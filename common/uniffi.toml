@@ -1,0 +1,8 @@
+[bindings.kotlin]
+package_name = "com.defi.wallet.core.common"
+cdylib_name = "dwc-common"
+
+[bindings.swift]
+ffi_module_name = "DefiWalletCore"
+ffi_module_filename = "dwc_commonFFI"
+generate_module_map = false

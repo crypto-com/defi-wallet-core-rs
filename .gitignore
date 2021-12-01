@@ -1,0 +1,42 @@
+website/build
+target
+credentials.json
+*-engine.json
+*.db
+.*.swp
+
+# Android stuff.
+*.iml
+.gradle
+local.properties
+.idea
+build
+.DS_Store
+captures
+.externalNativeBuild
+.lastAutoPublishContentsHash
+
+# iOS stuff.
+xcuserdata
+
+# Protobuf Swift
+*.pb.swift
+
+# UniFFI generated artifacts
+components/**/ios/Generated
+
+# Carthage generated artifacts
+Carthage
+raw_xcodebuild.log
+raw_xcodetest.log
+
+# Generated debug symbols
+crashreporter-symbols*
+automation/symbols-generation/bin/
+
+# Generated mdbook documentation files
+build/docs/*
+docs/book
+
+# Generated rustdocs
+docs/rust-docs
