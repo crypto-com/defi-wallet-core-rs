@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "common",
+]
+
+[profile.release]
+opt-level = "s"
+debug = true
+lto = "thin"

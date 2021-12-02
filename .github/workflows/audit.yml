@@ -1,0 +1,30 @@
+name: Security Audit
+on:
+  pull_request:
+    paths:
+      - Cargo.lock
+  push:
+    branches:
+      - main
+    paths:
+      - Cargo.lock
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  security_audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          profile: minimal
+      - name: Install cargo audit
+        run: cargo install cargo-audit
+      # FIXME: need to be fixed in upstream
+      - run: >
+          cargo audit --deny-warnings
+          --ignore RUSTSEC-2020-0159
