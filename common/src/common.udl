@@ -1,6 +1,7 @@
 [Enum]
 interface Network {
     CryptoOrgMainnet();
+    CryptoOrgTestnet();
     CronosMainnet();
     CosmosHub();
     Other(string chain_id, u32 coin_type, string bech32hrp);
@@ -9,10 +10,12 @@ interface Network {
 [Enum]
 interface SingleCoin {
   BaseCRO(u64 amount);
-  CRO(u64 amount);
+  CRO(u64 amount, Network network);
+  TestnetBaseCRO(u64 amount);
+  TestnetCRO(u64 amount);
   UATOM(u64 amount);
   ATOM(u64 amount);
-  Other(u64 amount, string denom);
+  Other(string amount, string denom);
 };
 
 [Wrapped]

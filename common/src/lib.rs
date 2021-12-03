@@ -12,12 +12,16 @@ use eyre::{eyre, Context};
 
 /// human-readable bech32 prefix for Crypto.org Chain accounts
 pub const CRYPTO_ORG_BECH32_HRP: &str = "cro";
+/// human-readable bech32 prefix for Crypto.org Chain testnet accounts
+pub const CRYPTO_ORG_TESTNET_BECH32_HRP: &str = "tcro";
 /// human-readable bech32 prefix for Cronos accounts
 pub const CRONOS_BECH32_HRP: &str = "crc";
 /// human-readable bech32 prefix for Cosmos Hub accounts
 pub const COSMOS_BECH32_HRP: &str = "cosmos";
 /// mainnet chain id of Crypto.org Chain
 pub const CRYPTO_ORG_CHAIN_ID: &str = "crypto-org-chain-mainnet-1";
+/// testnet chain id of Crypto.org Chain Croeseid
+pub const CRYPTO_ORG_CHAIN_TESTNET_ID: &str = "testnet-croeseid-4";
 /// mainnet chain id of Cronos
 pub const CRONOS_CHAIN_ID: &str = "cronosmainnet_25-1";
 /// mainnet chain id of Cosmos Hub
@@ -27,6 +31,8 @@ pub const COSMOS_CHAIN_ID: &str = "cosmoshub-4";
 pub enum Network {
     /// Crypto.org Chain mainnet
     CryptoOrgMainnet,
+    /// Crypto.org Chain testnet
+    CryptoOrgTestnet,
     /// Cronos mainnet beta
     CronosMainnet,
     /// Cosmos Hub mainnet
@@ -49,6 +55,7 @@ impl Network {
             Network::CronosMainnet => CRONOS_BECH32_HRP,
             Network::CosmosHub => COSMOS_BECH32_HRP,
             Network::Other { bech32hrp, .. } => bech32hrp,
+            Network::CryptoOrgTestnet => CRYPTO_ORG_TESTNET_BECH32_HRP,
         }
     }
 
@@ -58,6 +65,7 @@ impl Network {
             Network::CronosMainnet => CRONOS_CHAIN_ID,
             Network::CosmosHub => COSMOS_CHAIN_ID,
             Network::Other { chain_id, .. } => chain_id,
+            Network::CryptoOrgTestnet => CRYPTO_ORG_CHAIN_TESTNET_ID,
         };
         chain_id.parse().context("invalid chain id")
     }
@@ -67,14 +75,18 @@ impl Network {
 pub enum SingleCoin {
     /// basecro
     BaseCRO { amount: u64 },
-    /// 1 CRO = 10^8 basecro on Crypto.org Chain mainnet OR 10^18 on Cronos
-    CRO { amount: u64 },
+    /// 1 CRO = 10^8 basecro on Crypto.org Chain mainnet OR 10^18 on Cronos/EVM
+    CRO { amount: u64, network: Network },
+    /// basecro
+    TestnetBaseCRO { amount: u64 },
+    /// 1 TCRO = 10^8 basetcro
+    TestnetCRO { amount: u64 },
     /// uatom
     UATOM { amount: u64 },
     /// 1 ATOM = 10^6 uatom
     ATOM { amount: u64 },
     /// other coin unit
-    Other { amount: u64, denom: String },
+    Other { amount: String, denom: String },
 }
 
 impl TryInto<Coin> for &SingleCoin {
@@ -86,9 +98,27 @@ impl TryInto<Coin> for &SingleCoin {
                 amount: (*amount).into(),
                 denom: "basecro".parse()?,
             }),
-            SingleCoin::CRO { amount } => {
+            SingleCoin::TestnetBaseCRO { amount } => Ok(Coin {
+                amount: (*amount).into(),
+                denom: "basetcro".parse()?,
+            }),
+            SingleCoin::TestnetCRO { amount } => {
                 let base_amount = amount
-                    .checked_mul(1_0000_0000)
+                    .checked_mul(10 ^ 8)
+                    .ok_or_else(|| eyre!("integer overflow"))?;
+                Ok(Coin {
+                    amount: base_amount.into(),
+                    denom: "basetcro".parse()?,
+                })
+            }
+            SingleCoin::CRO { amount, network } => {
+                let decimals = match network {
+                    Network::CronosMainnet => 10 ^ 18,
+                    _ => 10 ^ 8,
+                };
+                // FIXME: convert to Decimal when it supports multiplication
+                let base_amount = amount
+                    .checked_mul(decimals)
                     .ok_or_else(|| eyre!("integer overflow"))?;
                 Ok(Coin {
                     amount: base_amount.into(),
@@ -109,7 +139,7 @@ impl TryInto<Coin> for &SingleCoin {
                 })
             }
             SingleCoin::Other { amount, denom } => Ok(Coin {
-                amount: (*amount).into(),
+                amount: amount.parse()?,
                 denom: denom.parse()?,
             }),
         }
@@ -117,9 +147,11 @@ impl TryInto<Coin> for &SingleCoin {
 }
 
 /// wrapper around 33-byte secp256k1 public key
+/// FIXME: investigate wrapping directly `cosmrs::crypto::PublicKey`
 pub struct PublicKeyBytesWrapper(Vec<u8>);
 
 /// unwrapping public key errors
+/// FIXME: additional errors after wrapping directly `cosmrs::crypto::PublicKey`
 #[derive(Debug, thiserror::Error)]
 pub enum PublicKeyBytesError {
     #[error("The length should be 33-bytes")]
@@ -259,7 +291,10 @@ pub fn get_single_bank_send_signdoc(
         tx_info,
         CosmosSDKMsg::BankSend {
             recipient_address,
-            amount: SingleCoin::Other { amount, denom },
+            amount: SingleCoin::Other {
+                amount: format!("{}", amount),
+                denom,
+            },
         },
     )
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
@@ -294,7 +329,7 @@ pub fn new_sdk_tx_info(
         sequence_number,
         gas_limit,
         fee_amount: SingleCoin::Other {
-            amount: fee_amount,
+            amount: format!("{}", fee_amount),
             denom: fee_denom,
         },
         timeout_height,
