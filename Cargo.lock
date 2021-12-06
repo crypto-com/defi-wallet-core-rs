@@ -316,6 +316,9 @@ version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "cosmrs",
+ "eyre",
+ "prost",
+ "thiserror",
  "uniffi",
  "uniffi_build",
  "uniffi_macros",

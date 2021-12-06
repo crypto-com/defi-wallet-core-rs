@@ -1,3 +1,53 @@
+[Enum]
+interface Network {
+    CryptoOrgMainnet();
+    CryptoOrgTestnet();
+    CronosMainnet();
+    CosmosHub();
+    Other(string chain_id, u32 coin_type, string bech32hrp);
+};
+
+[Enum]
+interface SingleCoin {
+  BaseCRO(u64 amount);
+  CRO(u64 amount, Network network);
+  TestnetBaseCRO(u64 amount);
+  TestnetCRO(u64 amount);
+  UATOM(u64 amount);
+  ATOM(u64 amount);
+  Other(string amount, string denom);
+};
+
+[Wrapped]
+typedef sequence<u8> PublicKeyBytesWrapper;
+
+[Error]
+enum PublicKeyBytesError {
+    "InvalidLength",
+};
+
+dictionary CosmosSDKTxInfo {
+    PublicKeyBytesWrapper sender_pubkey;
+    u64 account_number;
+    u64 sequence_number;
+    u64 gas_limit;
+    SingleCoin fee_amount;
+    u32 timeout_height;
+    string? memo_note;
+    Network network;
+};
+
+[Enum]
+interface CosmosSDKMsg {
+  BankSend(string recipient_address, SingleCoin amount);
+};
+
+[Error]
+enum ErrorWrapper {
+  "EyreReport",
+};
+
 namespace common {
-  u32 add(u32 a, u32 b);
+  [Throws=ErrorWrapper]
+  sequence<u8> get_single_msg_sign_payload(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg);
 };
