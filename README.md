@@ -28,3 +28,11 @@ uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml -
 ```bash
 wasm-pack build --scope crypto-com --out-dir ../bindings/wasm common
 ```
+
+## Examples
+
+### WASM
+1. generate the bindings as above
+2. `cd example/js-example`
+3. `npm install`
+4. `npm start`
