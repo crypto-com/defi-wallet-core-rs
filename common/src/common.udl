@@ -8,6 +8,41 @@ interface Network {
 };
 
 [Enum]
+interface WalletCoin {
+    CosmosSDK(Network network);
+};
+
+[Error]
+enum HdWrapError {
+    "InvalidLength",
+    "HDError",
+    "AccountId",
+};
+
+interface SecretKey {
+    constructor();
+};
+
+interface HDWallet {
+    [Throws=HdWrapError]
+    constructor(sequence<u8> seed_val);
+
+    [Throws=HdWrapError,Name=recover_wallet]
+    constructor(string mnemonic_phrase, string? password);
+
+    [Name=generate_wallet]
+    constructor(string? password);
+
+    string? get_backup_mnemonic_phrase();
+
+    [Throws=HdWrapError]
+    string get_default_address(WalletCoin coin);
+
+    [Throws=HdWrapError]
+    SecretKey get_key(string derivation_path);
+};
+
+[Enum]
 interface SingleCoin {
   BaseCRO(u64 amount);
   CRO(u64 amount, Network network);
@@ -27,7 +62,6 @@ enum PublicKeyBytesError {
 };
 
 dictionary CosmosSDKTxInfo {
-    PublicKeyBytesWrapper sender_pubkey;
     u64 account_number;
     u64 sequence_number;
     u64 gas_limit;
@@ -45,9 +79,12 @@ interface CosmosSDKMsg {
 [Error]
 enum ErrorWrapper {
   "EyreReport",
+  "PubkeyError",
 };
 
 namespace common {
   [Throws=ErrorWrapper]
-  sequence<u8> get_single_msg_sign_payload(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg);
+  sequence<u8> get_single_msg_sign_payload(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg, PublicKeyBytesWrapper sender_pubkey);
+  [Throws=ErrorWrapper]
+  sequence<u8> build_signed_single_msg_tx(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg, SecretKey secret_key);
 };
