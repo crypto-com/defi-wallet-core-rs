@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::{SecretKey, UniffiCustomTypeWrapper};
 pub use cosmrs::*;
 use cosmrs::{
     bank::MsgSend,
@@ -8,8 +9,6 @@ use cosmrs::{
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
 };
 use eyre::{eyre, Context};
-// use wasm_bindgen::prelude::*;
-use crate::{SecretKey, UniffiCustomTypeWrapper};
 
 /// human-readable bech32 prefix for Crypto.org Chain accounts
 pub const CRYPTO_ORG_BECH32_HRP: &str = "cro";
@@ -319,80 +318,6 @@ pub fn build_signed_single_msg_tx(
         .to_bytes()
         .map_err(|report| ErrorWrapper::EyreReport { report })
 }
-
-/// creates the transaction signing payload (`SignDoc`)
-/// for MsgSend from the Cosmos SDK bank module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
-///
-/// FIXME: re-organize wasm-bindgen to its own crate in the same workspace
-// #[wasm_bindgen]
-// pub fn get_single_bank_send_signdoc(
-//     tx_info: CosmosSDKTxInfo,
-//     recipient_address: String,
-//     amount: u64,
-//     denom: String,
-// ) -> Result<Vec<u8>, JsValue> {
-//     get_single_msg_sign_payload(
-//         tx_info,
-//         CosmosSDKMsg::BankSend {
-//             recipient_address,
-//             amount: SingleCoin::Other {
-//                 amount: format!("{}", amount),
-//                 denom,
-//             },
-//         },
-//     )
-//     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
-// }
-
-// /// constructs the Cosmos SDK Tx Info
-// ///
-// /// FIXME: re-organize wasm-bindgen to its own crate in the same workspace
-// /// FIXME: investigate if the number of args can be reduced
-// /// (e.g. if wasm-bindgen can directly tak a struct)
-// #[wasm_bindgen]
-// #[allow(clippy::too_many_arguments)]
-// pub fn new_sdk_tx_info(
-//     sender_pubkey: Vec<u8>,
-//     account_number: u64,
-//     sequence_number: u64,
-//     gas_limit: u64,
-//     fee_amount: u64,
-//     fee_denom: String,
-//     timeout_height: u32,
-//     memo_note: Option<String>,
-//     chain_id: String,
-//     bech32hrp: String,
-//     coin_type: u32,
-// ) -> Result<CosmosSDKTxInfo, JsValue> {
-//     if sender_pubkey.len() != COMPRESSED_SECP256K1_PUBKEY_SIZE {
-//         return Err(JsValue::from_str("incorrect public key length"));
-//     }
-//     Ok(CosmosSDKTxInfo {
-//         sender_pubkey: PublicKeyBytesWrapper(sender_pubkey),
-//         account_number,
-//         sequence_number,
-//         gas_limit,
-//         fee_amount: SingleCoin::Other {
-//             amount: format!("{}", fee_amount),
-//             denom: fee_denom,
-//         },
-//         timeout_height,
-//         memo_note,
-//         network: Network::Other {
-//             chain_id,
-//             bech32hrp,
-//             coin_type,
-//         },
-//     })
-// }
-
-// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
-// allocator.
-#[cfg(feature = "wee_alloc")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[cfg(test)]
 mod tests {

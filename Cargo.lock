@@ -314,7 +314,6 @@ dependencies = [
 name = "defi-wallet-core-common"
 version = "0.1.0"
 dependencies = [
- "console_error_panic_hook",
  "cosmrs",
  "eyre",
  "prost",
@@ -324,6 +323,14 @@ dependencies = [
  "uniffi",
  "uniffi_build",
  "uniffi_macros",
+]
+
+[[package]]
+name = "defi-wallet-core-wasm"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "defi-wallet-core-common",
  "wasm-bindgen",
  "wee_alloc",
 ]

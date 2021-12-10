@@ -18,6 +18,6 @@ jobs:
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - run: cargo install uniffi_bindgen
-      - run: wasm-pack build --scope crypto-com --out-dir ../bindings/wasm common
+      - run: wasm-pack build --scope crypto-com bindings/wasm
       - run: uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language kotlin --out-dir bindings/android
       - run: uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language swift --out-dir bindings/ios

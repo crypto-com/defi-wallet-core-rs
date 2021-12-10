@@ -26,7 +26,7 @@ uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml -
 
 ### WASM
 ```bash
-wasm-pack build --scope crypto-com --out-dir ../bindings/wasm common
+wasm-pack build --scope crypto-com bindings/wasm
 ```
 
 ## Examples
