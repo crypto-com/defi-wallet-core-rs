@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "common",
+    "bindings/wasm"
 ]
 
 [profile.release]

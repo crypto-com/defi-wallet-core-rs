@@ -11,6 +11,12 @@ module.exports = {
   experiments: {
     asyncWebAssembly: true
   },
+  // FIXME: https://github.com/rust-random/getrandom/issues/224 https://github.com/rustwasm/wasm-pack/issues/822
+  ignoreWarnings: [
+    (warning) =>
+      warning.message ===
+      "Critical dependency: the request of a dependency is an expression",
+  ],
   plugins: [
     new CopyWebpackPlugin({patterns: ['index.html']})
   ],

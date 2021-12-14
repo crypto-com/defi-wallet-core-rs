@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/rustwasm/create-wasm-app#readme",
   "dependencies": {
-    "@crypto-com/defi-wallet-core-common": "file:../../bindings/wasm"
+    "@crypto-com/defi-wallet-core-wasm": "file:../../bindings/wasm/pkg"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^10.0.0",
