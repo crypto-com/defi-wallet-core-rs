@@ -1,0 +1,11 @@
+//
+//  module.modulemap
+//  ios-example
+//
+//  Created by Hao Zhang on 2021/12/15.
+//
+
+module DefiWalletCore [system] {
+    header "dwc_commonFFI.h"
+    export *
+}
