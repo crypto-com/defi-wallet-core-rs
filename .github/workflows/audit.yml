@@ -22,9 +22,6 @@ jobs:
           toolchain: nightly
           override: true
           profile: minimal
-      - name: Install cargo audit
-        run: cargo install cargo-audit
-      # FIXME: need to be fixed in upstream
-      - run: >
-          cargo audit --deny-warnings
-          --ignore RUSTSEC-2020-0159
+      - uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
