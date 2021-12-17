@@ -28,3 +28,12 @@ const key = new wasm.PrivateKey();
 const signed_tx = wasm.get_single_bank_send_signed_tx(tx_info, key, "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
 BigInt(1000000), "uatom");
 console.log(signed_tx);
+
+const account = await wasm.query_account_details("https://testnet-croeseid-4.crypto.org:1317", "tcro1y6493k3smakl2wf09u7ds4amztx8ks7leyrtmy");
+console.log(account);
+
+const balance = await wasm.query_account_balance("https://testnet-croeseid-4.crypto.org:1317", "tcro1y6493k3smakl2wf09u7ds4amztx8ks7leyrtmy", "basetcro", 0);
+console.log(balance);
+
+const tx_resp = await wasm.broadcast_tx("https://testnet-croeseid-4.crypto.org:26657", signed_tx);
+console.log(tx_resp);

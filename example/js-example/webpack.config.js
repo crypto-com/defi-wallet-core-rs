@@ -9,6 +9,7 @@ module.exports = {
   },
   mode: "development",
   experiments: {
+    topLevelAwait: true,
     asyncWebAssembly: true
   },
   // FIXME: https://github.com/rust-random/getrandom/issues/224 https://github.com/rustwasm/wasm-pack/issues/822

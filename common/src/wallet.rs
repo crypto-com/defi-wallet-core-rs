@@ -28,6 +28,7 @@ pub struct HDWallet {
     mnemonic: Option<Mnemonic>,
 }
 
+/// wrapper around HD Wallet errors
 #[derive(Debug, thiserror::Error)]
 pub enum HdWrapError {
     #[error("The length should be 64-bytes")]
