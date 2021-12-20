@@ -14,7 +14,7 @@ rand_core = { version = "0.6", features = ["std"] }
 secrecy = "0.8"
 thiserror = "1"
 uniffi = "^0.15"
-uniffi_macros = "^0.15"
+uniffi_macros = "^0.16"
 
 [build-dependencies]
 uniffi_build = { version = "^0.15", features=["builtin-bindgen"] }
