@@ -310,7 +310,7 @@ dependencies = [
  "secrecy",
  "thiserror",
  "uniffi",
- "uniffi_build",
+ "uniffi_build 0.16.0",
  "uniffi_macros",
 ]
 
@@ -1176,9 +1176,9 @@ dependencies = [
 
 [[package]]
 name = "uniffi_bindgen"
-version = "0.15.2"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc0b1d54aee6bf6ab8e13d322cd9438c559e768790d356ecb54cf73f587afadc"
+checksum = "87e8e61e7f6d03d3bf70fe16c956061b7b5a5ef571171bb7bec160c86b5a5779"
 dependencies = [
  "anyhow",
  "askama",
@@ -1198,6 +1198,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0eef7d21f7e302fedef7e52f0dd4a5b1a636c99d4afea9f23a762106676f4960"
 dependencies = [
  "anyhow",
+]
+
+[[package]]
+name = "uniffi_build"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e41292abe9503cfdc682f53566b785f322548ca728e5b3b6183b0f2694b4225"
+dependencies = [
+ "anyhow",
  "uniffi_bindgen",
 ]
 
@@ -1211,7 +1220,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
- "uniffi_build",
+ "uniffi_build 0.15.2",
 ]
 
 [[package]]
