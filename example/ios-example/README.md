@@ -1,6 +1,6 @@
 # ios example
 
-## Pre-requisites
+## Building
 
 ```
 cd ../..
