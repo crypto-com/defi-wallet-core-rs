@@ -29,6 +29,25 @@ uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml -
 wasm-pack build --scope crypto-com bindings/wasm
 ```
 
+## Building
+
+### Android
+install android ndk: https://developer.android.com/ndk
+
+suggest version r22 https://developer.android.google.cn/ndk/downloads/older_releases.html
+
+set env NDK_HOME
+
+```bash
+make android
+```
+
+### iOS
+```bash
+make ios
+```
+
+
 ## Examples
 
 ### WASM

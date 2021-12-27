@@ -1,5 +1,8 @@
 website/build
 target
+NDK
+bindings/android
+bindings/ios
 credentials.json
 *-engine.json
 *.db

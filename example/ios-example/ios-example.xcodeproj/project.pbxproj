@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B03C80E02770F9F0004F77F3 /* libdefi_wallet_core_common.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B03C80DF2770F9F0004F77F3 /* libdefi_wallet_core_common.a */; };
 		B097EACB276917A400965091 /* ios_exampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B097EACA276917A400965091 /* ios_exampleApp.swift */; };
 		B097EACD276917A400965091 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B097EACC276917A400965091 /* ContentView.swift */; };
 		B097EACF276917A600965091 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B097EACE276917A600965091 /* Assets.xcassets */; };
@@ -14,7 +15,6 @@
 		B097EADC276917A700965091 /* ios_exampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B097EADB276917A700965091 /* ios_exampleTests.swift */; };
 		B097EAE6276917A700965091 /* ios_exampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B097EAE5276917A700965091 /* ios_exampleUITests.swift */; };
 		B097EAE8276917A700965091 /* ios_exampleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B097EAE7276917A700965091 /* ios_exampleUITestsLaunchTests.swift */; };
-		B097EAF82769185C00965091 /* libdefi_wallet_core_common_x86.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B097EAF62769185C00965091 /* libdefi_wallet_core_common_x86.a */; };
 		B097EAFB27691A2600965091 /* common.swift in Sources */ = {isa = PBXBuildFile; fileRef = B097EAFA27691A2600965091 /* common.swift */; };
 /* End PBXBuildFile section */
 
@@ -36,6 +36,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B03C80DF2770F9F0004F77F3 /* libdefi_wallet_core_common.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libdefi_wallet_core_common.a; sourceTree = "<group>"; };
 		B097EAC7276917A400965091 /* ios-example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ios-example.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B097EACA276917A400965091 /* ios_exampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios_exampleApp.swift; sourceTree = "<group>"; };
 		B097EACC276917A400965091 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -46,7 +47,6 @@
 		B097EAE1276917A700965091 /* ios-exampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ios-exampleUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B097EAE5276917A700965091 /* ios_exampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios_exampleUITests.swift; sourceTree = "<group>"; };
 		B097EAE7276917A700965091 /* ios_exampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ios_exampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		B097EAF62769185C00965091 /* libdefi_wallet_core_common_x86.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libdefi_wallet_core_common_x86.a; sourceTree = "<group>"; };
 		B097EAFA27691A2600965091 /* common.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = common.swift; sourceTree = "<group>"; };
 		B097EAFC27691A3C00965091 /* dwc_commonFFI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dwc_commonFFI.h; sourceTree = "<group>"; };
 		B097EAFD27691C1A00965091 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
@@ -57,7 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B097EAF82769185C00965091 /* libdefi_wallet_core_common_x86.a in Frameworks */,
+				B03C80E02770F9F0004F77F3 /* libdefi_wallet_core_common.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -149,7 +149,7 @@
 		B097EAF5276917D900965091 /* lib.a */ = {
 			isa = PBXGroup;
 			children = (
-				B097EAF62769185C00965091 /* libdefi_wallet_core_common_x86.a */,
+				B03C80DF2770F9F0004F77F3 /* libdefi_wallet_core_common.a */,
 			);
 			path = lib.a;
 			sourceTree = "<group>";
