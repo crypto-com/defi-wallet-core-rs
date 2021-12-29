@@ -6,6 +6,5 @@
 cd ../..
 make android
 cd -
-make init
 make app
 ```

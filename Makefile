@@ -14,7 +14,9 @@ test:
 
 clean:
 	rm -rf target bindings/android bindings/ios
+	./clean.sh
 
 cleanall:
 	rm -rf target bindings/android bindings/ios
 	rm -rf NDK
+	./clean.sh

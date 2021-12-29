@@ -44,6 +44,6 @@ class MainActivity : AppCompatActivity() {
         }
         text += "\nend"
 
-        textview.setText(text)
+        textview.text = text
     }
 }

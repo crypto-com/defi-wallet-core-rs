@@ -2,4 +2,3 @@
 common.kt
 *.so
 libs/*
-release
