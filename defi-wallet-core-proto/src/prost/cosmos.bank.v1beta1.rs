@@ -74,10 +74,14 @@ pub struct Metadata {
     #[prost(string, tag = "4")]
     pub display: ::prost::alloc::string::String,
     /// name defines the name of the token (eg: Cosmos Atom)
+    ///
+    /// Since: cosmos-sdk 0.43
     #[prost(string, tag = "5")]
     pub name: ::prost::alloc::string::String,
     /// symbol is the token symbol usually shown on exchanges (eg: ATOM). This can
     /// be the same as the display.
+    ///
+    /// Since: cosmos-sdk 0.43
     #[prost(string, tag = "6")]
     pub symbol: ::prost::alloc::string::String,
 }
@@ -240,6 +244,8 @@ pub struct QueryAllBalancesResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QueryTotalSupplyRequest {
     /// pagination defines an optional pagination for the request.
+    ///
+    /// Since: cosmos-sdk 0.43
     #[prost(message, optional, tag = "1")]
     pub pagination: ::core::option::Option<super::super::base::query::v1beta1::PageRequest>,
 }
@@ -251,6 +257,8 @@ pub struct QueryTotalSupplyResponse {
     #[prost(message, repeated, tag = "1")]
     pub supply: ::prost::alloc::vec::Vec<super::super::base::v1beta1::Coin>,
     /// pagination defines the pagination in the response.
+    ///
+    /// Since: cosmos-sdk 0.43
     #[prost(message, optional, tag = "2")]
     pub pagination: ::core::option::Option<super::super::base::query::v1beta1::PageResponse>,
 }
@@ -486,6 +494,8 @@ pub mod query_client {
 }
 /// SendAuthorization allows the grantee to spend up to spend_limit coins from
 /// the granter's account.
+///
+/// Since: cosmos-sdk 0.43
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SendAuthorization {
     #[prost(message, repeated, tag = "1")]

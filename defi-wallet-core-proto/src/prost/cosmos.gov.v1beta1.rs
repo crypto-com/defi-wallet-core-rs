@@ -1,4 +1,6 @@
 /// WeightedVoteOption defines a unit of vote for vote split.
+///
+/// Since: cosmos-sdk 0.43
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct WeightedVoteOption {
     #[prost(enumeration = "VoteOption", tag = "1")]
@@ -74,6 +76,7 @@ pub struct Vote {
     #[deprecated]
     #[prost(enumeration = "VoteOption", tag = "3")]
     pub option: i32,
+    /// Since: cosmos-sdk 0.43
     #[prost(message, repeated, tag = "4")]
     pub options: ::prost::alloc::vec::Vec<WeightedVoteOption>,
 }
@@ -178,6 +181,8 @@ pub struct MsgVote {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgVoteResponse {}
 /// MsgVoteWeighted defines a message to cast a vote.
+///
+/// Since: cosmos-sdk 0.43
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgVoteWeighted {
     #[prost(uint64, tag = "1")]
@@ -188,6 +193,8 @@ pub struct MsgVoteWeighted {
     pub options: ::prost::alloc::vec::Vec<WeightedVoteOption>,
 }
 /// MsgVoteWeightedResponse defines the Msg/VoteWeighted response type.
+///
+/// Since: cosmos-sdk 0.43
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MsgVoteWeightedResponse {}
 /// MsgDeposit defines a message to submit a deposit to an existing proposal.
@@ -295,6 +302,8 @@ pub mod msg_client {
             self.inner.unary(request.into_request(), path, codec).await
         }
         #[doc = " VoteWeighted defines a method to add a weighted vote on a specific proposal."]
+        #[doc = ""]
+        #[doc = " Since: cosmos-sdk 0.43"]
         pub async fn vote_weighted(
             &mut self,
             request: impl tonic::IntoRequest<super::MsgVoteWeighted>,

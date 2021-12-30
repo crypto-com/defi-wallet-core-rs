@@ -16,7 +16,7 @@ use walkdir::WalkDir;
 static QUIET: AtomicBool = AtomicBool::new(false);
 
 /// The Cosmos SDK commit or tag to be cloned and used to build the proto files
-const COSMOS_SDK_REV: &str = "v0.44.1";
+const COSMOS_SDK_REV: &str = "v0.44.5";
 
 /// The directory generated cosmos-sdk proto files go into in this repo
 const COSMOS_SDK_PROTO_DIR: &str = "../defi-wallet-core-proto/src/prost/";
@@ -115,12 +115,12 @@ fn run_git(args: impl IntoIterator<Item = impl AsRef<OsStr>>) {
 
 fn update_submodules() {
     info!("Updating cosmos/cosmos-sdk submodule...");
-    run_git(&["submodule", "update", "--init"]);
+    run_git(&["-C", COSMOS_SDK_DIR, "submodule", "update", "--init"]);
     run_git(&["-C", COSMOS_SDK_DIR, "fetch"]);
     run_git(&["-C", COSMOS_SDK_DIR, "reset", "--hard", COSMOS_SDK_REV]);
 
     info!("Updating chain-main submodule...");
-    run_git(&["submodule", "update", "--init"]);
+    run_git(&["-C", CHAIN_MAIN_DIR, "submodule", "update", "--init"]);
     run_git(&["-C", CHAIN_MAIN_DIR, "fetch"]);
     run_git(&["-C", CHAIN_MAIN_DIR, "reset", "--hard", CHAIN_MAIN_REV]);
 }

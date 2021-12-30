@@ -1089,6 +1089,8 @@ pub mod query_client {
     }
 }
 /// StakeAuthorization defines authorization for delegate/undelegate/redelegate.
+///
+/// Since: cosmos-sdk 0.43
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StakeAuthorization {
     /// max_tokens specifies the maximum amount of tokens can be delegate to a validator. If it is
@@ -1123,6 +1125,8 @@ pub mod stake_authorization {
     }
 }
 /// AuthorizationType defines the type of staking module authorization type
+///
+/// Since: cosmos-sdk 0.43
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
 pub enum AuthorizationType {
