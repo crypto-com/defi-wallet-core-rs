@@ -22,10 +22,10 @@ const COSMOS_SDK_REV: &str = "v0.44.5";
 const COSMOS_SDK_PROTO_DIR: &str = "../defi-wallet-core-proto/src/prost/";
 
 /// Directory where the cosmos-sdk submodule is located
-const COSMOS_SDK_DIR: &str = "../cosmos-sdk";
+const COSMOS_SDK_DIR: &str = "../third_party/cosmos-sdk";
 
 const CHAIN_MAIN_REV: &str = "v3.3.3";
-const CHAIN_MAIN_DIR: &str = "../chain-main";
+const CHAIN_MAIN_DIR: &str = "../third_party/chain-main";
 
 /// A temporary directory for proto building
 const TMP_BUILD_DIR: &str = "/tmp/tmp-protobuf/";

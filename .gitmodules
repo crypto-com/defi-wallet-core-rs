@@ -1,6 +1,6 @@
-[submodule "cosmos-sdk"]
-	path = cosmos-sdk
+[submodule "third_party/cosmos-sdk"]
+	path = third_party/cosmos-sdk
 	url = https://github.com/cosmos/cosmos-sdk.git
-[submodule "chain-main"]
-	path = chain-main
+[submodule "third_party/chain-main"]
+	path = third_party/chain-main
 	url = https://github.com/crypto-org-chain/chain-main.git
