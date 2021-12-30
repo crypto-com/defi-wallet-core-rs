@@ -13,21 +13,22 @@ pub const CHAIN_MAIN_VERSION: &str = include_str!("prost/CHAIN_MAIN_COMMIT");
 
 /// chainmain protobuf definitions.
 pub mod chainmain {
-    /// Authentication of accounts and transactions.
+    /// chainmain
+    #[allow(clippy::module_inception)]
     pub mod chainmain {
         pub mod v1 {
             include!("prost/chainmain.chainmain.v1.rs");
         }
     }
 
-    /// Balances.
+    /// nft
     pub mod nft {
         pub mod v1 {
             include!("prost/chainmain.nft.v1.rs");
         }
     }
 
-    /// Crisis handling
+    /// supply
     pub mod supply {
         pub mod v1 {
             include!("prost/chainmain.supply.v1.rs");
