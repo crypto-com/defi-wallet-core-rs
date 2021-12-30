@@ -340,6 +340,7 @@ name = "defi-wallet-core-common"
 version = "0.1.0"
 dependencies = [
  "cosmrs",
+ "defi-wallet-core-proto",
  "eyre",
  "prost",
  "rand_core 0.6.3",
@@ -354,6 +355,7 @@ dependencies = [
 name = "defi-wallet-core-proto"
 version = "0.1.0"
 dependencies = [
+ "cosmrs",
  "prost",
  "prost-types",
  "tendermint-proto",

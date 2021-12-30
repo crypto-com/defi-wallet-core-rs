@@ -9,6 +9,7 @@ crate-type = ["staticlib", "rlib"]
 [dependencies]
 eyre = "0.6"
 cosmrs = "0.3"
+defi-wallet-core-proto = { version = "0.1", default-features = false, path = "../defi-wallet-core-proto" }
 prost = "0.9"
 rand_core = { version = "0.6", features = ["std"] }
 secrecy = "0.8"
