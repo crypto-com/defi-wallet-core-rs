@@ -3,6 +3,7 @@
 #![forbid(unsafe_code)]
 #![warn(trivial_casts, trivial_numeric_casts, unused_import_braces)]
 
+use cosmos_sdk_proto::cosmos;
 pub use tendermint_proto as tendermint;
 
 use cosmrs::tx::MsgProto;
@@ -32,25 +33,6 @@ pub mod chainmain {
     pub mod supply {
         pub mod v1 {
             include!("prost/chainmain.supply.v1.rs");
-        }
-    }
-}
-
-/// Cosmos protobuf definitions.
-mod cosmos {
-
-    /// Base functionality.
-    pub mod base {
-
-        /// Query support.
-        pub mod query {
-            pub mod v1beta1 {
-                include!("prost/cosmos.base.query.v1beta1.rs");
-            }
-        }
-
-        pub mod v1beta1 {
-            include!("prost/cosmos.base.v1beta1.rs");
         }
     }
 }

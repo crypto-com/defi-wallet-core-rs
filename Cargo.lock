@@ -267,6 +267,7 @@ dependencies = [
  "prost",
  "prost-types",
  "tendermint-proto",
+ "tonic",
 ]
 
 [[package]]
@@ -355,6 +356,7 @@ dependencies = [
 name = "defi-wallet-core-proto"
 version = "0.1.0"
 dependencies = [
+ "cosmos-sdk-proto",
  "cosmrs",
  "prost",
  "prost-types",
