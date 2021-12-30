@@ -1,3 +1,4 @@
+// Copyright (c) 2020-2021, Cosmos Rust authors (licensed under the Apache License Version 2.0)
 use regex::Regex;
 use std::{
     env,
