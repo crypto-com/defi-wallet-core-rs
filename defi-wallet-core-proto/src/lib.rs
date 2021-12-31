@@ -39,3 +39,18 @@ pub mod chainmain {
 impl MsgProto for chainmain::nft::v1::MsgIssueDenom {
     const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgIssueDenom";
 }
+
+impl MsgProto for chainmain::nft::v1::MsgMintNft {
+    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgMintNft";
+}
+
+impl MsgProto for chainmain::nft::v1::MsgEditNft {
+    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgEditNft";
+}
+impl MsgProto for chainmain::nft::v1::MsgTransferNft {
+    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgTransferNft";
+}
+
+impl MsgProto for chainmain::nft::v1::MsgBurnNft {
+    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgBurnNft";
+}

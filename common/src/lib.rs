@@ -15,3 +15,6 @@ pub use nft::*;
 pub use transaction::*;
 pub use wallet::*;
 uniffi_macros::include_scaffolding!("common");
+
+#[macro_use]
+mod macros;
