@@ -267,7 +267,6 @@ dependencies = [
  "prost",
  "prost-types",
  "tendermint-proto",
- "tonic",
 ]
 
 [[package]]
