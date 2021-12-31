@@ -31,6 +31,14 @@ wasm-pack build --scope crypto-com bindings/wasm
 
 ## Building
 
+## Building Proto files from source
+
+The single `proto-build` crate in this repo clones and rebuilds proto files for
+all other crates, simply make the required edits in [main.rs](proto-build/main.rs), then
+
+    cd proto-build # enter `proto-build`, so that we can clone repos and build proto files relative to it
+    cargo run # build proto files and output to `../defi-wallet-core-prooto/src/prost` folder
+
 ### Android
 install android ndk: https://developer.android.com/ndk
 
