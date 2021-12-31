@@ -15,14 +15,8 @@ use walkdir::WalkDir;
 // TODO(tarcieri): use a logger for this
 static QUIET: AtomicBool = AtomicBool::new(false);
 
-/// The Cosmos SDK commit or tag to be cloned and used to build the proto files
-const COSMOS_SDK_REV: &str = "v0.44.5";
-
 /// The directory generated cosmos-sdk proto files go into in this repo
-const COSMOS_SDK_PROTO_DIR: &str = "../defi-wallet-core-proto/src/prost/";
-
-/// Directory where the cosmos-sdk submodule is located
-const COSMOS_SDK_DIR: &str = "../third_party/cosmos-sdk";
+const PROTO_DIR: &str = "../defi-wallet-core-proto/src/prost/";
 
 const CHAIN_MAIN_REV: &str = "v3.3.3";
 const CHAIN_MAIN_DIR: &str = "../third_party/chain-main";
@@ -65,8 +59,7 @@ fn main() {
     }
 
     let tmp_build_dir: PathBuf = TMP_BUILD_DIR.parse().unwrap();
-    let proto_dir: PathBuf = COSMOS_SDK_PROTO_DIR.parse().unwrap();
-    let _cosmos_sdk_dir: PathBuf = COSMOS_SDK_DIR.parse().unwrap();
+    let proto_dir: PathBuf = PROTO_DIR.parse().unwrap();
 
     if tmp_build_dir.exists() {
         fs::remove_dir_all(tmp_build_dir.clone()).unwrap();
@@ -76,7 +69,6 @@ fn main() {
 
     update_submodules();
     output_commit_versions(&tmp_build_dir);
-    compile_sdk_protos_and_services(&tmp_build_dir);
     compile_chain_main_protos_and_services(&tmp_build_dir);
     copy_generated_files(&tmp_build_dir, &proto_dir);
 }
@@ -114,82 +106,15 @@ fn run_git(args: impl IntoIterator<Item = impl AsRef<OsStr>>) {
 }
 
 fn update_submodules() {
-    info!("Updating cosmos/cosmos-sdk submodule...");
-    run_git(&["-C", COSMOS_SDK_DIR, "submodule", "update", "--init"]);
-    run_git(&["-C", COSMOS_SDK_DIR, "fetch"]);
-    run_git(&["-C", COSMOS_SDK_DIR, "reset", "--hard", COSMOS_SDK_REV]);
-
     info!("Updating chain-main submodule...");
-    run_git(&["-C", CHAIN_MAIN_DIR, "submodule", "update", "--init"]);
+    run_git(&["-C", CHAIN_MAIN_DIR, "submodule", "update", "--init", "--recursive"]);
     run_git(&["-C", CHAIN_MAIN_DIR, "fetch"]);
     run_git(&["-C", CHAIN_MAIN_DIR, "reset", "--hard", CHAIN_MAIN_REV]);
 }
 
 fn output_commit_versions(out_dir: &Path) {
-    let path = out_dir.join("COSMOS_SDK_COMMIT");
-    fs::write(path, COSMOS_SDK_REV).unwrap();
-
     let path = out_dir.join("CHAIN_MAIN_COMMIT");
     fs::write(path, CHAIN_MAIN_REV).unwrap();
-}
-
-fn compile_sdk_protos_and_services(out_dir: &Path) {
-    info!(
-        "Compiling cosmos-sdk .proto files to Rust into '{}'...",
-        out_dir.display()
-    );
-
-    let root = env!("CARGO_MANIFEST_DIR");
-    let sdk_dir = Path::new(COSMOS_SDK_DIR);
-
-    let proto_includes_paths = [
-        format!("{}/../proto", root),
-        format!("{}/proto", sdk_dir.display()),
-        format!("{}/third_party/proto", sdk_dir.display()),
-    ];
-
-    // Paths
-    let proto_paths = [
-        format!("{}/../proto/definitions/mock", root),
-        format!("{}/proto/cosmos/auth", sdk_dir.display()),
-        format!("{}/proto/cosmos/bank", sdk_dir.display()),
-        format!("{}/proto/cosmos/base", sdk_dir.display()),
-        format!("{}/proto/cosmos/base/tendermint", sdk_dir.display()),
-        format!("{}/proto/cosmos/capability", sdk_dir.display()),
-        format!("{}/proto/cosmos/crisis", sdk_dir.display()),
-        format!("{}/proto/cosmos/crypto", sdk_dir.display()),
-        format!("{}/proto/cosmos/distribution", sdk_dir.display()),
-        format!("{}/proto/cosmos/evidence", sdk_dir.display()),
-        format!("{}/proto/cosmos/genutil", sdk_dir.display()),
-        format!("{}/proto/cosmos/gov", sdk_dir.display()),
-        format!("{}/proto/cosmos/mint", sdk_dir.display()),
-        format!("{}/proto/cosmos/params", sdk_dir.display()),
-        format!("{}/proto/cosmos/slashing", sdk_dir.display()),
-        format!("{}/proto/cosmos/staking", sdk_dir.display()),
-        format!("{}/proto/cosmos/tx", sdk_dir.display()),
-        format!("{}/proto/cosmos/upgrade", sdk_dir.display()),
-        format!("{}/proto/cosmos/vesting", sdk_dir.display()),
-    ];
-
-    // List available proto files
-    let mut protos: Vec<PathBuf> = vec![];
-    collect_protos(&proto_paths, &mut protos);
-
-    // List available paths for dependencies
-    let includes: Vec<PathBuf> = proto_includes_paths.iter().map(PathBuf::from).collect();
-
-    // Compile all of the proto files, along with grpc service clients
-    info!("Compiling proto definitions and clients for GRPC services!");
-    tonic_build::configure()
-        .build_client(true)
-        .build_server(false)
-        .format(true)
-        .out_dir(out_dir)
-        .extern_path(".tendermint", "::tendermint_proto")
-        .compile(&protos, &includes)
-        .unwrap();
-
-    info!("=> Done!");
 }
 
 fn compile_chain_main_protos_and_services(out_dir: &Path) {
@@ -204,8 +129,11 @@ fn compile_chain_main_protos_and_services(out_dir: &Path) {
     let proto_includes_paths = [
         format!("{}/../proto", root),
         format!("{}/proto", sdk_dir.display()),
-        format!("{}/../cosmos-sdk/proto", sdk_dir.display()),
-        format!("{}/../cosmos-sdk/third_party/proto", sdk_dir.display()),
+        format!("{}/third_party/cosmos-sdk/proto", sdk_dir.display()),
+        format!(
+            "{}/third_party/cosmos-sdk/third_party/proto",
+            sdk_dir.display()
+        ),
     ];
 
     // Paths

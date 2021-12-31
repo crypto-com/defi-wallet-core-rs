@@ -9,7 +9,6 @@ pub use tendermint_proto as tendermint;
 use cosmrs::tx::MsgProto;
 
 /// The version (commit hash) of the Cosmos SDK used when generating this library.
-pub const COSMOS_SDK_VERSION: &str = include_str!("prost/COSMOS_SDK_COMMIT");
 pub const CHAIN_MAIN_VERSION: &str = include_str!("prost/CHAIN_MAIN_COMMIT");
 
 /// chainmain protobuf definitions.
