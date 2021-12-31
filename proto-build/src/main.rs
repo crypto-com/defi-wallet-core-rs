@@ -107,7 +107,14 @@ fn run_git(args: impl IntoIterator<Item = impl AsRef<OsStr>>) {
 
 fn update_submodules() {
     info!("Updating chain-main submodule...");
-    run_git(&["-C", CHAIN_MAIN_DIR, "submodule", "update", "--init", "--recursive"]);
+    run_git(&[
+        "-C",
+        CHAIN_MAIN_DIR,
+        "submodule",
+        "update",
+        "--init",
+        "--recursive",
+    ]);
     run_git(&["-C", CHAIN_MAIN_DIR, "fetch"]);
     run_git(&["-C", CHAIN_MAIN_DIR, "reset", "--hard", CHAIN_MAIN_REV]);
 }
