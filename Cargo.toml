@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "proto-build",
-    "defi-wallet-core-proto",
+    "proto",
     "common",
     "bindings/wasm"
 ]

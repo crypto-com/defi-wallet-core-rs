@@ -2,7 +2,7 @@
 name = "defi-wallet-core-proto"
 version = "0.1.0" # Also update html_root_url in lib.rs when bumping this
 license = "Apache-2.0"
-repository = "https://github.com/https://github.com/crypto-com/defi-wallet-core-rs/tree/main/defi-wallet-core-proto"
+repository = "https://github.com/defi-wallet-core-rs/tree/main/proto"
 description = "Protobuf stuct defintions for interacting Cosmos SDK powered blockchains"
 readme = "README.md"
 categories = ["cryptography", "cryptography::cryptocurrencies", "database"]

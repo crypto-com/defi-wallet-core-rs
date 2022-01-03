@@ -16,7 +16,7 @@ use walkdir::WalkDir;
 static QUIET: AtomicBool = AtomicBool::new(false);
 
 /// The directory generated cosmos-sdk proto files go into in this repo
-const PROTO_DIR: &str = "../defi-wallet-core-proto/src/prost/";
+const PROTO_DIR: &str = "../proto/src/prost/";
 
 const CHAIN_MAIN_REV: &str = "v3.3.3";
 const CHAIN_MAIN_DIR: &str = "../third_party/chain-main";
