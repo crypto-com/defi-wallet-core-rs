@@ -1,5 +1,7 @@
 [workspace]
 members = [
+    "proto-build",
+    "proto",
     "common",
     "bindings/wasm"
 ]
