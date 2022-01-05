@@ -13,6 +13,8 @@ jobs:
       - run: |
           make -v
           pwd
+          ls
+          ls ..
           cat Makefile
           cat ios_build.sh
           make ios
