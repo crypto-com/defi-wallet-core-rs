@@ -12,6 +12,9 @@ jobs:
     steps:
       - run: |
           make -v
+          pwd
+          cat Makefile
+          cat ios_build.sh
           make ios
 
           
