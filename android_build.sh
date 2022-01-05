@@ -50,6 +50,7 @@ cargo build --target aarch64-linux-android --release || exit 1
 cargo build --target armv7-linux-androideabi --release || exit 1
 cargo build --target i686-linux-android --release || exit 1
 
+mkdir -p mobile_modules/android_module/dwclib/libs
 cp NDK/libs/jna.aar mobile_modules/android_module/dwclib/libs/
 mkdir -p mobile_modules/android_module/dwclib/src/main/jniLibs/arm64-v8a || exit 1
 cp target/aarch64-linux-android/release/libdefi_wallet_core_wasm.so mobile_modules/android_module/dwclib/src/main/jniLibs/arm64-v8a/libdwc-common.so || exit 1
