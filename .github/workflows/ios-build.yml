@@ -1,4 +1,4 @@
-name: Makefile CI
+name: IOS Build CI
 
 on:
   push:
@@ -10,7 +10,10 @@ jobs:
   ios-build:
     runs-on: macos-11
     steps:
+      - uses: actions/checkout@v2
+      - run: cargo install uniffi_bindgen
       - run: |
+          cat ios_build.sh
           make ios
 
           
