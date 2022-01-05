@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
 use defi_wallet_core_common::{
-    build_signed_single_msg_tx, get_single_msg_sign_payload, CosmosSDKMsg, CosmosSDKTxInfo,
-    HDWallet, Network, PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin,
+    broadcast_tx_sync, build_signed_single_msg_tx, get_account_balance, get_account_details,
+    get_single_msg_sign_payload, BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, HDWallet,
+    Network, PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin,
     COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use wasm_bindgen::prelude::*;
@@ -228,6 +229,58 @@ pub fn get_single_bank_send_signed_tx(
         private_key.key,
     )
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+/// retrieves the account details (e.g. sequence and account number) for a given address
+/// TODO: switch to grpc-web
+#[wasm_bindgen]
+pub async fn query_account_details(api_url: String, address: String) -> Result<JsValue, JsValue> {
+    let account_details = get_account_details(&api_url, &address)
+        .await
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+
+    Ok(JsValue::from_serde(&account_details)
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+}
+
+/// retrieves the account balance for a given address and a denom
+/// api-version: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.42.11
+/// - 0 means before 0.42.11 or 0.44.4
+/// - >=1 means after 0.42.11 or 0.44.4
+/// TODO: switch to grpc-web
+#[wasm_bindgen]
+pub async fn query_account_balance(
+    api_url: String,
+    address: String,
+    denom: String,
+    api_version: u8,
+) -> Result<JsValue, JsValue> {
+    let balance_api_version = if api_version == 0 {
+        BalanceApiVersion::Old
+    } else {
+        BalanceApiVersion::New
+    };
+    let account_details = get_account_balance(&api_url, &address, &denom, balance_api_version)
+        .await
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+
+    Ok(JsValue::from_serde(&account_details)
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+}
+
+/// broadcasts a signed tx
+#[wasm_bindgen]
+pub async fn broadcast_tx(
+    tendermint_rpc_url: String,
+    raw_signed_tx: Vec<u8>,
+) -> Result<JsValue, JsValue> {
+    let resp = broadcast_tx_sync(&tendermint_rpc_url, raw_signed_tx)
+        .await
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?
+        .into_result()
+        .map_err(|e| JsValue::from_str(&format!("missing_resulgt: {}", e)))?;
+
+    Ok(JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
 }
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
