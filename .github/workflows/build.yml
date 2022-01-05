@@ -14,7 +14,7 @@ jobs:
           make -v
           pwd
           ls
-          ls ..
+          ls defi-wallet-core-rs
           cat Makefile
           cat ios_build.sh
           make ios
