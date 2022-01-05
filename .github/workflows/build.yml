@@ -1,0 +1,16 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ios-build:
+    runs-on: macos-11
+    steps:
+      - run: |
+          make ios
+
+          
