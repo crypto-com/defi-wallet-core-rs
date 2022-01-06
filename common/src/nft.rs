@@ -35,27 +35,51 @@ pub enum Error {
     TokenUri { uri: String },
 }
 
+impl AsRef<str> for DenomId {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
+}
+
+impl AsRef<str> for DenomName {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
+}
+
+impl AsRef<str> for TokenId {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
+}
+
+impl AsRef<str> for TokenUri {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
+    }
+}
+
 impl Display for DenomId {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", self.0)
+        f.write_str(self.as_ref())
     }
 }
 
 impl Display for DenomName {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", self.0)
+        f.write_str(self.as_ref())
     }
 }
 
 impl Display for TokenId {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", self.0)
+        f.write_str(self.as_ref())
     }
 }
 
 impl Display for TokenUri {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", self.0)
+        f.write_str(self.as_ref())
     }
 }
 
