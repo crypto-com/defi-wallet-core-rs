@@ -129,11 +129,11 @@ impl FromStr for DenomName {
     fn from_str(s: &str) -> Result<DenomName> {
         let s: String = s.chars().filter(|c| !c.is_whitespace()).collect();
 
-        if s.len() == 0 {
+        if s.is_empty() {
             Err(Error::DenomName { name: s.to_owned() })
                 .wrap_err_with(|| format!("denom name({}) can not be space", s.to_owned()))
         } else {
-            Ok(Self(s.to_owned()))
+            Ok(Self(s))
         }
     }
 }
@@ -247,4 +247,244 @@ msg_wrapper! {
        pub denom_id: DenomId,
        pub sender: AccountId,
    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use cosmrs::{
+        crypto::secp256k1,
+        tx::{self, Fee, Msg, SignDoc, SignerInfo, Tx},
+        Coin,
+    };
+
+    #[test]
+    fn test_denom_id() {
+        let id = " ";
+        let error = id.parse::<DenomId>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!(
+                "the length of denom({}) only accepts value [{}, {}]",
+                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+            )
+        );
+
+        let id = (0..MAX_DENOM_LEN + 1).map(|_| "a").collect::<String>();
+        let error = id.parse::<DenomId>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!(
+                "the length of denom({}) only accepts value [{}, {}]",
+                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+            )
+        );
+
+        let id = "a";
+        let error = id.parse::<DenomId>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!(
+                "the length of denom({}) only accepts value [{}, {}]",
+                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+            )
+        );
+
+        let id = "1bc";
+        let error = id.parse::<DenomId>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!("the denom({}) only begins with an English letter", id)
+        );
+
+        let id = "Abc";
+        let error = id.parse::<DenomId>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!(
+                "the denom({}) only accepts lowercase alphanumeric characters",
+                id
+            )
+        );
+
+        let id = "a2900dc4d702fbf67b9b3697233299371";
+        let result = id.parse::<DenomId>();
+        assert_eq!(
+            result.unwrap().as_ref(),
+            "a2900dc4d702fbf67b9b3697233299371"
+        );
+    }
+
+    #[test]
+    fn test_denom_name() {
+        let name = " ";
+        let error = name.parse::<DenomName>().unwrap_err().to_string();
+        assert_eq!(error, "denom name() can not be space".to_string());
+
+        let name = " a   b    c   ";
+        let result = name.parse::<DenomName>();
+        assert_eq!(result.is_ok(), true);
+        assert_eq!(result.unwrap().as_ref(), "abc");
+
+        let name = "a2900dc4d702fbf67b9b3697233299371";
+        let result = name.parse::<DenomName>();
+        assert_eq!(result.is_ok(), true);
+        assert_eq!(
+            result.unwrap().as_ref(),
+            "a2900dc4d702fbf67b9b3697233299371"
+        );
+    }
+
+    #[test]
+    fn test_token_id() {
+        let id = " ";
+        let error = id.parse::<TokenId>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!(
+                "the length of nft id({}) only accepts value [{}, {}]",
+                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+            )
+        );
+
+        let id = (0..MAX_DENOM_LEN + 1).map(|_| "a").collect::<String>();
+        let error = id.parse::<TokenId>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!(
+                "the length of nft id({}) only accepts value [{}, {}]",
+                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+            )
+        );
+
+        let id = "a";
+        let error = id.parse::<TokenId>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!(
+                "the length of nft id({}) only accepts value [{}, {}]",
+                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+            )
+        );
+
+        let id = "1bc";
+        let error = id.parse::<TokenId>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!("nft id({}) only begins with an English letter", id)
+        );
+
+        let id = "Abc";
+        let error = id.parse::<TokenId>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!(
+                "nft id({}) only accepts lowercase alphanumeric characters",
+                id
+            )
+        );
+
+        let id = "edition1";
+        let result = id.parse::<TokenId>();
+        assert_eq!(result.unwrap().as_ref(), "edition1");
+    }
+
+    #[test]
+    fn test_token_uri() {
+        let uri = (0..MAX_TOKEN_URI_LEN + 1).map(|_| "a").collect::<String>();
+        let error = uri.parse::<TokenUri>().unwrap_err().to_string();
+        assert_eq!(
+            error,
+            format!(
+                "the length of nft uri({}) only accepts value [0, {}]",
+                uri, MAX_TOKEN_URI_LEN
+            )
+        );
+
+        let uri = "";
+        let result = uri.parse::<TokenUri>();
+        assert_eq!(result.is_ok(), true);
+        assert_eq!(result.unwrap().as_ref(), "");
+
+        let uri = "ipfs://ipfs/QmYbhjEcxkz6F1jgcPmexYdbohDyX2MzZ4SQaNFABPN29h";
+        let result = uri.parse::<TokenUri>();
+        assert_eq!(result.is_ok(), true);
+        assert_eq!(
+            result.unwrap().as_ref(),
+            "ipfs://ipfs/QmYbhjEcxkz6F1jgcPmexYdbohDyX2MzZ4SQaNFABPN29h"
+        );
+    }
+
+    #[test]
+    fn test_create_nft_msg() {
+        create_nft_msg().unwrap();
+        // assert_eq!(create_nft_msg().is_ok(), true);
+    }
+
+    fn create_nft_msg() -> Result<()> {
+        // Generate sender private key.
+        // In real world usage, this account would need to be funded before use.
+        let sender_private_key = secp256k1::SigningKey::random();
+        let sender_public_key = sender_private_key.public_key();
+        let sender_account_id = sender_public_key.account_id("chainmain")?;
+
+        ///////////////////////////
+        // Building transactions //
+        ///////////////////////////
+        // We'll be doing a simple send transaction.
+        // First we'll create a "Coin" amount to be sent, in this case 1 million cro.
+        let amount = Coin {
+            amount: 1_000_000u64.into(),
+            denom: "cro".parse()?,
+        };
+
+        let msg_issue_denom = MsgIssueDenom {
+            id: "a2900dc4d702fbf67b9b3697233299371".parse::<DenomId>()?,
+            name: "a2900dc4d702fbf67b9b3697233299371".parse::<DenomName>()?,
+            schema: "world".to_string(),
+            sender: sender_account_id,
+        };
+
+        // Transaction metadata: chain, account, sequence, gas, fee, timeout, and memo.
+        let chain_id = "chainmain-1".parse()?;
+        let account_number = 1;
+        let sequence_number = 0;
+        let gas = 100_000;
+        let timeout_height = 9001u16;
+        let memo = "example memo";
+
+        // Create transaction body from the MsgIssueDenom, memo, and timeout height.
+        let tx_body = tx::Body::new(vec![msg_issue_denom.to_any()?], memo, timeout_height);
+
+        // Create signer info from public key and sequence number.
+        // This uses a standard "direct" signature from a single signer.
+        let signer_info = SignerInfo::single_direct(Some(sender_public_key), sequence_number);
+
+        // Compute auth info from signer info by associating a fee.
+        let auth_info = signer_info.auth_info(Fee::from_amount_and_gas(amount, gas));
+
+        //////////////////////////
+        // Signing transactions //
+        //////////////////////////
+
+        // The "sign doc" contains a message to be signed.
+        let sign_doc = SignDoc::new(&tx_body, &auth_info, &chain_id, account_number)?;
+
+        // Sign the "sign doc" with the sender's private key, producing a signed raw transaction.
+        let tx_signed = sign_doc.sign(&sender_private_key)?;
+
+        // Serialize the raw transaction as bytes (i.e. `Vec<u8>`).
+        let tx_bytes = tx_signed.to_bytes()?;
+
+        //////////////////////////
+        // Parsing transactions //
+        //////////////////////////
+
+        // Parse the serialized bytes from above into a `cosmrs::Tx`
+        let tx_parsed = Tx::from_bytes(&tx_bytes)?;
+        assert_eq!(tx_parsed.body, tx_body);
+        assert_eq!(tx_parsed.auth_info, auth_info);
+
+        Ok(())
+    }
 }
