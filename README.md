@@ -39,6 +39,8 @@ all other crates, simply make the required edits in [main.rs](proto-build/main.r
     cd proto-build # enter `proto-build`, so that we can clone repos and build proto files relative to it
     cargo run # build proto files and output to `../proto/src/prost` folder
 
+or simply run `make proto`.
+
 ### Android
 install android ndk: https://developer.android.com/ndk
 
