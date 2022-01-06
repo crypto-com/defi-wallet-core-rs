@@ -1,6 +1,6 @@
-use std::sync::Arc;
-
-use crate::{SecretKey, UniffiCustomTypeWrapper};
+use crate::SecretKey;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::UniffiCustomTypeWrapper;
 pub use cosmrs::*;
 use cosmrs::{
     bank::MsgSend,
@@ -9,6 +9,7 @@ use cosmrs::{
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
 };
 use eyre::{eyre, Context};
+use std::sync::Arc;
 
 /// human-readable bech32 prefix for Crypto.org Chain accounts
 pub const CRYPTO_ORG_BECH32_HRP: &str = "cro";
@@ -181,6 +182,7 @@ impl From<PublicKeyBytesWrapper> for PublicKeyBytes {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl UniffiCustomTypeWrapper for PublicKeyBytesWrapper {
     type Wrapped = Vec<u8>;
 

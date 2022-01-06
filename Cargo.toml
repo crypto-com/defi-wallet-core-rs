@@ -1,7 +1,11 @@
 [workspace]
+resolver = "2"
 members = [
+    "proto-build",
+    "proto",
     "common",
-    "bindings/wasm"
+    "bindings/wasm",
+    "bindings/cpp"
 ]
 
 [profile.release]

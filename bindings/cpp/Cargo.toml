@@ -1,0 +1,16 @@
+[package]
+name = "defi-wallet-core-cpp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+defi-wallet-core-common = { path = "../../common" }
+cxx = "1"
+anyhow = "1"
+
+[build-dependencies]
+cxx-build = "1"
+
+
+[lib]
+crate-type = ["staticlib"]

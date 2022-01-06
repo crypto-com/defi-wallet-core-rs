@@ -1,0 +1,3 @@
+[submodule "third_party/chain-main"]
+	path = third_party/chain-main
+	url = https://github.com/crypto-org-chain/chain-main.git
