@@ -416,18 +416,83 @@ mod test {
     }
 
     #[test]
-    fn test_create_nft_msg() {
-        create_nft_msg().unwrap();
-        // assert_eq!(create_nft_msg().is_ok(), true);
-    }
-
-    fn create_nft_msg() -> Result<()> {
+    fn test_nft_msg() {
         // Generate sender private key.
         // In real world usage, this account would need to be funded before use.
         let sender_private_key = secp256k1::SigningKey::random();
         let sender_public_key = sender_private_key.public_key();
-        let sender_account_id = sender_public_key.account_id("chainmain")?;
+        let sender_account_id = sender_public_key.account_id("chainmain").unwrap();
+        let recipient_account_id = "cro1wdxhq45a2jazcg8q09hecyvvjvacyqsv53ccau"
+            .parse::<AccountId>()
+            .unwrap();
 
+        let msg_issue_denom = MsgIssueDenom {
+            id: "a2900dc4d702fbf67b9b3697233299371"
+                .parse::<DenomId>()
+                .unwrap(),
+            name: "a2900dc4d702fbf67b9b3697233299371"
+                .parse::<DenomName>()
+                .unwrap(),
+            schema: "world".to_string(),
+            sender: sender_account_id.clone(),
+        };
+
+        let msg_mint_nft = MsgMintNft {
+            id: "edition1".parse::<TokenId>().unwrap(),
+            denom_id: "a2900dc4d702fbf67b9b3697233299371"
+                .parse::<DenomId>()
+                .unwrap(),
+            name: "a2900dc4d702fbf67b9b3697233299371"
+                .parse::<DenomName>()
+                .unwrap(),
+            uri: "ipfs://ipfs/QmYbhjEcxkz6F1jgcPmexYdbohDyX2MzZ4SQaNFABPN29h"
+                .parse::<TokenUri>()
+                .unwrap(),
+            data: "".to_owned(),
+            sender: sender_account_id.clone(),
+            recipient: recipient_account_id.clone(),
+        };
+
+        let msg_edit_nft = MsgEditNft {
+            id: "edition1".parse::<TokenId>().unwrap(),
+            denom_id: "a2900dc4d702fbf67b9b3697233299371"
+                .parse::<DenomId>()
+                .unwrap(),
+            name: "a2900dc4d702fbf67b9b3697233299371"
+                .parse::<DenomName>()
+                .unwrap(),
+            uri: "ipfs://ipfs/QmYbhjEcxkz6F1jgcPmexYdbohDyX2MzZ4SQaNFABPN29h"
+                .parse::<TokenUri>()
+                .unwrap(),
+            data: "".to_owned(),
+            sender: sender_account_id.clone(),
+        };
+
+        let msg_transfer_nft = MsgTransferNft {
+            id: "edition1".parse::<TokenId>().unwrap(),
+            denom_id: "a2900dc4d702fbf67b9b3697233299371"
+                .parse::<DenomId>()
+                .unwrap(),
+            sender: sender_account_id.clone(),
+            recipient: recipient_account_id.clone(),
+        };
+
+        let msg_burn_nft = MsgBurnNft {
+            id: "edition1".parse::<TokenId>().unwrap(),
+            denom_id: "a2900dc4d702fbf67b9b3697233299371"
+                .parse::<DenomId>()
+                .unwrap(),
+            sender: sender_account_id.clone(),
+        };
+
+        create_nft_msg(&sender_private_key, msg_issue_denom).unwrap();
+        create_nft_msg(&sender_private_key, msg_mint_nft).unwrap();
+        create_nft_msg(&sender_private_key, msg_edit_nft).unwrap();
+        create_nft_msg(&sender_private_key, msg_transfer_nft).unwrap();
+        create_nft_msg(&sender_private_key, msg_burn_nft).unwrap();
+    }
+
+    fn create_nft_msg(private_key: &secp256k1::SigningKey, msg: impl Msg) -> Result<()> {
         ///////////////////////////
         // Building transactions //
         ///////////////////////////
@@ -436,13 +501,6 @@ mod test {
         let amount = Coin {
             amount: 1_000_000u64.into(),
             denom: "cro".parse()?,
-        };
-
-        let msg_issue_denom = MsgIssueDenom {
-            id: "a2900dc4d702fbf67b9b3697233299371".parse::<DenomId>()?,
-            name: "a2900dc4d702fbf67b9b3697233299371".parse::<DenomName>()?,
-            schema: "world".to_string(),
-            sender: sender_account_id,
         };
 
         // Transaction metadata: chain, account, sequence, gas, fee, timeout, and memo.
@@ -454,11 +512,12 @@ mod test {
         let memo = "example memo";
 
         // Create transaction body from the MsgIssueDenom, memo, and timeout height.
-        let tx_body = tx::Body::new(vec![msg_issue_denom.to_any()?], memo, timeout_height);
+        let tx_body = tx::Body::new(vec![msg.to_any()?], memo, timeout_height);
 
         // Create signer info from public key and sequence number.
         // This uses a standard "direct" signature from a single signer.
-        let signer_info = SignerInfo::single_direct(Some(sender_public_key), sequence_number);
+        let signer_info =
+            SignerInfo::single_direct(Some(private_key.public_key()), sequence_number);
 
         // Compute auth info from signer info by associating a fee.
         let auth_info = signer_info.auth_info(Fee::from_amount_and_gas(amount, gas));
@@ -471,7 +530,7 @@ mod test {
         let sign_doc = SignDoc::new(&tx_body, &auth_info, &chain_id, account_number)?;
 
         // Sign the "sign doc" with the sender's private key, producing a signed raw transaction.
-        let tx_signed = sign_doc.sign(&sender_private_key)?;
+        let tx_signed = sign_doc.sign(&private_key)?;
 
         // Serialize the raw transaction as bytes (i.e. `Vec<u8>`).
         let tx_bytes = tx_signed.to_bytes()?;
