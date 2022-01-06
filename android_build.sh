@@ -46,9 +46,9 @@ else
         echo "x86 ndk installed."
 fi
 
-cargo build --target aarch64-linux-android --release || exit 1
-cargo build --target armv7-linux-androideabi --release || exit 1
-cargo build --target i686-linux-android --release || exit 1
+PATH=$PATH:`pwd`/NDK/arm64/bin cargo build --target aarch64-linux-android --release || exit 1
+PATH=$PATH:`pwd`/NDK/arm64/bin cargo build --target armv7-linux-androideabi --release || exit 1
+PATH=$PATH:`pwd`/NDK/arm64/bin cargo build --target i686-linux-android --release || exit 1
 
 mkdir -p mobile_modules/android_module/dwclib/libs
 cp NDK/libs/jna.aar mobile_modules/android_module/dwclib/libs/
