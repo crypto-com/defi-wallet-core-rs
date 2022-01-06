@@ -89,15 +89,15 @@ impl FromStr for DenomId {
     fn from_str(s: &str) -> Result<DenomId> {
         match s.len() {
             MIN_DENOM_LEN..=MAX_DENOM_LEN => {
-                for c in s.chars() {
-                    if !c.is_ascii_alphanumeric() || !c.is_lowercase() {
-                        return Err(Error::DenomId { id: s.to_owned() }).wrap_err_with(|| {
-                            format!(
-                                "the denom({}) only accepts lowercase alphanumeric characters",
-                                s.to_owned()
-                            )
-                        });
-                    }
+                if s.chars()
+                    .any(|c| !c.is_ascii_alphanumeric() || c.is_ascii_uppercase())
+                {
+                    return Err(Error::DenomId { id: s.to_owned() }).wrap_err_with(|| {
+                        format!(
+                            "the denom({}) only accepts lowercase alphanumeric characters",
+                            s.to_owned()
+                        )
+                    });
                 }
 
                 if s.chars().next().unwrap().is_ascii_alphabetic() {
@@ -144,15 +144,15 @@ impl FromStr for TokenId {
     fn from_str(s: &str) -> Result<TokenId> {
         match s.len() {
             MIN_DENOM_LEN..=MAX_DENOM_LEN => {
-                for c in s.chars() {
-                    if !c.is_ascii_alphanumeric() || !c.is_lowercase() {
-                        return Err(Error::TokenId { id: s.to_owned() }).wrap_err_with(|| {
-                            format!(
-                                "nft id({}) only accepts lowercase alphanumeric characters",
-                                s.to_owned()
-                            )
-                        });
-                    }
+                if s.chars()
+                    .any(|c| !c.is_ascii_alphanumeric() || c.is_ascii_uppercase())
+                {
+                    return Err(Error::TokenId { id: s.to_owned() }).wrap_err_with(|| {
+                        format!(
+                            "nft id({}) only accepts lowercase alphanumeric characters",
+                            s.to_owned()
+                        )
+                    });
                 }
 
                 if s.chars().next().unwrap().is_ascii_alphabetic() {
