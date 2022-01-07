@@ -90,6 +90,15 @@ pub enum BalanceApiVersion {
     New,
 }
 
+impl From<u8> for BalanceApiVersion {
+    fn from(version: u8) -> BalanceApiVersion {
+        match version {
+            0 => BalanceApiVersion::Old,
+            _ => BalanceApiVersion::New,
+        }
+    }
+}
+
 fn get_accounts_url(api_url: &str, address: &str) -> String {
     format!("{}/cosmos/auth/v1beta1/accounts/{}", api_url, address)
 }
@@ -219,7 +228,7 @@ pub async fn broadcast_tx_sync(
 }
 
 /// a subset of `tx_sync::Response` for UniFFI
-#[derive(Debug)]
+#[derive(serde::Serialize, Debug)]
 pub struct TxBroadcastResult {
     /// tendermint transaction hash in hexadecimal
     pub tx_hash_hex: String,
