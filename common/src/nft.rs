@@ -421,7 +421,7 @@ mod test {
         let sender_private_key = secp256k1::SigningKey::random();
         let sender_public_key = sender_private_key.public_key();
         let sender_account_id = sender_public_key.account_id("chainmain").unwrap();
-        let recipient_account_id = "cro1u08u5dvtnpmlpdq333uj9tcj75yceggszxpnsy" // singer1
+        let recipient_account_id = "cro1u08u5dvtnpmlpdq333uj9tcj75yceggszxpnsy" // signer1
             .parse::<AccountId>()
             .unwrap();
 
