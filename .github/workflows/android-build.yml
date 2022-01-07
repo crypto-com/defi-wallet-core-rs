@@ -14,5 +14,5 @@ jobs:
       - run: cargo install uniffi_bindgen
       - run: |
           export NDK_HOME=$ANDROID_NDK_ROOT
-          export JAVA_HOME=$JAVA_HOME_17_X64
+          export JAVA_HOME=$JAVA_HOME_11_X64
           make android
