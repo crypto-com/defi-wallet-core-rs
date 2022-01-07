@@ -307,12 +307,13 @@ mod test {
             )
         );
 
-        let id = "a2900dc4d702fbf67b9b3697233299371";
+        let id = "ab1";
         let result = id.parse::<DenomId>();
-        assert_eq!(
-            result.unwrap().as_ref(),
-            "a2900dc4d702fbf67b9b3697233299371"
-        );
+        assert_eq!(result.unwrap().as_ref(), "ab1");
+
+        let id = "testdenomid";
+        let result = id.parse::<DenomId>();
+        assert_eq!(result.unwrap().as_ref(), "testdenomid");
     }
 
     #[test]
@@ -326,13 +327,10 @@ mod test {
         assert_eq!(result.is_ok(), true);
         assert_eq!(result.unwrap().as_ref(), "abc");
 
-        let name = "a2900dc4d702fbf67b9b3697233299371";
+        let name = "testdenomname";
         let result = name.parse::<DenomName>();
         assert_eq!(result.is_ok(), true);
-        assert_eq!(
-            result.unwrap().as_ref(),
-            "a2900dc4d702fbf67b9b3697233299371"
-        );
+        assert_eq!(result.unwrap().as_ref(), "testdenomname");
     }
 
     #[test]
@@ -384,9 +382,13 @@ mod test {
             )
         );
 
-        let id = "edition1";
+        let id = "ab1";
         let result = id.parse::<TokenId>();
-        assert_eq!(result.unwrap().as_ref(), "edition1");
+        assert_eq!(result.unwrap().as_ref(), "ab1");
+
+        let id = "testtokenid";
+        let result = id.parse::<TokenId>();
+        assert_eq!(result.unwrap().as_ref(), "testtokenid");
     }
 
     #[test]
@@ -406,13 +408,10 @@ mod test {
         assert_eq!(result.is_ok(), true);
         assert_eq!(result.unwrap().as_ref(), "");
 
-        let uri = "ipfs://ipfs/QmYbhjEcxkz6F1jgcPmexYdbohDyX2MzZ4SQaNFABPN29h";
+        let uri = "testuri";
         let result = uri.parse::<TokenUri>();
         assert_eq!(result.is_ok(), true);
-        assert_eq!(
-            result.unwrap().as_ref(),
-            "ipfs://ipfs/QmYbhjEcxkz6F1jgcPmexYdbohDyX2MzZ4SQaNFABPN29h"
-        );
+        assert_eq!(result.unwrap().as_ref(), "testuri");
     }
 
     #[test]
@@ -422,66 +421,65 @@ mod test {
         let sender_private_key = secp256k1::SigningKey::random();
         let sender_public_key = sender_private_key.public_key();
         let sender_account_id = sender_public_key.account_id("chainmain").unwrap();
-        let recipient_account_id = "cro1wdxhq45a2jazcg8q09hecyvvjvacyqsv53ccau"
+        let recipient_account_id = "cro1u08u5dvtnpmlpdq333uj9tcj75yceggszxpnsy" // singer1
             .parse::<AccountId>()
             .unwrap();
 
         let msg_issue_denom = MsgIssueDenom {
-            id: "a2900dc4d702fbf67b9b3697233299371"
-                .parse::<DenomId>()
-                .unwrap(),
-            name: "a2900dc4d702fbf67b9b3697233299371"
-                .parse::<DenomName>()
-                .unwrap(),
-            schema: "world".to_string(),
+            id: "testdenomid".parse::<DenomId>().unwrap(),
+            name: "testdenomname".parse::<DenomName>().unwrap(),
+            schema: r#"
+                    {
+                        "title":"Asset Metadata",
+                        "type":"object",
+                        "properties":{
+                            "name":{
+                                "type":"string",
+                                "description":"testidentity"
+                            },
+                            "description":{
+                                "type":"string",
+                                "description":"testdescription"
+                            },
+                            "image":{
+                                "type":"string",
+                                "description":"testdescription"
+                            }
+                        }
+                    }"#
+            .to_string(),
             sender: sender_account_id.clone(),
         };
 
         let msg_mint_nft = MsgMintNft {
-            id: "edition1".parse::<TokenId>().unwrap(),
-            denom_id: "a2900dc4d702fbf67b9b3697233299371"
-                .parse::<DenomId>()
-                .unwrap(),
-            name: "a2900dc4d702fbf67b9b3697233299371"
-                .parse::<DenomName>()
-                .unwrap(),
-            uri: "ipfs://ipfs/QmYbhjEcxkz6F1jgcPmexYdbohDyX2MzZ4SQaNFABPN29h"
-                .parse::<TokenUri>()
-                .unwrap(),
+            id: "testtokenid".parse::<TokenId>().unwrap(),
+            denom_id: "testdenomid".parse::<DenomId>().unwrap(),
+            name: "testtokenid".parse::<DenomName>().unwrap(),
+            uri: "testuri".parse::<TokenUri>().unwrap(),
             data: "".to_owned(),
             sender: sender_account_id.clone(),
             recipient: recipient_account_id.clone(),
         };
 
         let msg_edit_nft = MsgEditNft {
-            id: "edition1".parse::<TokenId>().unwrap(),
-            denom_id: "a2900dc4d702fbf67b9b3697233299371"
-                .parse::<DenomId>()
-                .unwrap(),
-            name: "a2900dc4d702fbf67b9b3697233299371"
-                .parse::<DenomName>()
-                .unwrap(),
-            uri: "ipfs://ipfs/QmYbhjEcxkz6F1jgcPmexYdbohDyX2MzZ4SQaNFABPN29h"
-                .parse::<TokenUri>()
-                .unwrap(),
+            id: "testtokenid".parse::<TokenId>().unwrap(),
+            denom_id: "testdenomid".parse::<DenomId>().unwrap(),
+            name: "newname".parse::<DenomName>().unwrap(),
+            uri: "newuri".parse::<TokenUri>().unwrap(),
             data: "".to_owned(),
             sender: sender_account_id.clone(),
         };
 
         let msg_transfer_nft = MsgTransferNft {
-            id: "edition1".parse::<TokenId>().unwrap(),
-            denom_id: "a2900dc4d702fbf67b9b3697233299371"
-                .parse::<DenomId>()
-                .unwrap(),
+            id: "testtokenid".parse::<TokenId>().unwrap(),
+            denom_id: "testdenomid".parse::<DenomId>().unwrap(),
             sender: sender_account_id.clone(),
             recipient: recipient_account_id.clone(),
         };
 
         let msg_burn_nft = MsgBurnNft {
-            id: "edition1".parse::<TokenId>().unwrap(),
-            denom_id: "a2900dc4d702fbf67b9b3697233299371"
-                .parse::<DenomId>()
-                .unwrap(),
+            id: "testtokenid".parse::<TokenId>().unwrap(),
+            denom_id: "testdenomid".parse::<DenomId>().unwrap(),
             sender: sender_account_id.clone(),
         };
 
@@ -500,11 +498,11 @@ mod test {
         // First we'll create a "Coin" amount to be sent, in this case 1 million cro.
         let amount = Coin {
             amount: 1_000_000u64.into(),
-            denom: "cro".parse()?,
+            denom: "basecro".parse()?,
         };
 
         // Transaction metadata: chain, account, sequence, gas, fee, timeout, and memo.
-        let chain_id = "chainmain-1".parse()?;
+        let chain_id = "chaintest".parse()?;
         let account_number = 1;
         let sequence_number = 0;
         let gas = 100_000;
