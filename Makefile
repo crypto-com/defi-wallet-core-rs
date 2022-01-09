@@ -1,7 +1,7 @@
 
 cpp_example = ./example/cpp-example
 
-.PHONY: wasm android ios test clean cleanall
+.PHONY: wasm android ios test clean cleanall mac_install cpp
 
 wasm:
 	wasm-pack build --scope crypto-com bindings/wasm
@@ -17,10 +17,13 @@ test:
 
 clean:
 	rm -rf target bindings/android bindings/ios
+	./clean.sh
 
 cleanall:
 	rm -rf target bindings/android bindings/ios
 	rm -rf NDK
+	./clean.sh
+
 
 mac_install:
 	cargo install uniffi_bindgen

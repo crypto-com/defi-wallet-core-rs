@@ -6,29 +6,11 @@ if [ ! -n "$NDK_HOME" ]; then
 fi
 
 mkdir -p NDK/libs
-if [ ! -f "NDK/libs/jna-min.jar" ]
-then
-        wget https://github.com/java-native-access/jna/raw/5.10.0/dist/jna-min.jar -P NDK/libs/ || exit 1
-fi
-if [ ! -f "NDK/libs/aarch64/libjnidispatch.so" ]
-then
-        wget https://github.com/java-native-access/jna/raw/5.10.0/dist/android-aarch64.jar -P NDK/libs/aarch64/ || exit 1
-        unzip -o NDK/libs/aarch64/android-aarch64.jar -d NDK/libs/aarch64/ || exit 1
-        rm -f NDK/libs/aarch64/android-aarch64.jar
-fi
-if [ ! -f "NDK/libs/armv7/libjnidispatch.so" ]
-then
-        wget https://github.com/java-native-access/jna/raw/5.10.0/dist/android-armv7.jar -P NDK/libs/armv7/ || exit 1
-        unzip -o NDK/libs/armv7/android-armv7.jar -d NDK/libs/armv7/ || exit 1
-        rm -f NDK/libs/armv7/android-armv7.jar
-fi
-if [ ! -f "NDK/libs/x86/libjnidispatch.so" ]
-then
-        wget https://github.com/java-native-access/jna/raw/5.10.0/dist/android-x86.jar -P NDK/libs/x86/ || exit 1
-        unzip -o NDK/libs/x86/android-x86.jar -d NDK/libs/x86/ || exit 1
-        rm -f NDK/libs/x86/android-x86.jar
-fi
 
+if [ ! -f "NDK/libs/jna.aar" ]
+then
+        wget https://github.com/java-native-access/jna/raw/5.10.0/dist/jna.aar -P NDK/libs/ || exit 1
+fi
 
 MAKETOOL="$NDK_HOME/build/tools/make_standalone_toolchain.py"
 #echo $MAKETOOL
@@ -64,7 +46,27 @@ else
         echo "x86 ndk installed."
 fi
 
-cargo build --target aarch64-linux-android --release || exit 1
-cargo build --target armv7-linux-androideabi --release || exit 1
-cargo build --target i686-linux-android --release || exit 1
+PATH=$PATH:`pwd`/NDK/arm64/bin cargo build --target aarch64-linux-android --release || exit 1
+PATH=$PATH:`pwd`/NDK/arm/bin cargo build --target armv7-linux-androideabi --release || exit 1
+PATH=$PATH:`pwd`/NDK/x86/bin cargo build --target i686-linux-android --release || exit 1
 
+mkdir -p mobile_modules/android_module/dwclib/libs
+cp NDK/libs/jna.aar mobile_modules/android_module/dwclib/libs/
+mkdir -p mobile_modules/android_module/dwclib/src/main/jniLibs/arm64-v8a || exit 1
+cp target/aarch64-linux-android/release/libdefi_wallet_core_wasm.so mobile_modules/android_module/dwclib/src/main/jniLibs/arm64-v8a/libdwc-common.so || exit 1
+mkdir -p mobile_modules/android_module/dwclib/src/main/jniLibs/armeabi-v7a || exit 1
+cp target/armv7-linux-androideabi/release/libdefi_wallet_core_wasm.so mobile_modules/android_module/dwclib/src/main/jniLibs/armeabi-v7a/libdwc-common.so || exit 1
+mkdir -p mobile_modules/android_module/dwclib/src/main/jniLibs/x86 || exit 1
+cp target/i686-linux-android/release/libdefi_wallet_core_wasm.so mobile_modules/android_module/dwclib/src/main/jniLibs/x86/libdwc-common.so || exit 1
+mkdir -p mobile_modules/android_module/dwclib/src/main/java/com/defi/wallet/core/common || exit 1
+cp bindings/android/com/defi/wallet/core/common/common.kt mobile_modules/android_module/dwclib/src/main/java/com/defi/wallet/core/common/ || exit 1
+
+cd mobile_modules/android_module || exit 1
+./gradlew build || exit 1
+cd -
+cp mobile_modules/android_module/dwclib/build/outputs/aar/dwclib-release.aar NDK/libs/dwclib.aar || exit 1
+mkdir -p example/android_example/app/libs
+cp NDK/libs/dwclib.aar example/android_example/app/libs/
+cp NDK/libs/jna.aar example/android_example/app/libs/
+
+echo "finish"
