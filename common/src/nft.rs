@@ -6,14 +6,18 @@ use std::fmt::Display;
 use std::str::FromStr;
 use thiserror::Error;
 
+/// The denomination ID of the NFT
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-struct DenomId(String);
+pub struct DenomId(String);
+/// The denomination name of the NFT
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-struct DenomName(String);
+pub struct DenomName(String);
+/// The unique ID of the NFT
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-struct TokenId(String);
+pub struct TokenId(String);
+/// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-struct TokenUri(String);
+pub struct TokenUri(String);
 
 const MIN_DENOM_LEN: usize = 3;
 const MAX_DENOM_LEN: usize = 64;
@@ -29,6 +33,7 @@ trait Validate {
     fn validate<T: Helper + Display>(s: &str) -> Result<T>;
 }
 
+/// NFT metadata parse errors
 #[derive(Clone, Debug, Error, PartialEq)]
 pub enum Error {
     /// Invalid DenomId
@@ -253,55 +258,79 @@ impl FromStr for TokenUri {
 }
 
 msg_wrapper! {
-    // MsgIssueDenom defines an SDK message for creating a new denom.
+    /// MsgIssueDenom defines an SDK message for creating a new denom.
     proto::chainmain::nft::v1::MsgIssueDenom => pub struct MsgIssueDenom {
+        /// The denomination ID of the NFT, necessary as multiple denominations are able to be represented on each chain
         pub id: DenomId,
+        /// The denomination name of the NFT, necessary as multiple denominations are able to be represented on each chain.
         pub name: DenomName,
+        /// The account address of the user creating the denomination.
         pub schema: String,
+        /// NFT specifications defined under this category
         pub sender: AccountId,
     }
 }
 
 msg_wrapper! {
-    // MsgMintNft defines an SDK message for creating a new NFT.
+    /// MsgMintNft defines an SDK message for creating a new NFT.
     proto::chainmain::nft::v1::MsgMintNft =>  pub struct MsgMintNft {
+        /// The unique ID of the NFT being minted
         pub id: TokenId,
+        /// The unique ID of the denomination.
         pub denom_id: DenomId,
+        /// The name of the NFT being minted.
         pub name: DenomName,
+        /// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
         pub uri: TokenUri,
+        /// The data of the NFT.
         pub data: String,
+        /// The sender of the Message
         pub sender: AccountId,
+        /// The recipient of the new NFT
         pub recipient: AccountId,
     }
 }
 
 msg_wrapper! {
-   // MsgEditNft defines an SDK message for editing a nft.
+   /// MsgEditNft defines an SDK message for editing a nft.
    proto::chainmain::nft::v1::MsgEditNft => pub struct MsgEditNft {
+       /// The unique ID of the NFT being edited.
        pub id: TokenId,
+       /// The unique ID of the denomination, necessary as multiple denominations are able to be represented on each chain.
        pub denom_id: DenomId,
+       /// The name of the NFT being edited.
        pub name: DenomName,
+       /// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
        pub uri: TokenUri,
+       /// The data of the NFT
        pub data: String,
+       /// The creator of the message
        pub sender: AccountId,
    }
 }
 
 msg_wrapper! {
-   // MsgTransferNft defines an SDK message for transferring an NFT to recipient.
+   /// MsgTransferNft defines an SDK message for transferring an NFT to recipient.
    proto::chainmain::nft::v1::MsgTransferNft => pub struct MsgTransferNft {
+       /// The unique ID of the NFT being transferred.
        pub id: TokenId,
+       /// The unique ID of the denomination, necessary as multiple denominations are able to be represented on each chain.
        pub denom_id: DenomId,
+       /// The account address of the user sending the NFT.
        pub sender: AccountId,
+       /// The account address who will receive the NFT as a result of the transfer transaction.
        pub recipient: AccountId,
    }
 }
 
 msg_wrapper! {
-   // MsgBurnNft defines an SDK message for burning a NFT.
+   /// MsgBurnNft defines an SDK message for burning a NFT.
    proto::chainmain::nft::v1::MsgBurnNft => pub struct MsgBurnNft {
+       /// The ID of the Token.
        pub id: TokenId,
+       /// The Denom ID of the Token.
        pub denom_id: DenomId,
+       /// The account address of the user burning the token.
        pub sender: AccountId,
    }
 }

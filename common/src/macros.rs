@@ -1,10 +1,13 @@
 #[macro_export]
 macro_rules! msg_wrapper {
-    ($path:path => pub struct $name:ident { $(pub $element: ident: $ty: ty),* $(,)? }) => {
+    ($(#[$outer:meta])*
+     $path:path =>
 
+     pub struct $name:ident {$($(#[$inner:meta])* pub $element: ident: $ty: ty),* $(,)? }) => {
+        $(#[$outer])*
         #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
         pub struct $name {
-            $($element: $ty),*
+            $($(#[$inner])* pub $element: $ty),*
         }
 
         impl Msg for $name {

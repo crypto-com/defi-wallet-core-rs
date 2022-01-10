@@ -1,5 +1,5 @@
 /// NFT functionality
-mod nft;
+pub mod nft;
 /// interactions with remote node RPC / API (querying, broadcast etc.)
 mod node;
 /// transaction building etc.
@@ -12,7 +12,6 @@ pub use defi_wallet_core_proto as proto;
 pub use eyre::{Report as ErrorReport, Result};
 
 pub use cosmrs::{tx::Msg, AccountId};
-pub use nft::*;
 
 pub use node::*;
 pub use transaction::*;
