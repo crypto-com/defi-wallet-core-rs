@@ -19,6 +19,16 @@ const MIN_DENOM_LEN: usize = 3;
 const MAX_DENOM_LEN: usize = 64;
 const MAX_TOKEN_URI_LEN: usize = 256;
 
+trait Helper {
+    fn type_name() -> &'static str;
+    fn new(s: &str) -> Self;
+    fn err(e: &str) -> Error;
+}
+
+trait Validate {
+    fn validate<T: Helper + Display>(s: &str) -> Result<T>;
+}
+
 #[derive(Clone, Debug, Error, PartialEq)]
 pub enum Error {
     /// Invalid DenomId
@@ -83,43 +93,138 @@ impl Display for TokenUri {
     }
 }
 
+impl Helper for DenomName {
+    fn type_name() -> &'static str {
+        "DenomName"
+    }
+    fn new(s: &str) -> Self {
+        Self(s.to_owned())
+    }
+    fn err(s: &str) -> Error {
+        Error::DenomName { name: s.to_owned() }
+    }
+}
+
+impl Helper for TokenId {
+    fn type_name() -> &'static str {
+        "TokenId"
+    }
+    fn new(s: &str) -> Self {
+        Self(s.to_owned())
+    }
+    fn err(s: &str) -> Error {
+        Error::TokenId { id: s.to_owned() }
+    }
+}
+
+impl Helper for DenomId {
+    fn type_name() -> &'static str {
+        "DenomId"
+    }
+    fn new(s: &str) -> Self {
+        Self(s.to_owned())
+    }
+    fn err(s: &str) -> Error {
+        Error::DenomId { id: s.to_owned() }
+    }
+}
+
+impl Helper for TokenUri {
+    fn type_name() -> &'static str {
+        "TokenUri"
+    }
+    fn new(s: &str) -> Self {
+        Self(s.to_owned())
+    }
+    fn err(s: &str) -> Error {
+        Error::TokenUri { uri: s.to_owned() }
+    }
+}
+
+impl Validate for DenomName {
+    fn validate<T: Helper + Display>(s: &str) -> Result<T> {
+        let s: String = s.chars().filter(|c| !c.is_whitespace()).collect();
+
+        if s.is_empty() {
+            Err(T::err(&s)).wrap_err_with(|| format!("{}({}) can not be space", T::type_name(), s))
+        } else {
+            Ok(T::new(&s))
+        }
+    }
+}
+
+impl Validate for TokenId {
+    fn validate<T: Helper + Display>(s: &str) -> Result<T> {
+        validate_id::<T>(s)
+    }
+}
+
+impl Validate for DenomId {
+    fn validate<T: Helper + Display>(s: &str) -> Result<T> {
+        validate_id::<T>(s)
+    }
+}
+
+impl Validate for TokenUri {
+    fn validate<T: Helper + Display>(s: &str) -> Result<T> {
+        match s.len() {
+            0..=MAX_TOKEN_URI_LEN => Ok(T::new(s)),
+            _ => Err(T::err(s)).wrap_err_with(|| {
+                format!(
+                    "the length of {}({}) only accepts value [0, {}]",
+                    T::type_name(),
+                    s,
+                    MAX_TOKEN_URI_LEN
+                )
+            }),
+        }
+    }
+}
+
+fn validate_id<T: Helper + Display>(s: &str) -> Result<T> {
+    match s.len() {
+        MIN_DENOM_LEN..=MAX_DENOM_LEN => {
+            if s.chars()
+                .any(|c| !c.is_ascii_alphanumeric() || c.is_ascii_uppercase())
+            {
+                return Err(T::err(s)).wrap_err_with(|| {
+                    format!(
+                        "the {}({}) only accepts lowercase alphanumeric characters",
+                        T::type_name(),
+                        T::new(s)
+                    )
+                });
+            }
+
+            if s.chars().next().unwrap().is_ascii_alphabetic() {
+                Ok(T::new(s))
+            } else {
+                Err(T::err(s)).wrap_err_with(|| {
+                    format!(
+                        "the {}({}) only begins with an English letter",
+                        T::type_name(),
+                        T::new(s)
+                    )
+                })
+            }
+        }
+        _ => Err(T::err(s)).wrap_err_with(|| {
+            format!(
+                "the length of {}({}) only accepts value [{}, {}]",
+                T::type_name(),
+                T::new(s),
+                MIN_DENOM_LEN,
+                MAX_DENOM_LEN
+            )
+        }),
+    }
+}
+
 impl FromStr for DenomId {
     type Err = ErrorReport;
 
     fn from_str(s: &str) -> Result<DenomId> {
-        match s.len() {
-            MIN_DENOM_LEN..=MAX_DENOM_LEN => {
-                if s.chars()
-                    .any(|c| !c.is_ascii_alphanumeric() || c.is_ascii_uppercase())
-                {
-                    return Err(Error::DenomId { id: s.to_owned() }).wrap_err_with(|| {
-                        format!(
-                            "the denom({}) only accepts lowercase alphanumeric characters",
-                            s.to_owned()
-                        )
-                    });
-                }
-
-                if s.chars().next().unwrap().is_ascii_alphabetic() {
-                    Ok(Self(s.to_owned()))
-                } else {
-                    Err(Error::DenomId { id: s.to_owned() }).wrap_err_with(|| {
-                        format!(
-                            "the denom({}) only begins with an English letter",
-                            s.to_owned()
-                        )
-                    })
-                }
-            }
-            _ => Err(Error::DenomId { id: s.to_owned() }).wrap_err_with(|| {
-                format!(
-                    "the length of denom({}) only accepts value [{}, {}]",
-                    s.to_owned(),
-                    MIN_DENOM_LEN,
-                    MAX_DENOM_LEN
-                )
-            }),
-        }
+        DenomId::validate(s)
     }
 }
 
@@ -127,14 +232,7 @@ impl FromStr for DenomName {
     type Err = ErrorReport;
 
     fn from_str(s: &str) -> Result<DenomName> {
-        let s: String = s.chars().filter(|c| !c.is_whitespace()).collect();
-
-        if s.is_empty() {
-            Err(Error::DenomName { name: s.to_owned() })
-                .wrap_err_with(|| format!("denom name({}) can not be space", s.to_owned()))
-        } else {
-            Ok(Self(s))
-        }
+        DenomName::validate(s)
     }
 }
 
@@ -142,39 +240,7 @@ impl FromStr for TokenId {
     type Err = ErrorReport;
 
     fn from_str(s: &str) -> Result<TokenId> {
-        match s.len() {
-            MIN_DENOM_LEN..=MAX_DENOM_LEN => {
-                if s.chars()
-                    .any(|c| !c.is_ascii_alphanumeric() || c.is_ascii_uppercase())
-                {
-                    return Err(Error::TokenId { id: s.to_owned() }).wrap_err_with(|| {
-                        format!(
-                            "nft id({}) only accepts lowercase alphanumeric characters",
-                            s.to_owned()
-                        )
-                    });
-                }
-
-                if s.chars().next().unwrap().is_ascii_alphabetic() {
-                    Ok(Self(s.to_owned()))
-                } else {
-                    Err(Error::TokenId { id: s.to_owned() }).wrap_err_with(|| {
-                        format!(
-                            "nft id({}) only begins with an English letter",
-                            s.to_owned()
-                        )
-                    })
-                }
-            }
-            _ => Err(Error::TokenId { id: s.to_owned() }).wrap_err_with(|| {
-                format!(
-                    "the length of nft id({}) only accepts value [{}, {}]",
-                    s.to_owned(),
-                    MIN_DENOM_LEN,
-                    MAX_DENOM_LEN
-                )
-            }),
-        }
+        TokenId::validate(s)
     }
 }
 
@@ -182,16 +248,7 @@ impl FromStr for TokenUri {
     type Err = ErrorReport;
 
     fn from_str(s: &str) -> Result<TokenUri> {
-        match s.len() {
-            0..=MAX_TOKEN_URI_LEN => Ok(Self(s.to_owned())),
-            _ => Err(Error::TokenUri { uri: s.to_owned() }).wrap_err_with(|| {
-                format!(
-                    "the length of nft uri({}) only accepts value [0, {}]",
-                    s.to_owned(),
-                    MAX_TOKEN_URI_LEN
-                )
-            }),
-        }
+        TokenUri::validate(s)
     }
 }
 
@@ -265,8 +322,11 @@ mod test {
         assert_eq!(
             error,
             format!(
-                "the length of denom({}) only accepts value [{}, {}]",
-                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+                "the length of {}({}) only accepts value [{}, {}]",
+                DenomId::type_name(),
+                id,
+                MIN_DENOM_LEN,
+                MAX_DENOM_LEN
             )
         );
 
@@ -275,8 +335,11 @@ mod test {
         assert_eq!(
             error,
             format!(
-                "the length of denom({}) only accepts value [{}, {}]",
-                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+                "the length of {}({}) only accepts value [{}, {}]",
+                DenomId::type_name(),
+                id,
+                MIN_DENOM_LEN,
+                MAX_DENOM_LEN
             )
         );
 
@@ -285,8 +348,11 @@ mod test {
         assert_eq!(
             error,
             format!(
-                "the length of denom({}) only accepts value [{}, {}]",
-                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+                "the length of {}({}) only accepts value [{}, {}]",
+                DenomId::type_name(),
+                id,
+                MIN_DENOM_LEN,
+                MAX_DENOM_LEN
             )
         );
 
@@ -294,7 +360,11 @@ mod test {
         let error = id.parse::<DenomId>().unwrap_err().to_string();
         assert_eq!(
             error,
-            format!("the denom({}) only begins with an English letter", id)
+            format!(
+                "the {}({}) only begins with an English letter",
+                DenomId::type_name(),
+                id
+            )
         );
 
         let id = "Abc";
@@ -302,7 +372,8 @@ mod test {
         assert_eq!(
             error,
             format!(
-                "the denom({}) only accepts lowercase alphanumeric characters",
+                "the {}({}) only accepts lowercase alphanumeric characters",
+                DenomId::type_name(),
                 id
             )
         );
@@ -320,7 +391,10 @@ mod test {
     fn test_denom_name() {
         let name = " ";
         let error = name.parse::<DenomName>().unwrap_err().to_string();
-        assert_eq!(error, "denom name() can not be space".to_string());
+        assert_eq!(
+            error,
+            format!("{}() can not be space", DenomName::type_name())
+        );
 
         let name = " a   b    c   ";
         let result = name.parse::<DenomName>();
@@ -340,8 +414,11 @@ mod test {
         assert_eq!(
             error,
             format!(
-                "the length of nft id({}) only accepts value [{}, {}]",
-                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+                "the length of {}({}) only accepts value [{}, {}]",
+                TokenId::type_name(),
+                id,
+                MIN_DENOM_LEN,
+                MAX_DENOM_LEN
             )
         );
 
@@ -350,8 +427,11 @@ mod test {
         assert_eq!(
             error,
             format!(
-                "the length of nft id({}) only accepts value [{}, {}]",
-                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+                "the length of {}({}) only accepts value [{}, {}]",
+                TokenId::type_name(),
+                id,
+                MIN_DENOM_LEN,
+                MAX_DENOM_LEN
             )
         );
 
@@ -360,8 +440,11 @@ mod test {
         assert_eq!(
             error,
             format!(
-                "the length of nft id({}) only accepts value [{}, {}]",
-                id, MIN_DENOM_LEN, MAX_DENOM_LEN
+                "the length of {}({}) only accepts value [{}, {}]",
+                TokenId::type_name(),
+                id,
+                MIN_DENOM_LEN,
+                MAX_DENOM_LEN
             )
         );
 
@@ -369,7 +452,11 @@ mod test {
         let error = id.parse::<TokenId>().unwrap_err().to_string();
         assert_eq!(
             error,
-            format!("nft id({}) only begins with an English letter", id)
+            format!(
+                "the {}({}) only begins with an English letter",
+                TokenId::type_name(),
+                id
+            )
         );
 
         let id = "Abc";
@@ -377,7 +464,8 @@ mod test {
         assert_eq!(
             error,
             format!(
-                "nft id({}) only accepts lowercase alphanumeric characters",
+                "the {}({}) only accepts lowercase alphanumeric characters",
+                TokenId::type_name(),
                 id
             )
         );
@@ -398,8 +486,10 @@ mod test {
         assert_eq!(
             error,
             format!(
-                "the length of nft uri({}) only accepts value [0, {}]",
-                uri, MAX_TOKEN_URI_LEN
+                "the length of {}({}) only accepts value [0, {}]",
+                TokenUri::type_name(),
+                uri,
+                MAX_TOKEN_URI_LEN
             )
         );
 
