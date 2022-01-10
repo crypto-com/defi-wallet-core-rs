@@ -26,6 +26,8 @@ struct ContentView: View {
         let hexString = hexArray?.joined(separator: "")
         Text("siged_tx: " + hexString!)
 
+        var br = try? getAccountBalanceBlocking(apiUrl: "https://mainnet.crypto.org:1317", address: "cro1yjjlx5qsrj5rxn5xtd5rkm6dcqzlchxkrvsmg6", denom: "basecro", version: BalanceApiVersion.new)
+        Text("balance: " + br!.amount)
         Text("end")
     }
 }

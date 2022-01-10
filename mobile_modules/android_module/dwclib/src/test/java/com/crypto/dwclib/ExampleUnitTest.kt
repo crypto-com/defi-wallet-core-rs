@@ -3,6 +3,7 @@ package com.crypto.dwclib
 import org.junit.Test
 
 import org.junit.Assert.*
+import com.defi.wallet.core.common.*
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -11,7 +12,8 @@ import org.junit.Assert.*
  */
 class ExampleUnitTest {
     @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+    fun getBalanceTest() {
+        val rb = getAccountBalanceBlocking("https://mainnet.crypto.org:1317","cro1yjjlx5qsrj5rxn5xtd5rkm6dcqzlchxkrvsmg6","basecro",BalanceApiVersion.NEW)
+        println(rb.amount)
     }
 }
