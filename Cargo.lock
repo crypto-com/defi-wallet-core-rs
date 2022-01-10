@@ -298,7 +298,7 @@ checksum = "edb5204c6ddc4352c74297638b5561f2929d6334866c156e5f3c75e1e1a1436a"
 dependencies = [
  "prost",
  "prost-types",
- "tendermint-proto 0.23.2",
+ "tendermint-proto 0.23.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tonic",
 ]
 
@@ -489,7 +489,7 @@ dependencies = [
  "cosmrs",
  "prost",
  "prost-types",
- "tendermint-proto 0.23.2",
+ "tendermint-proto 0.23.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "tonic",
 ]
 
@@ -1911,7 +1911,7 @@ dependencies = [
  "signature",
  "subtle",
  "subtle-encoding",
- "tendermint-proto 0.23.2",
+ "tendermint-proto 0.23.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "time",
  "zeroize",
 ]
@@ -1939,7 +1939,7 @@ dependencies = [
  "signature",
  "subtle",
  "subtle-encoding",
- "tendermint-proto 0.23.3",
+ "tendermint-proto 0.23.3 (git+https://github.com/informalsystems/tendermint-rs.git?rev=v0.23.3)",
  "time",
  "zeroize",
 ]
@@ -1959,9 +1959,9 @@ dependencies = [
 
 [[package]]
 name = "tendermint-proto"
-version = "0.23.2"
+version = "0.23.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da86f6e52ced9c2f24c4ae57662ce8a44dd90ee7bc47bae27a710b02d48e193c"
+checksum = "a9e0a0251fd81bed7420bea0f4d91c2a58f6c9fa34d5b2f70bed0ba8890de5aa"
 dependencies = [
  "bytes",
  "flex-error",
@@ -2008,7 +2008,7 @@ dependencies = [
  "subtle-encoding",
  "tendermint 0.23.3",
  "tendermint-config",
- "tendermint-proto 0.23.3",
+ "tendermint-proto 0.23.3 (git+https://github.com/informalsystems/tendermint-rs.git?rev=v0.23.3)",
  "thiserror",
  "time",
  "url",
