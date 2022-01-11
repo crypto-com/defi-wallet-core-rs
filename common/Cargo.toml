@@ -8,7 +8,7 @@ crate-type = ["staticlib", "rlib"]
 
 [dependencies]
 eyre = "0.6"
-cosmrs = "0.3"
+cosmrs = "0.4"
 defi-wallet-core-proto = { version = "0.1", default-features = false, path = "../proto" }
 prost = "0.9"
 rand_core = { version = "0.6", features = ["std"] }
@@ -17,16 +17,13 @@ secrecy = "0.8"
 serde = "1"
 serde_json = "1"
 serde_with = "1"
-# FIXME: unify with crates.io (depends on the upstream fixes in CosmRS)
-# Currently, it needs this separate one, because CosmRS is fixed to 0.23.2 (it'll fail to compile with 0.23.3)
-# and 0.32.2 includes an old getrandom crate which will have a runtime error in WASM/JS.
-tendermint-rpc = { git = "https://github.com/informalsystems/tendermint-rs.git", rev = "v0.23.3" } 
+tendermint-rpc = "0.23"
 thiserror = "1"
 uniffi = "^0.15"
 uniffi_macros = "^0.15"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-cosmos-sdk-proto = { version = "0.8", features = ["grpc"] }
+cosmos-sdk-proto = { version = "0.9", features = ["grpc"] }
 tokio = { version = "1", features = ["rt"] }
 tonic = { version = "0.6", features = ["tls", "tls-roots"] }
 

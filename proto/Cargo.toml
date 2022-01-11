@@ -11,8 +11,8 @@ edition = "2021"
 rust-version = "1.56"
 
 [dependencies]
-cosmrs = "0.3"
-cosmos-sdk-proto = { version = "0.8.0", default-features = false }
+cosmrs = "0.4"
+cosmos-sdk-proto = { version = "0.9", default-features = false }
 prost = "0.9"
 prost-types = "0.9"
 tendermint-proto = "0.23"
