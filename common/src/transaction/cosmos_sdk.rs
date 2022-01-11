@@ -11,6 +11,8 @@ use cosmrs::{
 use eyre::{eyre, Context};
 use std::sync::Arc;
 
+use crate::nft::*;
+
 /// human-readable bech32 prefix for Crypto.org Chain accounts
 pub const CRYPTO_ORG_BECH32_HRP: &str = "cro";
 /// human-readable bech32 prefix for Crypto.org Chain testnet accounts
@@ -226,6 +228,59 @@ pub enum CosmosSDKMsg {
         /// amount to send
         amount: SingleCoin,
     },
+    /// MsgIssueDenom
+    DenomIssue {
+        /// The denomination ID of the NFT, necessary as multiple denominations are able to be represented on each chain
+        id: String,
+        /// The denomination name of the NFT, necessary as multiple denominations are able to be represented on each chain.
+        name: String,
+        /// The account address of the user creating the denomination.
+        schema: String,
+    },
+    /// MsgMintNft
+    NftMint {
+        /// The unique ID of the NFT being minted
+        id: String,
+        /// The unique ID of the denomination.
+        denom_id: String,
+        /// The name of the NFT being minted.
+        name: String,
+        /// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
+        uri: String,
+        /// The data of the NFT.
+        data: String,
+        /// The recipient of the new NFT
+        recipient: String,
+    },
+    /// MsgEditNft
+    NftEdit {
+        /// The unique ID of the NFT being edited.
+        id: String,
+        /// The unique ID of the denomination, necessary as multiple denominations are able to be represented on each chain.
+        denom_id: String,
+        /// The name of the NFT being edited.
+        name: String,
+        /// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
+        uri: String,
+        /// The data of the NFT
+        data: String,
+    },
+    /// MsgTransferNft
+    NftTransfer {
+        /// The unique ID of the NFT being transferred.
+        id: String,
+        /// The unique ID of the denomination, necessary as multiple denominations are able to be represented on each chain.
+        denom_id: String,
+        /// The account address who will receive the NFT as a result of the transfer transaction.
+        recipient: String,
+    },
+    /// MsgBurnNft
+    NftBurn {
+        /// The ID of the Token.
+        id: String,
+        /// The Denom ID of the Token.
+        denom_id: String,
+    },
 }
 
 impl CosmosSDKMsg {
@@ -241,6 +296,74 @@ impl CosmosSDKMsg {
                     from_address: sender_address,
                     to_address: recipient_account_id,
                     amount: vec![amount_coin],
+                };
+                msg_send.to_any()
+            }
+            CosmosSDKMsg::DenomIssue { id, name, schema } => {
+                let msg_send = MsgIssueDenom {
+                    id: id.parse::<DenomId>()?,
+                    name: name.parse::<DenomName>()?,
+                    schema: schema.to_owned(),
+                    sender: sender_address,
+                };
+                msg_send.to_any()
+            }
+            CosmosSDKMsg::NftMint {
+                id,
+                denom_id,
+                name,
+                uri,
+                data,
+                recipient,
+            } => {
+                let recipient_account_id = recipient.parse::<AccountId>()?;
+                let msg_send = MsgMintNft {
+                    id: id.parse::<TokenId>()?,
+                    denom_id: denom_id.parse::<DenomId>()?,
+                    name: name.parse::<DenomName>()?,
+                    uri: uri.parse::<TokenUri>()?,
+                    data: data.to_owned(),
+                    sender: sender_address,
+                    recipient: recipient_account_id,
+                };
+                msg_send.to_any()
+            }
+            CosmosSDKMsg::NftEdit {
+                id,
+                denom_id,
+                name,
+                uri,
+                data,
+            } => {
+                let msg_send = MsgEditNft {
+                    id: id.parse::<TokenId>()?,
+                    denom_id: denom_id.parse::<DenomId>()?,
+                    name: name.parse::<DenomName>()?,
+                    uri: uri.parse::<TokenUri>()?,
+                    data: data.to_owned(),
+                    sender: sender_address,
+                };
+                msg_send.to_any()
+            }
+            CosmosSDKMsg::NftTransfer {
+                id,
+                denom_id,
+                recipient,
+            } => {
+                let recipient_account_id = recipient.parse::<AccountId>()?;
+                let msg_send = MsgTransferNft {
+                    id: id.parse::<TokenId>()?,
+                    denom_id: denom_id.parse::<DenomId>()?,
+                    sender: sender_address,
+                    recipient: recipient_account_id,
+                };
+                msg_send.to_any()
+            }
+            CosmosSDKMsg::NftBurn { id, denom_id } => {
+                let msg_send = MsgBurnNft {
+                    id: id.parse::<TokenId>()?,
+                    denom_id: denom_id.parse::<DenomId>()?,
+                    sender: sender_address,
                 };
                 msg_send.to_any()
             }
