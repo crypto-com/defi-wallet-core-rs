@@ -39,3 +39,5 @@ cpp:
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
 	cd $(cpp_example) && make
 
+proto:
+	cd proto-build && cargo run
