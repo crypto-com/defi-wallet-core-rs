@@ -42,8 +42,11 @@ class MainActivity : AppCompatActivity() {
             val h = String.format("%02x", b.toInt())
             text += h
         }
-        text += "\nend"
 
+        val rb = getAccountBalanceBlocking("https://mainnet.crypto.org:1317","cro1yjjlx5qsrj5rxn5xtd5rkm6dcqzlchxkrvsmg6","basecro",BalanceApiVersion.NEW)
+        text += "\namount: " + rb.amount
+
+        text += "\nend"
         textview.text = text
     }
 }
