@@ -13,16 +13,14 @@ jobs:
       - uses: actions/checkout@v2
       - name: Android cache
         uses: actions/cache@v2
-         with:
-           path: |
-             ~/.cargo/bin/
-             ~/.cargo/registry/index/
-             ~/.cargo/registry/cache/
-             ~/.cargo/git/db/
-             target/
-             NDK/
-             mobile_modules/android_module/
-           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-android-${{ hashFiles('android_build.sh') }}
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
+            target/
+            NDK/
+            mobile_modules/android_module/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-android-${{ hashFiles('android_build.sh') }}
       - run: cargo install uniffi_bindgen
       - run: |
           export NDK_HOME=$ANDROID_NDK_ROOT

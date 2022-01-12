@@ -23,14 +23,12 @@ jobs:
           override: true
           profile: minimal
       - uses: actions/cache@v2
-         with:
-           path: |
-             ~/.cargo/bin/
-             ~/.cargo/registry/index/
-             ~/.cargo/registry/cache/
-             ~/.cargo/git/db/
-             target/
-           key: ${{ runner.os }}-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -26,14 +26,12 @@ jobs:
           toolchain: stable
           override: true
       - uses: actions/cache@v2
-         with:
-           path: |
-             ~/.cargo/bin/
-             ~/.cargo/registry/index/
-             ~/.cargo/registry/cache/
-             ~/.cargo/git/db/
-             target/
-           key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -49,14 +47,12 @@ jobs:
           toolchain: stable
           override: true
       - uses: actions/cache@v2
-         with:
-           path: |
-             ~/.cargo/bin/
-             ~/.cargo/registry/index/
-             ~/.cargo/registry/cache/
-             ~/.cargo/git/db/
-             target/
-           key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -73,14 +69,12 @@ jobs:
           components: rustfmt
           override: true
       - uses: actions/cache@v2
-         with:
-           path: |
-             ~/.cargo/bin/
-             ~/.cargo/registry/index/
-             ~/.cargo/registry/cache/
-             ~/.cargo/git/db/
-             target/
-           key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
@@ -97,14 +91,12 @@ jobs:
           components: clippy
           override: true
       - uses: actions/cache@v2
-         with:
-           path: |
-             ~/.cargo/bin/
-             ~/.cargo/registry/index/
-             ~/.cargo/registry/cache/
-             ~/.cargo/git/db/
-             target/
-           key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
