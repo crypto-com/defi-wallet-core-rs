@@ -1,5 +1,6 @@
 package com.example.android_example
 
+import com.defi.wallet.core.common.*
 import org.junit.Test
 
 import org.junit.Assert.*

@@ -6,3 +6,6 @@ linker = "NDK/arm/bin/arm-linux-androideabi-clang"
 
 [target.i686-linux-android]
 linker = "NDK/x86/bin/i686-linux-android-clang"
+
+[target.x86_64-linux-android]
+linker = "NDK/x86_64/bin/x86_64-linux-android-clang"
