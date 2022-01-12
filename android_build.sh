@@ -35,8 +35,6 @@ then
         PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/aarch64-linux-android-4.9/prebuilt/$OS-x86_64/bin:$PATH make || exit 1
         cd -
 fi
-cp NDK/openssl/openssl-aarch64/openssl-$OPENSSLTAG/libssl.so mobile_modules/android_module/dwclib/src/main/jniLibs/arm64-v8a/ || exit 1
-cp NDK/openssl/openssl-aarch64/openssl-$OPENSSLTAG/libcrypto.so mobile_modules/android_module/dwclib/src/main/jniLibs/arm64-v8a/ || exit 1
 export AARCH64_LINUX_ANDROID_OPENSSL_LIB_DIR=`pwd`/NDK/openssl/openssl-aarch64/openssl-$OPENSSLTAG
 export AARCH64_LINUX_ANDROID_OPENSSL_INCLUDE_DIR=`pwd`/NDK/openssl/openssl-aarch64/openssl-$OPENSSLTAG/include
 
@@ -48,8 +46,6 @@ then
         PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/$OS-x86_64/bin:$PATH make || exit 1
         cd -
 fi
-cp NDK/openssl/openssl-arm/openssl-$OPENSSLTAG/libssl.so mobile_modules/android_module/dwclib/src/main/jniLibs/armeabi-v7a/ || exit 1
-cp NDK/openssl/openssl-arm/openssl-$OPENSSLTAG/libcrypto.so mobile_modules/android_module/dwclib/src/main/jniLibs/armeabi-v7a/ || exit 1
 export ARMV7_LINUX_ANDROIDEABI_OPENSSL_LIB_DIR=`pwd`/NDK/openssl/openssl-arm/openssl-$OPENSSLTAG
 export ARMV7_LINUX_ANDROIDEABI_OPENSSL_INCLUDE_DIR=`pwd`/NDK/openssl/openssl-arm/openssl-$OPENSSLTAG/include
 
@@ -61,8 +57,6 @@ then
         PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/x86_64-4.9/prebuilt/$OS-x86_64/bin:$PATH make || exit 1
         cd -
 fi
-cp NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG/libssl.so mobile_modules/android_module/dwclib/src/main/jniLibs/x86_64/ || exit 1
-cp NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG/libcrypto.so mobile_modules/android_module/dwclib/src/main/jniLibs/x86_64/ || exit 1
 export X86_64_LINUX_ANDROID_OPENSSL_LIB_DIR=`pwd`/NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG
 export X86_64_LINUX_ANDROID_OPENSSL_INCLUDE_DIR=`pwd`/NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG/include
 
@@ -108,12 +102,18 @@ mkdir -p mobile_modules/android_module/dwclib/libs
 cp NDK/libs/jna.aar mobile_modules/android_module/dwclib/libs/
 mkdir -p mobile_modules/android_module/dwclib/src/main/jniLibs/arm64-v8a || exit 1
 cp target/aarch64-linux-android/release/libdefi_wallet_core_wasm.so mobile_modules/android_module/dwclib/src/main/jniLibs/arm64-v8a/libdwc-common.so || exit 1
+cp NDK/openssl/openssl-aarch64/openssl-$OPENSSLTAG/libssl.so mobile_modules/android_module/dwclib/src/main/jniLibs/arm64-v8a/ || exit 1
+cp NDK/openssl/openssl-aarch64/openssl-$OPENSSLTAG/libcrypto.so mobile_modules/android_module/dwclib/src/main/jniLibs/arm64-v8a/ || exit 1
 mkdir -p mobile_modules/android_module/dwclib/src/main/jniLibs/armeabi-v7a || exit 1
 cp target/armv7-linux-androideabi/release/libdefi_wallet_core_wasm.so mobile_modules/android_module/dwclib/src/main/jniLibs/armeabi-v7a/libdwc-common.so || exit 1
+cp NDK/openssl/openssl-arm/openssl-$OPENSSLTAG/libssl.so mobile_modules/android_module/dwclib/src/main/jniLibs/armeabi-v7a/ || exit 1
+cp NDK/openssl/openssl-arm/openssl-$OPENSSLTAG/libcrypto.so mobile_modules/android_module/dwclib/src/main/jniLibs/armeabi-v7a/ || exit 1
 mkdir -p mobile_modules/android_module/dwclib/src/main/jniLibs/x86_64 || exit 1
 cp target/x86_64-linux-android/release/libdefi_wallet_core_wasm.so mobile_modules/android_module/dwclib/src/main/jniLibs/x86_64/libdwc-common.so || exit 1
 mkdir -p mobile_modules/android_module/dwclib/src/main/java/com/defi/wallet/core/common || exit 1
 cp bindings/android/com/defi/wallet/core/common/common.kt mobile_modules/android_module/dwclib/src/main/java/com/defi/wallet/core/common/ || exit 1
+cp NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG/libssl.so mobile_modules/android_module/dwclib/src/main/jniLibs/x86_64/ || exit 1
+cp NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG/libcrypto.so mobile_modules/android_module/dwclib/src/main/jniLibs/x86_64/ || exit 1
 
 cd mobile_modules/android_module || exit 1
 ./gradlew build || exit 1
