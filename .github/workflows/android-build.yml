@@ -21,6 +21,15 @@ jobs:
             NDK/
             mobile_modules/android_module/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-android-${{ hashFiles('android_build.sh') }}
+      - name: Gradle cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
       - run: cargo install uniffi_bindgen
       - run: |
           export NDK_HOME=$ANDROID_NDK_ROOT
