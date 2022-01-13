@@ -75,7 +75,7 @@ dictionary CosmosSDKTxInfo {
 [Enum]
 interface CosmosSDKMsg {
   BankSend(string recipient_address, SingleCoin amount);
-  DenomIssue(string id, string name, string schema);
+  NftIssueDenom(string id, string name, string schema);
   NftMint(string id, string denom_id, string name, string uri, string data, string recipient);
   NftEdit(string id, string denom_id, string name, string uri, string data);
   NftTransfer(string id, string denom_id, string recipient);

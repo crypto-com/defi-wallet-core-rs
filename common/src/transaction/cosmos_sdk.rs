@@ -229,7 +229,7 @@ pub enum CosmosSDKMsg {
         amount: SingleCoin,
     },
     /// MsgIssueDenom
-    DenomIssue {
+    NftIssueDenom {
         /// The denomination ID of the NFT, necessary as multiple denominations are able to be represented on each chain
         id: String,
         /// The denomination name of the NFT, necessary as multiple denominations are able to be represented on each chain.
@@ -299,7 +299,7 @@ impl CosmosSDKMsg {
                 };
                 msg_send.to_any()
             }
-            CosmosSDKMsg::DenomIssue { id, name, schema } => {
+            CosmosSDKMsg::NftIssueDenom { id, name, schema } => {
                 let msg_send = MsgIssueDenom {
                     id: id.parse::<DenomId>()?,
                     name: name.parse::<DenomName>()?,
