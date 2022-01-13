@@ -1,14 +1,14 @@
 use std::{str::FromStr, sync::Arc};
 
+use crate::contract::*;
+use crate::{construct_simple_eth_transfer_tx, EthAmount, EthError, EthNetwork, SecretKey};
 use ethers::prelude::{
     Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware, TransactionReceipt,
     U256,
 };
+use ethers::utils::format_units;
 #[cfg(not(target_arch = "wasm32"))]
-use ethers::utils::{format_units, hex::ToHex};
-
-use crate::contract::*;
-use crate::{construct_simple_eth_transfer_tx, EthAmount, EthError, EthNetwork, SecretKey};
+use ethers::utils::hex::ToHex;
 
 /// Information needed for querying balance on different common contract types.
 /// The balance in the case of ERC721 returns the number of non-fungible tokens
@@ -49,13 +49,14 @@ pub enum ContractTransfer {
 }
 
 /// given the account address, it returns the amount of native token it owns
-pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<U256, EthError> {
+pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<String, EthError> {
     let to = Address::from_str(address).map_err(|_| EthError::HexConversion)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
-    provider
+    let result = provider
         .get_balance(to, None)
         .await
-        .map_err(|_| EthError::BalanceFail)
+        .map_err(|_| EthError::BalanceFail)?;
+    format_units(result, "ether").map_err(EthError::ParseError)
 }
 
 /// given the account address and contract information, it returns the amount of ERC20/ERC721/ERC1155 token it owns
@@ -233,9 +234,7 @@ pub async fn broadcast_sign_eth_tx(
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_eth_balance_blocking(address: &str, web3api_url: &str) -> Result<String, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    let result = rt.block_on(get_eth_balance(address, web3api_url))?;
-    let amount = format_units(result, "ether").map_err(EthError::ParseError)?;
-    Ok(amount)
+    rt.block_on(get_eth_balance(address, web3api_url))
 }
 
 /// Returns the corresponding account's contract token balance in a hexadecimal string,
