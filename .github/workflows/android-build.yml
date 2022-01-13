@@ -11,7 +11,31 @@ jobs:
     runs-on: macos-11
     steps:
       - uses: actions/checkout@v2
-      - run: cargo install uniffi_bindgen
+      - name: NDK cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            NDK/
+          key: ${{ runner.os }}-ndk-${{ hashFiles('android_build.sh') }}
+      - name: Build cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
+            target/
+            mobile_modules/android_module/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-android-${{ hashFiles('android_build.sh') }}
+      - name: Gradle cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen
       - run: |
           export NDK_HOME=$ANDROID_NDK_ROOT
           export JAVA_HOME=$JAVA_HOME_11_X64

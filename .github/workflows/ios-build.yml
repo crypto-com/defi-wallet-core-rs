@@ -11,8 +11,15 @@ jobs:
     runs-on: macos-11
     steps:
       - uses: actions/checkout@v2
-      - run: cargo install uniffi_bindgen
+      - name: Build cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
+            target/
+            mobile_modules/ios_module/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-ios-${{ hashFiles('ios_build.sh') }}
+      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen
       - run: |
           make ios
-
-          
