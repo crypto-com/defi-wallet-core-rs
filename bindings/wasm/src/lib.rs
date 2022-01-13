@@ -176,7 +176,7 @@ impl From<CosmosSDKTxInfoRaw> for CosmosSDKTxInfo {
 }
 
 /// creates the transaction signing payload (`SignDoc`)
-/// for MsgSend from the Cosmos SDK bank module
+/// for `MsgSend` from the Cosmos SDK bank module
 /// wasm-bindgen only supports the C-style enums,
 /// hences this duplicate function
 #[wasm_bindgen]
@@ -231,6 +231,10 @@ pub fn get_single_bank_send_signed_tx(
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }
 
+/// creates the signed transaction
+/// for `MsgIssueDenom` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
 #[wasm_bindgen]
 pub fn get_nft_issue_denom_signed_tx(
     tx_info: CosmosSDKTxInfoRaw,
@@ -247,6 +251,10 @@ pub fn get_nft_issue_denom_signed_tx(
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }
 
+/// creates the signed transaction
+/// for `MsgMintNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
 #[wasm_bindgen]
 #[allow(clippy::too_many_arguments)]
 pub fn get_nft_mint_signed_tx(
@@ -274,6 +282,10 @@ pub fn get_nft_mint_signed_tx(
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }
 
+/// creates the signed transaction
+/// for `MsgEditNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
 #[wasm_bindgen]
 pub fn get_nft_edit_signed_tx(
     tx_info: CosmosSDKTxInfoRaw,
@@ -298,6 +310,10 @@ pub fn get_nft_edit_signed_tx(
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }
 
+/// creates the signed transaction
+/// for `MsgTransferNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
 #[wasm_bindgen]
 pub fn get_nft_transfer_signed_tx(
     tx_info: CosmosSDKTxInfoRaw,
@@ -318,6 +334,10 @@ pub fn get_nft_transfer_signed_tx(
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }
 
+/// creates the signed transaction
+/// for `MsgBurnNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
 #[wasm_bindgen]
 pub fn get_nft_burn_signed_tx(
     tx_info: CosmosSDKTxInfoRaw,

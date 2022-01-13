@@ -6,7 +6,7 @@ use defi_wallet_core_common::{
 };
 use std::sync::Arc;
 
-/// Wrapper of CosmosSDKMsg
+/// Wrapper of `CosmosSDKMsg`
 pub enum CosmosSDKMsgRaw {
     /// MsgSend
     BankSend {
@@ -318,6 +318,8 @@ impl From<ffi::CosmosSDKTxInfoRaw> for CosmosSDKTxInfo {
     }
 }
 
+/// creates the transaction signing payload (`SignDoc`)
+/// for `MsgSend` from the Cosmos SDK bank module
 pub fn get_single_bank_send_signdoc(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     sender_pubkey: Vec<u8>,
@@ -346,6 +348,8 @@ pub fn get_single_bank_send_signdoc(
     Ok(signed_document.to_vec())
 }
 
+/// creates the signed transaction
+/// for `MsgSend` from the Cosmos SDK bank module
 pub fn get_single_bank_send_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
@@ -368,6 +372,8 @@ pub fn get_single_bank_send_signed_tx(
     Ok(ret)
 }
 
+/// creates the signed transaction
+/// for `MsgIssueDenom` from the Chainmain nft module
 fn get_nft_issue_denom_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
@@ -384,6 +390,8 @@ fn get_nft_issue_denom_signed_tx(
     Ok(ret)
 }
 
+/// creates the signed transaction
+/// for `MsgMintNft` from the Chainmain nft module
 #[allow(clippy::too_many_arguments)]
 fn get_nft_mint_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
@@ -411,6 +419,8 @@ fn get_nft_mint_signed_tx(
     Ok(ret)
 }
 
+/// creates the signed transaction
+/// for `MsgEditNft` from the Chainmain nft module
 fn get_nft_edit_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
@@ -435,6 +445,8 @@ fn get_nft_edit_signed_tx(
     Ok(ret)
 }
 
+/// creates the signed transaction
+/// for `MsgTransferNft` from the Chainmain nft module
 fn get_nft_transfer_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
@@ -454,6 +466,9 @@ fn get_nft_transfer_signed_tx(
 
     Ok(ret)
 }
+
+/// creates the signed transaction
+/// for `MsgBurnNft` from the Chainmain nft module
 fn get_nft_burn_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
@@ -469,7 +484,8 @@ fn get_nft_burn_signed_tx(
     Ok(ret)
 }
 
-fn get_msg_signed_tx(
+/// creates the signed transaction
+pub fn get_msg_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
     msg: &CosmosSDKMsgRaw,
