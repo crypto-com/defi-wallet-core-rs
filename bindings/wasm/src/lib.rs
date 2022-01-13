@@ -231,6 +231,108 @@ pub fn get_single_bank_send_signed_tx(
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }
 
+#[wasm_bindgen]
+pub fn get_nft_issue_denom_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    id: String,
+    name: String,
+    schema: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::NftIssueDenom { id, name, schema },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+#[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
+pub fn get_nft_mint_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    id: String,
+    denom_id: String,
+    name: String,
+    uri: String,
+    data: String,
+    recipient: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::NftMint {
+            id,
+            denom_id,
+            name,
+            uri,
+            data,
+            recipient,
+        },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+#[wasm_bindgen]
+pub fn get_nft_edit_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    id: String,
+    denom_id: String,
+    name: String,
+    uri: String,
+    data: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::NftEdit {
+            id,
+            denom_id,
+            name,
+            uri,
+            data,
+        },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+#[wasm_bindgen]
+pub fn get_nft_transfer_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    id: String,
+    denom_id: String,
+    recipient: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::NftTransfer {
+            id,
+            denom_id,
+            recipient,
+        },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+#[wasm_bindgen]
+pub fn get_nft_burn_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    id: String,
+    denom_id: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::NftBurn { id, denom_id },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
 /// retrieves the account details (e.g. sequence and account number) for a given address
 /// TODO: switch to grpc-web
 #[wasm_bindgen]
