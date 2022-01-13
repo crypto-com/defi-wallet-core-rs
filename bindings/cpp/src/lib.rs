@@ -68,7 +68,45 @@ mod ffi {
         fn new_wallet(password: String) -> Box<Wallet>;
         fn get_default_address(self: &Wallet, coin: CoinType) -> Result<String>;
         fn new_privatekey() -> Box<PrivateKey>;
-
+        fn get_nft_issue_denom_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            id: String,
+            name: String,
+            schema: String,
+        ) -> Result<Vec<u8>>;
+        fn get_nft_mint_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            id: String,
+            denom_id: String,
+            name: String,
+            uri: String,
+            data: String,
+            recipient: String,
+        ) -> Result<Vec<u8>>;
+        fn get_nft_edit_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            id: String,
+            denom_id: String,
+            name: String,
+            uri: String,
+            data: String,
+        ) -> Result<Vec<u8>>;
+        fn get_nft_transfer_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            id: String,
+            denom_id: String,
+            recipient: String,
+        ) -> Result<Vec<u8>>;
+        fn get_nft_burn_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            id: String,
+            denom_id: String,
+        ) -> Result<Vec<u8>>;
     }
 }
 
@@ -187,6 +225,106 @@ pub fn get_single_bank_send_signed_tx(
                 denom,
             },
         },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+
+fn get_nft_issue_denom_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    id: String,
+    name: String,
+    schema: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::NftIssueDenom { id, name, schema },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+
+fn get_nft_mint_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    id: String,
+    denom_id: String,
+    name: String,
+    uri: String,
+    data: String,
+    recipient: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::NftMint {
+            id,
+            denom_id,
+            name,
+            uri,
+            data,
+            recipient,
+        },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+
+fn get_nft_edit_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    id: String,
+    denom_id: String,
+    name: String,
+    uri: String,
+    data: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::NftEdit {
+            id,
+            denom_id,
+            name,
+            uri,
+            data,
+        },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+
+fn get_nft_transfer_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    id: String,
+    denom_id: String,
+    recipient: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::NftTransfer {
+            id,
+            denom_id,
+            recipient,
+        },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+fn get_nft_burn_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    id: String,
+    denom_id: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::NftBurn { id, denom_id },
         private_key.key.clone(),
     )?;
 
