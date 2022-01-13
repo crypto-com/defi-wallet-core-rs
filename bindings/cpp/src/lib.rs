@@ -136,6 +136,7 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
 }
 
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
+#[allow(clippy::too_many_arguments)]
 mod ffi {
 
     pub enum CoinType {
@@ -383,6 +384,7 @@ fn get_nft_issue_denom_signed_tx(
     Ok(ret)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn get_nft_mint_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
