@@ -4,21 +4,36 @@ use crate::Network;
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use cosmrs::bip32::{DerivationPath, Error, Mnemonic, PrivateKey, Seed, XPrv};
 use cosmrs::crypto::PublicKey;
+use ethers::utils::hex::ToHex;
+use ethers::utils::secret_key_to_address;
 use rand_core::OsRng;
 use secrecy::{ExposeSecret, SecretString, Zeroize};
+
 /// describes what coin type to use (for HD derivation or address generation)
 pub enum WalletCoin {
     CosmosSDK { network: Network },
+    Ethereum,
 }
 
 impl WalletCoin {
     /// get address from a private key
     pub fn derive_address(&self, private_key: &SigningKey) -> Result<String, eyre::Report> {
-        let bech32_hrp = match &self {
-            WalletCoin::CosmosSDK { network } => network.get_bech32_hrp(),
-        };
-        let pubkey = PublicKey::from(private_key.public_key());
-        pubkey.account_id(bech32_hrp).map(|x| x.to_string())
+        match self {
+            WalletCoin::CosmosSDK { network } => {
+                let bech32_hrp = network.get_bech32_hrp();
+                let pubkey = PublicKey::from(private_key.public_key());
+                pubkey.account_id(bech32_hrp).map(|x| x.to_string())
+            }
+            WalletCoin::Ethereum => {
+                // FIXME: remove when `ethers` updates k256
+                let private_key_old =
+                    ethers::core::k256::ecdsa::SigningKey::from_bytes(&private_key.to_bytes())
+                        .expect("two versions of k256 should be byte-compatible");
+                let address = secret_key_to_address(&private_key_old);
+                let address_hex: String = address.encode_hex();
+                Ok(format!("0x{}", address_hex))
+            }
+        }
     }
 }
 
@@ -108,20 +123,15 @@ impl HDWallet {
     pub fn get_default_address(&self, coin: WalletCoin) -> Result<String, HdWrapError> {
         let coin_type = match &coin {
             WalletCoin::CosmosSDK { network } => network.get_coin_type(),
-        };
-        let bech32_hrp = match &coin {
-            WalletCoin::CosmosSDK { network } => network.get_bech32_hrp(),
+            WalletCoin::Ethereum => 60,
         };
         let derivation_path: DerivationPath = format!("m/44'/{}'/0'/0/0", coin_type)
             .parse()
             .map_err(HdWrapError::HDError)?;
         let child_xprv =
             XPrv::derive_from_path(&self.seed, &derivation_path).map_err(HdWrapError::HDError)?;
-        let pubkey = PublicKey::from(child_xprv.public_key().public_key());
-        pubkey
-            .account_id(bech32_hrp)
+        coin.derive_address(child_xprv.private_key())
             .map_err(HdWrapError::AccountId)
-            .map(|x| x.to_string())
     }
 
     /// return the secret key for a given derivation path
@@ -146,6 +156,13 @@ impl SecretKey {
     /// get the inner signing key (for CosmRS signing)
     pub fn get_signing_key(&self) -> Box<SigningKey> {
         Box::new(self.0.clone())
+    }
+
+    /// get the inner signing key (for ethers signing)
+    /// FIXME: remove when `ethers` updates k256
+    pub fn get_eth_signing_key(&self) -> ethers::core::k256::ecdsa::SigningKey {
+        ethers::core::k256::ecdsa::SigningKey::from_bytes(&self.0.to_bytes())
+            .expect("two versions of k256 should be byte-compatible")
     }
 }
 
@@ -177,6 +194,14 @@ mod tests {
             default_address,
             "cro1u9q8mfpzhyv2s43js7l5qseapx5kt3g2rf7ppf"
         );
+        let eth_default_address = wallet
+            .get_default_address(WalletCoin::Ethereum)
+            .expect("address");
+        assert_eq!(
+            eth_default_address,
+            "0x2c600e0a72b3ae39e9b27d2e310b180abe779368"
+        );
+
         let private_key = wallet
             .get_key("m/44'/394'/0'/0/0".to_string())
             .expect("key");

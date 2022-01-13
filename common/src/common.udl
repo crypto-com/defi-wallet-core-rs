@@ -10,6 +10,7 @@ interface Network {
 [Enum]
 interface WalletCoin {
     CosmosSDK(Network network);
+    Ethereum();
 };
 
 [Error]

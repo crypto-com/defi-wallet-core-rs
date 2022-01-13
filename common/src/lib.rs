@@ -1,3 +1,5 @@
+/// Eth contract types generated from ABI
+pub mod contract;
 /// NFT functionality
 pub mod nft;
 /// interactions with remote node RPC / API (querying, broadcast etc.)
