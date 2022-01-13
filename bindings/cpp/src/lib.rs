@@ -5,6 +5,136 @@ use defi_wallet_core_common::{
     COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use std::sync::Arc;
+
+/// Wrapper of CosmosSDKMsg
+pub enum CosmosSDKMsgRaw {
+    /// MsgSend
+    BankSend {
+        /// recipient address in bech32
+        recipient_address: String,
+        /// amount to send
+        amount: u64,
+        denom: String,
+    },
+    /// MsgIssueDenom
+    NftIssueDenom {
+        /// The denomination ID of the NFT, necessary as multiple denominations are able to be represented on each chain
+        id: String,
+        /// The denomination name of the NFT, necessary as multiple denominations are able to be represented on each chain.
+        name: String,
+        /// The account address of the user creating the denomination.
+        schema: String,
+    },
+    /// MsgMintNft
+    NftMint {
+        /// The unique ID of the NFT being minted
+        id: String,
+        /// The unique ID of the denomination.
+        denom_id: String,
+        /// The name of the NFT being minted.
+        name: String,
+        /// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
+        uri: String,
+        /// The data of the NFT.
+        data: String,
+        /// The recipient of the new NFT
+        recipient: String,
+    },
+    /// MsgEditNft
+    NftEdit {
+        /// The unique ID of the NFT being edited.
+        id: String,
+        /// The unique ID of the denomination, necessary as multiple denominations are able to be represented on each chain.
+        denom_id: String,
+        /// The name of the NFT being edited.
+        name: String,
+        /// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
+        uri: String,
+        /// The data of the NFT
+        data: String,
+    },
+    /// MsgTransferNft
+    NftTransfer {
+        /// The unique ID of the NFT being transferred.
+        id: String,
+        /// The unique ID of the denomination, necessary as multiple denominations are able to be represented on each chain.
+        denom_id: String,
+        /// The account address who will receive the NFT as a result of the transfer transaction.
+        recipient: String,
+    },
+    /// MsgBurnNft
+    NftBurn {
+        /// The ID of the Token.
+        id: String,
+        /// The Denom ID of the Token.
+        denom_id: String,
+    },
+}
+
+impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
+    fn from(msg: &CosmosSDKMsgRaw) -> CosmosSDKMsg {
+        match msg {
+            CosmosSDKMsgRaw::BankSend {
+                recipient_address,
+                amount,
+                denom,
+            } => CosmosSDKMsg::BankSend {
+                recipient_address: recipient_address.to_owned(),
+                amount: SingleCoin::Other {
+                    amount: format!("{}", amount),
+                    denom: denom.to_owned(),
+                },
+            },
+            CosmosSDKMsgRaw::NftIssueDenom { id, name, schema } => CosmosSDKMsg::NftIssueDenom {
+                id: id.to_owned(),
+                name: name.to_owned(),
+                schema: schema.to_owned(),
+            },
+            CosmosSDKMsgRaw::NftMint {
+                id,
+                denom_id,
+                name,
+                uri,
+                data,
+                recipient,
+            } => CosmosSDKMsg::NftMint {
+                id: id.to_owned(),
+                denom_id: denom_id.to_owned(),
+                name: name.to_owned(),
+                uri: uri.to_owned(),
+                data: data.to_owned(),
+                recipient: recipient.to_owned(),
+            },
+            CosmosSDKMsgRaw::NftEdit {
+                id,
+                denom_id,
+                name,
+                uri,
+                data,
+            } => CosmosSDKMsg::NftEdit {
+                id: id.to_owned(),
+                denom_id: denom_id.to_owned(),
+                name: name.to_owned(),
+                uri: uri.to_owned(),
+                data: data.to_owned(),
+            },
+            CosmosSDKMsgRaw::NftTransfer {
+                id,
+                denom_id,
+                recipient,
+            } => CosmosSDKMsg::NftTransfer {
+                id: id.to_owned(),
+                denom_id: denom_id.to_owned(),
+                recipient: recipient.to_owned(),
+            },
+            CosmosSDKMsgRaw::NftBurn { id, denom_id } => CosmosSDKMsg::NftBurn {
+                id: id.to_owned(),
+                denom_id: denom_id.to_owned(),
+            },
+        }
+    }
+}
+
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
 mod ffi {
 
@@ -49,6 +179,12 @@ mod ffi {
 
     extern "Rust" {
         type PrivateKey;
+        type CosmosSDKMsgRaw;
+        pub fn get_msg_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            msg: &CosmosSDKMsgRaw,
+        ) -> Result<Vec<u8>>;
         pub fn get_single_bank_send_signdoc(
             tx_info: CosmosSDKTxInfoRaw,
             sender_pubkey: Vec<u8>,
@@ -328,5 +464,14 @@ fn get_nft_burn_signed_tx(
         private_key.key.clone(),
     )?;
 
+    Ok(ret)
+}
+
+fn get_msg_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    msg: &CosmosSDKMsgRaw,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(tx_info.into(), msg.into(), private_key.key.clone())?;
     Ok(ret)
 }
