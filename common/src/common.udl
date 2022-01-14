@@ -142,6 +142,51 @@ interface CosmosSDKClient {
     u64 simulate(sequence<u8> raw_signed_tx);
 };
 
+[Enum]
+interface ContractBalance {
+  Erc20(string contract_address);
+  Erc721(string contract_address);
+  Erc1155(string contract_address, string token_id);
+};
+
+[Enum]
+interface ContractTransfer {
+  Erc20(string contract_address, string to_address, string amount_hex);
+  Erc721(string contract_address, string token_id, string from_address, string to_address);
+  Erc1155(string contract_address, string token_id, string from_address, string to_address, string amount_hex);
+};
+
+[Error]
+enum EthError {
+  "HexConversion",
+  "ParseError",
+  "NodeUrl",
+  "SendTxFail",
+  "MempoolDrop",
+  "BalanceFail",
+  "AsyncRuntimeError",
+  "ContractError",
+};
+
+[Enum]
+interface EthNetwork {
+    EthereumMainnet();
+    RopstenTestnet();
+    KovanTestnet();
+    RinkebyTestnet();
+    GoerliTestnet();
+    Cronos();
+    CronosTestnet();
+    Custom(u64 chain_id);
+};
+
+[Enum]
+interface EthAmount {
+    WeiDecimal(string amount);
+    GweiDecimal(string amount);
+    EthDecimal(string amount);
+};
+
 namespace common {
   [Throws=ErrorWrapper]
   sequence<u8> get_single_msg_sign_payload(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg, PublicKeyBytesWrapper sender_pubkey);
@@ -155,4 +200,16 @@ namespace common {
   u64 simulate_blocking([ByRef] string grpc_url, sequence<u8> raw_signed_tx);
   [Throws=RestError]
   TxBroadcastResult broadcast_tx_sync_blocking([ByRef] string tendermint_rpc_url, sequence<u8> raw_signed_tx);
+  [Throws=EthError]
+  sequence<u8> construct_unsigned_eth_tx([ByRef] string from_hex, [ByRef] string to_hex, EthAmount amount, EthNetwork network);
+  [Throws=EthError]
+  sequence<u8> build_signed_eth_tx([ByRef] string to_hex, EthAmount amount, EthNetwork network, SecretKey secret_key);
+  [Throws=EthError]
+  string get_eth_balance_blocking([ByRef] string address, [ByRef] string web3api_url);
+  [Throws=EthError]
+  string get_contract_balance_blocking([ByRef] string account_address, ContractBalance contract_details, [ByRef] string web3api_url);
+  [Throws=EthError]
+  string broadcast_sign_eth_tx_blocking([ByRef] string to_hex, EthAmount amount, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
+  [Throws=EthError]
+  string broadcast_contract_transfer_tx_blocking(ContractTransfer transfer_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
 };

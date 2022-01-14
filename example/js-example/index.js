@@ -37,3 +37,8 @@ console.log(balance);
 
 const tx_resp = await wasm.broadcast_tx("https://testnet-croeseid-4.crypto.org:26657", signed_tx);
 console.log(tx_resp);
+const eth_balance = await wasm.query_account_eth_balance("https://cronos-testnet-3.crypto.org:8545", "0x2c600e0a72b3ae39e9b27d2e310b180abe779368", );
+console.log(eth_balance);
+const key2 = wallet.get_key("m/44'/60'/0'/0/0");
+const receipt = await wasm.broadcast_transfer_eth("https://cronos-testnet-3.crypto.org:8545", "0x2c600e0a72b3ae39e9b27d2e310b180abe779368", "1.0", BigInt(338), key2);
+console.log(receipt);
