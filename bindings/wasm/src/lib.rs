@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
 use defi_wallet_core_common::{
-    broadcast_tx_sync, build_signed_single_msg_tx, get_account_balance, get_account_details,
-    get_single_msg_sign_payload, BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, HDWallet,
-    Network, PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin,
-    COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    broadcast_contract_transfer_tx, broadcast_sign_eth_tx, broadcast_tx_sync,
+    build_signed_single_msg_tx, get_account_balance, get_account_details, get_contract_balance,
+    get_eth_balance, get_single_msg_sign_payload, BalanceApiVersion, ContractBalance,
+    ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Network,
+    PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use wasm_bindgen::prelude::*;
 /// wasm utilities
@@ -390,7 +391,7 @@ pub async fn query_account_balance(
         .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
 }
 
-/// broadcasts a signed tx
+/// broadcasts a signed cosmos sdk tx
 #[wasm_bindgen]
 pub async fn broadcast_tx(
     tendermint_rpc_url: String,
@@ -403,6 +404,135 @@ pub async fn broadcast_tx(
         .map_err(|e| JsValue::from_str(&format!("missing_resulgt: {}", e)))?;
 
     Ok(JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+}
+
+/// return the account's balance formatted as ether decimals
+#[wasm_bindgen]
+pub async fn query_account_eth_balance(
+    web3_api_url: String,
+    address: String,
+) -> Result<JsValue, JsValue> {
+    let balance = get_eth_balance(&address, &web3_api_url)
+        .await
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+
+    Ok(JsValue::from_str(&balance))
+}
+
+/// the token contract type
+#[wasm_bindgen]
+pub enum ContractType {
+    Erc20,
+    Erc721,
+    Erc1155,
+}
+
+/// return the account's token contract balance formatted as hexadecimals
+#[wasm_bindgen]
+pub async fn query_account_contract_token_balance(
+    web3_api_url: String,
+    address: String,
+    contract_address: String,
+    contract_type: ContractType,
+    token_id: Option<String>,
+) -> Result<JsValue, JsValue> {
+    let details = match (contract_type, token_id) {
+        (ContractType::Erc20, _) => Ok(ContractBalance::Erc20 { contract_address }),
+        (ContractType::Erc721, _) => Ok(ContractBalance::Erc721 { contract_address }),
+        (ContractType::Erc1155, Some(token_id)) => Ok(ContractBalance::Erc1155 {
+            contract_address,
+            token_id,
+        }),
+        (ContractType::Erc1155, None) => Err(JsValue::from_str("missing token id")),
+    }?;
+    let balance = get_contract_balance(&address, details, &web3_api_url)
+        .await
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+
+    Ok(JsValue::from_str(&balance.to_string()))
+}
+
+/// construct, sign and broadcast a plain transfer of eth/native token
+#[wasm_bindgen]
+pub async fn broadcast_transfer_eth(
+    web3_api_url: String,
+    to_address_hex: String,
+    eth_amount_decimal: String,
+    chain_id: u64,
+    private_key: PrivateKey,
+) -> Result<JsValue, JsValue> {
+    let receipt = broadcast_sign_eth_tx(
+        &to_address_hex,
+        EthAmount::EthDecimal {
+            amount: eth_amount_decimal,
+        },
+        EthNetwork::Custom { chain_id },
+        private_key.key,
+        &web3_api_url,
+    )
+    .await
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+
+    Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+}
+
+/// construct, sign and broadcast a transfer of a ERC20/ERC721/ERC1155 token
+#[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
+pub async fn broadcast_transfer_contract(
+    web3_api_url: String,
+    to_address: String,
+    contract_address: String,
+    contract_type: ContractType,
+    token_id: Option<String>,
+    amount_hex: Option<String>,
+    from_address: Option<String>,
+    chain_id: u64,
+    private_key: PrivateKey,
+) -> Result<JsValue, JsValue> {
+    let details = match (contract_type, amount_hex, token_id, from_address) {
+        (ContractType::Erc20, Some(amount_hex), _, _) => Ok(ContractTransfer::Erc20 {
+            contract_address,
+            amount_hex,
+            to_address,
+        }),
+        (ContractType::Erc721, _, Some(token_id), Some(from_address)) => {
+            Ok(ContractTransfer::Erc721 {
+                contract_address,
+                token_id,
+                from_address,
+                to_address,
+            })
+        }
+        (ContractType::Erc1155, Some(amount_hex), Some(token_id), Some(from_address)) => {
+            Ok(ContractTransfer::Erc1155 {
+                contract_address,
+                token_id,
+                amount_hex,
+                from_address,
+                to_address,
+            })
+        }
+        (ContractType::Erc1155, _, None, _) | (ContractType::Erc721, _, None, _) => {
+            Err(JsValue::from_str("missing token id"))
+        }
+        (ContractType::Erc1155, _, _, None) | (ContractType::Erc721, _, _, None) => {
+            Err(JsValue::from_str("missing from address"))
+        }
+        (ContractType::Erc1155, None, _, _) | (ContractType::Erc20, None, _, _) => {
+            Err(JsValue::from_str("missing amount"))
+        }
+    }?;
+    let receipt = broadcast_contract_transfer_tx(
+        details,
+        EthNetwork::Custom { chain_id },
+        private_key.key,
+        &web3_api_url,
+    )
+    .await
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+
+    Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
 }
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global

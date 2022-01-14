@@ -61,10 +61,16 @@ impl EthNetwork {
 /// in decimal notation
 pub enum EthAmount {
     /// 10^-18 ETH
-    WeiDecimal(String),
+    WeiDecimal {
+        amount: String,
+    },
     /// 10^-9 ETH
-    GweiDecimal(String),
-    EthDecimal(String),
+    GweiDecimal {
+        amount: String,
+    },
+    EthDecimal {
+        amount: String,
+    },
 }
 
 impl TryInto<U256> for EthAmount {
@@ -72,9 +78,9 @@ impl TryInto<U256> for EthAmount {
 
     fn try_into(self) -> Result<U256, Self::Error> {
         match self {
-            EthAmount::WeiDecimal(s) => parse_units(s, "wei"),
-            EthAmount::GweiDecimal(s) => parse_units(s, "gwei"),
-            EthAmount::EthDecimal(s) => parse_units(s, "ether"),
+            EthAmount::WeiDecimal { amount } => parse_units(amount, "wei"),
+            EthAmount::GweiDecimal { amount } => parse_units(amount, "gwei"),
+            EthAmount::EthDecimal { amount } => parse_units(amount, "ether"),
         }
     }
 }
@@ -133,7 +139,9 @@ mod tests {
         let tx_raw = construct_unsigned_eth_tx(
             "0x2c600e0a72b3ae39e9b27d2e310b180abe779368",
             "0x2c600e0a72b3ae39e9b27d2e310b180abe779368",
-            EthAmount::EthDecimal("1".to_string()),
+            EthAmount::EthDecimal {
+                amount: "1".to_string(),
+            },
             EthNetwork::Cronos,
         )
         .expect("ok signed tx");
@@ -146,7 +154,9 @@ mod tests {
 
         let tx_raw = build_signed_eth_tx(
             "0x2c600e0a72b3ae39e9b27d2e310b180abe779368",
-            EthAmount::EthDecimal("1".to_string()),
+            EthAmount::EthDecimal {
+                amount: "1".to_string(),
+            },
             EthNetwork::Cronos,
             Arc::new(secret_key),
         )
