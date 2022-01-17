@@ -1,8 +1,9 @@
 use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{
-    build_signed_single_msg_tx, get_single_msg_sign_payload, CosmosSDKMsg, CosmosSDKTxInfo,
-    HDWallet, Network, PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin,
-    COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    broadcast_tx_sync_blocking, build_signed_single_msg_tx, get_account_balance_blocking,
+    get_account_details_blocking, get_single_msg_sign_payload, BalanceApiVersion, CosmosSDKMsg,
+    CosmosSDKTxInfo, HDWallet, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey,
+    SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use std::sync::Arc;
 
@@ -178,7 +179,24 @@ mod ffi {
         pub coin_type: u32,
     }
 
+    pub struct CosmosAccountInfoRaw {
+        pub account_number: u64,
+        pub sequence_number: u64,
+    }
+
     extern "Rust" {
+        pub fn query_account_details(api_url: String, address: String) -> Result<String>;
+        pub fn query_account_details_info(
+            api_url: String,
+            address: String,
+        ) -> Result<CosmosAccountInfoRaw>;
+        pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Result<String>;
+        pub fn query_account_balance(
+            api_url: String,
+            address: String,
+            denom: String,
+            api_version: u8,
+        ) -> Result<String>;
         type PrivateKey;
         type CosmosSDKMsgRaw;
         pub fn get_msg_signed_tx(
@@ -202,8 +220,11 @@ mod ffi {
             denom: String,
         ) -> Result<Vec<u8>>;
         type Wallet;
-        fn new_wallet(password: String) -> Box<Wallet>;
+        fn new_wallet(password: String) -> Result<Box<Wallet>>;
+
+        fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>>;
         fn get_default_address(self: &Wallet, coin: CoinType) -> Result<String>;
+        fn get_key(self: &Wallet, derivation_path: String) -> Result<Box<PrivateKey>>;
         fn new_privatekey() -> Box<PrivateKey>;
         fn get_nft_issue_denom_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
@@ -279,11 +300,16 @@ pub struct Wallet {
     wallet: HDWallet,
 }
 
-fn new_wallet(password: String) -> Box<Wallet> {
+fn new_wallet(password: String) -> Result<Box<Wallet>> {
     let ret = Wallet {
         wallet: HDWallet::generate_wallet(Some(password)),
     };
-    Box::new(ret)
+    Ok(Box::new(ret))
+}
+
+fn restore_wallet(mnemonic: String, password: String) -> anyhow::Result<Box<Wallet>> {
+    let wallet = HDWallet::recover_wallet(mnemonic, Some(password))?;
+    Ok(Box::new(Wallet { wallet }))
 }
 
 impl Wallet {
@@ -492,4 +518,51 @@ pub fn get_msg_signed_tx(
 ) -> Result<Vec<u8>> {
     let ret = build_signed_single_msg_tx(tx_info.into(), msg.into(), private_key.key.clone())?;
     Ok(ret)
+}
+pub fn query_account_details(api_url: String, address: String) -> Result<String> {
+    let account_details: RawRpcAccountResponse = get_account_details_blocking(&api_url, &address)?;
+    Ok(serde_json::to_string(&account_details)?)
+}
+
+pub fn query_account_details_info(
+    api_url: String,
+    address: String,
+) -> Result<ffi::CosmosAccountInfoRaw> {
+    let account_details: RawRpcAccountResponse = get_account_details_blocking(&api_url, &address)?;
+
+    match account_details {
+        RawRpcAccountResponse::OkResponse { account } => Ok(ffi::CosmosAccountInfoRaw {
+            account_number: account.account_number,
+            sequence_number: account.sequence,
+        }),
+        RawRpcAccountResponse::ErrorResponse {
+            code,
+            message,
+            details,
+        } => Err(anyhow!(
+            "RawRpcAccountResponse error {} {} {:?}",
+            code,
+            message,
+            details
+        )),
+    }
+}
+
+pub fn query_account_balance(
+    api_url: String,
+    address: String,
+    denom: String,
+    api_version: u8,
+) -> Result<String> {
+    let balance_api_version = BalanceApiVersion::from(api_version);
+
+    let account_details =
+        get_account_balance_blocking(&api_url, &address, &denom, balance_api_version)?;
+
+    Ok(serde_json::to_string(&account_details)?)
+}
+
+pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Result<String> {
+    let resp = broadcast_tx_sync_blocking(&tendermint_rpc_url, raw_signed_tx)?;
+    Ok(serde_json::to_string(&resp)?)
 }

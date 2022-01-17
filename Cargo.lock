@@ -794,6 +794,7 @@ dependencies = [
  "cxx",
  "cxx-build",
  "defi-wallet-core-common",
+ "serde_json",
 ]
 
 [[package]]
