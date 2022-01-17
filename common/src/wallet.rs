@@ -119,19 +119,25 @@ impl HDWallet {
         })
     }
 
-    /// returns the default address of the wallet
-    pub fn get_default_address(&self, coin: WalletCoin) -> Result<String, HdWrapError> {
+    /// returns the address from index in wallet
+    pub fn get_address(&self, coin: WalletCoin, index: u32) -> Result<String, HdWrapError> {
         let coin_type = match &coin {
             WalletCoin::CosmosSDK { network } => network.get_coin_type(),
             WalletCoin::Ethereum => 60,
         };
-        let derivation_path: DerivationPath = format!("m/44'/{}'/0'/0/0", coin_type)
+        let derivation_path: DerivationPath = format!("m/44'/{}'/0'/0/{}", coin_type, index)
             .parse()
             .map_err(HdWrapError::HDError)?;
+
         let child_xprv =
             XPrv::derive_from_path(&self.seed, &derivation_path).map_err(HdWrapError::HDError)?;
         coin.derive_address(child_xprv.private_key())
             .map_err(HdWrapError::AccountId)
+    }
+
+    /// returns the default address of the wallet
+    pub fn get_default_address(&self, coin: WalletCoin) -> Result<String, HdWrapError> {
+        self.get_address(coin, 0)
     }
 
     /// return the secret key for a given derivation path
@@ -185,22 +191,35 @@ mod tests {
         let password = SecretString::from("".to_string());
 
         let wallet = HDWallet::recover_english(phrase, password).expect("wallet");
-        let default_address = wallet
+        let default_cosmos_address = wallet
             .get_default_address(WalletCoin::CosmosSDK {
                 network: Network::CryptoOrgMainnet,
             })
             .expect("address");
         assert_eq!(
-            default_address,
+            default_cosmos_address,
             "cro1u9q8mfpzhyv2s43js7l5qseapx5kt3g2rf7ppf"
         );
-        let eth_default_address = wallet
+        let default_eth_address = wallet
             .get_default_address(WalletCoin::Ethereum)
             .expect("address");
         assert_eq!(
-            eth_default_address,
+            default_eth_address,
             "0x2c600e0a72b3ae39e9b27d2e310b180abe779368"
         );
+        let cosmos_address = wallet
+            .get_address(
+                WalletCoin::CosmosSDK {
+                    network: Network::CryptoOrgMainnet,
+                },
+                1,
+            )
+            .expect("address");
+        assert_eq!(cosmos_address, "cro1g8w7w0kdx0hfv4eqhmv8avxnf7qruchg9pk3v2");
+        let eth_address = wallet
+            .get_address(WalletCoin::Ethereum, 1)
+            .expect("address");
+        assert_eq!(eth_address, "0x5a64bef6db23fc854e79eea9e630ccb9301629cb");
 
         let private_key = wallet
             .get_key("m/44'/394'/0'/0/0".to_string())
