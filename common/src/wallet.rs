@@ -4,6 +4,7 @@ use crate::Network;
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use cosmrs::bip32::{DerivationPath, Error, Mnemonic, PrivateKey, Seed, XPrv};
 use cosmrs::crypto::PublicKey;
+use ethers::prelude::{LocalWallet, Signature, Signer};
 use ethers::utils::hex::ToHex;
 use ethers::utils::secret_key_to_address;
 use rand_core::OsRng;
@@ -169,6 +170,16 @@ impl SecretKey {
     pub fn get_eth_signing_key(&self) -> ethers::core::k256::ecdsa::SigningKey {
         ethers::core::k256::ecdsa::SigningKey::from_bytes(&self.0.to_bytes())
             .expect("two versions of k256 should be byte-compatible")
+    }
+
+    /// signs an arbitrary message as per EIP-191
+    /// TODO: chain_id may not be necessary?
+    pub fn sign_eth(&self, message: &[u8], chain_id: u64) -> Result<Signature, Error> {
+        let hash = ethers::utils::hash_message(message);
+        let wallet = LocalWallet::from(self.get_eth_signing_key()).with_chain_id(chain_id);
+        // TODO: EIP-155 normalization (it seems `siwe` expects raw values)
+        let signature = wallet.sign_hash(hash, false);
+        Ok(signature)
     }
 }
 
