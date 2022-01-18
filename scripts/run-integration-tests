@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+cd "$(dirname "$0")"
+
+# explicitly set a short TMPDIR to prevent path too long issue on macosx
+export TMPDIR=/tmp
+
+cd ..
+nix-shell --run "pytest -vv -s"
