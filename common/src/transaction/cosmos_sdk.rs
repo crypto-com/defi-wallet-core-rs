@@ -411,8 +411,10 @@ pub struct CosmosSDKMsgs {
 }
 
 impl CosmosSDKMsgs {
-    pub fn new() -> Self{
-        CosmosSDKMsgs{messages: Vec::new()}
+    pub fn new() -> Self {
+        CosmosSDKMsgs {
+            messages: Vec::new(),
+        }
     }
 
     pub fn add(&mut self, msg: Any) {
@@ -560,17 +562,27 @@ mod tests {
         let sender_private_key = SigningKey::random();
         let sender_public_key = sender_private_key.public_key();
         let mut msgs = CosmosSDKMsgs::new();
-        let sender_account_id = sender_public_key.account_id(TX_INFO.network.get_bech32_hrp()).unwrap();
+        let sender_account_id = sender_public_key
+            .account_id(TX_INFO.network.get_bech32_hrp())
+            .unwrap();
 
-        msgs.add(CosmosSDKMsg::BankSend {
-            recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
-            amount: SingleCoin::ATOM { amount: 1 },
-        }.to_any(sender_account_id.clone()).unwrap());
+        msgs.add(
+            CosmosSDKMsg::BankSend {
+                recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+                amount: SingleCoin::ATOM { amount: 1 },
+            }
+            .to_any(sender_account_id.clone())
+            .unwrap(),
+        );
 
-        msgs.add(CosmosSDKMsg::BankSend {
-            recipient_address: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx".to_string(),
-            amount: SingleCoin::ATOM { amount: 2 },
-        }.to_any(sender_account_id).unwrap());
+        msgs.add(
+            CosmosSDKMsg::BankSend {
+                recipient_address: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx".to_string(),
+                amount: SingleCoin::ATOM { amount: 2 },
+            }
+            .to_any(sender_account_id)
+            .unwrap(),
+        );
 
         let sign_doc_raw = get_msg_sign_payload(
             TX_INFO,
@@ -597,9 +609,9 @@ mod tests {
         assert!(Tx::from_bytes(&tx_raw).is_ok());
     }
 
-    use secrecy::{SecretString};
     use crate::wallet::HDWallet;
     use ethers::utils::hex;
+    use secrecy::SecretString;
 
     #[test]
     fn signing_check() {
@@ -608,23 +620,29 @@ mod tests {
         let password = SecretString::from("".to_string());
 
         let wallet = HDWallet::recover_english(phrase, password).expect("wallet");
-        
+
         let private_key = wallet
-        .get_key("m/44'/118'/0'/0/0".to_string())
-        .expect("key");
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
 
         let keystr = hex::encode(private_key.get_signing_key().to_bytes());
-        assert_eq!(keystr,"cbdff41bb60c39f7b85d6378586951f61cf1e8a33c0a034b1f9f98ffe3ad18cf");
+        assert_eq!(
+            keystr,
+            "cbdff41bb60c39f7b85d6378586951f61cf1e8a33c0a034b1f9f98ffe3ad18cf"
+        );
 
         let cosmos_address = wallet
-        .get_address(
-            WalletCoin::CosmosSDK {
-                network: Network::CosmosHub,
-            },
-            0,
-        )
-        .expect("address");
-        assert_eq!(cosmos_address,"cosmos1l5s7tnj28a7zxeeckhgwlhjys8dlrrefgqr4pj");
+            .get_address(
+                WalletCoin::CosmosSDK {
+                    network: Network::CosmosHub,
+                },
+                0,
+            )
+            .expect("address");
+        assert_eq!(
+            cosmos_address,
+            "cosmos1l5s7tnj28a7zxeeckhgwlhjys8dlrrefgqr4pj"
+        );
 
         let tx_raw = build_signed_single_msg_tx(
             TX_INFO,
@@ -636,6 +654,6 @@ mod tests {
         )
         .expect("ok signed tx");
 
-        println!("{}",hex::encode(tx_raw));
+        println!("{}", hex::encode(tx_raw));
     }
 }
