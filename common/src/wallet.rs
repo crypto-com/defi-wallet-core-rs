@@ -106,7 +106,7 @@ impl HDWallet {
     }
 
     /// recovers the HD wallet from a backup phrase
-    fn recover_english(
+    pub fn recover_english(
         mnemonic_phrase: SecretString,
         password: SecretString,
     ) -> Result<Self, Error> {

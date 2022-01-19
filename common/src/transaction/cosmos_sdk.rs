@@ -406,6 +406,52 @@ fn get_signed_sign_msg_tx(
     ))
 }
 
+pub struct CosmosSDKMsgs {
+    pub messages: Vec<Any>,
+}
+
+impl CosmosSDKMsgs {
+    pub fn new() -> Self{
+        CosmosSDKMsgs{messages: Vec::new()}
+    }
+
+    pub fn add(&mut self, msg: Any) {
+        self.messages.push(msg);
+    }
+}
+
+fn get_msg_signdoc(
+    tx_info: CosmosSDKTxInfo,
+    msgs: CosmosSDKMsgs,
+    sender_public_key: crypto::PublicKey,
+) -> eyre::Result<SignDoc> {
+    let chain_id = tx_info.network.get_chain_id()?;
+    let tx_body = tx::Body::new(
+        msgs.messages,
+        tx_info.memo_note.unwrap_or_default(),
+        tx_info.timeout_height,
+    );
+    let signer_info = SignerInfo::single_direct(Some(sender_public_key), tx_info.sequence_number);
+    let auth_info = signer_info.auth_info(Fee::from_amount_and_gas(
+        (&tx_info.fee_amount).try_into()?,
+        tx_info.gas_limit,
+    ));
+
+    SignDoc::new(&tx_body, &auth_info, &chain_id, tx_info.account_number)
+}
+
+fn get_signed_msg_tx(
+    tx_info: CosmosSDKTxInfo,
+    msgs: CosmosSDKMsgs,
+    sender_private_key: Box<SigningKey>,
+) -> eyre::Result<Raw> {
+    let sender_pubkey = crypto::PublicKey::from(sender_private_key.public_key());
+    let sign_doc = get_msg_signdoc(tx_info, msgs, sender_pubkey)?;
+    sign_doc.sign(&cosmrs::crypto::secp256k1::SigningKey::new(
+        sender_private_key,
+    ))
+}
+
 /// UniFFI 0.15.2 doesn't support external types for Kotlin yet
 #[derive(Debug, thiserror::Error)]
 pub enum ErrorWrapper {
@@ -438,6 +484,35 @@ pub fn build_signed_single_msg_tx(
     secret_key: Arc<SecretKey>,
 ) -> Result<Vec<u8>, ErrorWrapper> {
     let raw_signed_tx = get_signed_sign_msg_tx(tx_info, msg, secret_key.get_signing_key())
+        .map_err(|report| ErrorWrapper::EyreReport { report })?;
+    raw_signed_tx
+        .to_bytes()
+        .map_err(|report| ErrorWrapper::EyreReport { report })
+}
+
+/// creates the transaction signing payload (`SignDoc`)
+/// with some Cosmos SDK messages
+pub fn get_msg_sign_payload(
+    tx_info: CosmosSDKTxInfo,
+    msgs: CosmosSDKMsgs,
+    sender_pubkey: PublicKeyBytesWrapper,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    let sender_public_key: crypto::PublicKey = crypto::PublicKey::from(
+        VerifyingKey::from_bytes(sender_pubkey.into()).map_err(ErrorWrapper::PubkeyError)?,
+    );
+    get_msg_signdoc(tx_info, msgs, sender_public_key)
+        .and_then(|doc| doc.into_bytes())
+        .map_err(|report| ErrorWrapper::EyreReport { report })
+}
+
+/// creates the signed transaction
+/// with some Cosmos SDK messages
+pub fn build_signed_msg_tx(
+    tx_info: CosmosSDKTxInfo,
+    msgs: CosmosSDKMsgs,
+    secret_key: Arc<SecretKey>,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    let raw_signed_tx = get_signed_msg_tx(tx_info, msgs, secret_key.get_signing_key())
         .map_err(|report| ErrorWrapper::EyreReport { report })?;
     raw_signed_tx
         .to_bytes()
@@ -481,6 +556,32 @@ mod tests {
     }
 
     #[test]
+    fn signdoc_construction_works_mutimsg() {
+        let sender_private_key = SigningKey::random();
+        let sender_public_key = sender_private_key.public_key();
+        let mut msgs = CosmosSDKMsgs::new();
+        let sender_account_id = sender_public_key.account_id(TX_INFO.network.get_bech32_hrp()).unwrap();
+
+        msgs.add(CosmosSDKMsg::BankSend {
+            recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            amount: SingleCoin::ATOM { amount: 1 },
+        }.to_any(sender_account_id.clone()).unwrap());
+
+        msgs.add(CosmosSDKMsg::BankSend {
+            recipient_address: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx".to_string(),
+            amount: SingleCoin::ATOM { amount: 2 },
+        }.to_any(sender_account_id).unwrap());
+
+        let sign_doc_raw = get_msg_sign_payload(
+            TX_INFO,
+            msgs,
+            PublicKeyBytesWrapper(sender_public_key.to_bytes()),
+        )
+        .expect("ok sign doc");
+        assert!(proto::cosmos::tx::v1beta1::SignDoc::decode(&*sign_doc_raw).is_ok());
+    }
+
+    #[test]
     fn signing_works() {
         let secret_key = SecretKey::new();
 
@@ -494,5 +595,47 @@ mod tests {
         )
         .expect("ok signed tx");
         assert!(Tx::from_bytes(&tx_raw).is_ok());
+    }
+
+    use secrecy::{SecretString};
+    use crate::wallet::HDWallet;
+    use ethers::utils::hex;
+
+    #[test]
+    fn signing_check() {
+        let words = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
+        let phrase = SecretString::from(words.to_string());
+        let password = SecretString::from("".to_string());
+
+        let wallet = HDWallet::recover_english(phrase, password).expect("wallet");
+        
+        let private_key = wallet
+        .get_key("m/44'/118'/0'/0/0".to_string())
+        .expect("key");
+
+        let keystr = hex::encode(private_key.get_signing_key().to_bytes());
+        assert_eq!(keystr,"cbdff41bb60c39f7b85d6378586951f61cf1e8a33c0a034b1f9f98ffe3ad18cf");
+
+        let cosmos_address = wallet
+        .get_address(
+            WalletCoin::CosmosSDK {
+                network: Network::CosmosHub,
+            },
+            0,
+        )
+        .expect("address");
+        assert_eq!(cosmos_address,"cosmos1l5s7tnj28a7zxeeckhgwlhjys8dlrrefgqr4pj");
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::BankSend {
+                recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+                amount: SingleCoin::ATOM { amount: 1 },
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        println!("{}",hex::encode(tx_raw));
     }
 }
