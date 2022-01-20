@@ -69,13 +69,33 @@ impl From<CoinType> for WalletCoin {
 }
 
 #[wasm_bindgen]
+pub enum MnemonicWordCount {
+    /// Word 12
+    Twelve,
+    /// Word 18
+    Eighteen,
+    /// Word 24
+    TwentyFour,
+}
+
+impl From<MnemonicWordCount> for defi_wallet_core_common::MnemonicWordCount {
+    fn from(word_count: MnemonicWordCount) -> Self {
+        match word_count {
+            MnemonicWordCount::Twelve => defi_wallet_core_common::MnemonicWordCount::Twelve,
+            MnemonicWordCount::Eighteen => defi_wallet_core_common::MnemonicWordCount::Eighteen,
+            MnemonicWordCount::TwentyFour => defi_wallet_core_common::MnemonicWordCount::TwentyFour,
+        }
+    }
+}
+
+#[wasm_bindgen]
 impl Wallet {
     /// generate a random wallet (with an optional password)
     #[wasm_bindgen(constructor)]
-    pub fn new(password: Option<String>) -> Self {
-        Self {
-            wallet: HDWallet::generate_wallet(password),
-        }
+    pub fn new(password: Option<String>, word_count: MnemonicWordCount) -> Result<Wallet, JsValue> {
+        let wallet = HDWallet::generate_wallet(password, word_count.into())
+            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        Ok(Self { wallet })
     }
 
     /// return the default address for a given coin type

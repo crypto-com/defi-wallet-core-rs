@@ -151,6 +151,15 @@ mod ffi {
         CosmosHub,
     }
 
+    pub enum MnemonicWordCount {
+        /// Word 12
+        Twelve,
+        /// Word 18
+        Eighteen,
+        /// Word 24
+        TwentyFour,
+    }
+
     pub struct StringTuple {
         pub value: String,
         pub error: String,
@@ -220,7 +229,7 @@ mod ffi {
             denom: String,
         ) -> Result<Vec<u8>>;
         type Wallet;
-        fn new_wallet(password: String) -> Result<Box<Wallet>>;
+        fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wallet>>;
 
         fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>>;
         fn get_default_address(self: &Wallet, coin: CoinType) -> Result<String>;
@@ -283,6 +292,17 @@ impl From<CoinType> for WalletCoin {
     }
 }
 
+use ffi::MnemonicWordCount;
+impl From<MnemonicWordCount> for defi_wallet_core_common::MnemonicWordCount {
+    fn from(word_count: MnemonicWordCount) -> Self {
+        match word_count {
+            MnemonicWordCount::Twelve => defi_wallet_core_common::MnemonicWordCount::Twelve,
+            MnemonicWordCount::Eighteen => defi_wallet_core_common::MnemonicWordCount::Eighteen,
+            _ => defi_wallet_core_common::MnemonicWordCount::TwentyFour,
+        }
+    }
+}
+
 pub struct PrivateKey {
     key: Arc<SecretKey>,
 }
@@ -300,11 +320,9 @@ pub struct Wallet {
     wallet: HDWallet,
 }
 
-fn new_wallet(password: String) -> Result<Box<Wallet>> {
-    let ret = Wallet {
-        wallet: HDWallet::generate_wallet(Some(password)),
-    };
-    Ok(Box::new(ret))
+fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wallet>> {
+    let wallet = HDWallet::generate_wallet(Some(password), word_count.into())?;
+    Ok(Box::new(Wallet { wallet }))
 }
 
 fn restore_wallet(mnemonic: String, password: String) -> anyhow::Result<Box<Wallet>> {
