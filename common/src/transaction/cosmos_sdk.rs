@@ -421,6 +421,11 @@ impl CosmosSDKMsgs {
         self.messages.push(msg);
     }
 }
+impl Default for CosmosSDKMsgs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 fn get_msg_signdoc(
     tx_info: CosmosSDKTxInfo,
