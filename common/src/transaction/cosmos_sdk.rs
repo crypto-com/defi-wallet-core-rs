@@ -615,13 +615,12 @@ mod tests {
 
     use crate::wallet::HDWallet;
     use ethers::utils::hex;
-    use secrecy::SecretString;
 
     #[test]
     fn signing_check() {
         let words = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
-        let wallet = HDWallet::recover_english(words.to_string(), None).expect("wallet");
-
+        let wallet = HDWallet::recover_wallet(words.to_string(), None).expect("wallet");
+        
         let private_key = wallet
             .get_key("m/44'/118'/0'/0/0".to_string())
             .expect("key");
