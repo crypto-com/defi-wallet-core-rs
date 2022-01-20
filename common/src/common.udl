@@ -177,6 +177,8 @@ enum EthError {
   "BalanceFail",
   "AsyncRuntimeError",
   "ContractError",
+  "SignatureError",
+  "ChainidError",
 };
 
 [Enum]

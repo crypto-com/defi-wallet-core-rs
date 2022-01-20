@@ -26,6 +26,10 @@ pub enum EthError {
     AsyncRuntimeError,
     #[error("Contract call error")]
     ContractError,
+    #[error("Signature error")]
+    SignatureError,
+    #[error("Chainid error")]
+    ChainidError,
 }
 
 /// Ethereum networks

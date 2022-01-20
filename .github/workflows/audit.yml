@@ -22,13 +22,10 @@ jobs:
           toolchain: nightly
           override: true
           profile: minimal
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
-      - uses: actions-rs/audit-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install cargo audit
+        run: cargo install cargo-audit
+      # FIXME: they need to be fixed in the `siwe` crate
+      - run: >
+          cargo audit --deny-warnings
+          --ignore RUSTSEC-2020-0159
+          --ignore RUSTSEC-2020-0071

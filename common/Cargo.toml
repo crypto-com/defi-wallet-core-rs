@@ -6,6 +6,10 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "staticlib", "rlib"]
 
+[features]
+default = []
+login = ["siwe"]
+
 [dependencies]
 anyhow = "1"
 bip39 = "1"
@@ -24,6 +28,7 @@ secrecy = "0.8"
 serde = "1"
 serde_json = "1"
 serde_with = "1"
+siwe = { version = "0.1", optional = true }
 tendermint-rpc = "0.23"
 thiserror = "1"
 uniffi = "^0.15"
