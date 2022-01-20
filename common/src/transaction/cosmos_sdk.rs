@@ -407,7 +407,7 @@ fn get_signed_sign_msg_tx(
 }
 
 pub struct CosmosSDKMsgs {
-    pub messages: Vec<Any>,
+    pub messages: Vec<CosmosSDKMsg>,
 }
 
 impl CosmosSDKMsgs {
@@ -417,8 +417,16 @@ impl CosmosSDKMsgs {
         }
     }
 
-    pub fn add(&mut self, msg: Any) {
+    pub fn add(&mut self, msg: CosmosSDKMsg) {
         self.messages.push(msg);
+    }
+
+    pub fn to_any(&self, sender_address: AccountId) -> Result<Vec<Any>> {
+        let mut msgs_any: Vec<Any> = Vec::new();
+        for (_, value) in self.messages.iter().enumerate() {
+            msgs_any.push(value.to_any(sender_address.clone())?);
+        }
+        Ok(msgs_any)
     }
 }
 impl Default for CosmosSDKMsgs {
@@ -433,8 +441,10 @@ fn get_msg_signdoc(
     sender_public_key: crypto::PublicKey,
 ) -> eyre::Result<SignDoc> {
     let chain_id = tx_info.network.get_chain_id()?;
+    let sender_account_id = sender_public_key.account_id(tx_info.network.get_bech32_hrp())?;
+
     let tx_body = tx::Body::new(
-        msgs.messages,
+        msgs.to_any(sender_account_id)?,
         tx_info.memo_note.unwrap_or_default(),
         tx_info.timeout_height,
     );
@@ -567,27 +577,16 @@ mod tests {
         let sender_private_key = SigningKey::random();
         let sender_public_key = sender_private_key.public_key();
         let mut msgs = CosmosSDKMsgs::new();
-        let sender_account_id = sender_public_key
-            .account_id(TX_INFO.network.get_bech32_hrp())
-            .unwrap();
 
-        msgs.add(
-            CosmosSDKMsg::BankSend {
-                recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
-                amount: SingleCoin::ATOM { amount: 1 },
-            }
-            .to_any(sender_account_id.clone())
-            .unwrap(),
-        );
+        msgs.add(CosmosSDKMsg::BankSend {
+            recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            amount: SingleCoin::ATOM { amount: 1 },
+        });
 
-        msgs.add(
-            CosmosSDKMsg::BankSend {
-                recipient_address: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx".to_string(),
-                amount: SingleCoin::ATOM { amount: 2 },
-            }
-            .to_any(sender_account_id)
-            .unwrap(),
-        );
+        msgs.add(CosmosSDKMsg::BankSend {
+            recipient_address: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx".to_string(),
+            amount: SingleCoin::ATOM { amount: 2 },
+        });
 
         let sign_doc_raw = get_msg_sign_payload(
             TX_INFO,
