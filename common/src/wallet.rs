@@ -9,7 +9,6 @@ use ethers::utils::hex::ToHex;
 use ethers::utils::secret_key_to_address;
 use rand_core::OsRng;
 use secrecy::{ExposeSecret, SecretString, Zeroize};
-use std::convert::Into;
 use std::str::FromStr;
 
 /// describes what coin type to use (for HD derivation or address generation)
@@ -28,12 +27,12 @@ pub enum MnemonicWordCount {
     TwentyFour,
 }
 
-impl Into<usize> for MnemonicWordCount {
-    fn into(self) -> usize {
-        match self {
-            Self::Twelve => 12,
-            Self::Eighteen => 18,
-            Self::TwentyFour => 24,
+impl From<MnemonicWordCount> for usize {
+    fn from(word_count: MnemonicWordCount) -> usize {
+        match word_count {
+            MnemonicWordCount::Twelve => 12,
+            MnemonicWordCount::Eighteen => 18,
+            MnemonicWordCount::TwentyFour => 24,
         }
     }
 }
