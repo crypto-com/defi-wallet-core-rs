@@ -206,7 +206,7 @@ impl SecretKey {
 
     /// signs an arbitrary message as per EIP-191
     /// TODO: chain_id may not be necessary?
-    pub fn sign_eth(&self, message: &[u8], chain_id: u64) -> Result<Signature, Error> {
+    pub fn sign_eth(&self, message: &[u8], chain_id: u64) -> Result<Signature, HdWrapError> {
         let hash = ethers::utils::hash_message(message);
         let wallet = LocalWallet::from(self.get_eth_signing_key()).with_chain_id(chain_id);
         // TODO: EIP-155 normalization (it seems `siwe` expects raw values)
