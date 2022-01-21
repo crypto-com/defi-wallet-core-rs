@@ -6,6 +6,7 @@ use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use cosmrs::bip32::{self, DerivationPath, PrivateKey, Seed, XPrv};
 use cosmrs::crypto::PublicKey;
 use ethers::prelude::{LocalWallet, Signature, Signer};
+use ethers::utils::hex;
 use ethers::utils::hex::ToHex;
 use ethers::utils::secret_key_to_address;
 use rand_core::OsRng;
@@ -212,6 +213,14 @@ impl SecretKey {
         // TODO: EIP-155 normalization (it seems `siwe` expects raw values)
         let signature = wallet.sign_hash(hash, false);
         Ok(signature)
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.get_signing_key().to_bytes().to_vec()
+    }
+
+    pub fn to_hex(&self) -> String {
+        hex::encode(self.get_signing_key().to_bytes())
     }
 }
 
