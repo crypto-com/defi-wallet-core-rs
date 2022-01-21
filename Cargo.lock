@@ -813,7 +813,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bip39",
- "cfg-if 1.0.0",
  "cosmos-sdk-proto",
  "cosmrs",
  "defi-wallet-core-proto",
@@ -2648,6 +2647,7 @@ dependencies = [
  "libc",
  "rand_core 0.4.2",
  "rdrand",
+ "wasm-bindgen",
  "winapi",
 ]
 

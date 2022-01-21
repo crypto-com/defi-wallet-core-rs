@@ -13,7 +13,6 @@ login = ["siwe"]
 [dependencies]
 anyhow = "1"
 bip39 = "1"
-cfg-if = "1"
 eyre = "0.6"
 cosmrs = "0.4"
 defi-wallet-core-proto = { version = "0.1", default-features = false, path = "../proto" }
@@ -22,7 +21,7 @@ ethers = { version = "0.6" }
 prost = "0.9"
 # NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
 # FIXME: https://github.com/rust-bitcoin/rust-bip39/issues/14
-rand = "0.6"
+rand = { version = "0.6", default-features = false, features = ["wasm-bindgen"] }
 rand_core = { version = "0.6", features = ["std"] }
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 secrecy = "0.8"
