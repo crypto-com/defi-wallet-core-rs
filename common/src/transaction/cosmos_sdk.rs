@@ -10,6 +10,7 @@ use cosmrs::{
 };
 use eyre::{eyre, Context};
 use std::sync::Arc;
+use std::sync::RwLock;
 
 use crate::nft::*;
 
@@ -407,28 +408,33 @@ fn get_signed_sign_msg_tx(
 }
 
 pub struct CosmosSDKMsgs {
-    pub messages: Vec<CosmosSDKMsg>,
+    messages: RwLock<Vec<CosmosSDKMsg>>,
 }
 
 impl CosmosSDKMsgs {
     pub fn new() -> Self {
         CosmosSDKMsgs {
-            messages: Vec::new(),
+            messages: RwLock::new(Vec::new()),
         }
     }
 
-    pub fn add(&mut self, msg: CosmosSDKMsg) {
-        self.messages.push(msg);
+    // pub fn get_signing_key(&self) -> Box<SigningKey> {
+    //     Box::new(self.0.clone())
+    // }
+
+    pub fn add(&self, msg: CosmosSDKMsg) {
+        self.messages.write().unwrap().push(msg);
     }
 
-    pub fn to_any(&self, sender_address: AccountId) -> Result<Vec<Any>> {
+    fn to_any(&self, sender_address: AccountId) -> Result<Vec<Any>> {
         let mut msgs_any: Vec<Any> = Vec::new();
-        for (_, value) in self.messages.iter().enumerate() {
+        for (_, value) in self.messages.write().unwrap().iter().enumerate() {
             msgs_any.push(value.to_any(sender_address.clone())?);
         }
         Ok(msgs_any)
     }
 }
+
 impl Default for CosmosSDKMsgs {
     fn default() -> Self {
         Self::new()
@@ -437,7 +443,7 @@ impl Default for CosmosSDKMsgs {
 
 fn get_msg_signdoc(
     tx_info: CosmosSDKTxInfo,
-    msgs: CosmosSDKMsgs,
+    msgs: Arc<CosmosSDKMsgs>,
     sender_public_key: crypto::PublicKey,
 ) -> eyre::Result<SignDoc> {
     let chain_id = tx_info.network.get_chain_id()?;
@@ -459,7 +465,7 @@ fn get_msg_signdoc(
 
 fn get_signed_msg_tx(
     tx_info: CosmosSDKTxInfo,
-    msgs: CosmosSDKMsgs,
+    msgs: Arc<CosmosSDKMsgs>,
     sender_private_key: Box<SigningKey>,
 ) -> eyre::Result<Raw> {
     let sender_pubkey = crypto::PublicKey::from(sender_private_key.public_key());
@@ -511,7 +517,7 @@ pub fn build_signed_single_msg_tx(
 /// with some Cosmos SDK messages
 pub fn get_msg_sign_payload(
     tx_info: CosmosSDKTxInfo,
-    msgs: CosmosSDKMsgs,
+    msgs: Arc<CosmosSDKMsgs>,
     sender_pubkey: PublicKeyBytesWrapper,
 ) -> Result<Vec<u8>, ErrorWrapper> {
     let sender_public_key: crypto::PublicKey = crypto::PublicKey::from(
@@ -526,7 +532,7 @@ pub fn get_msg_sign_payload(
 /// with some Cosmos SDK messages
 pub fn build_signed_msg_tx(
     tx_info: CosmosSDKTxInfo,
-    msgs: CosmosSDKMsgs,
+    msgs: Arc<CosmosSDKMsgs>,
     secret_key: Arc<SecretKey>,
 ) -> Result<Vec<u8>, ErrorWrapper> {
     let raw_signed_tx = get_signed_msg_tx(tx_info, msgs, secret_key.get_signing_key())
@@ -576,7 +582,7 @@ mod tests {
     fn signdoc_construction_works_mutimsg() {
         let sender_private_key = SigningKey::random();
         let sender_public_key = sender_private_key.public_key();
-        let mut msgs = CosmosSDKMsgs::new();
+        let msgs = CosmosSDKMsgs::new();
 
         msgs.add(CosmosSDKMsg::BankSend {
             recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
@@ -590,7 +596,7 @@ mod tests {
 
         let sign_doc_raw = get_msg_sign_payload(
             TX_INFO,
-            msgs,
+            Arc::new(msgs),
             PublicKeyBytesWrapper(sender_public_key.to_bytes()),
         )
         .expect("ok sign doc");
@@ -598,7 +604,7 @@ mod tests {
     }
 
     #[test]
-    fn signing_works() {
+    fn signing_works_mutimsg() {
         let secret_key = SecretKey::new();
 
         let tx_raw = build_signed_single_msg_tx(
@@ -613,6 +619,26 @@ mod tests {
         assert!(Tx::from_bytes(&tx_raw).is_ok());
     }
 
+    #[test]
+    fn signing_works() {
+        let secret_key = SecretKey::new();
+        let msgs = CosmosSDKMsgs::new();
+
+        msgs.add(CosmosSDKMsg::BankSend {
+            recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            amount: SingleCoin::ATOM { amount: 1 },
+        });
+
+        msgs.add(CosmosSDKMsg::BankSend {
+            recipient_address: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx".to_string(),
+            amount: SingleCoin::ATOM { amount: 2 },
+        });
+
+        let tx_raw = build_signed_msg_tx(TX_INFO, Arc::new(msgs), Arc::new(secret_key))
+            .expect("ok signed tx");
+        assert!(Tx::from_bytes(&tx_raw).is_ok());
+    }
+
     use crate::wallet::HDWallet;
     use ethers::utils::hex;
 
@@ -620,7 +646,7 @@ mod tests {
     fn signing_check() {
         let words = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
         let wallet = HDWallet::recover_wallet(words.to_string(), None).expect("wallet");
-        
+
         let private_key = wallet
             .get_key("m/44'/118'/0'/0/0".to_string())
             .expect("key");
