@@ -13,7 +13,7 @@ login = ["siwe"]
 [dependencies]
 anyhow = "1"
 bip39 = "1"
-cfg-if = "1.0.0"
+cfg-if = "1"
 eyre = "0.6"
 cosmrs = "0.4"
 defi-wallet-core-proto = { version = "0.1", default-features = false, path = "../proto" }
