@@ -124,7 +124,15 @@ impl HDWallet {
         password: SecretString,
         word_count: MnemonicWordCount,
     ) -> Result<Self, HdWrapError> {
-        let mut rng = rand::rngs::EntropyRng::new();
+        // Try to only use OsRng when upgrading `bip39`.
+        cfg_if::cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                let mut rng = rand::rngs::EntropyRng::new();
+            } else {
+                let mut rng = rand::rngs::OsRng::new().map_err(|e| HdWrapError::HDError(e.into()))?;
+            }
+        }
+
         let mnemonic = Mnemonic::generate_in_with(&mut rng, Language::English, word_count.into())
             .map_err(|e| HdWrapError::HDError(e.into()))?;
         let seed = mnemonic.to_seed_normalized(password.expose_secret());
