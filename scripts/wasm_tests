@@ -1,0 +1,11 @@
+# pip install pystarport
+# pip install supervisor
+tmpdir=$(mktemp -d -t chainmain)
+echo $tmpdir
+scripts/start-chainmain scripts/chainmain-devnet.yaml .env $tmpdir --base_port 26800 &
+sleep 5
+pid=$(cat $tmpdir/supervisord.pid)
+echo "supervisord PID:" $pid
+cd bindings/wasm/
+wasm-pack test --chrome --headless
+kill -s QUIT $pid

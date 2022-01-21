@@ -1,7 +1,7 @@
 name: Bindings
 on:
   push:
-    branches: 
+    branches:
       - main
     paths-ignore:
       - README.md
@@ -21,3 +21,4 @@ jobs:
       - run: wasm-pack build --scope crypto-com bindings/wasm
       - run: uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language kotlin --out-dir bindings/android
       - run: uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language swift --out-dir bindings/ios
+      - run: make wasm_tests

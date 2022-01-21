@@ -1,7 +1,7 @@
 
 cpp_example = ./example/cpp-example
 
-.PHONY: wasm android ios test clean cleanall mac_install cpp run-integration-tests lint-fix lint-py
+.PHONY: wasm android ios test clean cleanall mac_install cpp run-integration-tests lint-fix lint-py wasm_tests
 
 wasm:
 	wasm-pack build --scope crypto-com bindings/wasm
@@ -45,6 +45,8 @@ proto:
 run-integration-tests:
 	@nix-shell ./integration_tests/shell.nix --run ./scripts/run-integration-tests
 
+wasm_tests:
+	./scripts/wasm_tests
 
 lint-py:
 	flake8 --show-source --count --statistics \
