@@ -205,6 +205,10 @@ namespace common {
   sequence<u8> get_single_msg_sign_payload(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg, PublicKeyBytesWrapper sender_pubkey);
   [Throws=ErrorWrapper]
   sequence<u8> build_signed_single_msg_tx(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg, SecretKey secret_key);
+  [Throws=ErrorWrapper]
+  sequence<u8> get_msg_sign_payload(CosmosSDKTxInfo tx_info, sequence<CosmosSDKMsg> msgs, PublicKeyBytesWrapper sender_pubkey);
+  [Throws=ErrorWrapper]
+  sequence<u8> build_signed_msg_tx(CosmosSDKTxInfo tx_info, sequence<CosmosSDKMsg> msgs, SecretKey secret_key);
   [Throws=RestError]
   RawRpcAccountResponse get_account_details_blocking([ByRef] string api_url, [ByRef] string address);
   [Throws=RestError]
