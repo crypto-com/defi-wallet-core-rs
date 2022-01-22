@@ -98,9 +98,10 @@ impl HDWallet {
     /// generates the HD wallet with a BIP39 backup phrase (English words)
     pub fn generate_wallet(
         password: Option<String>,
-        word_count: MnemonicWordCount,
+        word_count: Option<MnemonicWordCount>,
     ) -> Result<Self, HdWrapError> {
         let pass = SecretString::new(password.unwrap_or_default());
+        let word_count = word_count.unwrap_or_else(|| MnemonicWordCount::TwentyFour);
         HDWallet::generate_english(pass, word_count)
     }
 
@@ -224,6 +225,49 @@ impl Default for SecretKey {
 #[cfg(test)]
 mod tests {
     use crate::*;
+
+    #[test]
+    fn test_generate_24_word_mnemonic_wallet_as_default() {
+        let wallet = HDWallet::generate_wallet(None, None).expect("Failed to generate wallet");
+        let mnemonic_phrase = wallet
+            .get_backup_mnemonic_phrase()
+            .expect("Failed to get backup mnemonic phrase");
+        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
+        assert_eq!(words.len(), 24);
+    }
+
+    #[test]
+    fn test_generate_wallet_for_12_word_mnemonic() {
+        let wallet = HDWallet::generate_wallet(None, Some(MnemonicWordCount::Twelve))
+            .expect("Failed to generate wallet");
+        let mnemonic_phrase = wallet
+            .get_backup_mnemonic_phrase()
+            .expect("Failed to get backup mnemonic phrase");
+        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
+        assert_eq!(words.len(), 12);
+    }
+
+    #[test]
+    fn test_generate_wallet_for_18_word_mnemonic() {
+        let wallet = HDWallet::generate_wallet(None, Some(MnemonicWordCount::Eighteen))
+            .expect("Failed to generate wallet");
+        let mnemonic_phrase = wallet
+            .get_backup_mnemonic_phrase()
+            .expect("Failed to get backup mnemonic phrase");
+        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
+        assert_eq!(words.len(), 18);
+    }
+
+    #[test]
+    fn test_generate_wallet_for_24_word_mnemonic() {
+        let wallet = HDWallet::generate_wallet(None, Some(MnemonicWordCount::TwentyFour))
+            .expect("Failed to generate wallet");
+        let mnemonic_phrase = wallet
+            .get_backup_mnemonic_phrase()
+            .expect("Failed to get backup mnemonic phrase");
+        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
+        assert_eq!(words.len(), 24);
+    }
 
     #[test]
     fn test_wallet_recovered_from_12_word_mnemonic() {
