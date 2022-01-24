@@ -13,6 +13,9 @@ jobs:
       - uses: actions/checkout@v2
       - run: |
           export JAVA_HOME=$JAVA_HOME_8_X64
-          $ANDROID_SDK_ROOT/tools/android list target
-          $ANDROID_SDK_ROOT/tools/android create avd -n testdev -k "1"
-          $ANDROID_SDK_ROOT/tools/emulator @testdev 
+          $ANDROID_SDK_ROOT/tools/bin/sdkmanager --list
+          $ANDROID_SDK_ROOT/tools/bin/sdkmanager platform 30
+          $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-30;google_apis;x86_64"
+          $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-30;google_apis;x86_64" --device "Pixel_4"
+          $ANDROID_SDK_ROOT/tools/emulator -list -avds
+          $ANDROID_SDK_ROOT/tools/emulator @testavd 
