@@ -13,5 +13,5 @@ jobs:
       - uses: actions/checkout@v2
       - run: |
           export JAVA_HOME=$JAVA_HOME_8_X64
-          $ANDROID_SDK_ROOT/tools/android create avd -n testdev -k "system-images;android-30;default;x86_64"
-          $ANDROID_SDK_ROOT/tools/emulator @testdev &
+          $ANDROID_SDK_ROOT/tools/android create avd -n testdev -k "1"
+          $ANDROID_SDK_ROOT/tools/emulator @testdev 
