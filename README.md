@@ -48,7 +48,7 @@ requires android sdk and ndk, java sdk
 
 install android ndk: https://developer.android.com/ndk
 
-suggest version r22 https://developer.android.google.cn/ndk/downloads/older_releases.html
+suggest version r22 https://github.com/android/ndk/wiki/Unsupported-Downloads
 
 android studio: https://developer.android.com/studio
 
@@ -71,7 +71,7 @@ make android
 
 build in macos
 
-requires xcode
+Requires Xcode 13+
 
 build:
 ```bash
