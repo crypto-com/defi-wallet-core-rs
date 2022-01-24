@@ -101,7 +101,7 @@ impl HDWallet {
         word_count: Option<MnemonicWordCount>,
     ) -> Result<Self, HdWrapError> {
         let pass = SecretString::new(password.unwrap_or_default());
-        let word_count = word_count.unwrap_or_else(|| MnemonicWordCount::TwentyFour);
+        let word_count = word_count.unwrap_or(MnemonicWordCount::TwentyFour);
         HDWallet::generate_english(pass, word_count)
     }
 
