@@ -16,4 +16,4 @@ jobs:
           $ANDROID_SDK_ROOT/tools/bin/sdkmanager --list
           echo y | $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-31;google_apis;x86_64"
           echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-31;google_apis;x86_64"
-          $ANDROID_SDK_ROOT/tools/emulator @testavd 
+          $ANDROID_SDK_ROOT/tools/emulator @testavd &
