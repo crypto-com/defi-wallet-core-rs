@@ -15,6 +15,6 @@ jobs:
           export JAVA_HOME=$JAVA_HOME_8_X64
           $ANDROID_SDK_ROOT/tools/bin/sdkmanager --list
           echo y | $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-31;google_apis;x86_64"
-          echo | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-31;google_apis;x86_64" --device "Pixel_4"
+          echo | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-31;google_apis;x86_64"
           $ANDROID_SDK_ROOT/tools/emulator -list -avds
           $ANDROID_SDK_ROOT/tools/emulator @testavd 
