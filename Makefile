@@ -43,7 +43,7 @@ proto:
 	cd proto-build && cargo run
 
 run-integration-tests:
-	@nix-shell ./integration_tests/shell.nix --run scripts/start-chainmain scripts/chainmain-devnet.yaml .env $tmpdir --base_port 26800 &
+	@nix-shell ./integration_tests/shell.nix --run scripts/run-integration-tests
 
 
 wasm-ci-tests:
@@ -51,7 +51,7 @@ wasm-ci-tests:
 	sleep 5
 	cd bindings/wasm/ && wasm-pack test --chrome --headless
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
-	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl kill"
+	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
 
 wasm-tests:
 	./scripts/wasm-tests
