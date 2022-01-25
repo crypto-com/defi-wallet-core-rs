@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          brew install binutils
-          export PATH=/usr/local/opt/binutils/bin:$PATH
-          readelf -v
+          command -v uniffi-bindgen || cargo install uniffi_bindgen
+          uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language kotlin --out-dir bindings/android
+          cat bindings/android/com/defi/wallet/core/common/common.kt
 
