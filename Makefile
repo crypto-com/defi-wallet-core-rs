@@ -1,7 +1,7 @@
 
 cpp_example = ./example/cpp-example
 
-.PHONY: wasm android ios test clean cleanall mac_install cpp run-integration-tests lint-fix lint-py wasm_tests
+.PHONY: wasm android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests
 
 wasm:
 	wasm-pack build --scope crypto-com bindings/wasm
@@ -42,9 +42,8 @@ cpp:
 proto:
 	cd proto-build && cargo run
 
-run-integration-tests:
-	@nix-shell ./integration_tests/shell.nix --run scripts/run-integration-tests
-
+python-tests:
+	@nix-shell ./integration_tests/shell.nix --run scripts/python-tests
 
 wasm-ci-tests:
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
