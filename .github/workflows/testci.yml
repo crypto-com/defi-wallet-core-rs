@@ -12,8 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          export JAVA_HOME=$JAVA_HOME_8_X64
-          $ANDROID_SDK_ROOT/tools/bin/sdkmanager --list
-          echo y | $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-31;google_apis;x86_64"
-          echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-31;google_apis;x86_64"
-          $ANDROID_SDK_ROOT/tools/emulator @testavd &
+          command -v uniffi-bindgen || cargo install uniffi_bindgen
+          uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language kotlin --out-dir bindings/android
+          cat bindings/android/com/defi/wallet/core/common/common.kt
