@@ -15,3 +15,4 @@ jobs:
           command -v uniffi-bindgen || cargo install uniffi_bindgen
           uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language kotlin --out-dir bindings/android
           cat bindings/android/com/defi/wallet/core/common/common.kt
+          brew install binutils
