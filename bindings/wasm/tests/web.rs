@@ -92,7 +92,7 @@ async fn test_query_account_balance() {
         "http://127.0.0.1:26804".to_owned(),
         "cro1u08u5dvtnpmlpdq333uj9tcj75yceggszxpnsy".to_owned(),
         "basecro".to_owned(),
-        0,
+        1,
     )
     .await
     .unwrap();
@@ -155,7 +155,7 @@ async fn test_get_single_bank_send_signed_tx() {
                 "http://127.0.0.1:26804".to_owned(),
                 "cro1apdh4yc2lnpephevc6lmpvkyv6s5cjh652n6e4".to_owned(),
                 "basecro".to_owned(),
-                0,
+                1,
             )
             .await
             .unwrap();

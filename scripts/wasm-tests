@@ -1,0 +1,28 @@
+# !! This script must run in project root folder (same path as MakeFile) !!
+# Requirements: pystarport, supervisor, chain-maind, cronosd
+
+cd scripts
+
+script_dir=$(pwd)
+
+# Stop chainmain
+./chainmain-ctl stop
+
+# Clear chainmain
+./chainmain-ctl clear
+
+# Start chainmain
+./chainmain-ctl start
+
+# Do wasm tests
+sleep 5
+cd ../bindings/wasm/
+wasm-pack test --chrome --headless
+
+cd $script_dir
+
+# Stop chainmain
+./chainmain-ctl stop
+
+# Clear chainmain
+./chainmain-ctl clear

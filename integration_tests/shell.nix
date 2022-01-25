@@ -7,6 +7,7 @@ mkShell {
     pkgs.pystarport
     pkgs.poetry
     pkgs.test-env
+    pkgs.python39Packages.supervisor
     (import ../nix/testenv.nix { inherit pkgs; })
     (import ../nix/chainmain.nix { inherit pkgs; })
     (import ../nix/cronos.nix { inherit pkgs; })
