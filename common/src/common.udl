@@ -40,7 +40,7 @@ interface HDWallet {
     constructor(string mnemonic_phrase, string? password);
 
     [Throws=HdWrapError,Name=generate_wallet]
-    constructor(string? password, optional MnemonicWordCount word_count = "TwentyFour");
+    constructor(string? password, MnemonicWordCount? word_count);
 
     string? get_backup_mnemonic_phrase();
 

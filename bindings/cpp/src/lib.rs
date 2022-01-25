@@ -321,7 +321,7 @@ pub struct Wallet {
 }
 
 fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wallet>> {
-    let wallet = HDWallet::generate_wallet(Some(password), word_count.into())?;
+    let wallet = HDWallet::generate_wallet(Some(password), Some(word_count.into()))?;
     Ok(Box::new(Wallet { wallet }))
 }
 
