@@ -115,7 +115,7 @@ dictionary RawRpcPubKey {
 dictionary RawRpcAccountStatus {
     string account_type;
     string address;
-    RawRpcPubKey pub_key;
+    RawRpcPubKey? pub_key;
     u64 account_number;
     u64 sequence;
 };
