@@ -6,6 +6,7 @@ use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use cosmrs::bip32::{self, DerivationPath, PrivateKey, Seed, XPrv};
 use cosmrs::crypto::PublicKey;
 use ethers::prelude::{LocalWallet, Signature, Signer};
+use ethers::utils::hex;
 use ethers::utils::hex::ToHex;
 use ethers::utils::secret_key_to_address;
 use rand_core::OsRng;
@@ -98,9 +99,10 @@ impl HDWallet {
     /// generates the HD wallet with a BIP39 backup phrase (English words)
     pub fn generate_wallet(
         password: Option<String>,
-        word_count: MnemonicWordCount,
+        word_count: Option<MnemonicWordCount>,
     ) -> Result<Self, HdWrapError> {
         let pass = SecretString::new(password.unwrap_or_default());
+        let word_count = word_count.unwrap_or(MnemonicWordCount::TwentyFour);
         HDWallet::generate_english(pass, word_count)
     }
 
@@ -213,6 +215,16 @@ impl SecretKey {
         let signature = wallet.sign_hash(hash, false);
         Ok(signature)
     }
+
+    /// Convert private key to byte array
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.get_signing_key().to_bytes().to_vec()
+    }
+
+    /// Convert the private key to a hex string without the 0x prefix
+    pub fn to_hex(&self) -> String {
+        hex::encode(self.get_signing_key().to_bytes())
+    }
 }
 
 impl Default for SecretKey {
@@ -224,6 +236,49 @@ impl Default for SecretKey {
 #[cfg(test)]
 mod tests {
     use crate::*;
+
+    #[test]
+    fn test_generate_24_word_mnemonic_wallet_as_default() {
+        let wallet = HDWallet::generate_wallet(None, None).expect("Failed to generate wallet");
+        let mnemonic_phrase = wallet
+            .get_backup_mnemonic_phrase()
+            .expect("Failed to get backup mnemonic phrase");
+        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
+        assert_eq!(words.len(), 24);
+    }
+
+    #[test]
+    fn test_generate_wallet_for_12_word_mnemonic() {
+        let wallet = HDWallet::generate_wallet(None, Some(MnemonicWordCount::Twelve))
+            .expect("Failed to generate wallet");
+        let mnemonic_phrase = wallet
+            .get_backup_mnemonic_phrase()
+            .expect("Failed to get backup mnemonic phrase");
+        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
+        assert_eq!(words.len(), 12);
+    }
+
+    #[test]
+    fn test_generate_wallet_for_18_word_mnemonic() {
+        let wallet = HDWallet::generate_wallet(None, Some(MnemonicWordCount::Eighteen))
+            .expect("Failed to generate wallet");
+        let mnemonic_phrase = wallet
+            .get_backup_mnemonic_phrase()
+            .expect("Failed to get backup mnemonic phrase");
+        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
+        assert_eq!(words.len(), 18);
+    }
+
+    #[test]
+    fn test_generate_wallet_for_24_word_mnemonic() {
+        let wallet = HDWallet::generate_wallet(None, Some(MnemonicWordCount::TwentyFour))
+            .expect("Failed to generate wallet");
+        let mnemonic_phrase = wallet
+            .get_backup_mnemonic_phrase()
+            .expect("Failed to get backup mnemonic phrase");
+        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
+        assert_eq!(words.len(), 24);
+    }
 
     #[test]
     fn test_wallet_recovered_from_12_word_mnemonic() {

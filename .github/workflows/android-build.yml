@@ -11,6 +11,12 @@ jobs:
     runs-on: macos-11
     steps:
       - uses: actions/checkout@v2
+      - run: |
+          export JAVA_HOME=$JAVA_HOME_8_X64
+          $ANDROID_SDK_ROOT/tools/bin/sdkmanager --list
+          echo y | $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-30;google_apis;x86_64"
+          echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-30;google_apis;x86_64"
+          $ANDROID_SDK_ROOT/tools/emulator @testavd &
       - name: NDK cache
         uses: actions/cache@v2
         with:
@@ -35,7 +41,7 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen
+      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen --version 0.15.2
       - run: |
           export NDK_HOME=$ANDROID_NDK_ROOT
           export JAVA_HOME=$JAVA_HOME_11_X64

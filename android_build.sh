@@ -117,6 +117,7 @@ cp NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG/libcrypto.so mobile_modules/an
 
 cd mobile_modules/android_module || exit 1
 ./gradlew build || exit 1
+./gradlew dwclib:connectedAndroidTest || exit 1
 cd -
 cp mobile_modules/android_module/dwclib/build/outputs/aar/dwclib-release.aar NDK/libs/dwclib.aar || exit 1
 mkdir -p example/android_example/app/libs

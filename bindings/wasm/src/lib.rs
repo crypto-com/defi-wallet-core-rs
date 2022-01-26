@@ -92,8 +92,11 @@ impl From<MnemonicWordCount> for defi_wallet_core_common::MnemonicWordCount {
 impl Wallet {
     /// generate a random wallet (with an optional password)
     #[wasm_bindgen(constructor)]
-    pub fn new(password: Option<String>, word_count: MnemonicWordCount) -> Result<Wallet, JsValue> {
-        let wallet = HDWallet::generate_wallet(password, word_count.into())
+    pub fn new(
+        password: Option<String>,
+        word_count: Option<MnemonicWordCount>,
+    ) -> Result<Wallet, JsValue> {
+        let wallet = HDWallet::generate_wallet(password, word_count.map(|val| val.into()))
             .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
         Ok(Self { wallet })
     }
@@ -380,6 +383,58 @@ pub fn get_nft_burn_signed_tx(
     build_signed_single_msg_tx(
         tx_info.into(),
         CosmosSDKMsg::NftBurn { id, denom_id },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+/// creates the signed transaction
+/// for `StakingDelegate` from the Chainmain staking module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+#[wasm_bindgen]
+pub fn get_staking_delegate_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    validator_address: String,
+    amount: u64,
+    denom: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::StakingDelegate {
+            validator_address,
+            amount: SingleCoin::Other {
+                amount: format!("{}", amount),
+                denom,
+            },
+        },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+/// creates the signed transaction
+/// for `StakingUndelegate` from the Chainmain staking module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+#[wasm_bindgen]
+pub fn get_staking_undelegate_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    validator_address: String,
+    amount: u64,
+    denom: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::StakingUndelegate {
+            validator_address,
+            amount: SingleCoin::Other {
+                amount: format!("{}", amount),
+                denom,
+            },
+        },
         private_key.key,
     )
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))

@@ -32,12 +32,20 @@ mac_install:
 
 cpp:
 	cargo build --release
-	cargo build
 	cp ./target/release/libdefi_wallet_core_cpp.a $(cpp_example)
 	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
 	cd $(cpp_example) && make
+
+cppx86_64:
+	cargo build --release --target x86_64-apple-darwin 
+	cp ./target/x86_64-apple-darwin/release/libdefi_wallet_core_cpp.a $(cpp_example)
+	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
+	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
+	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
+	cd $(cpp_example) && make x86_64
+
 
 proto:
 	cd proto-build && cargo run

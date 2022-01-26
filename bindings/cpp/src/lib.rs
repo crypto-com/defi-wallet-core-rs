@@ -70,6 +70,22 @@ pub enum CosmosSDKMsgRaw {
         /// The Denom ID of the Token.
         denom_id: String,
     },
+    /// MsgDelegate
+    StakingDelegate {
+        /// validator address in bech32
+        validator_address: String,
+        /// amount to delegate
+        amount: u64,
+        denom: String,
+    },
+    /// MsgUndelegate
+    StakingUndelegate {
+        /// validator address in bech32
+        validator_address: String,
+        /// amount to undelegate
+        amount: u64,
+        denom: String,
+    },
 }
 
 impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
@@ -131,6 +147,28 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
             CosmosSDKMsgRaw::NftBurn { id, denom_id } => CosmosSDKMsg::NftBurn {
                 id: id.to_owned(),
                 denom_id: denom_id.to_owned(),
+            },
+            CosmosSDKMsgRaw::StakingDelegate {
+                validator_address,
+                amount,
+                denom,
+            } => CosmosSDKMsg::StakingDelegate {
+                validator_address: validator_address.to_owned(),
+                amount: SingleCoin::Other {
+                    amount: format!("{}", amount),
+                    denom: denom.to_owned(),
+                },
+            },
+            CosmosSDKMsgRaw::StakingUndelegate {
+                validator_address,
+                amount,
+                denom,
+            } => CosmosSDKMsg::StakingUndelegate {
+                validator_address: validator_address.to_owned(),
+                amount: SingleCoin::Other {
+                    amount: format!("{}", amount),
+                    denom: denom.to_owned(),
+                },
             },
         }
     }
@@ -321,7 +359,7 @@ pub struct Wallet {
 }
 
 fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wallet>> {
-    let wallet = HDWallet::generate_wallet(Some(password), word_count.into())?;
+    let wallet = HDWallet::generate_wallet(Some(password), Some(word_count.into()))?;
     Ok(Box::new(Wallet { wallet }))
 }
 
@@ -522,6 +560,54 @@ fn get_nft_burn_signed_tx(
     let ret = build_signed_single_msg_tx(
         tx_info.into(),
         CosmosSDKMsg::NftBurn { id, denom_id },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+
+/// creates the signed transaction
+/// for `MsgDelegate` from the Cosmos SDK staking module
+pub fn get_staking_delegate_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    validator_address: String,
+    amount: u64,
+    denom: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::StakingDelegate {
+            validator_address,
+            amount: SingleCoin::Other {
+                amount: format!("{}", amount),
+                denom,
+            },
+        },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+
+/// creates the signed transaction
+/// for `MsgUndelegate` from the Cosmos SDK staking module
+pub fn get_staking_undelegate_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    validator_address: String,
+    amount: u64,
+    denom: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::StakingUndelegate {
+            validator_address,
+            amount: SingleCoin::Other {
+                amount: format!("{}", amount),
+                denom,
+            },
+        },
         private_key.key.clone(),
     )?;
 
