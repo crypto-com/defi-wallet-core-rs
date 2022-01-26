@@ -69,15 +69,22 @@ make ios
 ## Integration Tests
 ### WASM
 #### Without nix
+Please install `pystarport`, `supervisord`, `chain-maind v3.3.3` or newer before running this test.
+
 ``` bash
 make wasm-tests
 ```
 #### With nix
+Please install `nix` before running this test.
+
 ``` bash
 make wasm-ci-tests
 ```
 
 ### Python
+#### With nix
+Please install `nix` before running this test.
+
 ``` bash
 make python-tests
 ```
