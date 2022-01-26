@@ -41,7 +41,7 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen
+      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen --version 0.15.2
       - run: |
           export NDK_HOME=$ANDROID_NDK_ROOT
           export JAVA_HOME=$JAVA_HOME_11_X64
