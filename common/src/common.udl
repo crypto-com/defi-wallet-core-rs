@@ -28,6 +28,8 @@ enum HdWrapError {
 
 interface SecretKey {
     constructor();
+    sequence<u8> to_bytes();
+    string to_hex();
 };
 
 interface HDWallet {
