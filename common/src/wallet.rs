@@ -216,10 +216,12 @@ impl SecretKey {
         Ok(signature)
     }
 
+    /// Convert private key to byte array
     pub fn to_bytes(&self) -> Vec<u8> {
         self.get_signing_key().to_bytes().to_vec()
     }
 
+    /// Convert the private key to a hex string without the 0x prefix
     pub fn to_hex(&self) -> String {
         hex::encode(self.get_signing_key().to_bytes())
     }
