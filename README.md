@@ -65,3 +65,19 @@ make ios
 2. `cd example/js-example`
 3. `npm install`
 4. `npm start`
+
+## Integration Tests
+### WASM
+#### Without nix
+``` bash
+make wasm-tests
+```
+#### With nix
+``` bash
+make wasm-ci-tests
+```
+
+### Python
+``` bash
+make python-tests
+```
