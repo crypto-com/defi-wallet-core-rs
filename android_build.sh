@@ -115,10 +115,6 @@ cp bindings/android/com/defi/wallet/core/common/common.kt mobile_modules/android
 cp NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG/libssl.so mobile_modules/android_module/dwclib/src/main/jniLibs/x86_64/ || exit 1
 cp NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG/libcrypto.so mobile_modules/android_module/dwclib/src/main/jniLibs/x86_64/ || exit 1
 
-brew install binutils
-export PATH=/usr/local/opt/binutils/bin:$PATH
-readelf -a mobile_modules/android_module/dwclib/src/main/jniLibs/x86_64/libdwc-common.so | grep ffi_common_
-
 cd mobile_modules/android_module || exit 1
 ./gradlew build || exit 1
 ./gradlew dwclib:connectedAndroidTest || exit 1

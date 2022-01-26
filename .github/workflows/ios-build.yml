@@ -20,6 +20,6 @@ jobs:
             target/
             mobile_modules/ios_module/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-ios-${{ hashFiles('ios_build.sh') }}
-      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen
+      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen --version 0.15.2
       - run: |
           make ios
