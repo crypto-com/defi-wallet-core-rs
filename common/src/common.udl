@@ -86,6 +86,8 @@ interface CosmosSDKMsg {
   NftEdit(string id, string denom_id, string name, string uri, string data);
   NftTransfer(string id, string denom_id, string recipient);
   NftBurn(string id, string denom_id);
+  StakingDelegate(string validator_address, SingleCoin amount);
+  StakingUndelegate(string validator_address, SingleCoin amount);
 };
 
 [Error]

@@ -6,6 +6,7 @@ use cosmrs::{
     bank::MsgSend,
     bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
     crypto::{self, secp256k1::VerifyingKey},
+    staking::{MsgDelegate, MsgUndelegate},
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
 };
 use eyre::{eyre, Context};
@@ -281,6 +282,20 @@ pub enum CosmosSDKMsg {
         /// The Denom ID of the Token.
         denom_id: String,
     },
+    /// MsgDelegate
+    StakingDelegate {
+        /// validator address in bech32
+        validator_address: String,
+        /// amount to delegate
+        amount: SingleCoin,
+    },
+    /// MsgUndelegate
+    StakingUndelegate {
+        /// validator address in bech32
+        validator_address: String,
+        /// amount to undelegate
+        amount: SingleCoin,
+    },
 }
 
 impl CosmosSDKMsg {
@@ -366,6 +381,35 @@ impl CosmosSDKMsg {
                     sender: sender_address,
                 };
                 msg_send.to_any()
+            }
+            CosmosSDKMsg::StakingDelegate {
+                validator_address,
+                amount,
+            } => {
+                let validator_address = validator_address.parse::<AccountId>()?;
+                let amount: Coin = amount.try_into()?;
+
+                let msg = MsgDelegate {
+                    delegator_address: sender_address,
+                    validator_address,
+                    amount,
+                };
+                msg.to_any()
+            }
+            CosmosSDKMsg::StakingUndelegate {
+                validator_address,
+                amount,
+            } => {
+                let validator_address = validator_address.parse::<AccountId>()?;
+                let amount: Coin = amount.try_into()?;
+
+                let msg = MsgUndelegate {
+                    delegator_address: sender_address,
+                    validator_address,
+                    /// FIXME: amount should not support value of None
+                    amount: Some(amount),
+                };
+                msg.to_any()
             }
         }
     }
@@ -518,7 +562,7 @@ mod tests {
 
     use crate::*;
     use cosmrs::crypto::secp256k1::SigningKey;
-    use cosmrs::proto::{self};
+    use cosmrs::proto;
     use prost::Message;
 
     const TX_INFO: CosmosSDKTxInfo = CosmosSDKTxInfo {
