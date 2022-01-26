@@ -377,6 +377,58 @@ pub fn get_nft_burn_signed_tx(
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }
 
+/// creates the signed transaction
+/// for `StakingDelegate` from the Chainmain staking module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+#[wasm_bindgen]
+pub fn get_staking_delegate_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    validator_address: String,
+    amount: u64,
+    denom: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::StakingDelegate {
+            validator_address,
+            amount: SingleCoin::Other {
+                amount: format!("{}", amount),
+                denom,
+            },
+        },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+/// creates the signed transaction
+/// for `StakingUndelegate` from the Chainmain staking module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+#[wasm_bindgen]
+pub fn get_staking_undelegate_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    validator_address: String,
+    amount: u64,
+    denom: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::StakingUndelegate {
+            validator_address,
+            amount: SingleCoin::Other {
+                amount: format!("{}", amount),
+                denom,
+            },
+        },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
 /// retrieves the account details (e.g. sequence and account number) for a given address
 /// TODO: switch to grpc-web
 #[wasm_bindgen]
