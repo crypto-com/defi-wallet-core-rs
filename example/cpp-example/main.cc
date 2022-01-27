@@ -21,6 +21,8 @@ string getEnv(string key) {
   string ret;
   if (getenv(key.c_str()) != nullptr) {
     ret = getenv(key.c_str());
+  } else {
+      throw std::runtime_error(string("Missing env-").append(key.c_str()));
   }
   return ret;
 }
