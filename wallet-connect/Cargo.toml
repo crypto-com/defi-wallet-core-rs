@@ -1,0 +1,36 @@
+[package]
+name = "defi-wallet-connect"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aes = "0.7"
+async-trait = { version = "0.1", default-features = false }
+block-modes = "0.8"
+dashmap = "5"
+ethers = "0.6"
+eyre = "0.6"
+futures = "0.3"
+hmac = "0.12"
+qrcodegen = "1"
+rand = "0.8"
+secrecy = "0.8"
+serde = "1"
+serde_json = "1"
+sha2 = "0.10"
+subtle = "2"
+thiserror = "1"
+url = { version = "2", features = ["serde"] }
+zeroize = "1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio-tungstenite = { version = "0.16", features = ["native-tls"] }
+tokio = { version = "1", features = ["rt", "macros"] }
+uuid = { version = "0.8", features = ["serde", "v4"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+uuid = { version = "0.8", features = ["serde", "v4", "wasm-bindgen"] }
+ws_stream_wasm = { version = "0.7" }
+
+[[example]]
+name = "web3"

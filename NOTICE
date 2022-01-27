@@ -1,0 +1,14 @@
+DeFi Wallet Core
+Copyright 2022, Foris Limited ("Crypto.com"). 
+
+This project contains portions of code derived from the following libraries:
+
+* WalletConnect Rust Client
+ * Copyright: Copyright (c) 2020 Nicholas Rodrigues Lordello
+ * License: Apache License 2.0
+ * Repository: https://github.com/nlordell/walletconnect-rs
+
+* cross-websocket
+ * Copyright: Copyright (c) 2021 HIHAHEHO Studio
+ * License: Apache License 2.0
+ * Repository: https://github.com/Hihaheho/Desk/tree/main/crates/libs/cross-websocket
