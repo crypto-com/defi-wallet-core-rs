@@ -101,6 +101,17 @@ impl Wallet {
         Ok(Self { wallet })
     }
 
+    /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and an optional password
+    #[wasm_bindgen]
+    pub fn recover_wallet(
+        mnemonic_phase: String,
+        password: Option<String>,
+    ) -> Result<Wallet, JsValue> {
+        let wallet = HDWallet::recover_wallet(mnemonic_phase, password)
+            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        Ok(Self { wallet })
+    }
+
     /// return the default address for a given coin type
     #[wasm_bindgen]
     pub fn get_default_address(&self, coin: CoinType) -> Result<String, JsValue> {
@@ -476,7 +487,7 @@ pub async fn broadcast_tx(
         .await
         .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?
         .into_result()
-        .map_err(|e| JsValue::from_str(&format!("missing_resulgt: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("missing_result: {}", e)))?;
 
     Ok(JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
 }

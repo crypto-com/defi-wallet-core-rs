@@ -43,8 +43,13 @@ docs/book
 
 # Generated rustdocs
 docs/rust-docs
+
+# Generated cxx files
 example/cpp-example/cppexample
 example/cpp-example/cxx.h
 example/cpp-example/lib.rs.cc
 example/cpp-example/lib.rs.h
 example/cpp-example/libdefi_wallet_core_cpp.a
+
+# python stuff
+__pycache__

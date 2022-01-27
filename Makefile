@@ -1,7 +1,7 @@
 
 cpp_example = ./example/cpp-example
 
-.PHONY: wasm android ios test clean cleanall mac_install cpp
+.PHONY: wasm android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests
 
 wasm:
 	wasm-pack build --scope crypto-com bindings/wasm
@@ -49,3 +49,23 @@ cppx86_64:
 
 proto:
 	cd proto-build && cargo run
+
+python-tests:
+	@nix-shell ./integration_tests/shell.nix --run scripts/python-tests
+
+wasm-ci-tests:
+	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
+	sleep 5
+	cd bindings/wasm/ && wasm-pack test --chrome --headless
+	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
+	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
+
+wasm-tests:
+	./scripts/wasm-tests
+
+lint-py:
+	flake8 --show-source --count --statistics \
+          --format="::error file=%(path)s,line=%(row)d,col=%(col)d::%(path)s:%(row)d:%(col)d: %(code)s %(text)s" \
+
+lint-nix:
+	find . -name "*.nix" ! -path './example/*' | xargs nixpkgs-fmt --check

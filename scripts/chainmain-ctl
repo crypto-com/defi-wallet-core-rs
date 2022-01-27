@@ -1,0 +1,95 @@
+# !! This script can be run in current path (scripts folder) or root folder (same as MakeFile)
+start_script=$(
+            if [ -f "./start-chainmain" ]; then
+               echo "./start-chainmain"
+            else
+                if [ -f "./scripts/start-chainmain" ]; then
+                   echo "./scripts/start-chainmain"
+                fi
+            fi
+)
+
+config_file=$(
+            if [ -f "./chainmain-devnet.yaml" ]; then
+               echo "./chainmain-devnet.yaml"
+            else
+                if [ -f "./scripts/chainmain-devnet.yaml" ]; then
+                   echo "./scripts/chainmain-devnet.yaml"
+                fi
+            fi
+)
+
+
+case $1 in
+    start)
+        if [ -f /tmp/current_chainmain_working_path ]; then
+            tmpdir=$(cat /tmp/current_chainmain_working_path)
+            echo "chainmain's working directory: " $tmpdir
+            taskfile=$tmpdir/tasks.ini
+            if [ -f "$taskfile" ]; then
+                echo "Restart chainmain..."
+                supervisord -c $taskfile &
+            else
+                echo "$taskfile does not exist"
+            fi
+        else
+            echo "Starting chainmain..."
+            tmpdir=$(mktemp -d -t chainmain-XXXXXXXXXX)
+            echo "chainmain's working directory: " $tmpdir
+            echo $tmpdir > /tmp/current_chainmain_working_path
+            if [ -f "$start_script" ]; then
+               $start_script $config_file .env $tmpdir --base_port 26800 &
+            else
+               echo "No start-chainmain script is found."
+            fi
+        fi
+        ;;
+    stop)
+        echo "Stopping chainmain..."
+        if [ -f /tmp/current_chainmain_working_path ]; then
+            tmpdir=$(cat /tmp/current_chainmain_working_path)
+            echo "chainmain's working directory: " $tmpdir
+            pidfile=$tmpdir/supervisord.pid
+            # sleep 5
+            if [ -f "$pidfile" ]; then
+                pid=$(cat $tmpdir/supervisord.pid)
+                echo "chainmain PID:" $pid
+                kill -s QUIT $pid
+            else
+                echo "$pidfile does not exist"
+            fi
+        else
+            echo "/tmp/current_chainmain_working_path does not exist"
+        fi
+
+        ;;
+    status)
+        echo "checking chainmain..."
+        if [ -f /tmp/current_chainmain_working_path ]; then
+            tmpdir=$(cat /tmp/current_chainmain_working_path)
+            echo "chainmain's working directory: " $tmpdir
+            pidfile=$tmpdir/supervisord.pid
+            if [ -f "$pidfile" ]; then
+                pid=$(cat $tmpdir/supervisord.pid)
+                echo "chainmain PID:" $pid
+            else
+                echo "$pidfile does not exist"
+            fi
+        else
+            echo "/tmp/current_chainmain_working_path does not exist"
+        fi
+        ;;
+
+    clear)
+        echo "clearing chainmain..."
+        if [ -f /tmp/current_chainmain_working_path ]; then
+            tmpdir=$(cat /tmp/current_chainmain_working_path)
+            echo "Removing directory: " $tmpdir
+            rm -rf $tmpdir
+            echo "Removing /tmp/current_chainmain_working_path file"
+            rm /tmp/current_chainmain_working_path
+        else
+            echo "/tmp/current_chainmain_working_path does not exist"
+        fi
+        ;;
+esac
