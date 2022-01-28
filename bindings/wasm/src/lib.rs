@@ -489,6 +489,12 @@ pub async fn broadcast_tx(
         .into_result()
         .map_err(|e| JsValue::from_str(&format!("missing_result: {}", e)))?;
 
+    if let tendermint::abci::Code::Err(_) = resp.code {
+        return Err(
+            JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?
+        );
+    }
+
     Ok(JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
 }
 

@@ -866,6 +866,7 @@ dependencies = [
  "console_error_panic_hook",
  "defi-wallet-core-common",
  "ethers",
+ "tendermint",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
