@@ -592,7 +592,7 @@ pub fn get_staking_delegate_signed_tx(
 
 /// creates the signed transaction
 /// for `MsgUndelegate` from the Cosmos SDK staking module
-pub fn get_staking_undelegate_signed_tx(
+pub fn get_staking_unbond_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
     validator_address: String,
