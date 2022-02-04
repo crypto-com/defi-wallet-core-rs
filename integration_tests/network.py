@@ -26,7 +26,11 @@ class Chain:
         return "tcp://127.0.0.1:%d" % ports.rpc_port(self.base_port(i))
 
     def cosmos_cli(self, i=0):
-        return CosmosCLI(self.base_dir / f"node{i}", self.node_rpc(i), self.cmd)
+        return CosmosCLI(
+            self.base_dir / f"node{i}",
+            self.node_rpc(i),
+            cmd=self.cmd,
+        )
 
 
 class Cronos(Chain):
