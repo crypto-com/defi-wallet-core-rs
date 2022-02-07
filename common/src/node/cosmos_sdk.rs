@@ -1,20 +1,8 @@
+use super::error::RestError;
 #[cfg(not(target_arch = "wasm32"))]
 use cosmos_sdk_proto::cosmos::tx::v1beta1::{service_client::ServiceClient, SimulateRequest};
 use serde::{Deserialize, Serialize};
 use tendermint_rpc::{endpoint::broadcast::tx_sync, request, response};
-
-/// wrapper around API errors
-#[derive(Debug, thiserror::Error)]
-pub enum RestError {
-    #[error("HTTP request error: {0}")]
-    RequestError(reqwest::Error),
-    #[error("Missing result in the JSON-RPC response")]
-    MissingResult,
-    #[error("Async Runtime error")]
-    AsyncRuntimeError,
-    #[error("gRPC error")]
-    GRPCError,
-}
 
 /// Response from the balance API
 #[derive(Serialize, Deserialize)]

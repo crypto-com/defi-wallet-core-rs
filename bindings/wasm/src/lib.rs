@@ -3,9 +3,10 @@ use std::sync::Arc;
 use defi_wallet_core_common::{
     broadcast_contract_transfer_tx, broadcast_sign_eth_tx, broadcast_tx_sync,
     build_signed_single_msg_tx, get_account_balance, get_account_details, get_contract_balance,
-    get_eth_balance, get_single_msg_sign_payload, BalanceApiVersion, ContractBalance,
-    ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Network,
-    PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    get_eth_balance, get_query_denoms, get_single_msg_sign_payload, BalanceApiVersion,
+    ContractBalance, ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork,
+    HDWallet, Network, PublicKeyBytesWrapper, RawNftDenomsResponse, SecretKey, SingleCoin,
+    WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use wasm_bindgen::prelude::*;
 /// wasm utilities
@@ -632,3 +633,9 @@ pub async fn broadcast_transfer_contract(
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+#[wasm_bindgen]
+pub async fn query_denoms(api_url: String) -> Result<JsValue, JsValue> {
+    let res = get_query_denoms(&api_url).await?;
+    JsValue::from_serde(&res).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}

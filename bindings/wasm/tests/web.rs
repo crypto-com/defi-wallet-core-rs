@@ -10,9 +10,12 @@ use defi_wallet_core_common::{
     HDWallet, Network, RawRpcAccountResponse, RawRpcAccountStatus, RawRpcBalance, RawRpcPubKey,
 };
 use defi_wallet_core_wasm::{
-    broadcast_tx, get_single_bank_send_signed_tx, query_account_balance, query_account_details,
-    CoinType, CosmosSDKTxInfoRaw, PrivateKey, Wallet,
+    broadcast_tx, get_nft_issue_denom_signed_tx, get_single_bank_send_signed_tx,
+    query_account_balance, query_account_details, query_denoms, CoinType, CosmosSDKTxInfoRaw,
+    PrivateKey, Wallet,
 };
+
+use tendermint_rpc::endpoint::broadcast::tx_sync::Response;
 
 use core::time::Duration;
 use ethers::types::U256;
@@ -120,9 +123,13 @@ async fn test_get_single_bank_send_signed_tx() {
         get_single_bank_send_signed_tx(tx_info, key, SIGNER2.to_owned(), 100, DENOM.to_owned())
             .unwrap();
 
-    broadcast_tx(TENDERMINT_RPC_URL.to_owned(), signed_tx)
+    let res = broadcast_tx(TENDERMINT_RPC_URL.to_owned(), signed_tx)
         .await
+        .unwrap()
+        .into_serde::<Response>()
         .unwrap();
+
+    assert_eq!(res.code, tendermint::abci::Code::Ok);
 
     // Delay to wait the tx is included in the block, could be improved by waiting block
     Delay::new(Duration::from_millis(3000)).await;
@@ -145,4 +152,77 @@ async fn test_get_single_bank_send_signed_tx() {
             amount: (U256::from_dec_str(&beginning_balance.amount).unwrap() + 100).to_string()
         }
     );
+}
+
+#[wasm_bindgen_test]
+async fn test_get_nft_issue_denom_signed_tx() {
+    let wallet = Wallet::recover_wallet("night renew tonight dinner shaft scheme domain oppose echo summer broccoli agent face guitar surface belt veteran siren poem alcohol menu custom crunch index".to_owned(), None).unwrap();
+    let address = wallet.get_default_address(CoinType::CryptoOrgMainnet);
+    assert_eq!(address.unwrap(), SIGNER2.to_owned());
+    let key = wallet.get_key("m/44'/394'/0'/0/0".to_owned()).unwrap();
+    let account_details = query_account_details(API_URL.to_owned(), SIGNER2.to_owned())
+        .await
+        .unwrap()
+        .into_serde::<RawRpcAccountResponse>()
+        .unwrap();
+
+    let mut account_number = 0;
+    let mut sequence = 0;
+    if let RawRpcAccountResponse::OkResponse { account } = account_details {
+        account_number = account.account_number;
+        sequence = account.sequence;
+    } else {
+        panic!("Query account details error.");
+    }
+
+    let tx_info = CosmosSDKTxInfoRaw::new(
+        account_number,
+        sequence,
+        50000000,
+        25000000000,
+        DENOM.to_owned(),
+        0,
+        Some("".to_owned()),
+        CHAIN_ID.to_owned(),
+        Network::CryptoOrgMainnet.get_bech32_hrp().to_owned(),
+        Network::CryptoOrgMainnet.get_coin_type(),
+    );
+
+    let signed_tx = get_nft_issue_denom_signed_tx(
+        tx_info,
+        key,
+        "testdenomid".to_owned(),
+        "testdenomname".to_owned(),
+        r#"
+                    {
+                        "title":"Asset Metadata",
+                        "type":"object",
+                        "properties":{
+                            "name":{
+                                "type":"string",
+                                "description":"testidentity"
+                            },
+                            "description":{
+                                "type":"string",
+                                "description":"testdescription"
+                            },
+                            "image":{
+                                "type":"string",
+                                "description":"testdescription"
+                            }
+                        }
+                    }"#
+        .to_string(),
+    )
+    .unwrap();
+
+    let res = broadcast_tx(TENDERMINT_RPC_URL.to_owned(), signed_tx)
+        .await
+        .unwrap()
+        .into_serde::<Response>()
+        .unwrap();
+
+    assert_eq!(res.code, tendermint::abci::Code::Ok);
+
+    query_denoms(API_URL.to_owned()).await;
 }

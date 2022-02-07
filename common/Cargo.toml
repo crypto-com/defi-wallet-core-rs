@@ -33,6 +33,7 @@ tendermint-rpc = "0.23"
 thiserror = "1"
 uniffi = "^0.15"
 uniffi_macros = "^0.15"
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 cosmos-sdk-proto = { version = "0.9", features = ["grpc"] }

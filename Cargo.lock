@@ -834,6 +834,7 @@ dependencies = [
  "uniffi",
  "uniffi_build",
  "uniffi_macros",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -867,6 +868,7 @@ dependencies = [
  "defi-wallet-core-common",
  "ethers",
  "tendermint",
+ "tendermint-rpc",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
