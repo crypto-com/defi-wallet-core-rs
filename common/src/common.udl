@@ -63,7 +63,7 @@ interface SingleCoin {
   Other(string amount, string denom);
 };
 
-[Wrapped]
+[Custom]
 typedef sequence<u8> PublicKeyBytesWrapper;
 
 [Error]
