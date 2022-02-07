@@ -28,6 +28,6 @@ wee_alloc = { version = "0.4", optional = true }
 tendermint = "0.23"
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.28"
+wasm-bindgen-test = "0.3.29"
 ethers = { version = "0.6" }
 wasm-timer = "0.2.5"
