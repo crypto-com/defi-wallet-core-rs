@@ -1,3 +1,5 @@
+mod funclib;
+
 use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_single_msg_tx, get_account_balance_blocking,

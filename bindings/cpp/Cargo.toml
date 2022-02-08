@@ -4,14 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+libc= { version = "0.2.0", features = ["std"] }
 defi-wallet-core-common = { path = "../../common" }
 cxx = "1"
 anyhow = "1"
 serde_json="1"
 
 [build-dependencies]
+cbindgen = "0.20"
 cxx-build = "1"
 
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "cdylib"]
