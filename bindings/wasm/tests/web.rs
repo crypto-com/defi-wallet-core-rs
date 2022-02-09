@@ -5,7 +5,9 @@ use std::assert_eq;
 
 use wasm_bindgen_test::*;
 
-use defi_wallet_core_common::{Network, RawRpcAccountResponse, RawRpcAccountStatus, RawRpcBalance};
+use defi_wallet_core_common::{
+    Network, RawNftDenomsResponse, RawRpcAccountResponse, RawRpcAccountStatus, RawRpcBalance,
+};
 use defi_wallet_core_wasm::{
     broadcast_tx, get_nft_issue_denom_signed_tx, get_single_bank_send_signed_tx,
     get_staking_delegate_signed_tx, get_staking_unbond_signed_tx, query_account_balance,
@@ -302,6 +304,14 @@ async fn test_staking() {
 
 #[wasm_bindgen_test]
 async fn test_get_nft_issue_denom_signed_tx() {
+    let res = query_denoms(API_URL.to_owned())
+        .await
+        .unwrap()
+        .into_serde::<RawNftDenomsResponse>()
+        .unwrap();
+    assert_eq!(res.denoms.len(), 0); // no denoms
+    assert_eq!(res.pagination.total, "0".to_owned()); // no denoms
+
     let wallet = Wallet::recover_wallet(SIGNER2_MNEMONIC.to_owned(), None).unwrap();
     let address = wallet.get_default_address(CoinType::CryptoOrgMainnet);
     assert_eq!(address.unwrap(), SIGNER2.to_owned());
@@ -370,5 +380,14 @@ async fn test_get_nft_issue_denom_signed_tx() {
 
     assert_eq!(res.code, tendermint::abci::Code::Ok);
 
-    query_denoms(API_URL.to_owned()).await;
+    // Delay to wait the tx is included in the block, could be improved by waiting block
+    Delay::new(Duration::from_millis(3000)).await;
+
+    let res = query_denoms(API_URL.to_owned())
+        .await
+        .unwrap()
+        .into_serde::<RawNftDenomsResponse>()
+        .unwrap();
+    assert_eq!(res.denoms.len(), 1);
+    assert_eq!(res.pagination.total, "1".to_owned());
 }
