@@ -12,7 +12,7 @@ use cosmrs::{
 use eyre::{eyre, Context};
 use std::sync::Arc;
 
-use crate::nft::*;
+use super::nft::*;
 
 /// human-readable bech32 prefix for Crypto.org Chain accounts
 pub const CRYPTO_ORG_BECH32_HRP: &str = "cro";
