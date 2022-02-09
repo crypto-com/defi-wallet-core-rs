@@ -45,7 +45,7 @@ impl<'a> Query<'a> {
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct RawNftDenomsResponse {
     pub denoms: Vec<Denom>,
-    pub pagination: String,
+    pub pagination: RawPagination,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
