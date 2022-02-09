@@ -39,7 +39,7 @@ cpp:
 	cd $(cpp_example) && make
 
 cppx86_64:
-	cargo build --release --target x86_64-apple-darwin 
+	cargo build --release --target x86_64-apple-darwin
 	cp ./target/x86_64-apple-darwin/release/libdefi_wallet_core_cpp.a $(cpp_example)
 	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
@@ -55,7 +55,7 @@ python-tests:
 
 wasm-ci-tests:
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
-	sleep 5
+	sleep 10
 	cd bindings/wasm/ && wasm-pack test --chrome --headless
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"

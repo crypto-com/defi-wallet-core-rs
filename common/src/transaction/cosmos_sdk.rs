@@ -1,6 +1,8 @@
+use std::sync::Arc;
+
 use crate::SecretKey;
 #[cfg(not(target_arch = "wasm32"))]
-use crate::UniffiCustomTypeWrapper;
+use crate::UniffiCustomTypeConverter;
 pub use cosmrs::*;
 use cosmrs::{
     bank::MsgSend,
@@ -10,7 +12,6 @@ use cosmrs::{
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
 };
 use eyre::{eyre, Context};
-use std::sync::Arc;
 
 use super::nft::*;
 
@@ -184,12 +185,11 @@ impl From<PublicKeyBytesWrapper> for PublicKeyBytes {
         result
     }
 }
-
 #[cfg(not(target_arch = "wasm32"))]
-impl UniffiCustomTypeWrapper for PublicKeyBytesWrapper {
-    type Wrapped = Vec<u8>;
+impl UniffiCustomTypeConverter for PublicKeyBytesWrapper {
+    type Builtin = Vec<u8>;
 
-    fn wrap(val: Self::Wrapped) -> uniffi::Result<Self> {
+    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
         if val.len() != COMPRESSED_SECP256K1_PUBKEY_SIZE {
             Err(PublicKeyBytesError::InvalidLength.into())
         } else {
@@ -197,7 +197,7 @@ impl UniffiCustomTypeWrapper for PublicKeyBytesWrapper {
         }
     }
 
-    fn unwrap(obj: Self) -> Self::Wrapped {
+    fn from_custom(obj: Self) -> Self::Builtin {
         obj.0
     }
 }

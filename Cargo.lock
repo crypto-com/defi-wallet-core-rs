@@ -730,9 +730,9 @@ dependencies = [
 
 [[package]]
 name = "cxx"
-version = "1.0.63"
+version = "1.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c949f4e2576a655698463c56dbc5c5ea4c00964becc9adb0458baa943e862a5b"
+checksum = "fcd554072878dec8c16f59839336bf712d6d1f0d8d27cf9b471c10a484a3290f"
 dependencies = [
  "cc",
  "cxxbridge-flags",
@@ -742,9 +742,9 @@ dependencies = [
 
 [[package]]
 name = "cxx-build"
-version = "1.0.63"
+version = "1.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "618f85c8f132bd8912aab124e15a38adc762bb7e3cef84524adde1692ef3e8bc"
+checksum = "bae954f28208a9c31eb37623d435bdfcdd28fe93ffb5a34dfe6af9a2f1a1ca66"
 dependencies = [
  "cc",
  "codespan-reporting",
@@ -757,15 +757,15 @@ dependencies = [
 
 [[package]]
 name = "cxxbridge-flags"
-version = "1.0.63"
+version = "1.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b44dad556b0c83d86676135d6c684bdc2b1b9a1188052dd1cb5998246163536"
+checksum = "1cc629121d3f01cd7c85ba046b3bcef66d182429b495eeb1080396ba4bfb8ae4"
 
 [[package]]
 name = "cxxbridge-macro"
-version = "1.0.63"
+version = "1.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2acc9305a8b69bc2308c2e17dbb98debeac984cdc89ac550c01507cc129433c3"
+checksum = "93a8fa39ee5a91d04a99fc09fc3f1dd780ebfe31817721abcaecd823e00c9f3b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3053,9 +3053,9 @@ checksum = "930c0acf610d3fdb5e2ab6213019aaa04e227ebe9547b0649ba599b16d788bd7"
 
 [[package]]
 name = "serde"
-version = "1.0.135"
+version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cf9235533494ea2ddcdb794665461814781c53f19d87b76e571a1c35acbad2b"
+checksum = "ce31e24b01e1e524df96f1c2fdd054405f8d7376249a5110886fb4b658484789"
 dependencies = [
  "serde_derive",
 ]
@@ -3081,9 +3081,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.135"
+version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8dcde03d87d4c973c04be249e7d8f0b35db1c848c487bd43032808e59dd8328d"
+checksum = "08597e7152fcd306f41838ed3e37be9eaeed2b61c42e2117266a554fab4662f9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3206,9 +3206,9 @@ dependencies = [
 
 [[package]]
 name = "siwe"
-version = "0.1.3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51a371151a398635bf39e36ed90cd34c6264e7fd7bf1fb2337156f06f8ce836c"
+checksum = "eb84bc0bf6d4f4d18802a5f1f4e8e20a756d2d268395fd52a7f8bc29c3ecde12"
 dependencies = [
  "chrono",
  "ethers-core",
@@ -3510,9 +3510,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.15.0"
+version = "1.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbbf1c778ec206785635ce8ad57fe52b3009ae9e0c9f574a728f3049d3e55838"
+checksum = "0c27a64b625de6d309e8c57716ba93021dccf1b3b5c97edd6d3dd2d2135afc0a"
 dependencies = [
  "bytes",
  "libc",
@@ -3797,9 +3797,9 @@ checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
 
 [[package]]
 name = "uniffi"
-version = "0.15.2"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15e39922a6e95a3933017766cceebdc071891d43257cae272c55028842da724a"
+checksum = "8c70e9d90cc703c4bfa842b5be1647c039578f00e3fd575f796d5acb90bae3fa"
 dependencies = [
  "anyhow",
  "bytes",
@@ -3812,9 +3812,9 @@ dependencies = [
 
 [[package]]
 name = "uniffi_bindgen"
-version = "0.15.2"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc0b1d54aee6bf6ab8e13d322cd9438c559e768790d356ecb54cf73f587afadc"
+checksum = "f70a820a6a598cd6026e097a1a1520e429fb846efe4719934f816f264d3ba96a"
 dependencies = [
  "anyhow",
  "askama",
@@ -3829,9 +3829,9 @@ dependencies = [
 
 [[package]]
 name = "uniffi_build"
-version = "0.15.2"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0eef7d21f7e302fedef7e52f0dd4a5b1a636c99d4afea9f23a762106676f4960"
+checksum = "b7b35d8e19c773c42176343a92ce8480443e5aa19f02deb75572acf7f8a51bbb"
 dependencies = [
  "anyhow",
  "uniffi_bindgen",
@@ -3839,9 +3839,9 @@ dependencies = [
 
 [[package]]
 name = "uniffi_macros"
-version = "0.15.2"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16590eef444dcdd49dfbaa08f5931469375756fac5d3f831a287df65ba1d8cc8"
+checksum = "5fb8e1cc005baa085499d4802f9ffe5137f8d251b1fc75045b0767372199b21d"
 dependencies = [
  "glob",
  "proc-macro2",

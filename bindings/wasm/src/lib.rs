@@ -19,6 +19,7 @@ pub struct Wallet {
 }
 
 /// Signing key wrapper for Wasm
+#[derive(Clone)]
 #[wasm_bindgen]
 pub struct PrivateKey {
     key: Arc<SecretKey>,
@@ -420,7 +421,7 @@ pub fn get_staking_delegate_signed_tx(
 /// wasm-bindgen only supports the C-style enums,
 /// hences this duplicate function
 #[wasm_bindgen]
-pub fn get_staking_undelegate_signed_tx(
+pub fn get_staking_unbond_signed_tx(
     tx_info: CosmosSDKTxInfoRaw,
     private_key: PrivateKey,
     validator_address: String,
