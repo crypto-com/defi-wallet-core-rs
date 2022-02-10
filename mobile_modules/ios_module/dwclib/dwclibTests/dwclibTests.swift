@@ -30,6 +30,13 @@ class dwclibTests: XCTestCase {
         var wallet = try? HdWallet.generateWallet(password: "",wordCount: MnemonicWordCount.twelve)
         var mnemonic = wallet?.getBackupMnemonicPhrase()
         print(mnemonic)
+        assert(true, "HdWalletWork error")
+    }
+    
+    func testSingleMsgSignPayloadWork() throws {
+        var wallet = try? HdWallet.generateWallet(password: "",wordCount: MnemonicWordCount.twelve)
+        var mnemonic = wallet?.getBackupMnemonicPhrase()
+        print(mnemonic)
     }
 
     func testPerformanceExample() throws {
