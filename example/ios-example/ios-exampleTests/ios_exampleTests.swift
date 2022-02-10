@@ -6,7 +6,7 @@
 //
 
 import XCTest
-import ios_example
+import dwclib
 
 class ios_exampleTests: XCTestCase {
 
@@ -19,7 +19,7 @@ class ios_exampleTests: XCTestCase {
     }
 
     func testMnemonic() throws {
-        var wallet = try? HdWallet.generateWallet(password: "")
+        var wallet = try? HdWallet.generateWallet(password: "", wordCount: MnemonicWordCount.twelve)
         var mnemonic = try? wallet?.getBackupMnemonicPhrase()
         print(mnemonic)
     }

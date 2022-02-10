@@ -14,4 +14,7 @@
 .cxx
 local.properties
 
-ios_module/lib.a/*
+dwc_commonFFI.h
+lib.a/
+common.swift
+build/
