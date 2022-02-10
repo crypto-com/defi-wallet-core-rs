@@ -1,6 +1,6 @@
 use crate::{EthError, SecretKey};
 use core::fmt::Display;
-use siwe::eip4361::Message;
+use siwe::Message;
 
 /// The wrapper structure that contains
 /// all information from the EIP-4361 plaintext message:
@@ -20,13 +20,7 @@ impl LoginInfo {
     pub fn sign(&self, private_key: &SecretKey) -> Result<Vec<u8>, EthError> {
         let message = self.msg.to_string();
         private_key
-            .sign_eth(
-                message.as_bytes(),
-                self.msg
-                    .chain_id
-                    .parse()
-                    .map_err(|_e| EthError::ChainidError)?,
-            )
+            .sign_eth(message.as_bytes(), self.msg.chain_id)
             .map_err(|_e| EthError::SignatureError)
             .map(|x| x.to_vec())
     }
@@ -59,7 +53,7 @@ mod tests {
     use crate::SecretKey;
     use crate::WalletCoin;
     use ethers::prelude::Address;
-    use siwe::eip4361::Message;
+    use siwe::Message;
     use std::str::FromStr;
 
     fn get_logininfo(mwallet: Option<&SecretKey>) -> LoginInfo {
@@ -73,13 +67,14 @@ mod tests {
         let msg = Message {
             address: Address::from_str(&address).unwrap().into(),
             domain: "service.org".parse().unwrap(),
-            statement: "I accept the ServiceOrg Terms of Service: https://service.org/tos"
-                .to_string(),
+            statement: Some(
+                "I accept the ServiceOrg Terms of Service: https://service.org/tos".to_string(),
+            ),
             version: "1".parse().unwrap(),
-            chain_id: "1".to_string(),
+            chain_id: 1,
             uri: "https://service.org/login".parse().unwrap(),
             nonce: "32891756".to_string(),
-            issued_at: "2021-09-30T16:25:24Z".to_string(),
+            issued_at: "2021-09-30T16:25:24Z".parse().unwrap(),
             expiration_time: None,
             not_before: None,
             request_id: None,
