@@ -70,6 +70,16 @@ pub enum CosmosSDKMsgRaw {
         /// The Denom ID of the Token.
         denom_id: String,
     },
+    /// MsgBeginRedelegate
+    StakingBeginRedelegate {
+        /// source validator address in bech32
+        validator_src_address: String,
+        /// destination validator address in bech32
+        validator_dst_address: String,
+        /// amount to redelegate
+        amount: u64,
+        denom: String,
+    },
     /// MsgDelegate
     StakingDelegate {
         /// validator address in bech32
@@ -165,6 +175,19 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
                 denom,
             } => CosmosSDKMsg::StakingUndelegate {
                 validator_address: validator_address.to_owned(),
+                amount: SingleCoin::Other {
+                    amount: format!("{}", amount),
+                    denom: denom.to_owned(),
+                },
+            },
+            CosmosSDKMsgRaw::StakingBeginRedelegate {
+                validator_src_address,
+                validator_dst_address,
+                amount,
+                denom,
+            } => CosmosSDKMsg::StakingBeginRedelegate {
+                validator_src_address: validator_src_address.to_owned(),
+                validator_dst_address: validator_dst_address.to_owned(),
                 amount: SingleCoin::Other {
                     amount: format!("{}", amount),
                     denom: denom.to_owned(),
@@ -560,6 +583,32 @@ fn get_nft_burn_signed_tx(
     let ret = build_signed_single_msg_tx(
         tx_info.into(),
         CosmosSDKMsg::NftBurn { id, denom_id },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+
+/// creates the signed transaction
+/// for `MsgBeginRedelegate` from the Cosmos SDK staking module
+pub fn get_staking_begin_redelegate_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    validator_src_address: String,
+    validator_dst_address: String,
+    amount: u64,
+    denom: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::StakingBeginRedelegate {
+            validator_src_address,
+            validator_dst_address,
+            amount: SingleCoin::Other {
+                amount: format!("{}", amount),
+                denom,
+            },
+        },
         private_key.key.clone(),
     )?;
 
