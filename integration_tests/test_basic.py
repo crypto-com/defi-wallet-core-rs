@@ -14,7 +14,7 @@ def test_basic(chainmain, cronos):
         community_addr,
         delegator1_addr,
         delegator2_addr,
-        validator_addr
+        validator_addr,
     )
 
     rpc = chainmain.node_rpc(0)
