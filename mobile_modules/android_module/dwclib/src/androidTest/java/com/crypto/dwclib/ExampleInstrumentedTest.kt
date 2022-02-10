@@ -93,7 +93,7 @@ class ExampleInstrumentedTest {
         ),priv.getPublicKeyBytes())
         println("payload:" + bytesToHex(payload))
 
-        val siged_tx = buildSignedSingleMsgTx(
+        val sigedTx = buildSignedSingleMsgTx(
             txinfo1(),
             CosmosSdkMsg.BankSend(
                 "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
@@ -101,7 +101,7 @@ class ExampleInstrumentedTest {
             ),
             priv
         )
-        println("siged_tx:" + bytesToHex(siged_tx))
+        println("siged_tx:" + bytesToHex(sigedTx))
 
     }
 
