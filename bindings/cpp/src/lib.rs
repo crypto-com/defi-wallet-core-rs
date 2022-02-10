@@ -590,32 +590,6 @@ fn get_nft_burn_signed_tx(
 }
 
 /// creates the signed transaction
-/// for `MsgBeginRedelegate` from the Cosmos SDK staking module
-pub fn get_staking_begin_redelegate_signed_tx(
-    tx_info: ffi::CosmosSDKTxInfoRaw,
-    private_key: &PrivateKey,
-    validator_src_address: String,
-    validator_dst_address: String,
-    amount: u64,
-    denom: String,
-) -> Result<Vec<u8>> {
-    let ret = build_signed_single_msg_tx(
-        tx_info.into(),
-        CosmosSDKMsg::StakingBeginRedelegate {
-            validator_src_address,
-            validator_dst_address,
-            amount: SingleCoin::Other {
-                amount: format!("{}", amount),
-                denom,
-            },
-        },
-        private_key.key.clone(),
-    )?;
-
-    Ok(ret)
-}
-
-/// creates the signed transaction
 /// for `MsgDelegate` from the Cosmos SDK staking module
 pub fn get_staking_delegate_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
@@ -628,6 +602,32 @@ pub fn get_staking_delegate_signed_tx(
         tx_info.into(),
         CosmosSDKMsg::StakingDelegate {
             validator_address,
+            amount: SingleCoin::Other {
+                amount: format!("{}", amount),
+                denom,
+            },
+        },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+
+/// creates the signed transaction
+/// for `MsgBeginRedelegate` from the Cosmos SDK staking module
+pub fn get_staking_redelegate_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    validator_src_address: String,
+    validator_dst_address: String,
+    amount: u64,
+    denom: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::StakingBeginRedelegate {
+            validator_src_address,
+            validator_dst_address,
             amount: SingleCoin::Other {
                 amount: format!("{}", amount),
                 denom,
