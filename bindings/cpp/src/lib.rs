@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use defi_wallet_core_common::get_query_denoms_blocking;
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_single_msg_tx, get_account_balance_blocking,
     get_account_details_blocking, get_single_msg_sign_payload, BalanceApiVersion, CosmosSDKMsg,
@@ -6,6 +7,30 @@ use defi_wallet_core_common::{
     SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use std::sync::Arc;
+use defi_wallet_core_proto as proto;
+use proto::chainmain::nft::v1::{
+    query_client::QueryClient, QueryDenomsRequest, QueryDenomsResponse,
+    Denom, QueryDenomRequest
+};
+
+/// Wrapper of proto::chainmain::nft::v1::Denom
+pub struct DenomRaw {
+    pub id: String,
+    pub name: String,
+    pub schema: String,
+    pub creator: String,
+}
+
+impl From<Denom> for DenomRaw {
+    fn from(d: Denom) -> DenomRaw {
+        DenomRaw {
+            id: d.id,
+            name: d.name,
+            schema: d.schema,
+            creator: d.creator,
+        }
+    }
+}
 
 /// Wrapper of `CosmosSDKMsg`
 pub enum CosmosSDKMsgRaw {
@@ -312,6 +337,8 @@ mod ffi {
             id: String,
             denom_id: String,
         ) -> Result<Vec<u8>>;
+        type DenomRaw;
+        fn get_denoms(grpc_url: String) -> Result<Vec<DenomRaw>>;
     }
 }
 
@@ -669,4 +696,9 @@ pub fn query_account_balance(
 pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Result<String> {
     let resp = broadcast_tx_sync_blocking(&tendermint_rpc_url, raw_signed_tx)?;
     Ok(serde_json::to_string(&resp)?)
+}
+
+pub fn get_denoms(grpc_url: String) -> Result<Vec<DenomRaw>> {
+    let denoms = get_query_denoms_blocking(&grpc_url)?;
+    Ok(denoms.into_iter().map(|v| v.into()).collect())
 }

@@ -166,6 +166,7 @@ fn compile_chain_main_protos_and_services(out_dir: &Path) {
         .format(true)
         .out_dir(out_dir)
         .extern_path(".tendermint", "::tendermint_proto")
+        .type_attribute("nft.v1.Denom", "#[derive(Serialize, Deserialize)]")
         .compile(&protos, &includes)
         .unwrap();
 

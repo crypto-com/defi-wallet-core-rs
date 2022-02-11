@@ -104,6 +104,7 @@ enum RestError {
   "MissingResult",
   "AsyncRuntimeError",
   "GRPCError",
+  "ErrorReport",
 };
 
 dictionary RawRpcBalance {

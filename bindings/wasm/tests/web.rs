@@ -6,13 +6,22 @@ use std::assert_eq;
 use wasm_bindgen_test::*;
 
 use defi_wallet_core_common::{
-    Network, RawNftDenomsResponse, RawRpcAccountResponse, RawRpcAccountStatus, RawRpcBalance,
-};
+    Network, Query, RawRpcAccountResponse, RawRpcAccountStatus,
+    RawRpcBalance};
 use defi_wallet_core_wasm::{
     broadcast_tx, get_nft_issue_denom_signed_tx, get_single_bank_send_signed_tx,
     get_staking_delegate_signed_tx, get_staking_unbond_signed_tx, query_account_balance,
     query_account_details, query_denoms, CoinType, CosmosSDKTxInfoRaw, Wallet,
 };
+
+use defi_wallet_core_proto as proto;
+use proto::chainmain::nft::v1::{
+    query_client::QueryClient, QueryDenomsRequest, QueryDenomsResponse,
+    Denom, QueryDenomRequest
+};
+use grpc_web_client::Client;
+
+
 
 use tendermint_rpc::endpoint::broadcast::tx_sync::Response;
 
@@ -21,6 +30,7 @@ use ethers::types::U256;
 use wasm_timer::Delay;
 
 const API_URL: &str = "http://127.0.0.1:26804";
+const GRPC_URL: &str = "http://127.0.0.1:26808";
 const SIGNER1: &str = "cro1u08u5dvtnpmlpdq333uj9tcj75yceggszxpnsy";
 const SIGNER2: &str = "cro1apdh4yc2lnpephevc6lmpvkyv6s5cjh652n6e4";
 const COMMUNITY: &str = "cro1qj4u2y23hx7plrztswrel2hgf8mh2m22k80fet";
@@ -304,13 +314,13 @@ async fn test_staking() {
 
 #[wasm_bindgen_test]
 async fn test_get_nft_issue_denom_signed_tx() {
-    let res = query_denoms(API_URL.to_owned())
-        .await
-        .unwrap()
-        .into_serde::<RawNftDenomsResponse>()
-        .unwrap();
-    assert_eq!(res.denoms.len(), 0); // no denoms
-    assert_eq!(res.pagination.total, "0".to_owned()); // no denoms
+    // let res = query_denoms(API_URL.to_owned())
+    //     .await
+    //     .unwrap()
+    //     .into_serde::<RawQueryDenomsResponse>()
+    //     .unwrap();
+    // assert_eq!(res.denoms.len(), 0); // no denoms
+    // assert_eq!(res.pagination.total, "0".to_owned()); // no denoms
 
     let wallet = Wallet::recover_wallet(SIGNER2_MNEMONIC.to_owned(), None).unwrap();
     let address = wallet.get_default_address(CoinType::CryptoOrgMainnet);
@@ -322,18 +332,14 @@ async fn test_get_nft_issue_denom_signed_tx() {
         .into_serde::<RawRpcAccountResponse>()
         .unwrap();
 
-    let mut account_number = 0;
-    let mut sequence = 0;
-    if let RawRpcAccountResponse::OkResponse { account } = account_details {
-        account_number = account.account_number;
-        sequence = account.sequence;
-    } else {
-        panic!("Query account details error.");
-    }
+    let account = match account_details {
+        RawRpcAccountResponse::OkResponse { account } => account,
+        _ => panic!("Failed to query account details"),
+    };
 
     let tx_info = CosmosSDKTxInfoRaw::new(
-        account_number,
-        sequence,
+        account.account_number,
+        account.sequence,
         50000000,
         25000000000,
         DENOM.to_owned(),
@@ -346,7 +352,7 @@ async fn test_get_nft_issue_denom_signed_tx() {
 
     let signed_tx = get_nft_issue_denom_signed_tx(
         tx_info,
-        key,
+        key.clone(),
         "testdenomid".to_owned(),
         "testdenomname".to_owned(),
         r#"
@@ -380,14 +386,122 @@ async fn test_get_nft_issue_denom_signed_tx() {
 
     assert_eq!(res.code, tendermint::abci::Code::Ok);
 
+
+    let tx_info = CosmosSDKTxInfoRaw::new(
+        account.account_number,
+        account.sequence + 1,
+        50000000,
+        25000000000,
+        DENOM.to_owned(),
+        0,
+        Some("".to_owned()),
+        CHAIN_ID.to_owned(),
+        Network::CryptoOrgMainnet.get_bech32_hrp().to_owned(),
+        Network::CryptoOrgMainnet.get_coin_type(),
+    );
+
+    let signed_tx = get_nft_issue_denom_signed_tx(
+        tx_info,
+        key,
+        "testdenomid2".to_owned(),
+        "testdenomname2".to_owned(),
+        r#"
+                    {
+                        "title":"Asset Metadata",
+                        "type":"object",
+                        "properties":{
+                            "name":{
+                                "type":"string",
+                                "description":"testidentity"
+                            },
+                            "description":{
+                                "type":"string",
+                                "description":"testdescription"
+                            },
+                            "image":{
+                                "type":"string",
+                                "description":"testdescription"
+                            }
+                        }
+                    }"#
+        .to_string(),
+    )
+    .unwrap();
+
+    let res = broadcast_tx(TENDERMINT_RPC_URL.to_owned(), signed_tx)
+        .await
+        .unwrap()
+        .into_serde::<Response>()
+        .unwrap();
+
+    assert_eq!(res.code, tendermint::abci::Code::Ok);
+
+
     // Delay to wait the tx is included in the block, could be improved by waiting block
     Delay::new(Duration::from_millis(3000)).await;
 
-    let res = query_denoms(API_URL.to_owned())
-        .await
-        .unwrap()
-        .into_serde::<RawNftDenomsResponse>()
-        .unwrap();
-    assert_eq!(res.denoms.len(), 1);
-    assert_eq!(res.pagination.total, "1".to_owned());
+    let mut client = QueryClient::new(Client::new(GRPC_URL.to_owned()));
+    let request = QueryDenomRequest {denom_id: "testdenomid2".to_owned()};
+    let res = client
+        .denom(request)
+        .await;
+    console_log!("{:?}", res);
+
+    // let res = query_denoms(GRPC_URL.to_owned())
+    //     .await
+    //     .unwrap();
+
+    // console_log!("{:?}", res);
+
+    // let res = res.into_serde::<Vec<Denom>>()
+    //     .unwrap();
+    // console_log!("{:?}", res);
+
+    // let res = reqwest::Client::new()
+    //     .get(Query::Denoms.get_url(API_URL))
+    //     .send()
+    //     .await
+    //     .unwrap()
+    //     .json::<RawQueryDenomsResponse>()
+    //     .await
+    //     .unwrap();
+
+    // assert_eq!(res.len(), 1);
+    // assert_eq!(res.pagination.total, "1".to_owned());
+
+    // let res = reqwest::Client::new()
+    //     .get(Query::Denoms.get_url(API_URL))
+    //     .send()
+    //     .await;
+    // console_log!("{:?}", res.unwrap().text().await.unwrap());
+
+    // let resp1 = reqwest::Client::new()
+    //     .get(Query::Owner.get_url(API_URL))
+    //     .send()
+    //     .await;
+    // console_log!("{:?}", resp1.unwrap().text().await.unwrap());
+
+    // let resp1 = reqwest::Client::new()
+    //     .get(Query::Supply("testdenomid").get_url(API_URL))
+    //     .send()
+    //     .await;
+    // console_log!("{:?}", resp1.unwrap().text().await.unwrap());
+
+    // let resp1 = reqwest::Client::new()
+    //     .get(Query::Collection("testdenomid").get_url(API_URL))
+    //     .send()
+    //     .await;
+    // console_log!("{:?}", resp1.unwrap().text().await.unwrap());
+
+    // let resp1 = reqwest::Client::new()
+    //     .get(Query::DenomByName("testdenomname").get_url(API_URL))
+    //     .send()
+    //     .await;
+    // console_log!("{:?}", resp1.unwrap().text().await.unwrap());
+
+    // let resp1 = reqwest::Client::new()
+    //     .get(Query::NFT("testdenomid", "testdenomname").get_url(API_URL))
+    //     .send()
+    //     .await;
+    // console_log!("{:?}", resp1.unwrap().text().await.unwrap());
 }

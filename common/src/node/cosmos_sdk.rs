@@ -142,10 +142,10 @@ pub fn get_account_details_blocking(
 /// given the gRPC endpoint and the raw signed transaction bytes,
 /// it'll submit the transaction for simulating its execution and return the used gas.
 #[cfg(not(target_arch = "wasm32"))]
-pub fn simulate_blocking(gprc_url: &str, tx: Vec<u8>) -> Result<u64, RestError> {
+pub fn simulate_blocking(grpc_url: &str, tx: Vec<u8>) -> Result<u64, RestError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
     let result = rt.block_on(async move {
-        let mut client = ServiceClient::connect(gprc_url.to_owned())
+        let mut client = ServiceClient::connect(grpc_url.to_owned())
             .await
             .map_err(|_err| RestError::GRPCError)?;
         let request = SimulateRequest {

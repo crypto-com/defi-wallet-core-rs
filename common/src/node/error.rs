@@ -11,7 +11,13 @@ pub enum RestError {
     AsyncRuntimeError,
     #[error("gRPC error")]
     GRPCError,
+    #[error("ErrorReport")]
+    ErrorReport,
 }
+
+/// wrapper around API errors
+#[derive(Debug, thiserror::Error)]
+pub enum GrpcError {}
 
 impl From<RestError> for JsValue {
     fn from(e: RestError) -> Self {
