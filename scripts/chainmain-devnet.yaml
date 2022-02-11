@@ -7,6 +7,9 @@ chainmain-1:
     api:
       enable-unsafe-cors: false
       enabled-unsafe-cors: true
+    grpc-web:
+      enable: true
+      enable-unsafe-cors: true
   validators:
     - coins: 2234240000000000000cro
       staked: 10000000000000cro

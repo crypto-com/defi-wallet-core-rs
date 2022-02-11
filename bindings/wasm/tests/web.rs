@@ -30,14 +30,14 @@ use ethers::types::U256;
 use wasm_timer::Delay;
 
 const API_URL: &str = "http://127.0.0.1:26804";
-const GRPC_URL: &str = "http://127.0.0.1:26808";
+const TENDERMINT_RPC_URL: &str = "http://127.0.0.1:26807";
+const GRPC_WEB_URL: &str = "http://127.0.0.1:26808";
 const SIGNER1: &str = "cro1u08u5dvtnpmlpdq333uj9tcj75yceggszxpnsy";
 const SIGNER2: &str = "cro1apdh4yc2lnpephevc6lmpvkyv6s5cjh652n6e4";
 const COMMUNITY: &str = "cro1qj4u2y23hx7plrztswrel2hgf8mh2m22k80fet";
 const DELEGATOR: &str = "cro1ykec6vralvrh5vcvpf7w7u02gj728u4wp738kz";
 const VALIDATOR: &str = "crocncl1pk9eajj4zuzpptnadwz6tzfgcpchqvpkvql0a9";
 const DENOM: &str = "basecro";
-const TENDERMINT_RPC_URL: &str = "http://127.0.0.1:26807";
 const CHAIN_ID: &str = "chainmain-1";
 const DELEGATOR_MNEMONIC: &str = "yard night airport critic main upper measure metal unhappy cliff pistol square upon access math owner enemy unfold scan small injury blind aunt million";
 const SIGNER1_MNEMONIC: &str = "shed crumble dismiss loyal latin million oblige gesture shrug still oxygen custom remove ribbon disorder palace addict again blanket sad flock consider obey popular";
@@ -440,14 +440,14 @@ async fn test_get_nft_issue_denom_signed_tx() {
     // Delay to wait the tx is included in the block, could be improved by waiting block
     Delay::new(Duration::from_millis(3000)).await;
 
-    let mut client = QueryClient::new(Client::new(GRPC_URL.to_owned()));
+    let mut client = QueryClient::new(Client::new(GRPC_WEB_URL.to_owned()));
     let request = QueryDenomRequest {denom_id: "testdenomid2".to_owned()};
     let res = client
         .denom(request)
         .await;
     console_log!("{:?}", res);
 
-    // let res = query_denoms(GRPC_URL.to_owned())
+    // let res = query_denoms(GRPC_WEB_URL.to_owned())
     //     .await
     //     .unwrap();
 
