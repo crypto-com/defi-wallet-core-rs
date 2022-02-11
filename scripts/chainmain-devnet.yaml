@@ -22,9 +22,12 @@ chainmain-1:
     - name: community
       coins: 10000000000000cro
       mnemonic: ${COMMUNITY_MNEMONIC}
-    - name: delegator
+    - name: delegator1
       coins: 10000000000000cro
-      mnemonic: ${DELEGATOR_MNEMONIC}
+      mnemonic: ${DELEGATOR1_MNEMONIC}
+    - name: delegator2
+      coins: 10000000000000cro
+      mnemonic: ${DELEGATOR2_MNEMONIC}
     - name: signer1
       coins: 10000000000000cro
       mnemonic: ${SIGNER1_MNEMONIC}
