@@ -56,6 +56,23 @@ impl MessageHandler {
     }
 }
 
+/// returns a topic and the decrypted payload
+fn check_socket_msg(mmsg: Vec<u8>, key: &Key) -> Option<(Topic, Vec<u8>)> {
+    match serde_json::from_slice::<SocketMessage>(&mmsg) {
+        Ok(msg) if !matches!(msg.kind, SocketMessageKind::Sub) && msg.payload.is_some() => {
+            let topic = msg.topic;
+            // unwrap is safe -- it's checked above in the match clause if it's Some
+            let payload = msg.payload.unwrap();
+            if let Ok(decrypted) = key.open(&payload) {
+                Some((topic, decrypted))
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
 impl Socket {
     fn send_socket_msg(
         &self,
@@ -177,24 +194,7 @@ impl Socket {
         // and sending them as responses to the previous requests by the message handler
         let reader = tokio::spawn(async move {
             let _ = rx
-                .try_filter_map(|mmsg| {
-                    future::ok(match serde_json::from_slice::<SocketMessage>(&mmsg) {
-                        Ok(msg)
-                            if !matches!(msg.kind, SocketMessageKind::Sub)
-                                && msg.payload.is_some() =>
-                        {
-                            let topic = msg.topic;
-                            // unwrap is safe -- it's checked above in the match clause if it's Some
-                            let payload = msg.payload.unwrap();
-                            if let Ok(decrypted) = key.open(&payload) {
-                                Some((topic, decrypted))
-                            } else {
-                                None
-                            }
-                        }
-                        _ => None,
-                    })
-                })
+                .try_filter_map(|mmsg| future::ok(check_socket_msg(mmsg, &key)))
                 .try_for_each(|(topic, decrypted)| {
                     if let Some(resp) = handler.handle(topic, decrypted) {
                         let _ = sender.send((None, resp));
