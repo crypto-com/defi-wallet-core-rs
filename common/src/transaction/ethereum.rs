@@ -109,7 +109,11 @@ pub fn construct_unsigned_eth_tx(
     let from = Address::from_str(from_hex).map_err(|_| EthError::HexConversion)?;
 
     let tx = construct_simple_eth_transfer_tx(to_hex, amount)?;
-    Ok(tx.from(from).rlp(network.get_chain_id()).to_vec())
+    Ok(tx
+        .from(from)
+        .chain_id(network.get_chain_id())
+        .rlp()
+        .to_vec())
 }
 
 /// constructs a signed simple transfer of Eth/native token on a given network
