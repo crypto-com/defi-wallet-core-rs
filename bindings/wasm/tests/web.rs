@@ -5,9 +5,7 @@ use std::assert_eq;
 
 use wasm_bindgen_test::*;
 
-use defi_wallet_core_common::{
-    Network, Query, RawRpcAccountResponse, RawRpcAccountStatus,
-    RawRpcBalance};
+use defi_wallet_core_common::{Network, RawRpcAccountResponse, RawRpcAccountStatus, RawRpcBalance};
 use defi_wallet_core_wasm::{
     broadcast_tx, get_nft_issue_denom_signed_tx, get_single_bank_send_signed_tx,
     get_staking_delegate_signed_tx, get_staking_unbond_signed_tx, query_account_balance,
@@ -15,13 +13,10 @@ use defi_wallet_core_wasm::{
 };
 
 use defi_wallet_core_proto as proto;
-use proto::chainmain::nft::v1::{
-    query_client::QueryClient, QueryDenomsRequest, QueryDenomsResponse,
-    Denom, QueryDenomRequest
-};
 use grpc_web_client::Client;
-
-
+use proto::chainmain::nft::v1::{
+    query_client::QueryClient, Denom, QueryDenomRequest, QueryDenomsRequest, QueryDenomsResponse,
+};
 
 use tendermint_rpc::endpoint::broadcast::tx_sync::Response;
 
@@ -386,7 +381,6 @@ async fn test_get_nft_issue_denom_signed_tx() {
 
     assert_eq!(res.code, tendermint::abci::Code::Ok);
 
-
     let tx_info = CosmosSDKTxInfoRaw::new(
         account.account_number,
         account.sequence + 1,
@@ -436,15 +430,14 @@ async fn test_get_nft_issue_denom_signed_tx() {
 
     assert_eq!(res.code, tendermint::abci::Code::Ok);
 
-
     // Delay to wait the tx is included in the block, could be improved by waiting block
     Delay::new(Duration::from_millis(3000)).await;
 
     let mut client = QueryClient::new(Client::new(GRPC_WEB_URL.to_owned()));
-    let request = QueryDenomRequest {denom_id: "testdenomid2".to_owned()};
-    let res = client
-        .denom(request)
-        .await;
+    let request = QueryDenomRequest {
+        denom_id: "testdenomid2".to_owned(),
+    };
+    let res = client.denom(request).await;
     console_log!("{:?}", res);
 
     // let res = query_denoms(GRPC_WEB_URL.to_owned())

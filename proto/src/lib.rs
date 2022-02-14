@@ -17,7 +17,6 @@ pub mod chainmain {
     #[allow(clippy::module_inception)]
     pub mod chainmain {
         pub mod v1 {
-            use serde::{Deserialize, Serialize};
             include!("prost/chainmain.chainmain.v1.rs");
         }
     }
@@ -33,7 +32,6 @@ pub mod chainmain {
     /// supply
     pub mod supply {
         pub mod v1 {
-            use serde::{Deserialize, Serialize};
             include!("prost/chainmain.supply.v1.rs");
         }
     }

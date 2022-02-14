@@ -6,13 +6,9 @@ use proto::chainmain::nft::v1::{
     query_client::QueryClient, Denom, QueryDenomsRequest, QueryDenomsResponse,
 };
 use serde::{Deserialize, Serialize};
-#[cfg(not(target_arch = "wasm32"))]
-use tonic::transport::Channel;
-#[cfg(not(target_arch = "wasm32"))]
-use tonic::transport::Endpoint;
 
-pub async fn get_query_denoms(grpc_url: &str) -> Result<Vec<Denom>, RestError> {
-    let mut client = QueryClient::new(Client::new(grpc_url.to_owned()));
+pub async fn get_query_denoms(grpc_web_url: &str) -> Result<Vec<Denom>, RestError> {
+    let mut client = QueryClient::new(Client::new(grpc_web_url.to_owned()));
     let request = QueryDenomsRequest { pagination: None };
     let res = client
         .denoms(request)
@@ -26,8 +22,7 @@ pub async fn get_query_denoms(grpc_url: &str) -> Result<Vec<Denom>, RestError> {
 pub fn get_query_denoms_blocking(grpc_url: &str) -> anyhow::Result<Vec<Denom>> {
     let rt = tokio::runtime::Runtime::new()?;
     rt.block_on(async move {
-        let channel = Endpoint::new(grpc_url.to_owned())?.connect().await?;
-        let mut client = QueryClient::new(channel);
+        let mut client = QueryClient::connect(grpc_url.to_owned()).await?;
 
         let request = QueryDenomsRequest { pagination: None };
 

@@ -861,7 +861,6 @@ dependencies = [
  "serde",
  "tendermint-proto",
  "tonic",
- "tonic-build",
 ]
 
 [[package]]

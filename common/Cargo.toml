@@ -41,7 +41,11 @@ grpc-web-client = { git = "https://github.com/titanous/grpc-web-client"}
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 cosmos-sdk-proto = { version = "0.9", features = ["grpc"] }
 tokio = { version = "1", features = ["rt"] }
+tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots"] }
+
 
 [build-dependencies]
 uniffi_build = { version = "^0.17", features=["builtin-bindgen"] }

@@ -49,7 +49,7 @@ void process() {
           "palace addict again blanket sad flock consider obey popular\""
        << endl;
   cout << "export MYCOSMOSRPC=\"http://127.0.0.1:26804\"" << endl;
-  cout << "export MYTENDERMINTRPC=\"http://127.0.0.1:26808\"" << endl;
+  cout << "export MYTENDERMINTRPC=\"http://127.0.0.1:26807\"" << endl;
   cout << "export MYCHAINID=chainmain-1" << endl;
   cout << "export MYFROM=cro1u08u5dvtnpmlpdq333uj9tcj75yceggszxpnsy" << endl;
   cout << "export MYTO=cro1apdh4yc2lnpephevc6lmpvkyv6s5cjh652n6e4" << endl;
@@ -87,7 +87,7 @@ void process() {
   // broadcast_tx(myservertendermint, signedtx);
 
   rust::cxxbridge1::Vec<DenomRaw> denoms =
-      get_denoms("http://127.0.0.1:26808");
+      get_denoms("http://127.0.0.1:26803");
 
   cout << denoms.size() << endl;
 }
