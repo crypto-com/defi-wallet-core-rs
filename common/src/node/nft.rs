@@ -7,7 +7,7 @@ use proto::chainmain::nft::v1::{
 };
 use serde::{Deserialize, Serialize};
 
-pub async fn get_query_denoms(grpc_web_url: &str) -> Result<Vec<Denom>, RestError> {
+pub async fn query_denoms(grpc_web_url: &str) -> Result<Vec<Denom>, RestError> {
     let mut client = QueryClient::new(Client::new(grpc_web_url.to_owned()));
     let request = QueryDenomsRequest { pagination: None };
     let res = client
@@ -19,7 +19,7 @@ pub async fn get_query_denoms(grpc_web_url: &str) -> Result<Vec<Denom>, RestErro
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn get_query_denoms_blocking(grpc_url: &str) -> anyhow::Result<Vec<Denom>> {
+pub fn query_denoms_blocking(grpc_url: &str) -> anyhow::Result<Vec<Denom>> {
     let rt = tokio::runtime::Runtime::new()?;
     rt.block_on(async move {
         let mut client = QueryClient::connect(grpc_url.to_owned()).await?;
@@ -30,4 +30,15 @@ pub fn get_query_denoms_blocking(grpc_url: &str) -> anyhow::Result<Vec<Denom>> {
 
         Ok(res.denoms)
     })
+}
+
+pub async fn query_supply(grpc_web_url: &str) -> Result<Vec<Denom>, RestError> {
+    let mut client = QueryClient::new(Client::new(grpc_web_url.to_owned()));
+    let request = QueryDenomsRequest { pagination: None };
+    let res = client
+        .denoms(request)
+        .await
+        .map_err(|_err| RestError::GRPCError)?
+    .into_inner();
+    Ok(res.denoms)
 }
