@@ -5,6 +5,9 @@ cd scripts
 
 script_dir=$(pwd)
 
+# Set timeout to wasm tests
+export WASM_BINDGEN_TEST_TIMEOUT=60
+
 # Stop chainmain
 ./chainmain-ctl stop
 

@@ -54,6 +54,7 @@ python-tests:
 	@nix-shell ./integration_tests/shell.nix --run scripts/python-tests
 
 wasm-ci-tests:
+	export WASM_BINDGEN_TEST_TIMEOUT=60
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
 	sleep 10
 	cd bindings/wasm/ && wasm-pack test --chrome --headless
