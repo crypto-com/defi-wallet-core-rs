@@ -2,6 +2,7 @@
 name = "defi-wallet-core-cpp"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.57"
 
 [dependencies]
 defi-wallet-core-common = { path = "../../common" }
