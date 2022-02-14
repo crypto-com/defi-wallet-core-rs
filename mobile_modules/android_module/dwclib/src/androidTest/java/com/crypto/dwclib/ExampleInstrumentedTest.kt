@@ -128,7 +128,6 @@ class ExampleInstrumentedTest {
             priv
         )
         println("siged_tx:" + bytesToHex(sigedTx))
-
     }
 
     @Test

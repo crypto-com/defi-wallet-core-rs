@@ -8,7 +8,7 @@ use cosmrs::{
     bank::MsgSend,
     bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
     crypto::{self, secp256k1::VerifyingKey},
-    staking::{MsgDelegate, MsgUndelegate},
+    staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
 };
 use eyre::{eyre, Context};
@@ -282,6 +282,15 @@ pub enum CosmosSDKMsg {
         /// The Denom ID of the Token.
         denom_id: String,
     },
+    /// MsgBeginRedelegate
+    StakingBeginRedelegate {
+        /// source validator address in bech32
+        validator_src_address: String,
+        /// destination validator address in bech32
+        validator_dst_address: String,
+        /// amount to redelegate
+        amount: SingleCoin,
+    },
     /// MsgDelegate
     StakingDelegate {
         /// validator address in bech32
@@ -382,6 +391,25 @@ impl CosmosSDKMsg {
                 };
                 msg_send.to_any()
             }
+            CosmosSDKMsg::StakingBeginRedelegate {
+                validator_src_address,
+                validator_dst_address,
+                amount,
+            } => {
+                let validator_src_address = validator_src_address.parse::<AccountId>()?;
+                let validator_dst_address = validator_dst_address.parse::<AccountId>()?;
+                let amount: Coin = amount.try_into()?;
+
+                let msg = MsgBeginRedelegate {
+                    delegator_address: sender_address,
+                    validator_src_address,
+                    validator_dst_address,
+                    /// Amount should not be None value.
+                    /// It should be fixed after merging PR - https://github.com/cosmos/cosmos-rust/pull/175
+                    amount: Some(amount),
+                };
+                msg.to_any()
+            }
             CosmosSDKMsg::StakingDelegate {
                 validator_address,
                 amount,
@@ -406,7 +434,8 @@ impl CosmosSDKMsg {
                 let msg = MsgUndelegate {
                     delegator_address: sender_address,
                     validator_address,
-                    /// FIXME: amount should not support value of None
+                    /// Amount should not be None value.
+                    /// It should be fixed after merging PR - https://github.com/cosmos/cosmos-rust/pull/175
                     amount: Some(amount),
                 };
                 msg.to_any()

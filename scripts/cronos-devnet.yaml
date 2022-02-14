@@ -18,9 +18,12 @@ cronos_777-1:
     - name: community
       coins: 10000000000000000000000basetcro
       mnemonic: ${COMMUNITY_MNEMONIC}
-    - name: delegator
+    - name: delegator1
       coins: 10000000000000000000000basetcro
-      mnemonic: ${DELEGATOR_MNEMONIC}
+      mnemonic: ${DELEGATOR1_MNEMONIC}
+    - name: delegator2
+      coins: 10000000000000000000000basetcro
+      mnemonic: ${DELEGATOR2_MNEMONIC}
     - name: signer1
       coins: 20000000000000000000000basetcro
       mnemonic: ${SIGNER1_MNEMONIC}
