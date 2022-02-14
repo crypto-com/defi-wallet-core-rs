@@ -712,6 +712,17 @@ mod tests {
             "cosmos1l5s7tnj28a7zxeeckhgwlhjys8dlrrefgqr4pj"
         );
 
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::BankSend {
+                recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+                amount: SingleCoin::ATOM { amount: 1 },
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+        println!("payload_raw:{}", hex::encode(payload_raw));
+
         let tx_raw = build_signed_single_msg_tx(
             TX_INFO,
             CosmosSDKMsg::BankSend {
@@ -722,6 +733,6 @@ mod tests {
         )
         .expect("ok signed tx");
 
-        println!("{}", hex::encode(tx_raw));
+        println!("tx_raw:{}", hex::encode(tx_raw));
     }
 }

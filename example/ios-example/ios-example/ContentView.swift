@@ -6,10 +6,11 @@
 //
 
 import SwiftUI
+import dwclib
 
 struct ContentView: View {
     var body: some View {
-        var wallet = try? HdWallet.generateWallet(password: "")
+        var wallet = try? HdWallet.generateWallet(password: "", wordCount: MnemonicWordCount.twelve)
         var mnemonic = try? wallet?.getBackupMnemonicPhrase()
         Text("mnemonic: " + mnemonic!)
         

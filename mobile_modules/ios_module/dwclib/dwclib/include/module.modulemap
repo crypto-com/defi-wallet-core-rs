@@ -1,0 +1,4 @@
+module DefiWalletCore [system] {
+    header "dwc_commonFFI.h"
+    export *
+}

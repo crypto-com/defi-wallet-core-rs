@@ -6,5 +6,5 @@
 cd ../..
 make ios
 cd -
-make x86 or make arm64
+make x86_64 or make arm64
 ```

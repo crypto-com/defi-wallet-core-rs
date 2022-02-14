@@ -1,11 +1,9 @@
-.PHONY: x86 arm64 clean
+.PHONY: x86_64 arm64 clean
 
-x86:
-	./build.sh x86
+x86_64:
+	./build.sh x86_64
 arm64:
 	./build.sh arm64
 clean:
-	rm -rf ios-example/include/dwc_commonFFI.h
-	rm -rf ios-example/common.swift
-	rm -rf ios-example/lib.a/*
+	rm -rf dwclib.framework
 	xcodebuild SYMROOT="./build" clean	
