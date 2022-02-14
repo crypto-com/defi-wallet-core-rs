@@ -8,6 +8,7 @@ use cosmrs::{
     bank::MsgSend,
     bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
     crypto::{self, secp256k1::VerifyingKey},
+    distribution::MsgWithdrawDelegatorReward,
     staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
 };
@@ -305,6 +306,11 @@ pub enum CosmosSDKMsg {
         /// amount to undelegate
         amount: SingleCoin,
     },
+    /// MsgWithdrawDelegatorReward
+    DistributionWithdrawDelegatorReward {
+        /// validator address in bech32
+        validator_address: String,
+    },
 }
 
 impl CosmosSDKMsg {
@@ -440,43 +446,17 @@ impl CosmosSDKMsg {
                 };
                 msg.to_any()
             }
+            CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address } => {
+                let validator_address = validator_address.parse::<AccountId>()?;
+
+                let msg = MsgWithdrawDelegatorReward {
+                    delegator_address: sender_address,
+                    validator_address,
+                };
+                msg.to_any()
+            }
         }
     }
-}
-
-fn get_single_msg_signdoc(
-    tx_info: CosmosSDKTxInfo,
-    msg: CosmosSDKMsg,
-    sender_public_key: crypto::PublicKey,
-) -> eyre::Result<SignDoc> {
-    let chain_id = tx_info.network.get_chain_id()?;
-
-    let sender_account_id = sender_public_key.account_id(tx_info.network.get_bech32_hrp())?;
-
-    let tx_body = tx::Body::new(
-        vec![msg.to_any(sender_account_id)?],
-        tx_info.memo_note.unwrap_or_default(),
-        tx_info.timeout_height,
-    );
-    let signer_info = SignerInfo::single_direct(Some(sender_public_key), tx_info.sequence_number);
-    let auth_info = signer_info.auth_info(Fee::from_amount_and_gas(
-        (&tx_info.fee_amount).try_into()?,
-        tx_info.gas_limit,
-    ));
-
-    SignDoc::new(&tx_body, &auth_info, &chain_id, tx_info.account_number)
-}
-
-fn get_signed_sign_msg_tx(
-    tx_info: CosmosSDKTxInfo,
-    msg: CosmosSDKMsg,
-    sender_private_key: Box<SigningKey>,
-) -> eyre::Result<Raw> {
-    let sender_pubkey = crypto::PublicKey::from(sender_private_key.public_key());
-    let sign_doc = get_single_msg_signdoc(tx_info, msg, sender_pubkey)?;
-    sign_doc.sign(&cosmrs::crypto::secp256k1::SigningKey::new(
-        sender_private_key,
-    ))
 }
 
 fn get_msg_signdoc(
@@ -534,12 +514,7 @@ pub fn get_single_msg_sign_payload(
     msg: CosmosSDKMsg,
     sender_pubkey: PublicKeyBytesWrapper,
 ) -> Result<Vec<u8>, ErrorWrapper> {
-    let sender_public_key: crypto::PublicKey = crypto::PublicKey::from(
-        VerifyingKey::from_bytes(sender_pubkey.into()).map_err(ErrorWrapper::PubkeyError)?,
-    );
-    get_single_msg_signdoc(tx_info, msg, sender_public_key)
-        .and_then(|doc| doc.into_bytes())
-        .map_err(|report| ErrorWrapper::EyreReport { report })
+    get_msg_sign_payload(tx_info, vec![msg], sender_pubkey)
 }
 
 /// creates the signed transaction
@@ -549,7 +524,7 @@ pub fn build_signed_single_msg_tx(
     msg: CosmosSDKMsg,
     secret_key: Arc<SecretKey>,
 ) -> Result<Vec<u8>, ErrorWrapper> {
-    let raw_signed_tx = get_signed_sign_msg_tx(tx_info, msg, secret_key.get_signing_key())
+    let raw_signed_tx = get_signed_msg_tx(tx_info, vec![msg], secret_key.get_signing_key())
         .map_err(|report| ErrorWrapper::EyreReport { report })?;
     raw_signed_tx
         .to_bytes()
