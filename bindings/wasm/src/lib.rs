@@ -3,11 +3,13 @@ use std::sync::Arc;
 use defi_wallet_core_common::{
     broadcast_contract_transfer_tx, broadcast_sign_eth_tx, broadcast_tx_sync,
     build_signed_single_msg_tx, get_account_balance, get_account_details, get_contract_balance,
-    get_eth_balance, query_denoms, get_single_msg_sign_payload, BalanceApiVersion,
-    ContractBalance, ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork,
-    HDWallet, Network, PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin,
-    COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    get_eth_balance, get_single_msg_sign_payload, BalanceApiVersion, ContractBalance,
+    ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Network,
+    PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
+
+use defi_wallet_core_common::node::nft;
+
 use wasm_bindgen::prelude::*;
 /// wasm utilities
 mod utils;
@@ -636,9 +638,58 @@ pub async fn broadcast_transfer_contract(
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
-pub async fn query_denoms(api_url: String) -> Result<JsValue, JsValue> {
-    let denoms = query_denoms(&api_url).await?;
-    // Ok(JsValue::from_serde(&denoms).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+pub async fn query_supply(
+    grpc_web_url: String,
+    denom_id: String,
+    owner: String,
+) -> Result<JsValue, JsValue> {
+    let supply = nft::query_supply(&grpc_web_url, denom_id, owner).await?;
+    JsValue::from_serde(&supply).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
 
+#[wasm_bindgen]
+pub async fn query_owner(
+    grpc_web_url: String,
+    denom_id: String,
+    owner: String,
+) -> Result<JsValue, JsValue> {
+    let owner = nft::query_owner(&grpc_web_url, denom_id, owner).await?;
+    JsValue::from_serde(&owner).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+#[wasm_bindgen]
+pub async fn query_collection(grpc_web_url: String, denom_id: String) -> Result<JsValue, JsValue> {
+    let collection = nft::query_collection(&grpc_web_url, denom_id).await?;
+    JsValue::from_serde(&collection).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+#[wasm_bindgen]
+pub async fn query_denom(grpc_web_url: String, denom_id: String) -> Result<JsValue, JsValue> {
+    let denom = nft::query_denom(&grpc_web_url, denom_id).await?;
+    JsValue::from_serde(&denom).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+#[wasm_bindgen]
+pub async fn query_denom_by_name(
+    grpc_web_url: String,
+    denom_name: String,
+) -> Result<JsValue, JsValue> {
+    let denom = nft::query_denom(&grpc_web_url, denom_name).await?;
+    JsValue::from_serde(&denom).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+#[wasm_bindgen]
+pub async fn query_denoms(grpc_web_url: String) -> Result<JsValue, JsValue> {
+    let denoms = nft::query_denoms(&grpc_web_url).await?;
     JsValue::from_serde(&denoms).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+#[wasm_bindgen]
+pub async fn query_nft(
+    grpc_web_url: String,
+    denom_id: String,
+    token_id: String,
+) -> Result<JsValue, JsValue> {
+    let nft = nft::query_nft(&grpc_web_url, denom_id, token_id).await?;
+    JsValue::from_serde(&nft).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }

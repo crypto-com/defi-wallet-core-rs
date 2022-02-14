@@ -1,7 +1,7 @@
 /// Eth contract types generated from ABI
 pub mod contract;
 /// interactions with remote node RPC / API (querying, broadcast etc.)
-mod node;
+pub mod node;
 /// transaction building etc.
 mod transaction;
 /// HD wallet-related functionality

@@ -219,7 +219,7 @@ pub mod msg_client {
     }
 }
 /// BaseNFT defines a non-fungible token
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, ::prost::Message)]
 pub struct BaseNft {
     #[prost(string, tag = "1")]
     pub id: ::prost::alloc::string::String,
@@ -245,7 +245,7 @@ pub struct Denom {
     pub creator: ::prost::alloc::string::String,
 }
 /// IDCollection defines a type of collection with specified ID
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, ::prost::Message)]
 pub struct IdCollection {
     #[prost(string, tag = "1")]
     pub denom_id: ::prost::alloc::string::String,
@@ -253,7 +253,7 @@ pub struct IdCollection {
     pub token_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Owner defines a type of owner
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, ::prost::Message)]
 pub struct Owner {
     #[prost(string, tag = "1")]
     pub address: ::prost::alloc::string::String,
@@ -261,7 +261,7 @@ pub struct Owner {
     pub id_collections: ::prost::alloc::vec::Vec<IdCollection>,
 }
 /// Collection defines a type of collection
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, ::prost::Message)]
 pub struct Collection {
     #[prost(message, optional, tag = "1")]
     pub denom: ::core::option::Option<Denom>,
