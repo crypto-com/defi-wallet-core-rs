@@ -146,6 +146,7 @@ async fn test_staking_delegate_and_unbound() {
         VALIDATOR1.to_owned(),
         100000000000,
         DENOM.to_owned(),
+        false,
     )
     .unwrap();
 
@@ -194,6 +195,7 @@ async fn test_staking_delegate_and_unbound() {
         VALIDATOR1.to_owned(),
         50000000000,
         DENOM.to_owned(),
+        false,
     )
     .unwrap();
 
@@ -250,6 +252,7 @@ async fn test_staking_redelegate() {
         VALIDATOR1.to_owned(),
         100000000000,
         DENOM.to_owned(),
+        false,
     )
     .unwrap();
     broadcast_tx(TENDERMINT_RPC_URL.to_owned(), signed_tx)
@@ -298,6 +301,7 @@ async fn test_staking_redelegate() {
         VALIDATOR2.to_owned(),
         50000000000,
         DENOM.to_owned(),
+        false,
     )
     .unwrap();
     broadcast_tx(TENDERMINT_RPC_URL.to_owned(), signed_tx)
@@ -342,3 +346,5 @@ async fn query_balance(address: &str) -> RawRpcBalance {
         .into_serde::<RawRpcBalance>()
         .unwrap()
 }
+
+// gupeng
