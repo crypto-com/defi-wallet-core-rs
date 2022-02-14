@@ -14,4 +14,4 @@ cxx-build = "1"
 
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "cdylib"]

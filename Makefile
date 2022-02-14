@@ -30,9 +30,12 @@ mac_install:
 	brew install ktlint
 	brew install swiftformat
 
-cpp:
-	cargo build --release
-	cp ./target/release/libdefi_wallet_core_cpp.a $(cpp_example)
+prepare_cpp:
+	cargo build --package defi-wallet-core-cpp --release
+
+cpp: prepare_cpp
+	cp $(shell find ./target/release -name "libcxxbridge1.a") $(cpp_example)
+	cp ./target/release/libdefi_wallet_core_cpp.* $(cpp_example)
 	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
