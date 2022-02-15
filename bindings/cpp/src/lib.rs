@@ -1,17 +1,14 @@
 use anyhow::{anyhow, Result};
-use defi_wallet_core_common::query_denoms_blocking;
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_single_msg_tx, get_account_balance_blocking,
     get_account_details_blocking, get_single_msg_sign_payload, BalanceApiVersion, CosmosSDKMsg,
     CosmosSDKTxInfo, HDWallet, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey,
     SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
-use std::sync::Arc;
+use defi_wallet_core_common::{query_denoms_blocking, query_nft_blocking};
 use defi_wallet_core_proto as proto;
-use proto::chainmain::nft::v1::{
-    query_client::QueryClient, QueryDenomsRequest, QueryDenomsResponse,
-    Denom, QueryDenomRequest
-};
+use proto::chainmain::nft::v1::{BaseNft, Denom};
+use std::sync::Arc;
 
 /// Wrapper of proto::chainmain::nft::v1::Denom
 pub struct DenomRaw {
@@ -28,6 +25,27 @@ impl From<Denom> for DenomRaw {
             name: d.name,
             schema: d.schema,
             creator: d.creator,
+        }
+    }
+}
+
+/// Wrapper of proto::chainmain::nft::v1::BaseNft
+pub struct BaseNftRaw {
+    pub id: String,
+    pub name: String,
+    pub uri: String,
+    pub data: String,
+    pub owner: String,
+}
+
+impl From<BaseNft> for BaseNftRaw {
+    fn from(d: BaseNft) -> BaseNftRaw {
+        BaseNftRaw {
+            id: d.id,
+            name: d.name,
+            uri: d.uri,
+            data: d.data,
+            owner: d.owner,
         }
     }
 }
@@ -339,6 +357,12 @@ mod ffi {
         ) -> Result<Vec<u8>>;
         type DenomRaw;
         fn query_denoms(grpc_url: String) -> Result<Vec<DenomRaw>>;
+        type BaseNftRaw;
+        fn query_nft(
+            grpc_url: String,
+            denom_id: String,
+            token_id: String,
+        ) -> Result<Box<BaseNftRaw>>;
     }
 }
 
@@ -701,4 +725,10 @@ pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Resul
 pub fn query_denoms(grpc_url: String) -> Result<Vec<DenomRaw>> {
     let denoms = query_denoms_blocking(&grpc_url)?;
     Ok(denoms.into_iter().map(|v| v.into()).collect())
+}
+
+pub fn query_nft(grpc_url: String, denom_id: String, token_id: String) -> Result<Box<BaseNftRaw>> {
+    let nft =
+        query_nft_blocking(&grpc_url, denom_id, token_id)?.ok_or(anyhow::anyhow!("No Nft"))?;
+    Ok(Box::new(nft.into()))
 }
