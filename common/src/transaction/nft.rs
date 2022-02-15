@@ -750,7 +750,7 @@ mod test {
         // Create signer info from public key and sequence number.
         // This uses a standard "direct" signature from a single signer.
         let signer_info =
-            SignerInfo::single_direct(Some(secret_key.public_key()), sequence_number);
+            SignerInfo::single_direct(Some(private_key.public_key()), sequence_number);
 
         // Compute auth info from signer info by associating a fee.
         let auth_info = signer_info.auth_info(Fee::from_amount_and_gas(amount, gas));
@@ -763,7 +763,7 @@ mod test {
         let sign_doc = SignDoc::new(&tx_body, &auth_info, &chain_id, account_number)?;
 
         // Sign the "sign doc" with the sender's private key, producing a signed raw transaction.
-        let tx_signed = sign_doc.sign(&secret_key)?;
+        let tx_signed = sign_doc.sign(&private_key)?;
 
         // Serialize the raw transaction as bytes (i.e. `Vec<u8>`).
         let tx_bytes = tx_signed.to_bytes()?;
