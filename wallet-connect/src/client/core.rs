@@ -117,7 +117,8 @@ impl Connector {
             socket.subscribe(topic).await?;
         }
         Ok(Self {
-            current_request: AtomicU64::new(0),
+            // Trust Wallet requires a non-zero request id
+            current_request: AtomicU64::new(1),
             socket,
             context,
         })
