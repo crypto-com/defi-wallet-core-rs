@@ -7,7 +7,7 @@ use defi_wallet_core_common::{
 };
 use defi_wallet_core_common::{
     query_collection_blocking, query_denom_blocking, query_denoms_blocking, query_nft_blocking,
-    query_owner_blocking, query_supply_blocking,
+    query_owner_blocking, query_supply_blocking, transaction,
 };
 use defi_wallet_core_proto as proto;
 use proto::chainmain::nft::v1::{BaseNft, Collection, Denom, IdCollection, Owner};
@@ -558,12 +558,13 @@ fn get_nft_issue_denom_signed_tx(
     name: String,
     schema: String,
 ) -> Result<Vec<u8>> {
-    let ret = build_signed_single_msg_tx(
+    let ret = transaction::nft::get_nft_issue_denom_signed_tx(
         tx_info.into(),
-        CosmosSDKMsg::NftIssueDenom { id, name, schema },
         private_key.key.clone(),
+        id,
+        name,
+        schema,
     )?;
-
     Ok(ret)
 }
 
@@ -580,19 +581,16 @@ fn get_nft_mint_signed_tx(
     data: String,
     recipient: String,
 ) -> Result<Vec<u8>> {
-    let ret = build_signed_single_msg_tx(
+    let ret = transaction::nft::get_nft_mint_signed_tx(
         tx_info.into(),
-        CosmosSDKMsg::NftMint {
-            id,
-            denom_id,
-            name,
-            uri,
-            data,
-            recipient,
-        },
         private_key.key.clone(),
+        id,
+        denom_id,
+        name,
+        uri,
+        data,
+        recipient,
     )?;
-
     Ok(ret)
 }
 
@@ -607,16 +605,14 @@ fn get_nft_edit_signed_tx(
     uri: String,
     data: String,
 ) -> Result<Vec<u8>> {
-    let ret = build_signed_single_msg_tx(
+    let ret = transaction::nft::get_nft_edit_signed_tx(
         tx_info.into(),
-        CosmosSDKMsg::NftEdit {
-            id,
-            denom_id,
-            name,
-            uri,
-            data,
-        },
         private_key.key.clone(),
+        id,
+        denom_id,
+        name,
+        uri,
+        data,
     )?;
 
     Ok(ret)
@@ -631,14 +627,12 @@ fn get_nft_transfer_signed_tx(
     denom_id: String,
     recipient: String,
 ) -> Result<Vec<u8>> {
-    let ret = build_signed_single_msg_tx(
+    let ret = transaction::nft::get_nft_transfer_signed_tx(
         tx_info.into(),
-        CosmosSDKMsg::NftTransfer {
-            id,
-            denom_id,
-            recipient,
-        },
         private_key.key.clone(),
+        id,
+        denom_id,
+        recipient,
     )?;
 
     Ok(ret)
@@ -652,10 +646,11 @@ fn get_nft_burn_signed_tx(
     id: String,
     denom_id: String,
 ) -> Result<Vec<u8>> {
-    let ret = build_signed_single_msg_tx(
+    let ret = transaction::nft::get_nft_burn_signed_tx(
         tx_info.into(),
-        CosmosSDKMsg::NftBurn { id, denom_id },
         private_key.key.clone(),
+        id,
+        denom_id,
     )?;
 
     Ok(ret)

@@ -9,6 +9,7 @@ pub enum RestError {
     MissingResult,
     #[error("Async Runtime error")]
     AsyncRuntimeError,
+    #[cfg(not(target_arch = "wasm32"))]
     #[error("gRPC transport error: {0}")]
     GRPCTransportError(tonic::transport::Error),
     #[error("gRPC error: {0}")]

@@ -1,10 +1,12 @@
 // ! NFT module support
 
-use crate::{msg_wrapper, proto, AccountId, ErrorReport, Msg, Result};
+use crate::{msg_wrapper, proto, AccountId, ErrorReport, Msg, Result, CosmosSDKMsg,CosmosSDKTxInfo, SecretKey, ErrorWrapper, build_signed_single_msg_tx};
+use std::sync::Arc;
 use eyre::WrapErr;
 use std::fmt::Display;
 use std::str::FromStr;
 use thiserror::Error;
+
 
 /// The denomination ID of the NFT
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -335,6 +337,120 @@ msg_wrapper! {
    }
 }
 
+/// creates the signed transaction
+/// for `MsgIssueDenom` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+pub fn get_nft_issue_denom_signed_tx(
+    tx_info: CosmosSDKTxInfo,
+    secret_key: Arc<SecretKey>,
+    id: String,
+    name: String,
+    schema: String,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    build_signed_single_msg_tx(
+        tx_info,
+        CosmosSDKMsg::NftIssueDenom { id, name, schema },
+        secret_key,
+    )
+}
+
+/// creates the signed transaction
+/// for `MsgMintNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+#[allow(clippy::too_many_arguments)]
+pub fn get_nft_mint_signed_tx(
+    tx_info: CosmosSDKTxInfo,
+    secret_key: Arc<SecretKey>,
+    id: String,
+    denom_id: String,
+    name: String,
+    uri: String,
+    data: String,
+    recipient: String,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    build_signed_single_msg_tx(
+        tx_info,
+        CosmosSDKMsg::NftMint {
+            id,
+            denom_id,
+            name,
+            uri,
+            data,
+            recipient,
+        },
+        secret_key,
+    )
+}
+
+/// creates the signed transaction
+/// for `MsgEditNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+pub fn get_nft_edit_signed_tx(
+    tx_info: CosmosSDKTxInfo,
+    secret_key: Arc<SecretKey>,
+    id: String,
+    denom_id: String,
+    name: String,
+    uri: String,
+    data: String,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    build_signed_single_msg_tx(
+        tx_info,
+        CosmosSDKMsg::NftEdit {
+            id,
+            denom_id,
+            name,
+            uri,
+            data,
+        },
+        secret_key,
+    )
+}
+
+/// creates the signed transaction
+/// for `MsgTransferNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+pub fn get_nft_transfer_signed_tx(
+    tx_info: CosmosSDKTxInfo,
+    secret_key: Arc<SecretKey>,
+    id: String,
+    denom_id: String,
+    recipient: String,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    build_signed_single_msg_tx(
+        tx_info,
+        CosmosSDKMsg::NftTransfer {
+            id,
+            denom_id,
+            recipient,
+        },
+        secret_key,
+    )
+}
+
+/// creates the signed transaction
+/// for `MsgBurnNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+pub fn get_nft_burn_signed_tx(
+    tx_info: CosmosSDKTxInfo,
+    secret_key: Arc<SecretKey>,
+    id: String,
+    denom_id: String,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    build_signed_single_msg_tx(
+        tx_info,
+        CosmosSDKMsg::NftBurn { id, denom_id },
+        secret_key,
+    )
+}
+
+
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -634,7 +750,7 @@ mod test {
         // Create signer info from public key and sequence number.
         // This uses a standard "direct" signature from a single signer.
         let signer_info =
-            SignerInfo::single_direct(Some(private_key.public_key()), sequence_number);
+            SignerInfo::single_direct(Some(secret_key.public_key()), sequence_number);
 
         // Compute auth info from signer info by associating a fee.
         let auth_info = signer_info.auth_info(Fee::from_amount_and_gas(amount, gas));
@@ -647,7 +763,7 @@ mod test {
         let sign_doc = SignDoc::new(&tx_body, &auth_info, &chain_id, account_number)?;
 
         // Sign the "sign doc" with the sender's private key, producing a signed raw transaction.
-        let tx_signed = sign_doc.sign(&private_key)?;
+        let tx_signed = sign_doc.sign(&secret_key)?;
 
         // Serialize the raw transaction as bytes (i.e. `Vec<u8>`).
         let tx_bytes = tx_signed.to_bytes()?;

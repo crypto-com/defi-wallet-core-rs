@@ -3,7 +3,7 @@ mod cosmos_sdk;
 /// wrapper and helpers for ethers
 mod ethereum;
 /// wrapper and helper for NFT functionality
-mod nft;
+pub mod nft;
 
 pub use cosmos_sdk::*;
 pub use ethereum::*;

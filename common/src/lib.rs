@@ -3,7 +3,7 @@ pub mod contract;
 /// interactions with remote node RPC / API (querying, broadcast etc.)
 pub mod node;
 /// transaction building etc.
-mod transaction;
+pub mod transaction;
 /// HD wallet-related functionality
 mod wallet;
 
