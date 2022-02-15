@@ -1,13 +1,16 @@
 use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_single_msg_tx, get_account_balance_blocking,
-    get_account_details_blocking, get_single_msg_sign_payload, BalanceApiVersion, CosmosSDKMsg,
-    CosmosSDKTxInfo, HDWallet, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey,
-    SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    get_account_details_blocking, get_single_msg_sign_payload, query_denom_by_name_blocking,
+    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, HDWallet, Network, PublicKeyBytesWrapper,
+    RawRpcAccountResponse, SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
-use defi_wallet_core_common::{query_denoms_blocking, query_nft_blocking};
+use defi_wallet_core_common::{
+    query_collection_blocking, query_denom_blocking, query_denoms_blocking, query_nft_blocking,
+    query_owner_blocking, query_supply_blocking,
+};
 use defi_wallet_core_proto as proto;
-use proto::chainmain::nft::v1::{BaseNft, Denom};
+use proto::chainmain::nft::v1::{BaseNft, Collection, Denom, IdCollection, Owner};
 use std::sync::Arc;
 
 /// Wrapper of proto::chainmain::nft::v1::Denom
@@ -46,6 +49,36 @@ impl From<BaseNft> for BaseNftRaw {
             uri: d.uri,
             data: d.data,
             owner: d.owner,
+        }
+    }
+}
+
+/// Wrapper of proto::chainmain::nft::v1::Owner
+pub struct OwnerRaw {
+    pub address: String,
+    pub id_collections: Vec<IdCollection>,
+}
+
+impl From<Owner> for OwnerRaw {
+    fn from(d: Owner) -> OwnerRaw {
+        OwnerRaw {
+            address: d.address,
+            id_collections: d.id_collections,
+        }
+    }
+}
+
+/// Wrapper of proto::chainmain::nft::v1::Collection
+pub struct CollectionRaw {
+    pub denom: Option<Denom>,
+    pub nfts: Vec<BaseNft>,
+}
+
+impl From<Collection> for CollectionRaw {
+    fn from(d: Collection) -> CollectionRaw {
+        CollectionRaw {
+            denom: d.denom,
+            nfts: d.nfts,
         }
     }
 }
@@ -355,7 +388,18 @@ mod ffi {
             id: String,
             denom_id: String,
         ) -> Result<Vec<u8>>;
+        fn query_supply(grpc_url: String, denom_id: String, owner: String) -> Result<u64>;
+        type OwnerRaw;
+        pub fn query_owner(
+            grpc_url: String,
+            denom_id: String,
+            owner: String,
+        ) -> Result<Box<OwnerRaw>>;
+        type CollectionRaw;
+        pub fn query_collection(grpc_url: String, denom_id: String) -> Result<Box<CollectionRaw>>;
         type DenomRaw;
+        pub fn query_denom(grpc_url: String, denom_id: String) -> Result<Box<DenomRaw>>;
+        pub fn query_denom_by_name(grpc_url: String, denom_name: String) -> Result<Box<DenomRaw>>;
         fn query_denoms(grpc_url: String) -> Result<Vec<DenomRaw>>;
         type BaseNftRaw;
         fn query_nft(
@@ -720,6 +764,34 @@ pub fn query_account_balance(
 pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Result<String> {
     let resp = broadcast_tx_sync_blocking(&tendermint_rpc_url, raw_signed_tx)?;
     Ok(serde_json::to_string(&resp)?)
+}
+
+fn query_supply(grpc_url: String, denom_id: String, owner: String) -> Result<u64> {
+    let supply = query_supply_blocking(&grpc_url, denom_id, owner)?;
+    Ok(supply)
+}
+
+pub fn query_owner(grpc_url: String, denom_id: String, owner: String) -> Result<Box<OwnerRaw>> {
+    let owner =
+        query_owner_blocking(&grpc_url, denom_id, owner)?.ok_or(anyhow::anyhow!("No Owner"))?;
+    Ok(Box::new(owner.into()))
+}
+
+pub fn query_collection(grpc_url: String, denom_id: String) -> Result<Box<CollectionRaw>> {
+    let collection =
+        query_collection_blocking(&grpc_url, denom_id)?.ok_or(anyhow::anyhow!("No Collection"))?;
+    Ok(Box::new(collection.into()))
+}
+
+pub fn query_denom(grpc_url: String, denom_id: String) -> Result<Box<DenomRaw>> {
+    let denom = query_denom_blocking(&grpc_url, denom_id)?.ok_or(anyhow::anyhow!("No denom"))?;
+    Ok(Box::new(denom.into()))
+}
+
+pub fn query_denom_by_name(grpc_url: String, denom_name: String) -> Result<Box<DenomRaw>> {
+    let denom =
+        query_denom_by_name_blocking(&grpc_url, denom_name)?.ok_or(anyhow::anyhow!("No denom"))?;
+    Ok(Box::new(denom.into()))
 }
 
 pub fn query_denoms(grpc_url: String) -> Result<Vec<DenomRaw>> {
