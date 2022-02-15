@@ -92,6 +92,7 @@ interface CosmosSDKMsg {
   StakingDelegate(string validator_address, SingleCoin amount);
   StakingUndelegate(string validator_address, SingleCoin amount);
   StakingBeginRedelegate(string validator_src_address, string validator_dst_address, SingleCoin amount);
+  DistributionSetWithdrawAddress(string withdraw_address);
   DistributionWithdrawDelegatorReward(string validator_address);
 };
 
