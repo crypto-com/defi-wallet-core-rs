@@ -147,7 +147,7 @@ pub fn simulate_blocking(grpc_url: &str, tx: Vec<u8>) -> Result<u64, RestError> 
     let result = rt.block_on(async move {
         let mut client = ServiceClient::connect(grpc_url.to_owned())
             .await
-            .map_err(|_err| RestError::GRPCError)?;
+            .map_err(RestError::GRPCTransportError)?;
         let request = SimulateRequest {
             tx_bytes: tx,
             ..Default::default()
@@ -155,7 +155,7 @@ pub fn simulate_blocking(grpc_url: &str, tx: Vec<u8>) -> Result<u64, RestError> 
         let res = client
             .simulate(request)
             .await
-            .map_err(|_err| RestError::GRPCError)?;
+            .map_err(RestError::GRPCError)?;
         res.into_inner().gas_info.ok_or(RestError::MissingResult)
     })?;
     Ok(result.gas_used)

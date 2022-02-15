@@ -9,15 +9,13 @@ pub enum RestError {
     MissingResult,
     #[error("Async Runtime error")]
     AsyncRuntimeError,
-    #[error("gRPC error")]
-    GRPCError,
+    #[error("gRPC transport error: {0}")]
+    GRPCTransportError(tonic::transport::Error),
+    #[error("gRPC error: {0}")]
+    GRPCError(tonic::Status),
     #[error("ErrorReport")]
     ErrorReport,
 }
-
-/// wrapper around API errors
-#[derive(Debug, thiserror::Error)]
-pub enum GrpcError {}
 
 impl From<RestError> for JsValue {
     fn from(e: RestError) -> Self {

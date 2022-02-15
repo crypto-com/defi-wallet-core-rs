@@ -103,6 +103,7 @@ enum RestError {
   "RequestError",
   "MissingResult",
   "AsyncRuntimeError",
+  "GRPCTransportError",
   "GRPCError",
   "ErrorReport",
 };

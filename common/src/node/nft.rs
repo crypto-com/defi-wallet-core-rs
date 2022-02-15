@@ -19,7 +19,7 @@ pub async fn query_supply(
     let res = client
         .supply(request)
         .await
-        .map_err(|_err| RestError::GRPCError)?
+        .map_err(RestError::GRPCError)?
         .into_inner();
     Ok(res.amount)
 }
@@ -39,7 +39,7 @@ pub async fn query_owner(
     let res = client
         .owner(request)
         .await
-        .map_err(|_err| RestError::GRPCError)?
+        .map_err(RestError::GRPCError)?
         .into_inner();
     Ok(res.owner)
 }
@@ -57,7 +57,7 @@ pub async fn query_collection(
     let res = client
         .collection(request)
         .await
-        .map_err(|_err| RestError::GRPCError)?
+        .map_err(RestError::GRPCError)?
         .into_inner();
     Ok(res.collection)
 }
@@ -69,7 +69,7 @@ pub async fn query_denom(grpc_web_url: &str, denom_id: String) -> Result<Option<
     let res = client
         .denom(request)
         .await
-        .map_err(|_err| RestError::GRPCError)?
+        .map_err(RestError::GRPCError)?
         .into_inner();
     Ok(res.denom)
 }
@@ -84,7 +84,7 @@ pub async fn query_denom_by_name(
     let res = client
         .denom_by_name(request)
         .await
-        .map_err(|_err| RestError::GRPCError)?
+        .map_err(RestError::GRPCError)?
         .into_inner();
     Ok(res.denom)
 }
@@ -96,21 +96,26 @@ pub async fn query_denoms(grpc_web_url: &str) -> Result<Vec<Denom>, RestError> {
     let res = client
         .denoms(request)
         .await
-        .map_err(|_err| RestError::GRPCError)?
+        .map_err(RestError::GRPCError)?
         .into_inner();
     Ok(res.denoms)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 /// Denoms queries all the denoms
-pub fn query_denoms_blocking(grpc_url: &str) -> anyhow::Result<Vec<Denom>> {
-    let rt = tokio::runtime::Runtime::new()?;
+pub fn query_denoms_blocking(grpc_url: &str) -> Result<Vec<Denom>, RestError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
     rt.block_on(async move {
-        let mut client = QueryClient::connect(grpc_url.to_owned()).await?;
-
+        let mut client = QueryClient::connect(grpc_url.to_owned())
+            .await
+            .map_err(RestError::GRPCTransportError)?;
         let request = QueryDenomsRequest { pagination: None };
 
-        let res = client.denoms(request).await?.into_inner();
+        let res = client
+            .denoms(request)
+            .await
+            .map_err(RestError::GRPCError)?
+            .into_inner();
 
         Ok(res.denoms)
     })
@@ -127,7 +132,31 @@ pub async fn query_nft(
     let res = client
         .nft(request)
         .await
-        .map_err(|_err| RestError::GRPCError)?
+        .map_err(RestError::GRPCError)?
         .into_inner();
     Ok(res.nft)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+/// NFT queries the NFT for the given denom and token ID
+pub fn query_nft_blocking(
+    grpc_url: &str,
+    denom_id: String,
+    token_id: String,
+) -> Result<Option<BaseNft>, RestError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
+    rt.block_on(async move {
+        let mut client = QueryClient::connect(grpc_url.to_owned())
+            .await
+            .map_err(RestError::GRPCTransportError)?;
+        let request = QueryNftRequest { denom_id, token_id };
+
+        let res = client
+            .nft(request)
+            .await
+            .map_err(RestError::GRPCError)?
+            .into_inner();
+
+        Ok(res.nft)
+    })
 }
