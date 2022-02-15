@@ -766,39 +766,46 @@ pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Resul
     Ok(serde_json::to_string(&resp)?)
 }
 
-fn query_supply(grpc_url: String, denom_id: String, owner: String) -> Result<u64> {
+/// Supply queries the total supply of a given denom or owner
+pub fn query_supply(grpc_url: String, denom_id: String, owner: String) -> Result<u64> {
     let supply = query_supply_blocking(&grpc_url, denom_id, owner)?;
     Ok(supply)
 }
 
+/// Owner queries the NFTs of the specified owner
 pub fn query_owner(grpc_url: String, denom_id: String, owner: String) -> Result<Box<OwnerRaw>> {
     let owner =
         query_owner_blocking(&grpc_url, denom_id, owner)?.ok_or(anyhow::anyhow!("No Owner"))?;
     Ok(Box::new(owner.into()))
 }
 
+/// Collection queries the NFTs of the specified denom
 pub fn query_collection(grpc_url: String, denom_id: String) -> Result<Box<CollectionRaw>> {
     let collection =
         query_collection_blocking(&grpc_url, denom_id)?.ok_or(anyhow::anyhow!("No Collection"))?;
     Ok(Box::new(collection.into()))
 }
 
+/// Denom queries the definition of a given denom
 pub fn query_denom(grpc_url: String, denom_id: String) -> Result<Box<DenomRaw>> {
     let denom = query_denom_blocking(&grpc_url, denom_id)?.ok_or(anyhow::anyhow!("No denom"))?;
     Ok(Box::new(denom.into()))
 }
 
+/// DenomByName queries the definition of a given denom by name
 pub fn query_denom_by_name(grpc_url: String, denom_name: String) -> Result<Box<DenomRaw>> {
     let denom =
         query_denom_by_name_blocking(&grpc_url, denom_name)?.ok_or(anyhow::anyhow!("No denom"))?;
     Ok(Box::new(denom.into()))
 }
 
+/// Denoms queries all the denoms
 pub fn query_denoms(grpc_url: String) -> Result<Vec<DenomRaw>> {
     let denoms = query_denoms_blocking(&grpc_url)?;
     Ok(denoms.into_iter().map(|v| v.into()).collect())
 }
 
+/// NFT queries the NFT for the given denom and token ID
 pub fn query_nft(grpc_url: String, denom_id: String, token_id: String) -> Result<Box<BaseNftRaw>> {
     let nft =
         query_nft_blocking(&grpc_url, denom_id, token_id)?.ok_or(anyhow::anyhow!("No Nft"))?;
