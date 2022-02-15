@@ -1,6 +1,5 @@
 use super::error::RestError;
 use crate::proto;
-use crate::transaction::*;
 use grpc_web_client::Client;
 use proto::chainmain::nft::v1::{
     query_client::QueryClient, BaseNft, Collection, Denom, Owner, QueryCollectionRequest,

@@ -828,6 +828,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "siwe",
+ "tendermint",
  "tendermint-rpc",
  "thiserror",
  "tokio",

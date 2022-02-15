@@ -3,13 +3,13 @@ use std::sync::Arc;
 use crate::SecretKey;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::UniffiCustomTypeConverter;
-pub use cosmrs::*;
 use cosmrs::{
     bank::MsgSend,
     bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
     crypto::{self, secp256k1::VerifyingKey},
     staking::{MsgDelegate, MsgUndelegate},
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
+    AccountId, Any, Coin, ErrorReport,
 };
 use eyre::{eyre, Context};
 

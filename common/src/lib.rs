@@ -12,6 +12,8 @@ mod wallet;
 mod login;
 
 pub use defi_wallet_core_proto as proto;
+// expose all proto related types (e.g. for uniffi)
+pub use proto::chainmain::nft::v1::*;
 
 pub use eyre::{Report as ErrorReport, Result};
 
