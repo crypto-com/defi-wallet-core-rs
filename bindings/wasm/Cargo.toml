@@ -30,5 +30,5 @@ tendermint = "0.23"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.28"
-ethers = { version = "0.6" }
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev="faba6e014da854e296d095541679e852e2288eec" }
 wasm-timer = "0.2.5"

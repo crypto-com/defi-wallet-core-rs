@@ -17,7 +17,7 @@ bip39 = "1"
 eyre = "0.6"
 defi-wallet-core-proto = { version = "0.1", default-features = false, path = "../proto" }
 # NOTE: add `features = ["legacy"]` if non-EIP-1559 network support is required
-ethers = { version = "0.6" }
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev="faba6e014da854e296d095541679e852e2288eec" }
 cosmrs = "0.4"
 prost = "0.9"
 # NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)

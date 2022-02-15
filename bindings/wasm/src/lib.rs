@@ -1,3 +1,5 @@
+#![allow(clippy::unused_unit)]
+/// TODO: remove when a new version is published https://github.com/crypto-com/defi-wallet-core-rs/issues/110
 use std::sync::Arc;
 
 use defi_wallet_core_common::{
