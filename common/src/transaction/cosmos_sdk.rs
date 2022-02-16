@@ -10,7 +10,7 @@ use cosmrs::{
     distribution::MsgWithdrawDelegatorReward,
     staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
-    AccountId, Any, Coin, ErrorReport,
+    AccountId, Any, Coin, ErrorReport, Tx,
 };
 use eyre::{eyre, Context};
 
