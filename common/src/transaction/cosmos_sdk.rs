@@ -593,6 +593,13 @@ mod tests {
     use cosmrs::crypto::secp256k1::SigningKey;
     use cosmrs::proto;
     use prost::Message;
+    use cosmrs::{
+        bank::MsgSend,
+        // bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
+        // crypto::{self, secp256k1::VerifyingKey},
+        // staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
+        // tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
+    };
 
     const TX_INFO: CosmosSDKTxInfo = CosmosSDKTxInfo {
         account_number: 1,
@@ -699,6 +706,12 @@ mod tests {
             "cbdff41bb60c39f7b85d6378586951f61cf1e8a33c0a034b1f9f98ffe3ad18cf"
         );
 
+        let pubkeys = private_key.get_public_key_bytes();
+        assert_eq!(
+            hex::encode(pubkeys),
+            "028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c520"
+        );
+
         let cosmos_address = wallet
             .get_address(
                 WalletCoin::CosmosSDK {
@@ -721,7 +734,11 @@ mod tests {
             PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
         )
         .expect("ok signed payload");
-        println!("payload_raw:{}", hex::encode(payload_raw));
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0a96010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a1a100a057561746f6d12073130303030303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
 
         let tx_raw = build_signed_single_msg_tx(
             TX_INFO,
@@ -733,6 +750,29 @@ mod tests {
         )
         .expect("ok signed tx");
 
-        println!("tx_raw:{}", hex::encode(tx_raw));
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0a96010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a1a100a057561746f6d12073130303030303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a40aa554d4be2ac72d644002296882c188de39944efd21fc021bf1202721fff40d05e9c86d398b11bb94e16cf79dd4866eca22d84b6785bd0098ed353615585485c"
+        );
+    }
+
+    #[test]
+    fn message_check() {
+        let amount = &SingleCoin::ATOM { amount: 1 };
+        let amount_coin: Coin = amount.try_into().unwrap();
+        let sender_address = &"cosmos1l5s7tnj28a7zxeeckhgwlhjys8dlrrefgqr4pj".to_string();
+        let sender_account_id = sender_address.parse::<AccountId>().unwrap();
+        let recipient_address = &"cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string();
+        let recipient_account_id = recipient_address.parse::<AccountId>().unwrap();
+        let msg_send = MsgSend {
+            from_address: sender_account_id,
+            to_address: recipient_account_id,
+            amount: vec![amount_coin],
+        };
+
+        assert_eq!(
+            hex::encode(msg_send.to_any().unwrap_or_default().value),
+            "0a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a1a100a057561746f6d120731303030303030"
+        );
     }
 }
