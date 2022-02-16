@@ -10,7 +10,7 @@ use cosmrs::{
     distribution::MsgWithdrawDelegatorReward,
     staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
-    AccountId, Any, Coin, ErrorReport, Tx,
+    AccountId, Any, Coin, ErrorReport,
 };
 use eyre::{eyre, Context};
 
@@ -567,6 +567,7 @@ mod tests {
     use crate::*;
     use cosmrs::crypto::secp256k1::SigningKey;
     use cosmrs::proto;
+    use cosmrs::Tx;
     use prost::Message;
 
     const TX_INFO: CosmosSDKTxInfo = CosmosSDKTxInfo {
