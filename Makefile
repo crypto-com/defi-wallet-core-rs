@@ -1,7 +1,7 @@
 
 cpp_example = ./example/cpp-example
 
-.PHONY: wasm android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto
+.PHONY: wasm android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests
 
 wasm:
 	wasm-pack build --scope crypto-com bindings/wasm
@@ -30,9 +30,12 @@ mac_install:
 	brew install ktlint
 	brew install swiftformat
 
-cpp:
-	cargo build --release
-	cp ./target/release/libdefi_wallet_core_cpp.a $(cpp_example)
+prepare_cpp:
+	cargo build --package defi-wallet-core-cpp --release
+
+cpp: prepare_cpp
+	cp $(shell find ./target/release -name "libcxxbridge1.a") $(cpp_example)
+	cp ./target/release/libdefi_wallet_core_cpp.* $(cpp_example)
 	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
@@ -54,6 +57,7 @@ python-tests:
 	@nix-shell ./integration_tests/shell.nix --run scripts/python-tests
 
 wasm-ci-tests:
+	export WASM_BINDGEN_TEST_TIMEOUT=60
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
 	sleep 10
 	cd bindings/wasm/ && wasm-pack test --chrome --headless
@@ -62,6 +66,16 @@ wasm-ci-tests:
 
 wasm-tests:
 	./scripts/wasm-tests
+
+cpp-ci-tests:
+	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
+	source ./scripts/.env
+	make cpp
+	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
+	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
+
+cpp-tests:
+	./scripts/cpp-tests
 
 lint-py:
 	flake8 --show-source --count --statistics \

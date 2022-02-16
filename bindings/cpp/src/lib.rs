@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{
-    broadcast_tx_sync_blocking, build_signed_single_msg_tx, get_account_balance_blocking,
+    broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx, get_account_balance_blocking,
     get_account_details_blocking, get_single_msg_sign_payload, query_denom_by_name_blocking,
     BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, HDWallet, Network, PublicKeyBytesWrapper,
     RawRpcAccountResponse, SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
@@ -146,6 +146,16 @@ pub enum CosmosSDKMsgRaw {
         /// The Denom ID of the Token.
         denom_id: String,
     },
+    /// MsgBeginRedelegate
+    StakingBeginRedelegate {
+        /// source validator address in bech32
+        validator_src_address: String,
+        /// destination validator address in bech32
+        validator_dst_address: String,
+        /// amount to redelegate
+        amount: u64,
+        denom: String,
+    },
     /// MsgDelegate
     StakingDelegate {
         /// validator address in bech32
@@ -161,6 +171,11 @@ pub enum CosmosSDKMsgRaw {
         /// amount to undelegate
         amount: u64,
         denom: String,
+    },
+    /// MsgWithdrawDelegatorReward
+    DistributionWithdrawDelegatorReward {
+        /// validator address in bech32
+        validator_address: String,
     },
 }
 
@@ -246,6 +261,24 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
                     denom: denom.to_owned(),
                 },
             },
+            CosmosSDKMsgRaw::StakingBeginRedelegate {
+                validator_src_address,
+                validator_dst_address,
+                amount,
+                denom,
+            } => CosmosSDKMsg::StakingBeginRedelegate {
+                validator_src_address: validator_src_address.to_owned(),
+                validator_dst_address: validator_dst_address.to_owned(),
+                amount: SingleCoin::Other {
+                    amount: format!("{}", amount),
+                    denom: denom.to_owned(),
+                },
+            },
+            CosmosSDKMsgRaw::DistributionWithdrawDelegatorReward { validator_address } => {
+                CosmosSDKMsg::DistributionWithdrawDelegatorReward {
+                    validator_address: validator_address.to_owned(),
+                }
+            }
         }
     }
 }
@@ -407,6 +440,36 @@ mod ffi {
             denom_id: String,
             token_id: String,
         ) -> Result<Box<BaseNftRaw>>;
+        fn get_staking_delegate_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            validator_address: String,
+            amount: u64,
+            denom: String,
+            with_reward_withdrawal: bool,
+        ) -> Result<Vec<u8>>;
+        fn get_staking_redelegate_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            validator_src_address: String,
+            validator_dst_address: String,
+            amount: u64,
+            denom: String,
+            with_reward_withdrawal: bool,
+        ) -> Result<Vec<u8>>;
+        fn get_staking_unbond_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            validator_address: String,
+            amount: u64,
+            denom: String,
+            with_reward_withdrawal: bool,
+        ) -> Result<Vec<u8>>;
+        fn get_distribution_withdraw_reward_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            validator_address: String,
+        ) -> Result<Vec<u8>>;
     }
 }
 
@@ -664,20 +727,53 @@ pub fn get_staking_delegate_signed_tx(
     validator_address: String,
     amount: u64,
     denom: String,
+    with_reward_withdrawal: bool,
 ) -> Result<Vec<u8>> {
-    let ret = build_signed_single_msg_tx(
-        tx_info.into(),
-        CosmosSDKMsg::StakingDelegate {
-            validator_address,
-            amount: SingleCoin::Other {
-                amount: format!("{}", amount),
-                denom,
-            },
+    let mut messages = vec![CosmosSDKMsg::StakingDelegate {
+        validator_address: validator_address.clone(),
+        amount: SingleCoin::Other {
+            amount: format!("{}", amount),
+            denom,
         },
-        private_key.key.clone(),
-    )?;
+    }];
 
-    Ok(ret)
+    if with_reward_withdrawal {
+        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address });
+    }
+
+    build_signed_msg_tx(tx_info.into(), messages, private_key.key.clone()).map_err(|e| e.into())
+}
+
+/// creates the signed transaction
+/// for `MsgBeginRedelegate` from the Cosmos SDK staking module
+pub fn get_staking_redelegate_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    validator_src_address: String,
+    validator_dst_address: String,
+    amount: u64,
+    denom: String,
+    with_reward_withdrawal: bool,
+) -> Result<Vec<u8>> {
+    let mut messages = vec![CosmosSDKMsg::StakingBeginRedelegate {
+        validator_src_address: validator_src_address.clone(),
+        validator_dst_address: validator_dst_address.clone(),
+        amount: SingleCoin::Other {
+            amount: format!("{}", amount),
+            denom,
+        },
+    }];
+
+    if with_reward_withdrawal {
+        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward {
+            validator_address: validator_src_address,
+        });
+        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward {
+            validator_address: validator_dst_address,
+        });
+    }
+
+    build_signed_msg_tx(tx_info.into(), messages, private_key.key.clone()).map_err(|e| e.into())
 }
 
 /// creates the signed transaction
@@ -688,16 +784,33 @@ pub fn get_staking_unbond_signed_tx(
     validator_address: String,
     amount: u64,
     denom: String,
+    with_reward_withdrawal: bool,
+) -> Result<Vec<u8>> {
+    let mut messages = vec![CosmosSDKMsg::StakingUndelegate {
+        validator_address: validator_address.clone(),
+        amount: SingleCoin::Other {
+            amount: format!("{}", amount),
+            denom,
+        },
+    }];
+
+    if with_reward_withdrawal {
+        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address });
+    }
+
+    build_signed_msg_tx(tx_info.into(), messages, private_key.key.clone()).map_err(|e| e.into())
+}
+
+/// creates the signed transaction
+/// for `MsgWithdrawDelegatorReward` from the Cosmos SDK distributon module
+pub fn get_distribution_withdraw_reward_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    validator_address: String,
 ) -> Result<Vec<u8>> {
     let ret = build_signed_single_msg_tx(
         tx_info.into(),
-        CosmosSDKMsg::StakingUndelegate {
-            validator_address,
-            amount: SingleCoin::Other {
-                amount: format!("{}", amount),
-                denom,
-            },
-        },
+        CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address },
         private_key.key.clone(),
     )?;
 

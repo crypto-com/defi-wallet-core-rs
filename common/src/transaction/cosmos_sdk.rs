@@ -7,7 +7,8 @@ use cosmrs::{
     bank::MsgSend,
     bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
     crypto::{self, secp256k1::VerifyingKey},
-    staking::{MsgDelegate, MsgUndelegate},
+    distribution::MsgWithdrawDelegatorReward,
+    staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
     AccountId, Any, Coin, ErrorReport,
 };
@@ -282,6 +283,15 @@ pub enum CosmosSDKMsg {
         /// The Denom ID of the Token.
         denom_id: String,
     },
+    /// MsgBeginRedelegate
+    StakingBeginRedelegate {
+        /// source validator address in bech32
+        validator_src_address: String,
+        /// destination validator address in bech32
+        validator_dst_address: String,
+        /// amount to redelegate
+        amount: SingleCoin,
+    },
     /// MsgDelegate
     StakingDelegate {
         /// validator address in bech32
@@ -295,6 +305,11 @@ pub enum CosmosSDKMsg {
         validator_address: String,
         /// amount to undelegate
         amount: SingleCoin,
+    },
+    /// MsgWithdrawDelegatorReward
+    DistributionWithdrawDelegatorReward {
+        /// validator address in bech32
+        validator_address: String,
     },
 }
 
@@ -382,6 +397,25 @@ impl CosmosSDKMsg {
                 };
                 msg_send.to_any()
             }
+            CosmosSDKMsg::StakingBeginRedelegate {
+                validator_src_address,
+                validator_dst_address,
+                amount,
+            } => {
+                let validator_src_address = validator_src_address.parse::<AccountId>()?;
+                let validator_dst_address = validator_dst_address.parse::<AccountId>()?;
+                let amount: Coin = amount.try_into()?;
+
+                let msg = MsgBeginRedelegate {
+                    delegator_address: sender_address,
+                    validator_src_address,
+                    validator_dst_address,
+                    /// Amount should not be None value.
+                    /// It should be fixed after merging PR - https://github.com/cosmos/cosmos-rust/pull/175
+                    amount: Some(amount),
+                };
+                msg.to_any()
+            }
             CosmosSDKMsg::StakingDelegate {
                 validator_address,
                 amount,
@@ -406,48 +440,23 @@ impl CosmosSDKMsg {
                 let msg = MsgUndelegate {
                     delegator_address: sender_address,
                     validator_address,
-                    /// FIXME: amount should not support value of None
+                    /// Amount should not be None value.
+                    /// It should be fixed after merging PR - https://github.com/cosmos/cosmos-rust/pull/175
                     amount: Some(amount),
+                };
+                msg.to_any()
+            }
+            CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address } => {
+                let validator_address = validator_address.parse::<AccountId>()?;
+
+                let msg = MsgWithdrawDelegatorReward {
+                    delegator_address: sender_address,
+                    validator_address,
                 };
                 msg.to_any()
             }
         }
     }
-}
-
-fn get_single_msg_signdoc(
-    tx_info: CosmosSDKTxInfo,
-    msg: CosmosSDKMsg,
-    sender_public_key: crypto::PublicKey,
-) -> eyre::Result<SignDoc> {
-    let chain_id = tx_info.network.get_chain_id()?;
-
-    let sender_account_id = sender_public_key.account_id(tx_info.network.get_bech32_hrp())?;
-
-    let tx_body = tx::Body::new(
-        vec![msg.to_any(sender_account_id)?],
-        tx_info.memo_note.unwrap_or_default(),
-        tx_info.timeout_height,
-    );
-    let signer_info = SignerInfo::single_direct(Some(sender_public_key), tx_info.sequence_number);
-    let auth_info = signer_info.auth_info(Fee::from_amount_and_gas(
-        (&tx_info.fee_amount).try_into()?,
-        tx_info.gas_limit,
-    ));
-
-    SignDoc::new(&tx_body, &auth_info, &chain_id, tx_info.account_number)
-}
-
-fn get_signed_sign_msg_tx(
-    tx_info: CosmosSDKTxInfo,
-    msg: CosmosSDKMsg,
-    sender_private_key: Box<SigningKey>,
-) -> eyre::Result<Raw> {
-    let sender_pubkey = crypto::PublicKey::from(sender_private_key.public_key());
-    let sign_doc = get_single_msg_signdoc(tx_info, msg, sender_pubkey)?;
-    sign_doc.sign(&cosmrs::crypto::secp256k1::SigningKey::new(
-        sender_private_key,
-    ))
 }
 
 fn get_msg_signdoc(
@@ -505,12 +514,7 @@ pub fn get_single_msg_sign_payload(
     msg: CosmosSDKMsg,
     sender_pubkey: PublicKeyBytesWrapper,
 ) -> Result<Vec<u8>, ErrorWrapper> {
-    let sender_public_key: crypto::PublicKey = crypto::PublicKey::from(
-        VerifyingKey::from_bytes(sender_pubkey.into()).map_err(ErrorWrapper::PubkeyError)?,
-    );
-    get_single_msg_signdoc(tx_info, msg, sender_public_key)
-        .and_then(|doc| doc.into_bytes())
-        .map_err(|report| ErrorWrapper::EyreReport { report })
+    get_msg_sign_payload(tx_info, vec![msg], sender_pubkey)
 }
 
 /// creates the signed transaction
@@ -520,7 +524,7 @@ pub fn build_signed_single_msg_tx(
     msg: CosmosSDKMsg,
     secret_key: Arc<SecretKey>,
 ) -> Result<Vec<u8>, ErrorWrapper> {
-    let raw_signed_tx = get_signed_sign_msg_tx(tx_info, msg, secret_key.get_signing_key())
+    let raw_signed_tx = get_signed_msg_tx(tx_info, vec![msg], secret_key.get_signing_key())
         .map_err(|report| ErrorWrapper::EyreReport { report })?;
     raw_signed_tx
         .to_bytes()
@@ -683,6 +687,17 @@ mod tests {
             "cosmos1l5s7tnj28a7zxeeckhgwlhjys8dlrrefgqr4pj"
         );
 
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::BankSend {
+                recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+                amount: SingleCoin::ATOM { amount: 1 },
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+        println!("payload_raw:{}", hex::encode(payload_raw));
+
         let tx_raw = build_signed_single_msg_tx(
             TX_INFO,
             CosmosSDKMsg::BankSend {
@@ -693,6 +708,6 @@ mod tests {
         )
         .expect("ok signed tx");
 
-        println!("{}", hex::encode(tx_raw));
+        println!("tx_raw:{}", hex::encode(tx_raw));
     }
 }

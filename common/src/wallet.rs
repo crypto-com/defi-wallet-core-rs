@@ -216,6 +216,11 @@ impl SecretKey {
         Ok(signature)
     }
 
+    /// Get public key to byte array
+    pub fn get_public_key_bytes(&self) -> Vec<u8> {
+        self.0.clone().public_key().to_bytes().to_vec()
+    }
+
     /// Convert private key to byte array
     pub fn to_bytes(&self) -> Vec<u8> {
         self.get_signing_key().to_bytes().to_vec()
@@ -231,6 +236,11 @@ impl Default for SecretKey {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Convert byte array to a hex string without the 0x prefix
+pub fn bytes_to_hex(data: Vec<u8>) -> String {
+    hex::encode(data)
 }
 
 #[cfg(test)]

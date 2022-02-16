@@ -28,6 +28,7 @@ enum HdWrapError {
 
 interface SecretKey {
     constructor();
+    sequence<u8> get_public_key_bytes();
     sequence<u8> to_bytes();
     string to_hex();
 };
@@ -90,6 +91,8 @@ interface CosmosSDKMsg {
   NftBurn(string id, string denom_id);
   StakingDelegate(string validator_address, SingleCoin amount);
   StakingUndelegate(string validator_address, SingleCoin amount);
+  StakingBeginRedelegate(string validator_src_address, string validator_dst_address, SingleCoin amount);
+  DistributionWithdrawDelegatorReward(string validator_address);
 };
 
 [Error]
@@ -290,4 +293,5 @@ namespace common {
   string broadcast_sign_eth_tx_blocking([ByRef] string to_hex, EthAmount amount, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
   [Throws=EthError]
   string broadcast_contract_transfer_tx_blocking(ContractTransfer transfer_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
+  string bytes_to_hex(sequence<u8> data);
 };

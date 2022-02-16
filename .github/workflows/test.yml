@@ -11,6 +11,8 @@ on:
 jobs:
   integration_tests:
     runs-on: ubuntu-latest
+    env:
+      WASM_BINDGEN_TEST_TIMEOUT: 60
     steps:
       - uses: actions/checkout@v2
       - uses: cachix/install-nix-action@v15
@@ -36,3 +38,5 @@ jobs:
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
       - name: Run wasm tests
         run: make wasm-ci-tests
+      - name: Run cpp tests
+        run: make cpp-tests

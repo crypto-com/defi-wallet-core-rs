@@ -3,3 +3,4 @@ dwc_commonFFI.h
 lib.a/
 common.swift
 build/
+dwclib.framework/

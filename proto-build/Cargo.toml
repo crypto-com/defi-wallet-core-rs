@@ -3,7 +3,7 @@ name = "proto-build"
 version = "0.1.0"
 edition = "2021"
 publish = false
-
+rust-version = "1.57"
 
 [dependencies]
 prost = "0.9"
