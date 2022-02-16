@@ -25,7 +25,11 @@ pub async fn query_supply(
 
 #[cfg(not(target_arch = "wasm32"))]
 /// Supply queries the total supply of a given denom or owner
-pub fn query_supply_blocking(grpc_url: &str, denom_id: String, owner: String) -> Result<u64, RestError> {
+pub fn query_supply_blocking(
+    grpc_url: &str,
+    denom_id: String,
+    owner: String,
+) -> Result<u64, RestError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
     rt.block_on(async move {
         let mut client = QueryClient::connect(grpc_url.to_owned())
@@ -37,7 +41,7 @@ pub fn query_supply_blocking(grpc_url: &str, denom_id: String, owner: String) ->
             .supply(request)
             .await
             .map_err(RestError::GRPCError)?
-        .into_inner();
+            .into_inner();
 
         Ok(res.amount)
     })
@@ -65,7 +69,11 @@ pub async fn query_owner(
 
 #[cfg(not(target_arch = "wasm32"))]
 /// Owner queries the NFTs of the specified owner
-pub fn query_owner_blocking(grpc_url: &str, denom_id: String, owner: String) -> Result<Option<Owner>, RestError> {
+pub fn query_owner_blocking(
+    grpc_url: &str,
+    denom_id: String,
+    owner: String,
+) -> Result<Option<Owner>, RestError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
     rt.block_on(async move {
         let mut client = QueryClient::connect(grpc_url.to_owned())
@@ -81,7 +89,7 @@ pub fn query_owner_blocking(grpc_url: &str, denom_id: String, owner: String) -> 
             .owner(request)
             .await
             .map_err(RestError::GRPCError)?
-        .into_inner();
+            .into_inner();
 
         Ok(res.owner)
     })
@@ -107,7 +115,10 @@ pub async fn query_collection(
 
 #[cfg(not(target_arch = "wasm32"))]
 /// Collection queries the NFTs of the specified denom
-pub fn query_collection_blocking(grpc_url: &str, denom_id: String) -> Result<Option<Collection>, RestError> {
+pub fn query_collection_blocking(
+    grpc_url: &str,
+    denom_id: String,
+) -> Result<Option<Collection>, RestError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
     rt.block_on(async move {
         let mut client = QueryClient::connect(grpc_url.to_owned())
@@ -122,7 +133,7 @@ pub fn query_collection_blocking(grpc_url: &str, denom_id: String) -> Result<Opt
             .collection(request)
             .await
             .map_err(RestError::GRPCError)?
-        .into_inner();
+            .into_inner();
 
         Ok(res.collection)
     })
@@ -154,7 +165,7 @@ pub fn query_denom_blocking(grpc_url: &str, denom_id: String) -> Result<Option<D
             .denom(request)
             .await
             .map_err(RestError::GRPCError)?
-        .into_inner();
+            .into_inner();
 
         Ok(res.denom)
     })
@@ -177,7 +188,10 @@ pub async fn query_denom_by_name(
 
 #[cfg(not(target_arch = "wasm32"))]
 /// DenomByName queries the definition of a given denom by name
-pub fn query_denom_by_name_blocking(grpc_url: &str, denom_name: String) -> Result<Option<Denom>, RestError> {
+pub fn query_denom_by_name_blocking(
+    grpc_url: &str,
+    denom_name: String,
+) -> Result<Option<Denom>, RestError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
     rt.block_on(async move {
         let mut client = QueryClient::connect(grpc_url.to_owned())
@@ -189,7 +203,7 @@ pub fn query_denom_by_name_blocking(grpc_url: &str, denom_name: String) -> Resul
             .denom_by_name(request)
             .await
             .map_err(RestError::GRPCError)?
-        .into_inner();
+            .into_inner();
 
         Ok(res.denom)
     })

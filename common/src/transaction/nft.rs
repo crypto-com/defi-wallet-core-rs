@@ -1,12 +1,14 @@
 // ! NFT module support
 
-use crate::{msg_wrapper, proto, AccountId, ErrorReport, Msg, Result, CosmosSDKMsg,CosmosSDKTxInfo, SecretKey, ErrorWrapper, build_signed_single_msg_tx};
-use std::sync::Arc;
+use crate::{
+    build_signed_single_msg_tx, msg_wrapper, proto, AccountId, CosmosSDKMsg, CosmosSDKTxInfo,
+    ErrorReport, ErrorWrapper, Msg, Result, SecretKey,
+};
 use eyre::WrapErr;
 use std::fmt::Display;
 use std::str::FromStr;
+use std::sync::Arc;
 use thiserror::Error;
-
 
 /// The denomination ID of the NFT
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -442,14 +444,8 @@ pub fn get_nft_burn_signed_tx(
     id: String,
     denom_id: String,
 ) -> Result<Vec<u8>, ErrorWrapper> {
-    build_signed_single_msg_tx(
-        tx_info,
-        CosmosSDKMsg::NftBurn { id, denom_id },
-        secret_key,
-    )
+    build_signed_single_msg_tx(tx_info, CosmosSDKMsg::NftBurn { id, denom_id }, secret_key)
 }
-
-
 
 #[cfg(test)]
 mod test {
