@@ -7,8 +7,13 @@ mod session;
 /// The websocket connection management
 mod socket;
 
+use std::str::FromStr;
+
 use async_trait::async_trait;
-use ethers::prelude::{Address, FromErr, JsonRpcClient, Middleware, Provider, ProviderError};
+use ethers::prelude::{
+    Address, FromErr, JsonRpcClient, Middleware, Provider, ProviderError, Signature,
+};
+use eyre::Context;
 use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
 
@@ -48,6 +53,27 @@ impl Client {
     /// TODO: more specific error types than eyre
     pub async fn ensure_session(&mut self) -> Result<(Vec<Address>, u64), eyre::Error> {
         self.connection.ensure_session().await
+    }
+
+    /// Send a request to sign a message as per https://eips.ethereum.org/EIPS/eip-1271
+    pub async fn personal_sign(
+        &mut self,
+        message: &str,
+        address: &Address,
+    ) -> Result<Signature, ClientError> {
+        let sig_str: String = self
+            .request(
+                "personal_sign",
+                vec![
+                    message.to_string(),
+                    format!("{:?}", address),
+                    "".to_string(),
+                ],
+            )
+            .await?;
+        Signature::from_str(&sig_str)
+            .context("failed to parse signature")
+            .map_err(ClientError::Eyre)
     }
 }
 
