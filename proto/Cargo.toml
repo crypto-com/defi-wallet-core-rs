@@ -22,6 +22,7 @@ serde = "1"
 [features]
 default = ["grpc"]
 grpc = []
+transport = ["tonic/transport", "tonic/tls", "tonic/tls-roots"]
 
 [package.metadata.docs.rs]
 all-features = true

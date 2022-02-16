@@ -34,17 +34,18 @@ thiserror = "1"
 uniffi = "^0.17"
 uniffi_macros = "^0.17"
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
-defi-wallet-core-proto = { version = "0.1", path = "../proto" }
 # grpc-web-client would be replaced if tonic has native grpc-web support.
 # Check https://github.com/hyperium/tonic/issues/645
 grpc-web-client = { git = "https://github.com/titanous/grpc-web-client"}
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+defi-wallet-core-proto = { version = "0.1", path = "../proto", features = ["transport"] }
 cosmos-sdk-proto = { version = "0.9", features = ["grpc"] }
 tokio = { version = "1", features = ["rt"] }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+defi-wallet-core-proto = { version = "0.1", path = "../proto" }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost"] }
 
 
