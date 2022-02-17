@@ -729,7 +729,7 @@ pub async fn query_denom_by_name(
     grpc_web_url: String,
     denom_name: String,
 ) -> Result<JsValue, JsValue> {
-    let denom = node::nft::query_denom(&grpc_web_url, denom_name).await?;
+    let denom = node::nft::query_denom_by_name(&grpc_web_url, denom_name).await?;
     JsValue::from_serde(&denom).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }
 
