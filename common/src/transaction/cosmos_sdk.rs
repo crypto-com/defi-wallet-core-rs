@@ -8,7 +8,7 @@ use cosmrs::{
     bank::MsgSend,
     bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
     crypto::{self, secp256k1::VerifyingKey},
-    distribution::MsgWithdrawDelegatorReward,
+    distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward},
     staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
 };
@@ -306,6 +306,11 @@ pub enum CosmosSDKMsg {
         /// amount to undelegate
         amount: SingleCoin,
     },
+    /// MsgSetWithdrawAddress
+    DistributionSetWithdrawAddress {
+        /// withdraw address in bech32
+        withdraw_address: String,
+    },
     /// MsgWithdrawDelegatorReward
     DistributionWithdrawDelegatorReward {
         /// validator address in bech32
@@ -443,6 +448,15 @@ impl CosmosSDKMsg {
                     /// Amount should not be None value.
                     /// It should be fixed after merging PR - https://github.com/cosmos/cosmos-rust/pull/175
                     amount: Some(amount),
+                };
+                msg.to_any()
+            }
+            CosmosSDKMsg::DistributionSetWithdrawAddress { withdraw_address } => {
+                let withdraw_address = withdraw_address.parse::<AccountId>()?;
+
+                let msg = MsgSetWithdrawAddress {
+                    delegator_address: sender_address,
+                    withdraw_address,
                 };
                 msg.to_any()
             }

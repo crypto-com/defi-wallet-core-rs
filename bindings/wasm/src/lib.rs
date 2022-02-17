@@ -486,6 +486,24 @@ pub fn get_staking_unbond_signed_tx(
 }
 
 /// creates the signed transaction
+/// for `DistributionSetWithdrawAddress` from the Chainmain distribution module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+#[wasm_bindgen]
+pub fn get_distribution_set_withdraw_address_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    withdraw_address: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::DistributionSetWithdrawAddress { withdraw_address },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+/// creates the signed transaction
 /// for `DistributionWithdrawDelegatorReward` from the Chainmain distribution module
 /// wasm-bindgen only supports the C-style enums,
 /// hences this duplicate function

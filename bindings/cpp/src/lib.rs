@@ -96,6 +96,11 @@ pub enum CosmosSDKMsgRaw {
         amount: u64,
         denom: String,
     },
+    /// MsgSetWithdrawAddress
+    DistributionSetWithdrawAddress {
+        /// withdraw address in bech32
+        withdraw_address: String,
+    },
     /// MsgWithdrawDelegatorReward
     DistributionWithdrawDelegatorReward {
         /// validator address in bech32
@@ -198,6 +203,11 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
                     denom: denom.to_owned(),
                 },
             },
+            CosmosSDKMsgRaw::DistributionSetWithdrawAddress { withdraw_address } => {
+                CosmosSDKMsg::DistributionSetWithdrawAddress {
+                    withdraw_address: withdraw_address.to_owned(),
+                }
+            }
             CosmosSDKMsgRaw::DistributionWithdrawDelegatorReward { validator_address } => {
                 CosmosSDKMsg::DistributionWithdrawDelegatorReward {
                     validator_address: validator_address.to_owned(),
@@ -369,6 +379,11 @@ mod ffi {
             amount: u64,
             denom: String,
             with_reward_withdrawal: bool,
+        ) -> Result<Vec<u8>>;
+        fn get_distribution_set_withdraw_address_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            withdraw_address: String,
         ) -> Result<Vec<u8>>;
         fn get_distribution_withdraw_reward_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
@@ -709,6 +724,22 @@ pub fn get_staking_unbond_signed_tx(
     }
 
     build_signed_msg_tx(tx_info.into(), messages, private_key.key.clone()).map_err(|e| e.into())
+}
+
+/// creates the signed transaction
+/// for `MsgSetWithdrawAddress` from the Cosmos SDK distributon module
+pub fn get_distribution_set_withdraw_address_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    withdraw_address: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::DistributionSetWithdrawAddress { withdraw_address },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
 }
 
 /// creates the signed transaction
