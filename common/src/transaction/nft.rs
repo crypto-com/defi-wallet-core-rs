@@ -283,7 +283,7 @@ msg_wrapper! {
         /// The unique ID of the denomination.
         pub denom_id: DenomId,
         /// The name of the NFT being minted.
-        pub name: DenomName,
+        pub name: String,
         /// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
         pub uri: TokenUri,
         /// The data of the NFT.
@@ -303,7 +303,7 @@ msg_wrapper! {
        /// The unique ID of the denomination, necessary as multiple denominations are able to be represented on each chain.
        pub denom_id: DenomId,
        /// The name of the NFT being edited.
-       pub name: DenomName,
+       pub name: String,
        /// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
        pub uri: TokenUri,
        /// The data of the NFT
@@ -685,7 +685,7 @@ mod test {
         let msg_mint_nft = MsgMintNft {
             id: "testtokenid".parse::<TokenId>().unwrap(),
             denom_id: "testdenomid".parse::<DenomId>().unwrap(),
-            name: "testtokenid".parse::<DenomName>().unwrap(),
+            name: "".to_owned(),
             uri: "testuri".parse::<TokenUri>().unwrap(),
             data: "".to_owned(),
             sender: sender_account_id.clone(),

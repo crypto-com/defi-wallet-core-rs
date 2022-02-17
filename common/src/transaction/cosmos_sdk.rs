@@ -350,7 +350,7 @@ impl CosmosSDKMsg {
                 let msg_send = MsgMintNft {
                     id: id.parse::<TokenId>()?,
                     denom_id: denom_id.parse::<DenomId>()?,
-                    name: name.parse::<DenomName>()?,
+                    name: name.to_owned(),
                     uri: uri.parse::<TokenUri>()?,
                     data: data.to_owned(),
                     sender: sender_address,
@@ -368,7 +368,7 @@ impl CosmosSDKMsg {
                 let msg_send = MsgEditNft {
                     id: id.parse::<TokenId>()?,
                     denom_id: denom_id.parse::<DenomId>()?,
-                    name: name.parse::<DenomName>()?,
+                    name: name.to_owned(),
                     uri: uri.parse::<TokenUri>()?,
                     data: data.to_owned(),
                     sender: sender_address,
