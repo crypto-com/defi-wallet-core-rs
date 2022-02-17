@@ -782,6 +782,47 @@ mod tests {
     }
 
     #[test]
+    fn staking_undelegate_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::StakingUndelegate {
+                validator_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+                amount: SingleCoin::UATOM { amount: 100 },
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0aa2010a9c010a252f636f736d6f732e7374616b696e672e763162657461312e4d7367556e64656c656761746512730a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b331a0c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::StakingUndelegate {
+                validator_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+                amount: SingleCoin::UATOM { amount: 100 },
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0aa2010a9c010a252f636f736d6f732e7374616b696e672e763162657461312e4d7367556e64656c656761746512730a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b331a0c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a407c468b64e58510b3dc20259d6042f280b8ee9e9aca6a0b3bfc21d931509659b70169aad7543970b65c8bc6aa3bccbb8868ce85d3eece042396492e6dc666404a"
+        );
+    }
+
+    #[test]
     fn message_check() {
         let amount = &SingleCoin::ATOM { amount: 1 };
         let amount_coin: Coin = amount.try_into().unwrap();
