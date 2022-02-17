@@ -1,0 +1,30 @@
+name: Windows Build CI
+
+on:
+  push:
+    branches: 
+      - main  
+    paths-ignore:
+      - README.md
+  pull_request:
+    paths-ignore:
+      - README.md
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: prepare files in bash
+      shell: bash
+      run: |
+        cd ./example/vs-example
+        ./go.sh
+
+    - name: compile 
+      working-directory: .\example\vs-example\vs-example
+      run: msbuild .\vs-example.vcxproj -t:rebuild  -property:Configuration=Release /p:Platform=x64

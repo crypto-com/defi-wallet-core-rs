@@ -1,7 +1,9 @@
+#![allow(clippy::unused_unit)]
+/// TODO: remove when a new version is published https://github.com/crypto-com/defi-wallet-core-rs/issues/110
 use std::sync::Arc;
 
 use defi_wallet_core_common::{
-    broadcast_contract_transfer_tx, broadcast_sign_eth_tx, broadcast_tx_sync,
+    broadcast_contract_transfer_tx, broadcast_sign_eth_tx, broadcast_tx_sync, build_signed_msg_tx,
     build_signed_single_msg_tx, get_account_balance, get_account_details, get_contract_balance,
     get_eth_balance, get_single_msg_sign_payload, BalanceApiVersion, ContractBalance,
     ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Network,
@@ -400,19 +402,22 @@ pub fn get_staking_delegate_signed_tx(
     validator_address: String,
     amount: u64,
     denom: String,
+    with_reward_withdrawal: bool,
 ) -> Result<Vec<u8>, JsValue> {
-    build_signed_single_msg_tx(
-        tx_info.into(),
-        CosmosSDKMsg::StakingDelegate {
-            validator_address,
-            amount: SingleCoin::Other {
-                amount: format!("{}", amount),
-                denom,
-            },
+    let mut messages = vec![CosmosSDKMsg::StakingDelegate {
+        validator_address: validator_address.clone(),
+        amount: SingleCoin::Other {
+            amount: format!("{}", amount),
+            denom,
         },
-        private_key.key,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }];
+
+    if with_reward_withdrawal {
+        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address });
+    }
+
+    build_signed_msg_tx(tx_info.into(), messages, private_key.key)
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }
 
 /// creates the signed transaction
@@ -427,20 +432,28 @@ pub fn get_staking_redelegate_signed_tx(
     validator_dst_address: String,
     amount: u64,
     denom: String,
+    with_reward_withdrawal: bool,
 ) -> Result<Vec<u8>, JsValue> {
-    build_signed_single_msg_tx(
-        tx_info.into(),
-        CosmosSDKMsg::StakingBeginRedelegate {
-            validator_src_address,
-            validator_dst_address,
-            amount: SingleCoin::Other {
-                amount: format!("{}", amount),
-                denom,
-            },
+    let mut messages = vec![CosmosSDKMsg::StakingBeginRedelegate {
+        validator_src_address: validator_src_address.clone(),
+        validator_dst_address: validator_dst_address.clone(),
+        amount: SingleCoin::Other {
+            amount: format!("{}", amount),
+            denom,
         },
-        private_key.key,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }];
+
+    if with_reward_withdrawal {
+        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward {
+            validator_address: validator_src_address,
+        });
+        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward {
+            validator_address: validator_dst_address,
+        });
+    }
+
+    build_signed_msg_tx(tx_info.into(), messages, private_key.key)
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
 }
 
 /// creates the signed transaction
@@ -454,16 +467,55 @@ pub fn get_staking_unbond_signed_tx(
     validator_address: String,
     amount: u64,
     denom: String,
+    with_reward_withdrawal: bool,
+) -> Result<Vec<u8>, JsValue> {
+    let mut messages = vec![CosmosSDKMsg::StakingUndelegate {
+        validator_address: validator_address.clone(),
+        amount: SingleCoin::Other {
+            amount: format!("{}", amount),
+            denom,
+        },
+    }];
+
+    if with_reward_withdrawal {
+        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address });
+    }
+
+    build_signed_msg_tx(tx_info.into(), messages, private_key.key)
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+/// creates the signed transaction
+/// for `DistributionSetWithdrawAddress` from the Chainmain distribution module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+#[wasm_bindgen]
+pub fn get_distribution_set_withdraw_address_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    withdraw_address: String,
 ) -> Result<Vec<u8>, JsValue> {
     build_signed_single_msg_tx(
         tx_info.into(),
-        CosmosSDKMsg::StakingUndelegate {
-            validator_address,
-            amount: SingleCoin::Other {
-                amount: format!("{}", amount),
-                denom,
-            },
-        },
+        CosmosSDKMsg::DistributionSetWithdrawAddress { withdraw_address },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+/// creates the signed transaction
+/// for `DistributionWithdrawDelegatorReward` from the Chainmain distribution module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+#[wasm_bindgen]
+pub fn get_distribution_withdraw_reward_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    validator_address: String,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address },
         private_key.key,
     )
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))

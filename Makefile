@@ -1,7 +1,7 @@
 
 cpp_example = ./example/cpp-example
 
-.PHONY: wasm android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests
+.PHONY: wasm android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests
 
 wasm:
 	wasm-pack build --scope crypto-com bindings/wasm
@@ -57,6 +57,7 @@ python-tests:
 	@nix-shell ./integration_tests/shell.nix --run scripts/python-tests
 
 wasm-ci-tests:
+	export WASM_BINDGEN_TEST_TIMEOUT=60
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
 	sleep 10
 	cd bindings/wasm/ && wasm-pack test --chrome --headless
@@ -65,6 +66,16 @@ wasm-ci-tests:
 
 wasm-tests:
 	./scripts/wasm-tests
+
+cpp-ci-tests:
+	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
+	source ./scripts/.env
+	make cpp
+	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
+	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
+
+cpp-tests:
+	./scripts/cpp-tests
 
 lint-py:
 	flake8 --show-source --count --statistics \

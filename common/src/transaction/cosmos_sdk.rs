@@ -8,6 +8,7 @@ use cosmrs::{
     bank::MsgSend,
     bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
     crypto::{self, secp256k1::VerifyingKey},
+    distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward},
     staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
 };
@@ -305,6 +306,16 @@ pub enum CosmosSDKMsg {
         /// amount to undelegate
         amount: SingleCoin,
     },
+    /// MsgSetWithdrawAddress
+    DistributionSetWithdrawAddress {
+        /// withdraw address in bech32
+        withdraw_address: String,
+    },
+    /// MsgWithdrawDelegatorReward
+    DistributionWithdrawDelegatorReward {
+        /// validator address in bech32
+        validator_address: String,
+    },
 }
 
 impl CosmosSDKMsg {
@@ -440,43 +451,26 @@ impl CosmosSDKMsg {
                 };
                 msg.to_any()
             }
+            CosmosSDKMsg::DistributionSetWithdrawAddress { withdraw_address } => {
+                let withdraw_address = withdraw_address.parse::<AccountId>()?;
+
+                let msg = MsgSetWithdrawAddress {
+                    delegator_address: sender_address,
+                    withdraw_address,
+                };
+                msg.to_any()
+            }
+            CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address } => {
+                let validator_address = validator_address.parse::<AccountId>()?;
+
+                let msg = MsgWithdrawDelegatorReward {
+                    delegator_address: sender_address,
+                    validator_address,
+                };
+                msg.to_any()
+            }
         }
     }
-}
-
-fn get_single_msg_signdoc(
-    tx_info: CosmosSDKTxInfo,
-    msg: CosmosSDKMsg,
-    sender_public_key: crypto::PublicKey,
-) -> eyre::Result<SignDoc> {
-    let chain_id = tx_info.network.get_chain_id()?;
-
-    let sender_account_id = sender_public_key.account_id(tx_info.network.get_bech32_hrp())?;
-
-    let tx_body = tx::Body::new(
-        vec![msg.to_any(sender_account_id)?],
-        tx_info.memo_note.unwrap_or_default(),
-        tx_info.timeout_height,
-    );
-    let signer_info = SignerInfo::single_direct(Some(sender_public_key), tx_info.sequence_number);
-    let auth_info = signer_info.auth_info(Fee::from_amount_and_gas(
-        (&tx_info.fee_amount).try_into()?,
-        tx_info.gas_limit,
-    ));
-
-    SignDoc::new(&tx_body, &auth_info, &chain_id, tx_info.account_number)
-}
-
-fn get_signed_sign_msg_tx(
-    tx_info: CosmosSDKTxInfo,
-    msg: CosmosSDKMsg,
-    sender_private_key: Box<SigningKey>,
-) -> eyre::Result<Raw> {
-    let sender_pubkey = crypto::PublicKey::from(sender_private_key.public_key());
-    let sign_doc = get_single_msg_signdoc(tx_info, msg, sender_pubkey)?;
-    sign_doc.sign(&cosmrs::crypto::secp256k1::SigningKey::new(
-        sender_private_key,
-    ))
 }
 
 fn get_msg_signdoc(
@@ -534,12 +528,7 @@ pub fn get_single_msg_sign_payload(
     msg: CosmosSDKMsg,
     sender_pubkey: PublicKeyBytesWrapper,
 ) -> Result<Vec<u8>, ErrorWrapper> {
-    let sender_public_key: crypto::PublicKey = crypto::PublicKey::from(
-        VerifyingKey::from_bytes(sender_pubkey.into()).map_err(ErrorWrapper::PubkeyError)?,
-    );
-    get_single_msg_signdoc(tx_info, msg, sender_public_key)
-        .and_then(|doc| doc.into_bytes())
-        .map_err(|report| ErrorWrapper::EyreReport { report })
+    get_msg_sign_payload(tx_info, vec![msg], sender_pubkey)
 }
 
 /// creates the signed transaction
@@ -549,7 +538,7 @@ pub fn build_signed_single_msg_tx(
     msg: CosmosSDKMsg,
     secret_key: Arc<SecretKey>,
 ) -> Result<Vec<u8>, ErrorWrapper> {
-    let raw_signed_tx = get_signed_sign_msg_tx(tx_info, msg, secret_key.get_signing_key())
+    let raw_signed_tx = get_signed_msg_tx(tx_info, vec![msg], secret_key.get_signing_key())
         .map_err(|report| ErrorWrapper::EyreReport { report })?;
     raw_signed_tx
         .to_bytes()
@@ -590,16 +579,10 @@ mod tests {
     use std::sync::Arc;
 
     use crate::*;
+    use cosmrs::bank::MsgSend;
     use cosmrs::crypto::secp256k1::SigningKey;
     use cosmrs::proto;
     use prost::Message;
-    use cosmrs::{
-        bank::MsgSend,
-        // bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
-        // crypto::{self, secp256k1::VerifyingKey},
-        // staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
-        // tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
-    };
 
     const TX_INFO: CosmosSDKTxInfo = CosmosSDKTxInfo {
         account_number: 1,
@@ -610,6 +593,8 @@ mod tests {
         memo_note: None,
         network: Network::CosmosHub,
     };
+
+    const WORDS: &str = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
 
     #[test]
     fn signdoc_construction_works() {
@@ -693,8 +678,7 @@ mod tests {
 
     #[test]
     fn signing_check() {
-        let words = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
-        let wallet = HDWallet::recover_wallet(words.to_string(), None).expect("wallet");
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
 
         let private_key = wallet
             .get_key("m/44'/118'/0'/0/0".to_string())
@@ -753,6 +737,47 @@ mod tests {
         assert_eq!(
             hex::encode(tx_raw),
             "0a96010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a1a100a057561746f6d12073130303030303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a40aa554d4be2ac72d644002296882c188de39944efd21fc021bf1202721fff40d05e9c86d398b11bb94e16cf79dd4866eca22d84b6785bd0098ed353615585485c"
+        );
+    }
+
+    #[test]
+    fn staking_delegate_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::StakingDelegate {
+                validator_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+                amount: SingleCoin::UATOM { amount: 100 },
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0aa0010a9a010a232f636f736d6f732e7374616b696e672e763162657461312e4d736744656c656761746512730a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b331a0c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::StakingDelegate {
+                validator_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+                amount: SingleCoin::UATOM { amount: 100 },
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0aa0010a9a010a232f636f736d6f732e7374616b696e672e763162657461312e4d736744656c656761746512730a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b331a0c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a404d71f59fb847a319b5cd4a831eed8c9baa4051a656392be6c981f95d5debf552011318ac433caf47e8df57d6fb133cf9f5d91db031dff59beb2d98b7e041a125"
         );
     }
 
