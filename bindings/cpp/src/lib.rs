@@ -15,6 +15,10 @@ use proto::chainmain::nft::v1::{BaseNft, Collection, Denom, IdCollection, Owner}
 use std::sync::Arc;
 
 /// Wrapper of proto::chainmain::nft::v1::Denom
+///
+/// For now, types used as extern Rust types are required to be defined by the same crate that
+/// contains the bridge using them. This restriction may be lifted in the future.
+/// Check https://cxx.rs/extern-rust.html
 pub struct DenomRaw {
     pub id: String,
     pub name: String,
@@ -34,6 +38,10 @@ impl From<Denom> for DenomRaw {
 }
 
 /// Wrapper of proto::chainmain::nft::v1::BaseNft
+///
+/// For now, types used as extern Rust types are required to be defined by the same crate that
+/// contains the bridge using them. This restriction may be lifted in the future.
+/// Check https://cxx.rs/extern-rust.html
 pub struct BaseNftRaw {
     pub id: String,
     pub name: String,
@@ -55,6 +63,10 @@ impl From<BaseNft> for BaseNftRaw {
 }
 
 /// Wrapper of proto::chainmain::nft::v1::Owner
+///
+/// For now, types used as extern Rust types are required to be defined by the same crate that
+/// contains the bridge using them. This restriction may be lifted in the future.
+/// Check https://cxx.rs/extern-rust.html
 pub struct OwnerRaw {
     pub address: String,
     pub id_collections: Vec<IdCollection>,
@@ -70,6 +82,10 @@ impl From<Owner> for OwnerRaw {
 }
 
 /// Wrapper of proto::chainmain::nft::v1::Collection
+///
+/// For now, types used as extern Rust types are required to be defined by the same crate that
+/// contains the bridge using them. This restriction may be lifted in the future.
+/// Check https://cxx.rs/extern-rust.html
 pub struct CollectionRaw {
     pub denom: Option<Denom>,
     pub nfts: Vec<BaseNft>,
@@ -85,6 +101,10 @@ impl From<Collection> for CollectionRaw {
 }
 
 /// Wrapper of `CosmosSDKMsg`
+///
+/// For now, types used as extern Rust types are required to be defined by the same crate that
+/// contains the bridge using them. This restriction may be lifted in the future.
+/// Check https://cxx.rs/extern-rust.html
 pub enum CosmosSDKMsgRaw {
     /// MsgSend
     BankSend {
