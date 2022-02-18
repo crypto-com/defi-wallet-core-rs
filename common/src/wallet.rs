@@ -1,17 +1,16 @@
-use std::sync::Arc;
-
 use crate::Network;
 use bip39::{Language, Mnemonic};
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use cosmrs::bip32::{self, DerivationPath, PrivateKey, Seed, XPrv};
 use cosmrs::crypto::PublicKey;
+use ethers::core::k256::ecdsa;
 use ethers::prelude::{LocalWallet, Signature, Signer};
-use ethers::utils::hex;
-use ethers::utils::hex::ToHex;
-use ethers::utils::secret_key_to_address;
+use ethers::utils::hex::{self, FromHexError, ToHex};
+use ethers::utils::{hash_message, secret_key_to_address};
 use rand_core::OsRng;
 use secrecy::{ExposeSecret, SecretString, Zeroize};
 use std::str::FromStr;
+use std::sync::Arc;
 
 /// describes what coin type to use (for HD derivation or address generation)
 pub enum WalletCoin {
@@ -50,9 +49,8 @@ impl WalletCoin {
             }
             WalletCoin::Ethereum => {
                 // FIXME: remove when `ethers` updates k256
-                let private_key_old =
-                    ethers::core::k256::ecdsa::SigningKey::from_bytes(&private_key.to_bytes())
-                        .expect("two versions of k256 should be byte-compatible");
+                let private_key_old = SigningKey::from_bytes(&private_key.to_bytes())
+                    .expect("two versions of k256 should be byte-compatible");
                 let address = secret_key_to_address(&private_key_old);
                 let address_hex: String = address.encode_hex();
                 Ok(format!("0x{}", address_hex))
@@ -185,6 +183,15 @@ impl HDWallet {
     }
 }
 
+/// wrapper around Secret Key errors
+#[derive(Debug, thiserror::Error)]
+pub enum SecretKeyWrapError {
+    #[error("Invalid bytes: {0}")]
+    InvalidBytes(ecdsa::Error),
+    #[error("Invalid hex: {0}")]
+    InvalidHex(FromHexError),
+}
+
 /// wrapper around secp256k1 signing key
 pub struct SecretKey(SigningKey);
 
@@ -194,6 +201,19 @@ impl SecretKey {
         SecretKey(SigningKey::random(&mut OsRng))
     }
 
+    /// constructs secret key from bytes
+    pub fn from_bytes(bytes: Vec<u8>) -> Result<Self, SecretKeyWrapError> {
+        let signing_key =
+            SigningKey::from_bytes(&bytes).map_err(|e| SecretKeyWrapError::InvalidBytes(e))?;
+        Ok(SecretKey(signing_key))
+    }
+
+    /// constructs secret key from hex
+    pub fn from_hex(hex: String) -> Result<Self, SecretKeyWrapError> {
+        let bytes = hex::decode(hex).map_err(|e| SecretKeyWrapError::InvalidHex(e))?;
+        Self::from_bytes(bytes)
+    }
+
     /// get the inner signing key (for CosmRS signing)
     pub fn get_signing_key(&self) -> Box<SigningKey> {
         Box::new(self.0.clone())
@@ -201,15 +221,15 @@ impl SecretKey {
 
     /// get the inner signing key (for ethers signing)
     /// FIXME: remove when `ethers` updates k256
-    pub fn get_eth_signing_key(&self) -> ethers::core::k256::ecdsa::SigningKey {
-        ethers::core::k256::ecdsa::SigningKey::from_bytes(&self.0.to_bytes())
+    pub fn get_eth_signing_key(&self) -> SigningKey {
+        SigningKey::from_bytes(&self.0.to_bytes())
             .expect("two versions of k256 should be byte-compatible")
     }
 
     /// signs an arbitrary message as per EIP-191
     /// TODO: chain_id may not be necessary?
     pub fn sign_eth(&self, message: &[u8], chain_id: u64) -> Result<Signature, HdWrapError> {
-        let hash = ethers::utils::hash_message(message);
+        let hash = hash_message(message);
         let wallet = LocalWallet::from(self.get_eth_signing_key()).with_chain_id(chain_id);
         // TODO: EIP-155 normalization (it seems `siwe` expects raw values)
         let signature = wallet.sign_hash(hash, false);
@@ -219,6 +239,11 @@ impl SecretKey {
     /// Get public key to byte array
     pub fn get_public_key_bytes(&self) -> Vec<u8> {
         self.0.clone().public_key().to_bytes().to_vec()
+    }
+
+    /// Get public key to a hex string without the 0x prefix
+    pub fn get_public_key_hex(&self) -> String {
+        hex::encode(self.0.clone().public_key().to_bytes())
     }
 
     /// Convert private key to byte array
