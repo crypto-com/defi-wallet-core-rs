@@ -198,14 +198,14 @@ pub struct SecretKey(SigningKey);
 impl SecretKey {
     /// generates a random secret key
     pub fn new() -> Self {
-        SecretKey(SigningKey::random(&mut OsRng))
+        Self(SigningKey::random(&mut OsRng))
     }
 
     /// constructs secret key from bytes
     pub fn from_bytes(bytes: Vec<u8>) -> Result<Self, SecretKeyWrapError> {
         let signing_key =
             SigningKey::from_bytes(&bytes).map_err(|e| SecretKeyWrapError::InvalidBytes(e))?;
-        Ok(SecretKey(signing_key))
+        Ok(Self(signing_key))
     }
 
     /// constructs secret key from hex
@@ -214,12 +214,12 @@ impl SecretKey {
         Self::from_bytes(bytes)
     }
 
-    /// get the inner signing key (for CosmRS signing)
+    /// gets the inner signing key (for CosmRS signing)
     pub fn get_signing_key(&self) -> Box<SigningKey> {
         Box::new(self.0.clone())
     }
 
-    /// get the inner signing key (for ethers signing)
+    /// gets the inner signing key (for ethers signing)
     /// FIXME: remove when `ethers` updates k256
     pub fn get_eth_signing_key(&self) -> SigningKey {
         SigningKey::from_bytes(&self.0.to_bytes())
@@ -236,22 +236,22 @@ impl SecretKey {
         Ok(signature)
     }
 
-    /// Get public key to byte array
+    /// gets public key to byte array
     pub fn get_public_key_bytes(&self) -> Vec<u8> {
         self.0.clone().public_key().to_bytes().to_vec()
     }
 
-    /// Get public key to a hex string without the 0x prefix
+    /// gets public key to a hex string without the 0x prefix
     pub fn get_public_key_hex(&self) -> String {
         hex::encode(self.0.clone().public_key().to_bytes())
     }
 
-    /// Convert private key to byte array
+    /// converts private key to byte array
     pub fn to_bytes(&self) -> Vec<u8> {
         self.get_signing_key().to_bytes().to_vec()
     }
 
-    /// Convert the private key to a hex string without the 0x prefix
+    /// converts private key to a hex string without the 0x prefix
     pub fn to_hex(&self) -> String {
         hex::encode(self.get_signing_key().to_bytes())
     }
