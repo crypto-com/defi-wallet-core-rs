@@ -240,6 +240,33 @@ interface EthAmount {
     EthDecimal(string amount);
 };
 
+
+interface Client {
+    [Throws=RestError,Name=new_blocking]
+    constructor(string grpc_web_url);
+
+    [Throws=RestError]
+    u64 supply_blocking(string denom_id, string owner);
+
+    [Throws=RestError]
+    Owner? owner_blocking(string denom_id, string owner);
+
+    [Throws=RestError]
+    Collection? collection_blocking(string denom_id);
+
+    [Throws=RestError]
+    Denom? denom_blocking(string denom_id);
+
+    [Throws=RestError]
+    Denom? denom_by_name_blocking(string denom_name);
+
+    [Throws=RestError]
+    sequence<Denom> denoms_blocking();
+
+    [Throws=RestError]
+    BaseNft? nft_blocking(string denom_id, string token_id);
+};
+
 namespace common {
   [Throws=ErrorWrapper]
   sequence<u8> get_single_msg_sign_payload(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg, PublicKeyBytesWrapper sender_pubkey);
@@ -267,20 +294,6 @@ namespace common {
   u64 simulate_blocking([ByRef] string grpc_url, sequence<u8> raw_signed_tx);
   [Throws=RestError]
   TxBroadcastResult broadcast_tx_sync_blocking([ByRef] string tendermint_rpc_url, sequence<u8> raw_signed_tx);
-  [Throws=RestError]
-  u64 query_supply_blocking([ByRef] string grpc_url, string denom_id, string owner);
-  [Throws=RestError]
-  Owner? query_owner_blocking([ByRef] string grpc_url, string denom_id, string owner);
-  [Throws=RestError]
-  Collection? query_collection_blocking([ByRef] string grpc_url, string denom_id);
-  [Throws=RestError]
-  Denom? query_denom_blocking([ByRef] string grpc_url, string denom_id);
-  [Throws=RestError]
-  Denom? query_denom_by_name_blocking([ByRef] string grpc_url, string denom_name);
-  [Throws=RestError]
-  sequence<Denom> query_denoms_blocking([ByRef] string grpc_url);
-  [Throws=RestError]
-  BaseNft? query_nft_blocking([ByRef] string grpc_url, string denom_id, string token_id);
   [Throws=EthError]
   sequence<u8> construct_unsigned_eth_tx([ByRef] string from_hex, [ByRef] string to_hex, EthAmount amount, EthNetwork network);
   [Throws=EthError]

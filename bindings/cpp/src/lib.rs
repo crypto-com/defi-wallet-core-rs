@@ -21,14 +21,14 @@ fn new_grpc_client(grpc_url: String) -> Result<Box<GrpcClient>> {
 
 impl GrpcClient {
     /// Supply queries the total supply of a given denom or owner
-    pub fn supply(&mut self, denom_id: String, owner: String) -> Result<u64> {
+    pub fn supply(&self, denom_id: String, owner: String) -> Result<u64> {
         // let supply = query_supply_blocking(&self.0.grpc_url, denom_id, owner)?;
         let supply = self.0.supply_blocking(denom_id, owner)?;
         Ok(supply)
     }
 
     /// Owner queries the NFTs of the specified owner
-    pub fn owner(&mut self, denom_id: String, owner: String) -> Result<Box<OwnerRaw>> {
+    pub fn owner(&self, denom_id: String, owner: String) -> Result<Box<OwnerRaw>> {
         let owner = self
             .0
             .owner_blocking(denom_id, owner)?
@@ -37,7 +37,7 @@ impl GrpcClient {
     }
 
     /// Collection queries the NFTs of the specified denom
-    pub fn collection(&mut self, denom_id: String) -> Result<Box<CollectionRaw>> {
+    pub fn collection(&self, denom_id: String) -> Result<Box<CollectionRaw>> {
         let collection = self
             .0
             .collection_blocking(denom_id)?
@@ -46,7 +46,7 @@ impl GrpcClient {
     }
 
     /// Denom queries the definition of a given denom
-    pub fn denom(&mut self, denom_id: String) -> Result<Box<DenomRaw>> {
+    pub fn denom(&self, denom_id: String) -> Result<Box<DenomRaw>> {
         let denom = self
             .0
             .denom_blocking(denom_id)?
@@ -55,7 +55,7 @@ impl GrpcClient {
     }
 
     /// DenomByName queries the definition of a given denom by name
-    pub fn denom_by_name(&mut self, denom_name: String) -> Result<Box<DenomRaw>> {
+    pub fn denom_by_name(&self, denom_name: String) -> Result<Box<DenomRaw>> {
         let denom = self
             .0
             .denom_by_name_blocking(denom_name)?
@@ -64,13 +64,13 @@ impl GrpcClient {
     }
 
     /// Denoms queries all the denoms
-    pub fn denoms(&mut self) -> Result<Vec<DenomRaw>> {
+    pub fn denoms(&self) -> Result<Vec<DenomRaw>> {
         let denoms = self.0.denoms_blocking()?;
         Ok(denoms.into_iter().map(|v| v.into()).collect())
     }
 
     /// NFT queries the NFT for the given denom and token ID
-    pub fn nft(&mut self, denom_id: String, token_id: String) -> Result<Box<BaseNftRaw>> {
+    pub fn nft(&self, denom_id: String, token_id: String) -> Result<Box<BaseNftRaw>> {
         let nft = self
             .0
             .nft_blocking(denom_id, token_id)?
