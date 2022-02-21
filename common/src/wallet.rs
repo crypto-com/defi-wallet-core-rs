@@ -204,13 +204,13 @@ impl SecretKey {
     /// constructs secret key from bytes
     pub fn from_bytes(bytes: Vec<u8>) -> Result<Self, SecretKeyWrapError> {
         let signing_key =
-            SigningKey::from_bytes(&bytes).map_err(|e| SecretKeyWrapError::InvalidBytes(e))?;
+            SigningKey::from_bytes(&bytes).map_err(SecretKeyWrapError::InvalidBytes)?;
         Ok(Self(signing_key))
     }
 
     /// constructs secret key from hex
     pub fn from_hex(hex: String) -> Result<Self, SecretKeyWrapError> {
-        let bytes = hex::decode(hex).map_err(|e| SecretKeyWrapError::InvalidHex(e))?;
+        let bytes = hex::decode(hex).map_err(SecretKeyWrapError::InvalidHex)?;
         Self::from_bytes(bytes)
     }
 
