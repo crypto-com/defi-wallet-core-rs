@@ -730,11 +730,7 @@ impl GrpcWebClient {
         JsValue::from_serde(&denoms).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
     }
 
-    pub async fn query_nft(
-        &mut self,
-        denom_id: String,
-        token_id: String,
-    ) -> Result<JsValue, JsValue> {
+    pub async fn nft(&mut self, denom_id: String, token_id: String) -> Result<JsValue, JsValue> {
         let nft = self.0.nft(denom_id, token_id).await?;
         JsValue::from_serde(&nft).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
     }
