@@ -692,59 +692,50 @@ pub async fn broadcast_transfer_contract(
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+/// Grpc Web Client wrapper for Wasm
 #[wasm_bindgen]
-pub async fn query_supply(
-    grpc_web_url: String,
-    denom_id: String,
-    owner: String,
-) -> Result<JsValue, JsValue> {
-    let supply = node::nft::query_supply(&grpc_web_url, denom_id, owner).await?;
-    JsValue::from_serde(&supply).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
-}
+pub struct GrpcWebClient(node::nft::Client);
 
-#[wasm_bindgen]
-pub async fn query_owner(
-    grpc_web_url: String,
-    denom_id: String,
-    owner: String,
-) -> Result<JsValue, JsValue> {
-    let owner = node::nft::query_owner(&grpc_web_url, denom_id, owner).await?;
-    JsValue::from_serde(&owner).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
-}
+impl GrpcWebClient {
+    pub fn new(grpc_web_url: String) -> Self {
+        Self(node::nft::Client::new(grpc_web_url))
+    }
+    pub async fn supply(&mut self, denom_id: String, owner: String) -> Result<JsValue, JsValue> {
+        let supply = self.0.supply(denom_id, owner).await?;
+        JsValue::from_serde(&supply).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }
 
-#[wasm_bindgen]
-pub async fn query_collection(grpc_web_url: String, denom_id: String) -> Result<JsValue, JsValue> {
-    let collection = node::nft::query_collection(&grpc_web_url, denom_id).await?;
-    JsValue::from_serde(&collection).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
-}
+    pub async fn owner(&mut self, denom_id: String, owner: String) -> Result<JsValue, JsValue> {
+        let owner = self.0.owner(denom_id, owner).await?;
+        JsValue::from_serde(&owner).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }
 
-#[wasm_bindgen]
-pub async fn query_denom(grpc_web_url: String, denom_id: String) -> Result<JsValue, JsValue> {
-    let denom = node::nft::query_denom(&grpc_web_url, denom_id).await?;
-    JsValue::from_serde(&denom).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
-}
+    pub async fn collection(&mut self, denom_id: String) -> Result<JsValue, JsValue> {
+        let collection = self.0.collection(denom_id).await?;
+        JsValue::from_serde(&collection).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }
 
-#[wasm_bindgen]
-pub async fn query_denom_by_name(
-    grpc_web_url: String,
-    denom_name: String,
-) -> Result<JsValue, JsValue> {
-    let denom = node::nft::query_denom_by_name(&grpc_web_url, denom_name).await?;
-    JsValue::from_serde(&denom).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
-}
+    pub async fn denom(&mut self, denom_id: String) -> Result<JsValue, JsValue> {
+        let denom = self.0.denom(denom_id).await?;
+        JsValue::from_serde(&denom).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }
 
-#[wasm_bindgen]
-pub async fn query_denoms(grpc_web_url: String) -> Result<JsValue, JsValue> {
-    let denoms = node::nft::query_denoms(&grpc_web_url).await?;
-    JsValue::from_serde(&denoms).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
-}
+    pub async fn denom_by_name(&mut self, denom_name: String) -> Result<JsValue, JsValue> {
+        let denom = self.0.denom_by_name(denom_name).await?;
+        JsValue::from_serde(&denom).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }
 
-#[wasm_bindgen]
-pub async fn query_nft(
-    grpc_web_url: String,
-    denom_id: String,
-    token_id: String,
-) -> Result<JsValue, JsValue> {
-    let nft = node::nft::query_nft(&grpc_web_url, denom_id, token_id).await?;
-    JsValue::from_serde(&nft).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    pub async fn denoms(&mut self) -> Result<JsValue, JsValue> {
+        let denoms = self.0.denoms().await?;
+        JsValue::from_serde(&denoms).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }
+
+    pub async fn query_nft(
+        &mut self,
+        denom_id: String,
+        token_id: String,
+    ) -> Result<JsValue, JsValue> {
+        let nft = self.0.nft(denom_id, token_id).await?;
+        JsValue::from_serde(&nft).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }
 }
