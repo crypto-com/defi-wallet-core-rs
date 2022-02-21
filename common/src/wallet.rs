@@ -48,10 +48,7 @@ impl WalletCoin {
                 pubkey.account_id(bech32_hrp).map(|x| x.to_string())
             }
             WalletCoin::Ethereum => {
-                // FIXME: remove when `ethers` updates k256
-                let private_key_old = SigningKey::from_bytes(&private_key.to_bytes())
-                    .expect("two versions of k256 should be byte-compatible");
-                let address = secret_key_to_address(&private_key_old);
+                let address = secret_key_to_address(&private_key);
                 let address_hex: String = address.encode_hex();
                 Ok(format!("0x{}", address_hex))
             }
@@ -220,10 +217,8 @@ impl SecretKey {
     }
 
     /// gets the inner signing key (for ethers signing)
-    /// FIXME: remove when `ethers` updates k256
     pub fn get_eth_signing_key(&self) -> SigningKey {
-        SigningKey::from_bytes(&self.0.to_bytes())
-            .expect("two versions of k256 should be byte-compatible")
+        self.0.clone()
     }
 
     /// signs an arbitrary message as per EIP-191
