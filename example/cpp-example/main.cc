@@ -85,7 +85,11 @@ void process() {
       get_single_bank_send_signed_tx(tx_info, *privatekey, myto, 1, "basecro");
   broadcast_tx(myservertendermint, signedtx);
 
-  rust::cxxbridge1::Vec<DenomRaw> denoms = query_denoms(mygrpc);
+
+  rust::cxxbridge1::Box<GrpcClient> grpc_client = new_grpc_client(mygrpc);
+  grpc_client->supply("hello", "world");
+
+  rust::cxxbridge1::Vec<DenomRaw> denoms = grpc_client->denoms();
   cout << denoms.size() << endl;
 }
 int main() {
