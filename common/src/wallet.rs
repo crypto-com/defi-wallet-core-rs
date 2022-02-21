@@ -48,7 +48,7 @@ impl WalletCoin {
                 pubkey.account_id(bech32_hrp).map(|x| x.to_string())
             }
             WalletCoin::Ethereum => {
-                let address = secret_key_to_address(&private_key);
+                let address = secret_key_to_address(private_key);
                 let address_hex: String = address.encode_hex();
                 Ok(format!("0x{}", address_hex))
             }
