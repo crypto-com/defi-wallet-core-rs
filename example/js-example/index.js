@@ -24,8 +24,19 @@ const tx_info = new wasm.CosmosSDKTxInfoRaw(account_number, sequence_number, gas
 //     BigInt(1000000), "uatom");
 // console.log(tx_signdoc);
 
-const key = new wasm.PrivateKey();
-const signed_tx = wasm.get_single_bank_send_signed_tx(tx_info, key, "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
+// constructs private key from bytes
+const privateKey1 = wasm.PrivateKey.from_bytes([68, 130, 23, 78, 109, 255, 54, 116, 253, 157, 134, 231, 202, 245, 109, 197, 25, 56, 195, 182, 224, 75, 239, 191, 220, 164, 170, 198, 159, 113, 5, 255]);
+logPrivateKeyInternal(privateKey1);
+
+// constructs private key from hex
+const privateKey2 = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
+logPrivateKeyInternal(privateKey2);
+
+// generates a random private key
+const privateKey3 = new wasm.PrivateKey();
+logPrivateKeyInternal(privateKey3);
+
+const signed_tx = wasm.get_single_bank_send_signed_tx(tx_info, privateKey3, "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
 BigInt(1000000), "uatom");
 console.log(signed_tx);
 
@@ -42,3 +53,18 @@ console.log(eth_balance);
 const key2 = wallet.get_key("m/44'/60'/0'/0/0");
 const receipt = await wasm.broadcast_transfer_eth("https://cronos-testnet-3.crypto.org:8545", "0x2c600e0a72b3ae39e9b27d2e310b180abe779368", "1.0", BigInt(338), key2);
 console.log(receipt);
+
+function logPrivateKeyInternal(privateKey) {
+  const publicKeyBytes = privateKey.get_public_key_bytes();
+  const publicKeyHex = privateKey.get_public_key_hex();
+  const privateKeyBytes = privateKey.to_bytes();
+  const privateKeyHex = privateKey.to_hex();
+
+  console.log(
+    "Private Key Internal",
+    `\nPublic Key Bytes: ${publicKeyBytes}`,
+    `\nPublic Key Hex: ${publicKeyHex}`,
+    `\nPrivate Key Bytes: ${privateKeyBytes}`,
+    `\nPrivate Key Hex: ${privateKeyHex}`
+  );
+}

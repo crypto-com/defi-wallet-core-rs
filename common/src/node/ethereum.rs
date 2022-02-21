@@ -117,7 +117,7 @@ pub async fn broadcast_contract_transfer_tx(
 ) -> Result<TransactionReceipt, EthError> {
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let wallet =
-        LocalWallet::from(secret_key.get_eth_signing_key()).with_chain_id(network.get_chain_id());
+        LocalWallet::from(secret_key.get_signing_key()).with_chain_id(network.get_chain_id());
     let client = SignerMiddleware::new(provider, wallet);
     match transfer_details {
         ContractTransfer::Erc20 {
@@ -214,7 +214,7 @@ pub async fn broadcast_sign_eth_tx(
     let tx = construct_simple_eth_transfer_tx(to_hex, amount)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let wallet =
-        LocalWallet::from(secret_key.get_eth_signing_key()).with_chain_id(network.get_chain_id());
+        LocalWallet::from(secret_key.get_signing_key()).with_chain_id(network.get_chain_id());
     let client = SignerMiddleware::new(provider, wallet);
 
     let pending_tx = client

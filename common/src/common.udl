@@ -20,17 +20,31 @@ enum MnemonicWordCount {
 };
 
 [Error]
-enum HdWrapError {
-    "InvalidLength",
-    "HDError",
-    "AccountId",
+enum SecretKeyWrapError {
+    "InvalidBytes",
+    "InvalidHex",
 };
 
 interface SecretKey {
     constructor();
+
+    [Throws=SecretKeyWrapError,Name=from_bytes]
+    constructor(sequence<u8> bytes);
+
+    [Throws=SecretKeyWrapError,Name=from_hex]
+    constructor(string hex);
+
     sequence<u8> get_public_key_bytes();
+    string get_public_key_hex();
     sequence<u8> to_bytes();
     string to_hex();
+};
+
+[Error]
+enum HdWrapError {
+    "InvalidLength",
+    "HDError",
+    "AccountId",
 };
 
 interface HDWallet {
