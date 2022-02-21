@@ -503,13 +503,13 @@ fn get_msg_signdoc(
 fn get_signed_msg_tx(
     tx_info: CosmosSDKTxInfo,
     msgs: Vec<CosmosSDKMsg>,
-    sender_private_key: Box<SigningKey>,
+    sender_private_key: SigningKey,
 ) -> eyre::Result<Raw> {
     let sender_pubkey = crypto::PublicKey::from(sender_private_key.public_key());
     let sign_doc = get_msg_signdoc(tx_info, msgs, sender_pubkey)?;
-    sign_doc.sign(&cosmrs::crypto::secp256k1::SigningKey::new(
+    sign_doc.sign(&cosmrs::crypto::secp256k1::SigningKey::new(Box::new(
         sender_private_key,
-    ))
+    )))
 }
 
 /// UniFFI 0.15.2 doesn't support external types for Kotlin yet

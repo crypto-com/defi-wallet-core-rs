@@ -211,13 +211,8 @@ impl SecretKey {
         Self::from_bytes(bytes)
     }
 
-    /// gets the inner signing key (for CosmRS signing)
-    pub fn get_signing_key(&self) -> Box<SigningKey> {
-        Box::new(self.0.clone())
-    }
-
-    /// gets the inner signing key (for ethers signing)
-    pub fn get_eth_signing_key(&self) -> SigningKey {
+    /// gets the inner signing key
+    pub fn get_signing_key(&self) -> SigningKey {
         self.0.clone()
     }
 
@@ -225,7 +220,7 @@ impl SecretKey {
     /// TODO: chain_id may not be necessary?
     pub fn sign_eth(&self, message: &[u8], chain_id: u64) -> Result<Signature, HdWrapError> {
         let hash = hash_message(message);
-        let wallet = LocalWallet::from(self.get_eth_signing_key()).with_chain_id(chain_id);
+        let wallet = LocalWallet::from(self.get_signing_key()).with_chain_id(chain_id);
         // TODO: EIP-155 normalization (it seems `siwe` expects raw values)
         let signature = wallet.sign_hash(hash, false);
         Ok(signature)
@@ -478,7 +473,6 @@ mod secret_key_tests {
     fn test_generate_random_secret_key() {
         let secret_key = SecretKey::new();
         secret_key.get_signing_key();
-        secret_key.get_eth_signing_key();
         secret_key
             .sign_eth("hello world".as_bytes(), 1)
             .expect("failed to sign a message");
@@ -499,7 +493,6 @@ mod secret_key_tests {
         let secret_key = SecretKey::from_bytes(bytes.to_vec())
             .expect("Failed to construct Secret Key from bytes");
         secret_key.get_signing_key();
-        secret_key.get_eth_signing_key();
         secret_key
             .sign_eth("hello world".as_bytes(), 1)
             .expect("failed to sign a message");
@@ -529,7 +522,6 @@ mod secret_key_tests {
         let secret_key =
             SecretKey::from_hex(hex.to_owned()).expect("Failed to construct Secret Key from hex");
         secret_key.get_signing_key();
-        secret_key.get_eth_signing_key();
         secret_key
             .sign_eth("hello world".as_bytes(), 1)
             .expect("failed to sign a message");
