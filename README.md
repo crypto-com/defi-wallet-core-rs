@@ -101,6 +101,30 @@ Please install `nix` before running this test.
 make wasm-ci-tests
 ```
 
+#### Cargo test
+The recommended way to use `wasm-bindgen-test` is with `wasm-pack`, since it will handle installing the test runner, installing a WebDriver client for your browser, and informing cargo how to use the custom test runner. However, you can also manage those tasks yourself, if you wish.
+
+It is also possible to use `cargo test` instead of `wasm-pack`
+
+1. Install wasm-bindgen-cli
+    ``` bash
+    cargo install wasm-bindgen-cli
+    ```
+
+2. Install chromdriver (for chrome)
+    ``` bash
+    brew install --cask chromedriver
+    ```
+
+3. Run the test in binding/wasm folder
+    ``` bash
+    cargo test
+    ```
+
+##### References
+- [Testing in headless browsers without wasm-pack](https://rustwasm.github.io/docs/wasm-bindgen/wasm-bindgen-test/browsers.html#appendix-testing-in-headless-browsers-without-wasm-pack)
+- [Using wasm-bindgen-test without wasm-pack](https://rustwasm.github.io/docs/wasm-bindgen/wasm-bindgen-test/usage.html#appendix-using-wasm-bindgen-test-without-wasm-pack)
+
 ### Python
 #### With nix
 Please install `nix` before running this test.
