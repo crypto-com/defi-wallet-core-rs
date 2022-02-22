@@ -695,7 +695,7 @@ mod test {
         let msg_edit_nft = MsgEditNft {
             id: "testtokenid".parse::<TokenId>().unwrap(),
             denom_id: "testdenomid".parse::<DenomId>().unwrap(),
-            name: "newname".parse::<DenomName>().unwrap(),
+            name: "newname".to_owned(),
             uri: "newuri".parse::<TokenUri>().unwrap(),
             data: "".to_owned(),
             sender: sender_account_id.clone(),
