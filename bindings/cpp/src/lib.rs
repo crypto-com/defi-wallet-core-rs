@@ -509,22 +509,22 @@ mod ffi {
         ) -> Result<Vec<u8>>;
         type GrpcClient;
         fn new_grpc_client(grpc_url: String) -> Result<Box<GrpcClient>>;
-        fn supply(self: &mut GrpcClient, denom_id: String, owner: String) -> Result<u64>;
+        fn supply(self: &GrpcClient, denom_id: String, owner: String) -> Result<u64>;
         type OwnerRaw;
         pub fn owner(
-            self: &mut GrpcClient,
+            self: &GrpcClient,
             denom_id: String,
             owner: String,
         ) -> Result<Box<OwnerRaw>>;
         type CollectionRaw;
-        pub fn collection(self: &mut GrpcClient, denom_id: String) -> Result<Box<CollectionRaw>>;
+        pub fn collection(self: &GrpcClient, denom_id: String) -> Result<Box<CollectionRaw>>;
         type DenomRaw;
-        pub fn denom(self: &mut GrpcClient, denom_id: String) -> Result<Box<DenomRaw>>;
-        pub fn denom_by_name(self: &mut GrpcClient, denom_name: String) -> Result<Box<DenomRaw>>;
-        fn denoms(self: &mut GrpcClient) -> Result<Vec<DenomRaw>>;
+        pub fn denom(self: &GrpcClient, denom_id: String) -> Result<Box<DenomRaw>>;
+        pub fn denom_by_name(self: &GrpcClient, denom_name: String) -> Result<Box<DenomRaw>>;
+        fn denoms(self: &GrpcClient) -> Result<Vec<DenomRaw>>;
         type BaseNftRaw;
         fn nft(
-            self: &mut GrpcClient,
+            self: &GrpcClient,
             denom_id: String,
             token_id: String,
         ) -> Result<Box<BaseNftRaw>>;

@@ -14,6 +14,8 @@ pub struct Client {
     pub client: QueryClient<grpc_web_client::Client>,
     #[cfg(not(target_arch = "wasm32"))]
     pub client: RwLock<QueryClient<tonic::transport::Channel>>,
+    #[cfg(not(target_arch = "wasm32"))]
+    pub rt: tokio::runtime::Runtime,
 }
 
 impl Client {
@@ -25,13 +27,15 @@ impl Client {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn new_blocking(grpc_url: String) -> Result<Self, RestError> {
         let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
-        rt.block_on(async move {
+        let client = rt.block_on(async move {
             let client = QueryClient::connect(grpc_url.to_owned())
                 .await
                 .map_err(RestError::GRPCTransportError)?;
-            Ok(Self {
-                client: RwLock::new(client),
-            })
+            Ok(client)
+        });
+        Ok(Self {
+            client: RwLock::new(client?),
+            rt,
         })
     }
 
@@ -51,8 +55,7 @@ impl Client {
     #[cfg(not(target_arch = "wasm32"))]
     /// Supply queries the total supply of a given denom or owner
     pub fn supply_blocking(&self, denom_id: String, owner: String) -> Result<u64, RestError> {
-        let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
-        rt.block_on(async move {
+        self.rt.block_on(async move {
             let mut client = self.client.write().unwrap();
             let request = QuerySupplyRequest { denom_id, owner };
             let res = (*client)
@@ -92,8 +95,7 @@ impl Client {
         denom_id: String,
         owner: String,
     ) -> Result<Option<Owner>, RestError> {
-        let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
-        rt.block_on(async move {
+        self.rt.block_on(async move {
             let mut client = self.client.write().unwrap();
             let request = QueryOwnerRequest {
                 denom_id,
@@ -128,8 +130,7 @@ impl Client {
     #[cfg(not(target_arch = "wasm32"))]
     /// Collection queries the NFTs of the specified denom
     pub fn collection_blocking(&self, denom_id: String) -> Result<Option<Collection>, RestError> {
-        let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
-        rt.block_on(async move {
+        self.rt.block_on(async move {
             let mut client = self.client.write().unwrap();
             let request = QueryCollectionRequest {
                 denom_id,
@@ -160,8 +161,7 @@ impl Client {
     #[cfg(not(target_arch = "wasm32"))]
     /// Denom queries the definition of a given denom
     pub fn denom_blocking(&self, denom_id: String) -> Result<Option<Denom>, RestError> {
-        let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
-        rt.block_on(async move {
+        self.rt.block_on(async move {
             let mut client = self.client.write().unwrap();
             let request = QueryDenomRequest { denom_id };
             let res = (*client)
@@ -189,8 +189,7 @@ impl Client {
     #[cfg(not(target_arch = "wasm32"))]
     /// DenomByName queries the definition of a given denom by name
     pub fn denom_by_name_blocking(&self, denom_name: String) -> Result<Option<Denom>, RestError> {
-        let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
-        rt.block_on(async move {
+        self.rt.block_on(async move {
             let mut client = self.client.write().unwrap();
             let request = QueryDenomByNameRequest { denom_name };
             let res = (*client)
@@ -218,8 +217,7 @@ impl Client {
     #[cfg(not(target_arch = "wasm32"))]
     /// Denoms queries all the denoms
     pub fn denoms_blocking(&self) -> Result<Vec<Denom>, RestError> {
-        let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
-        rt.block_on(async move {
+        self.rt.block_on(async move {
             let mut client = self.client.write().unwrap();
             let request = QueryDenomsRequest { pagination: None };
             let res = (*client)
@@ -255,8 +253,7 @@ impl Client {
         denom_id: String,
         token_id: String,
     ) -> Result<Option<BaseNft>, RestError> {
-        let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
-        rt.block_on(async move {
+        self.rt.block_on(async move {
             let mut client = self.client.write().unwrap();
             let request = QueryNftRequest { denom_id, token_id };
             let res = (*client)

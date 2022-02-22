@@ -87,7 +87,7 @@ void process() {
 
 
   rust::cxxbridge1::Box<GrpcClient> grpc_client = new_grpc_client(mygrpc);
-  grpc_client->supply("hello", "world");
+  // grpc_client->supply("hello", "world");
 
   rust::cxxbridge1::Vec<DenomRaw> denoms = grpc_client->denoms();
   cout << denoms.size() << endl;
