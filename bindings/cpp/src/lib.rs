@@ -511,11 +511,7 @@ mod ffi {
         fn new_grpc_client(grpc_url: String) -> Result<Box<GrpcClient>>;
         fn supply(self: &GrpcClient, denom_id: String, owner: String) -> Result<u64>;
         type OwnerRaw;
-        pub fn owner(
-            self: &GrpcClient,
-            denom_id: String,
-            owner: String,
-        ) -> Result<Box<OwnerRaw>>;
+        pub fn owner(self: &GrpcClient, denom_id: String, owner: String) -> Result<Box<OwnerRaw>>;
         type CollectionRaw;
         pub fn collection(self: &GrpcClient, denom_id: String) -> Result<Box<CollectionRaw>>;
         type DenomRaw;
@@ -523,11 +519,7 @@ mod ffi {
         pub fn denom_by_name(self: &GrpcClient, denom_name: String) -> Result<Box<DenomRaw>>;
         fn denoms(self: &GrpcClient) -> Result<Vec<DenomRaw>>;
         type BaseNftRaw;
-        fn nft(
-            self: &GrpcClient,
-            denom_id: String,
-            token_id: String,
-        ) -> Result<Box<BaseNftRaw>>;
+        fn nft(self: &GrpcClient, denom_id: String, token_id: String) -> Result<Box<BaseNftRaw>>;
         fn get_staking_delegate_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,

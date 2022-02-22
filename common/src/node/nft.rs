@@ -13,6 +13,7 @@ pub struct Client {
     #[cfg(target_arch = "wasm32")]
     pub client: QueryClient<grpc_web_client::Client>,
     #[cfg(not(target_arch = "wasm32"))]
+    // uniffi does not support mutable reference, that's why RwLock here
     pub client: RwLock<QueryClient<tonic::transport::Channel>>,
     #[cfg(not(target_arch = "wasm32"))]
     pub rt: tokio::runtime::Runtime,
