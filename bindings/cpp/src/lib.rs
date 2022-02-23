@@ -2,8 +2,9 @@ use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx,
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
-    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, HDWallet, Network, PublicKeyBytesWrapper,
-    RawRpcAccountResponse, SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, HDWallet, Height, Network,
+    PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey, SingleCoin, WalletCoin,
+    COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use std::sync::Arc;
 
@@ -105,6 +106,25 @@ pub enum CosmosSDKMsgRaw {
     DistributionWithdrawDelegatorReward {
         /// validator address in bech32
         validator_address: String,
+    },
+    /// MsgTransfer
+    IbcTransfer {
+        /// the recipient address on the destination chain
+        receiver: String,
+        /// the port on which the packet will be sent
+        source_port: String,
+        /// the channel by which the packet will be sent
+        source_channel: String,
+        /// the tokens to be transferred
+        denom: String,
+        token: u64,
+        /// Timeout height relative to the current block height.
+        /// The timeout is disabled when set to 0.
+        revision_height: u64,
+        revision_number: u64,
+        /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
+        /// The timeout is disabled when set to 0.
+        timeout_timestamp: u64,
     },
 }
 
@@ -213,6 +233,29 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
                     validator_address: validator_address.to_owned(),
                 }
             }
+            CosmosSDKMsgRaw::IbcTransfer {
+                receiver,
+                source_port,
+                source_channel,
+                denom,
+                token,
+                revision_height,
+                revision_number,
+                timeout_timestamp,
+            } => CosmosSDKMsg::IbcTransfer {
+                receiver: receiver.to_owned(),
+                source_port: source_port.to_owned(),
+                source_channel: source_channel.to_owned(),
+                token: SingleCoin::Other {
+                    amount: format!("{}", token),
+                    denom: denom.to_owned(),
+                },
+                timeout_height: Height {
+                    revision_height: *revision_height,
+                    revision_number: *revision_number,
+                },
+                timeout_timestamp: *timeout_timestamp,
+            },
         }
     }
 }
@@ -391,6 +434,18 @@ mod ffi {
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
             validator_address: String,
+        ) -> Result<Vec<u8>>;
+        fn get_ibc_transfer_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            receiver: String,
+            source_port: String,
+            source_channel: String,
+            denom: String,
+            token: u64,
+            revision_height: u64,
+            revision_number: u64,
+            timeout_timestamp: u64,
         ) -> Result<Vec<u8>>;
     }
 }
@@ -788,6 +843,42 @@ pub fn get_distribution_withdraw_reward_signed_tx(
     let ret = build_signed_single_msg_tx(
         tx_info.into(),
         CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+
+/// creates the signed transaction
+/// for `MsgTransfer` from the Cosmos SDK ibc module
+pub fn get_ibc_transfer_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    receiver: String,
+    source_port: String,
+    source_channel: String,
+    denom: String,
+    token: u64,
+    revision_height: u64,
+    revision_number: u64,
+    timeout_timestamp: u64,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::IbcTransfer {
+            receiver,
+            source_port,
+            source_channel,
+            token: SingleCoin::Other {
+                amount: format!("{}", token),
+                denom,
+            },
+            timeout_height: Height {
+                revision_height,
+                revision_number,
+            },
+            timeout_timestamp,
+        },
         private_key.key.clone(),
     )?;
 
