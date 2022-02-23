@@ -1026,6 +1026,53 @@ mod tests {
     }
 
     #[test]
+    fn nft_mint_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::NftMint {
+                id: "edition01".to_string(),
+                denom_id: "domingo1".to_string(),
+                name: "test".to_string(),
+                uri: "test".to_string(),
+                data: "test".to_string(),
+                recipient: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0aac010aa6010a1c2f636861696e6d61696e2e6e66742e76312e4d73674d696e744e46541285010a0965646974696f6e30311208646f6d696e676f311a04746573742204746573742a0474657374322d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a3a2d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::NftMint {
+                id: "edition01".to_string(),
+                denom_id: "domingo1".to_string(),
+                name: "test".to_string(),
+                uri: "test".to_string(),
+                data: "test".to_string(),
+                recipient: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0aac010aa6010a1c2f636861696e6d61696e2e6e66742e76312e4d73674d696e744e46541285010a0965646974696f6e30311208646f6d696e676f311a04746573742204746573742a0474657374322d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a3a2d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a401a3eb24123103ee0ec2856315311b8c9c01e3e54249beb18bec91864834c6ffd7605e2a866fa7307f2786bc15e9075fa8d73cd188924eb7bded6214c858f9fdf"
+        );
+    }
+
+    #[test]
     fn message_check() {
         let amount = &SingleCoin::ATOM { amount: 1 };
         let amount_coin: Coin = amount.try_into().unwrap();
