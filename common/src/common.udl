@@ -95,6 +95,11 @@ dictionary CosmosSDKTxInfo {
     Network network;
 };
 
+dictionary Height {
+    u64 revision_number;
+    u64 revision_height;
+};
+
 [Enum]
 interface CosmosSDKMsg {
   BankSend(string recipient_address, SingleCoin amount);
@@ -108,6 +113,7 @@ interface CosmosSDKMsg {
   StakingBeginRedelegate(string validator_src_address, string validator_dst_address, SingleCoin amount);
   DistributionSetWithdrawAddress(string withdraw_address);
   DistributionWithdrawDelegatorReward(string validator_address);
+  IbcTransfer(string receiver, string source_port, string source_channel, SingleCoin token, Height timeout_height, u64 timeout_timestamp);
 };
 
 [Error]

@@ -1,20 +1,21 @@
-use std::sync::Arc;
+pub use crate::ibc::Height;
+pub use cosmrs::*;
 
+use crate::ibc::*;
+use crate::nft::*;
 use crate::SecretKey;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::UniffiCustomTypeConverter;
-pub use cosmrs::*;
-use cosmrs::{
-    bank::MsgSend,
-    bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
-    crypto::{self, secp256k1::VerifyingKey},
-    distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward},
-    staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
-    tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
+use cosmrs::bank::MsgSend;
+use cosmrs::bip32::{
+    secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE,
 };
+use cosmrs::crypto::{self, secp256k1::VerifyingKey};
+use cosmrs::distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward};
+use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
+use cosmrs::tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo};
 use eyre::{eyre, Context};
-
-use crate::nft::*;
+use std::sync::Arc;
 
 /// human-readable bech32 prefix for Crypto.org Chain accounts
 pub const CRYPTO_ORG_BECH32_HRP: &str = "cro";
@@ -316,6 +317,23 @@ pub enum CosmosSDKMsg {
         /// validator address in bech32
         validator_address: String,
     },
+    /// MsgTransfer
+    IbcTransfer {
+        /// the recipient address on the destination chain
+        receiver: String,
+        /// the port on which the packet will be sent
+        source_port: String,
+        /// the channel by which the packet will be sent
+        source_channel: String,
+        /// the tokens to be transferred
+        token: SingleCoin,
+        /// Timeout height relative to the current block height.
+        /// The timeout is disabled when set to 0.
+        timeout_height: Height,
+        /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
+        /// The timeout is disabled when set to 0.
+        timeout_timestamp: u64,
+    },
 }
 
 impl CosmosSDKMsg {
@@ -468,6 +486,26 @@ impl CosmosSDKMsg {
                     validator_address,
                 };
                 msg.to_any()
+            }
+            CosmosSDKMsg::IbcTransfer {
+                receiver,
+                source_port,
+                source_channel,
+                token,
+                timeout_height,
+                timeout_timestamp,
+            } => {
+                MsgTransfer {
+                    sender: sender_address,
+                    receiver: receiver.to_owned(),
+                    source_port: source_port.to_owned(),
+                    source_channel: source_channel.to_owned(),
+                    /// FIXME: Both token and timeout height should not be None value.
+                    token: Some(token.try_into()?),
+                    timeout_height: Some(timeout_height.clone()),
+                    timeout_timestamp: *timeout_timestamp,
+                }
+                .to_any()
             }
         }
     }

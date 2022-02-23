@@ -1,5 +1,7 @@
-/// Eth contract types generated from ABI
+/// eth contract types generated from abi
 pub mod contract;
+/// IBC functionality
+pub mod ibc;
 /// NFT functionality
 pub mod nft;
 /// interactions with remote node RPC / API (querying, broadcast etc.)
