@@ -6,8 +6,9 @@ use defi_wallet_core_common::{
     broadcast_contract_transfer_tx, broadcast_sign_eth_tx, broadcast_tx_sync, build_signed_msg_tx,
     build_signed_single_msg_tx, get_account_balance, get_account_details, get_contract_balance,
     get_eth_balance, get_single_msg_sign_payload, BalanceApiVersion, ContractBalance,
-    ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Network,
-    PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Height,
+    Network, PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin,
+    COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use wasm_bindgen::prelude::*;
 /// wasm utilities
@@ -562,6 +563,44 @@ pub fn get_distribution_withdraw_reward_signed_tx(
     build_signed_single_msg_tx(
         tx_info.into(),
         CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address },
+        private_key.key,
+    )
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+}
+
+/// creates the signed transaction
+/// for `IbcTransfer` from the Chainmain ibc module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+#[wasm_bindgen]
+pub fn get_ibc_transfer_signed_tx(
+    tx_info: CosmosSDKTxInfoRaw,
+    private_key: PrivateKey,
+    receiver: String,
+    source_port: String,
+    source_channel: String,
+    denom: String,
+    token: u64,
+    revision_height: u64,
+    revision_number: u64,
+    timeout_timestamp: u64,
+) -> Result<Vec<u8>, JsValue> {
+    build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::IbcTransfer {
+            receiver,
+            source_port,
+            source_channel,
+            token: SingleCoin::Other {
+                amount: format!("{}", token),
+                denom,
+            },
+            timeout_height: Height {
+                revision_height,
+                revision_number,
+            },
+            timeout_timestamp,
+        },
         private_key.key,
     )
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
