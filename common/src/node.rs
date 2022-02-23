@@ -3,7 +3,7 @@
 mod cosmos_sdk;
 /// wrappers around Web3 API + basic contract types
 mod ethereum;
-/// wrappers around chainmain NFT REST API and Tendermint RPC
+/// wrappers around chainmain NFT grpc/grpc-web API
 pub mod nft;
 
 mod error;
