@@ -22,7 +22,6 @@ fn new_grpc_client(grpc_url: String) -> Result<Box<GrpcClient>> {
 impl GrpcClient {
     /// Supply queries the total supply of a given denom or owner
     pub fn supply(&self, denom_id: String, owner: String) -> Result<u64> {
-        // let supply = query_supply_blocking(&self.0.grpc_url, denom_id, owner)?;
         let supply = self.0.supply_blocking(denom_id, owner)?;
         Ok(supply)
     }
@@ -953,7 +952,3 @@ pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Resul
     let resp = broadcast_tx_sync_blocking(&tendermint_rpc_url, raw_signed_tx)?;
     Ok(serde_json::to_string(&resp)?)
 }
-
-// pub fn new_grpc_client(grpc_url: String) -> Box<GrpcClient> {
-//     Box::new(GrpcClient::new(grpc_url))
-// }
