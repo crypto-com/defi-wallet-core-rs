@@ -28,12 +28,58 @@ pub struct PrivateKey {
 
 #[wasm_bindgen]
 impl PrivateKey {
-    /// generate a random signing key
+    /// generates a random private key
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
             key: Arc::new(SecretKey::new()),
         }
+    }
+
+    /// constructs private key from bytes
+    #[wasm_bindgen]
+    pub fn from_bytes(bytes: Vec<u8>) -> Result<PrivateKey, JsValue> {
+        Ok(Self {
+            key: Arc::new(
+                SecretKey::from_bytes(bytes)
+                    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?,
+            ),
+        })
+    }
+
+    /// constructs private key from hex
+    #[wasm_bindgen]
+    pub fn from_hex(hex: String) -> Result<PrivateKey, JsValue> {
+        Ok(Self {
+            key: Arc::new(
+                SecretKey::from_hex(hex)
+                    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?,
+            ),
+        })
+    }
+
+    /// gets public key to byte array
+    #[wasm_bindgen]
+    pub fn get_public_key_bytes(&self) -> Vec<u8> {
+        self.key.get_public_key_bytes()
+    }
+
+    /// gets public key to a hex string without the 0x prefix
+    #[wasm_bindgen]
+    pub fn get_public_key_hex(&self) -> String {
+        self.key.get_public_key_hex()
+    }
+
+    /// converts private key to byte array
+    #[wasm_bindgen]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.key.to_bytes()
+    }
+
+    /// converts private key to a hex string without the 0x prefix
+    #[wasm_bindgen]
+    pub fn to_hex(&self) -> String {
+        self.key.to_hex()
     }
 }
 
