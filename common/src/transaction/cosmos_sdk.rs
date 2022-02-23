@@ -7,7 +7,7 @@ use cosmrs::{
     bank::MsgSend,
     bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
     crypto::{self, secp256k1::VerifyingKey},
-    distribution::MsgWithdrawDelegatorReward,
+    distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward},
     staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
     tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
     AccountId, Any, Coin, ErrorReport,
@@ -306,6 +306,11 @@ pub enum CosmosSDKMsg {
         /// amount to undelegate
         amount: SingleCoin,
     },
+    /// MsgSetWithdrawAddress
+    DistributionSetWithdrawAddress {
+        /// withdraw address in bech32
+        withdraw_address: String,
+    },
     /// MsgWithdrawDelegatorReward
     DistributionWithdrawDelegatorReward {
         /// validator address in bech32
@@ -446,6 +451,15 @@ impl CosmosSDKMsg {
                 };
                 msg.to_any()
             }
+            CosmosSDKMsg::DistributionSetWithdrawAddress { withdraw_address } => {
+                let withdraw_address = withdraw_address.parse::<AccountId>()?;
+
+                let msg = MsgSetWithdrawAddress {
+                    delegator_address: sender_address,
+                    withdraw_address,
+                };
+                msg.to_any()
+            }
             CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address } => {
                 let validator_address = validator_address.parse::<AccountId>()?;
 
@@ -489,13 +503,13 @@ fn get_msg_signdoc(
 fn get_signed_msg_tx(
     tx_info: CosmosSDKTxInfo,
     msgs: Vec<CosmosSDKMsg>,
-    sender_private_key: Box<SigningKey>,
+    sender_private_key: SigningKey,
 ) -> eyre::Result<Raw> {
     let sender_pubkey = crypto::PublicKey::from(sender_private_key.public_key());
     let sign_doc = get_msg_signdoc(tx_info, msgs, sender_pubkey)?;
-    sign_doc.sign(&cosmrs::crypto::secp256k1::SigningKey::new(
+    sign_doc.sign(&cosmrs::crypto::secp256k1::SigningKey::new(Box::new(
         sender_private_key,
-    ))
+    )))
 }
 
 /// UniFFI 0.15.2 doesn't support external types for Kotlin yet

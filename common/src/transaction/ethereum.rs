@@ -125,7 +125,7 @@ pub fn build_signed_eth_tx(
 ) -> Result<Vec<u8>, EthError> {
     let tx = construct_simple_eth_transfer_tx(to_hex, amount)?;
     let wallet =
-        LocalWallet::from(secret_key.get_eth_signing_key()).with_chain_id(network.get_chain_id());
+        LocalWallet::from(secret_key.get_signing_key()).with_chain_id(network.get_chain_id());
     let typed_tx = TypedTransaction::Legacy(tx.clone());
 
     let sig = wallet.sign_transaction_sync(&typed_tx);

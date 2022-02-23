@@ -257,6 +257,11 @@ pub enum CosmosSDKMsgRaw {
         amount: u64,
         denom: String,
     },
+    /// MsgSetWithdrawAddress
+    DistributionSetWithdrawAddress {
+        /// withdraw address in bech32
+        withdraw_address: String,
+    },
     /// MsgWithdrawDelegatorReward
     DistributionWithdrawDelegatorReward {
         /// validator address in bech32
@@ -359,6 +364,11 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
                     denom: denom.to_owned(),
                 },
             },
+            CosmosSDKMsgRaw::DistributionSetWithdrawAddress { withdraw_address } => {
+                CosmosSDKMsg::DistributionSetWithdrawAddress {
+                    withdraw_address: withdraw_address.to_owned(),
+                }
+            }
             CosmosSDKMsgRaw::DistributionWithdrawDelegatorReward { validator_address } => {
                 CosmosSDKMsg::DistributionWithdrawDelegatorReward {
                     validator_address: validator_address.to_owned(),
@@ -467,6 +477,8 @@ mod ffi {
         fn get_default_address(self: &Wallet, coin: CoinType) -> Result<String>;
         fn get_key(self: &Wallet, derivation_path: String) -> Result<Box<PrivateKey>>;
         fn new_privatekey() -> Box<PrivateKey>;
+        fn new_privatekey_from_bytes(bytes: Vec<u8>) -> Result<Box<PrivateKey>>;
+        fn new_privatekey_from_hex(hex: String) -> Result<Box<PrivateKey>>;
         fn get_nft_issue_denom_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -544,6 +556,11 @@ mod ffi {
             denom: String,
             with_reward_withdrawal: bool,
         ) -> Result<Vec<u8>>;
+        fn get_distribution_set_withdraw_address_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            withdraw_address: String,
+        ) -> Result<Vec<u8>>;
         fn get_distribution_withdraw_reward_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -582,14 +599,48 @@ pub struct PrivateKey {
     key: Arc<SecretKey>,
 }
 
+/// generates a random private key
 fn new_privatekey() -> Box<PrivateKey> {
-    let ret = PrivateKey {
+    Box::new(PrivateKey {
         key: Arc::new(SecretKey::new()),
-    };
-    Box::new(ret)
+    })
 }
 
-impl PrivateKey {}
+/// constructs private key from bytes
+fn new_privatekey_from_bytes(bytes: Vec<u8>) -> Result<Box<PrivateKey>> {
+    Ok(Box::new(PrivateKey {
+        key: Arc::new(SecretKey::from_bytes(bytes)?),
+    }))
+}
+
+/// constructs private key from hex
+fn new_privatekey_from_hex(hex: String) -> Result<Box<PrivateKey>> {
+    Ok(Box::new(PrivateKey {
+        key: Arc::new(SecretKey::from_hex(hex)?),
+    }))
+}
+
+impl PrivateKey {
+    /// gets public key to byte array
+    pub fn get_public_key_bytes(&self) -> Vec<u8> {
+        self.key.get_public_key_bytes()
+    }
+
+    /// gets public key to a hex string without the 0x prefix
+    pub fn get_public_key_hex(&self) -> String {
+        self.key.get_public_key_hex()
+    }
+
+    /// converts private key to byte array
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.key.to_bytes()
+    }
+
+    /// converts private key to a hex string without the 0x prefix
+    pub fn to_hex(&self) -> String {
+        self.key.to_hex()
+    }
+}
 
 pub struct Wallet {
     wallet: HDWallet,
@@ -600,17 +651,17 @@ fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wal
     Ok(Box::new(Wallet { wallet }))
 }
 
-fn restore_wallet(mnemonic: String, password: String) -> anyhow::Result<Box<Wallet>> {
+fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>> {
     let wallet = HDWallet::recover_wallet(mnemonic, Some(password))?;
     Ok(Box::new(Wallet { wallet }))
 }
 
 impl Wallet {
-    pub fn get_default_address(&self, coin: CoinType) -> anyhow::Result<String> {
+    pub fn get_default_address(&self, coin: CoinType) -> Result<String> {
         Ok(self.wallet.get_default_address(coin.into())?)
     }
 
-    pub fn get_key(&self, derivation_path: String) -> anyhow::Result<Box<PrivateKey>> {
+    pub fn get_key(&self, derivation_path: String) -> Result<Box<PrivateKey>> {
         let key = self.wallet.get_key(derivation_path)?;
         Ok(Box::new(PrivateKey { key }))
     }
@@ -878,6 +929,22 @@ pub fn get_staking_unbond_signed_tx(
     }
 
     build_signed_msg_tx(tx_info.into(), messages, private_key.key.clone()).map_err(|e| e.into())
+}
+
+/// creates the signed transaction
+/// for `MsgSetWithdrawAddress` from the Cosmos SDK distributon module
+pub fn get_distribution_set_withdraw_address_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    withdraw_address: String,
+) -> Result<Vec<u8>> {
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::DistributionSetWithdrawAddress { withdraw_address },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
 }
 
 /// creates the signed transaction

@@ -1,17 +1,16 @@
-use std::sync::Arc;
-
 use crate::Network;
 use bip39::{Language, Mnemonic};
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use cosmrs::bip32::{self, DerivationPath, PrivateKey, Seed, XPrv};
 use cosmrs::crypto::PublicKey;
+use ethers::core::k256::ecdsa;
 use ethers::prelude::{LocalWallet, Signature, Signer};
-use ethers::utils::hex;
-use ethers::utils::hex::ToHex;
-use ethers::utils::secret_key_to_address;
+use ethers::utils::hex::{self, FromHexError, ToHex};
+use ethers::utils::{hash_message, secret_key_to_address};
 use rand_core::OsRng;
 use secrecy::{ExposeSecret, SecretString, Zeroize};
 use std::str::FromStr;
+use std::sync::Arc;
 
 /// describes what coin type to use (for HD derivation or address generation)
 pub enum WalletCoin {
@@ -49,11 +48,7 @@ impl WalletCoin {
                 pubkey.account_id(bech32_hrp).map(|x| x.to_string())
             }
             WalletCoin::Ethereum => {
-                // FIXME: remove when `ethers` updates k256
-                let private_key_old =
-                    ethers::core::k256::ecdsa::SigningKey::from_bytes(&private_key.to_bytes())
-                        .expect("two versions of k256 should be byte-compatible");
-                let address = secret_key_to_address(&private_key_old);
+                let address = secret_key_to_address(private_key);
                 let address_hex: String = address.encode_hex();
                 Ok(format!("0x{}", address_hex))
             }
@@ -185,48 +180,68 @@ impl HDWallet {
     }
 }
 
+/// wrapper around Secret Key errors
+#[derive(Debug, thiserror::Error)]
+pub enum SecretKeyWrapError {
+    #[error("Invalid bytes: {0}")]
+    InvalidBytes(ecdsa::Error),
+    #[error("Invalid hex: {0}")]
+    InvalidHex(FromHexError),
+}
+
 /// wrapper around secp256k1 signing key
 pub struct SecretKey(SigningKey);
 
 impl SecretKey {
     /// generates a random secret key
     pub fn new() -> Self {
-        SecretKey(SigningKey::random(&mut OsRng))
+        Self(SigningKey::random(&mut OsRng))
     }
 
-    /// get the inner signing key (for CosmRS signing)
-    pub fn get_signing_key(&self) -> Box<SigningKey> {
-        Box::new(self.0.clone())
+    /// constructs secret key from bytes
+    pub fn from_bytes(bytes: Vec<u8>) -> Result<Self, SecretKeyWrapError> {
+        let signing_key =
+            SigningKey::from_bytes(&bytes).map_err(SecretKeyWrapError::InvalidBytes)?;
+        Ok(Self(signing_key))
     }
 
-    /// get the inner signing key (for ethers signing)
-    /// FIXME: remove when `ethers` updates k256
-    pub fn get_eth_signing_key(&self) -> ethers::core::k256::ecdsa::SigningKey {
-        ethers::core::k256::ecdsa::SigningKey::from_bytes(&self.0.to_bytes())
-            .expect("two versions of k256 should be byte-compatible")
+    /// constructs secret key from hex
+    pub fn from_hex(hex: String) -> Result<Self, SecretKeyWrapError> {
+        let bytes = hex::decode(hex).map_err(SecretKeyWrapError::InvalidHex)?;
+        Self::from_bytes(bytes)
+    }
+
+    /// gets the inner signing key
+    pub fn get_signing_key(&self) -> SigningKey {
+        self.0.clone()
     }
 
     /// signs an arbitrary message as per EIP-191
     /// TODO: chain_id may not be necessary?
     pub fn sign_eth(&self, message: &[u8], chain_id: u64) -> Result<Signature, HdWrapError> {
-        let hash = ethers::utils::hash_message(message);
-        let wallet = LocalWallet::from(self.get_eth_signing_key()).with_chain_id(chain_id);
+        let hash = hash_message(message);
+        let wallet = LocalWallet::from(self.get_signing_key()).with_chain_id(chain_id);
         // TODO: EIP-155 normalization (it seems `siwe` expects raw values)
         let signature = wallet.sign_hash(hash, false);
         Ok(signature)
     }
 
-    /// Get public key to byte array
+    /// gets public key to byte array
     pub fn get_public_key_bytes(&self) -> Vec<u8> {
         self.0.clone().public_key().to_bytes().to_vec()
     }
 
-    /// Convert private key to byte array
+    /// gets public key to a hex string without the 0x prefix
+    pub fn get_public_key_hex(&self) -> String {
+        hex::encode(self.0.clone().public_key().to_bytes())
+    }
+
+    /// converts private key to byte array
     pub fn to_bytes(&self) -> Vec<u8> {
         self.get_signing_key().to_bytes().to_vec()
     }
 
-    /// Convert the private key to a hex string without the 0x prefix
+    /// converts private key to a hex string without the 0x prefix
     pub fn to_hex(&self) -> String {
         hex::encode(self.get_signing_key().to_bytes())
     }
@@ -244,8 +259,8 @@ pub fn bytes_to_hex(data: Vec<u8>) -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use crate::*;
+mod hd_wallet_tests {
+    use super::*;
 
     #[test]
     fn test_generate_24_word_mnemonic_wallet_as_default() {
@@ -447,5 +462,88 @@ mod tests {
         ]
         .to_vec();
         assert_eq!(raw_key, expected_key);
+    }
+}
+
+#[cfg(test)]
+mod secret_key_tests {
+    use super::*;
+
+    #[test]
+    fn test_generate_random_secret_key() {
+        let secret_key = SecretKey::new();
+        secret_key.get_signing_key();
+        secret_key
+            .sign_eth("hello world".as_bytes(), 1)
+            .expect("failed to sign a message");
+
+        assert!(!secret_key.get_public_key_bytes().is_empty());
+        assert!(!secret_key.get_public_key_hex().is_empty());
+        assert!(!secret_key.to_bytes().is_empty());
+        assert!(!secret_key.to_hex().is_empty());
+    }
+
+    #[test]
+    fn test_construct_secret_key_from_bytes() {
+        let bytes = [
+            34, 132, 105, 223, 8, 11, 89, 187, 229, 227, 66, 38, 131, 228, 149, 134, 208, 32, 112,
+            118, 177, 151, 63, 38, 193, 73, 194, 226, 198, 187, 100, 133,
+        ];
+
+        let secret_key = SecretKey::from_bytes(bytes.to_vec())
+            .expect("Failed to construct Secret Key from bytes");
+        secret_key.get_signing_key();
+        secret_key
+            .sign_eth("hello world".as_bytes(), 1)
+            .expect("failed to sign a message");
+
+        assert_eq!(
+            secret_key.get_public_key_bytes(),
+            [
+                2, 31, 14, 65, 53, 132, 187, 5, 189, 214, 210, 70, 194, 21, 71, 128, 144, 69, 201,
+                166, 84, 68, 242, 68, 100, 68, 215, 215, 113, 29, 5, 15, 97
+            ]
+        );
+        assert_eq!(
+            secret_key.get_public_key_hex(),
+            "021f0e413584bb05bdd6d246c21547809045c9a65444f2446444d7d7711d050f61"
+        );
+        assert_eq!(secret_key.to_bytes(), bytes);
+        assert_eq!(
+            secret_key.to_hex(),
+            "228469df080b59bbe5e3422683e49586d0207076b1973f26c149c2e2c6bb6485"
+        );
+    }
+
+    #[test]
+    fn test_construct_secret_key_from_hex() {
+        let hex = "e7de4e2f72573cf3c6e1fa3845cec6a4e2aac582702cac14bb9da0bb05aa24ae";
+
+        let secret_key =
+            SecretKey::from_hex(hex.to_owned()).expect("Failed to construct Secret Key from hex");
+        secret_key.get_signing_key();
+        secret_key
+            .sign_eth("hello world".as_bytes(), 1)
+            .expect("failed to sign a message");
+
+        assert_eq!(
+            secret_key.get_public_key_bytes(),
+            [
+                3, 206, 250, 179, 248, 156, 98, 236, 197, 76, 9, 99, 69, 22, 187, 40, 25, 210, 13,
+                131, 117, 121, 86, 199, 244, 105, 13, 195, 184, 6, 236, 199, 210
+            ]
+        );
+        assert_eq!(
+            secret_key.get_public_key_hex(),
+            "03cefab3f89c62ecc54c09634516bb2819d20d83757956c7f4690dc3b806ecc7d2"
+        );
+        assert_eq!(
+            secret_key.to_bytes(),
+            [
+                231, 222, 78, 47, 114, 87, 60, 243, 198, 225, 250, 56, 69, 206, 198, 164, 226, 170,
+                197, 130, 112, 44, 172, 20, 187, 157, 160, 187, 5, 170, 36, 174
+            ]
+        );
+        assert_eq!(secret_key.to_hex(), hex);
     }
 }
