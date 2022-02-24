@@ -121,7 +121,9 @@ enum RestError {
   "RequestError",
   "MissingResult",
   "AsyncRuntimeError",
+  "GRPCTransportError",
   "GRPCError",
+  "ErrorReport",
 };
 
 dictionary RawRpcBalance {
@@ -189,6 +191,37 @@ interface ContractTransfer {
   Erc1155(string contract_address, string token_id, string from_address, string to_address, string amount_hex);
 };
 
+dictionary Denom {
+    string id;
+    string name;
+    string schema;
+    string creator;
+};
+
+dictionary BaseNft {
+    string id;
+    string name;
+    string uri;
+    string data;
+    string owner;
+};
+
+
+dictionary Owner {
+    string address;
+    sequence<IdCollection> id_collections;
+};
+
+dictionary IdCollection {
+    string denom_id;
+    sequence<string> token_ids;
+};
+
+dictionary Collection {
+    Denom? denom;
+    sequence<BaseNft> nfts;
+};
+
 [Error]
 enum EthError {
   "HexConversion",
@@ -222,6 +255,33 @@ interface EthAmount {
     EthDecimal(string amount);
 };
 
+
+interface Client {
+    [Throws=RestError,Name=new_blocking]
+    constructor(string grpc_web_url);
+
+    [Throws=RestError]
+    u64 supply_blocking(string denom_id, string owner);
+
+    [Throws=RestError]
+    Owner? owner_blocking(string denom_id, string owner);
+
+    [Throws=RestError]
+    Collection? collection_blocking(string denom_id);
+
+    [Throws=RestError]
+    Denom? denom_blocking(string denom_id);
+
+    [Throws=RestError]
+    Denom? denom_by_name_blocking(string denom_name);
+
+    [Throws=RestError]
+    sequence<Denom> denoms_blocking();
+
+    [Throws=RestError]
+    BaseNft? nft_blocking(string denom_id, string token_id);
+};
+
 namespace common {
   [Throws=ErrorWrapper]
   sequence<u8> get_single_msg_sign_payload(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg, PublicKeyBytesWrapper sender_pubkey);
@@ -231,6 +291,16 @@ namespace common {
   sequence<u8> get_msg_sign_payload(CosmosSDKTxInfo tx_info, sequence<CosmosSDKMsg> msgs, PublicKeyBytesWrapper sender_pubkey);
   [Throws=ErrorWrapper]
   sequence<u8> build_signed_msg_tx(CosmosSDKTxInfo tx_info, sequence<CosmosSDKMsg> msgs, SecretKey secret_key);
+  [Throws=ErrorWrapper]
+  sequence<u8> get_nft_issue_denom_signed_tx(CosmosSDKTxInfo tx_info, SecretKey secret_key, string id, string name, string schema);
+  [Throws=ErrorWrapper]
+  sequence<u8> get_nft_mint_signed_tx(CosmosSDKTxInfo tx_info, SecretKey secret_key, string id, string denom_id, string name, string uri, string data, string recipient);
+  [Throws=ErrorWrapper]
+  sequence<u8> get_nft_edit_signed_tx(CosmosSDKTxInfo tx_info, SecretKey secret_key, string id, string denom_id, string name, string uri, string data);
+  [Throws=ErrorWrapper]
+  sequence<u8> get_nft_transfer_signed_tx(CosmosSDKTxInfo tx_info, SecretKey secret_key, string id, string denom_id, string recipient);
+  [Throws=ErrorWrapper]
+  sequence<u8> get_nft_burn_signed_tx(CosmosSDKTxInfo tx_info, SecretKey secret_key, string id, string denom_id);
   [Throws=RestError]
   RawRpcAccountResponse get_account_details_blocking([ByRef] string api_url, [ByRef] string address);
   [Throws=RestError]

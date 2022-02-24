@@ -3,5 +3,11 @@
 mod cosmos_sdk;
 /// wrappers around Web3 API + basic contract types
 mod ethereum;
+/// wrappers around chainmain NFT grpc/grpc-web API
+pub mod nft;
+
+mod error;
 pub use cosmos_sdk::*;
+pub use error::*;
 pub use ethereum::*;
+pub use nft::*;

@@ -7,6 +7,12 @@ members = [
     "bindings/wasm",
     "bindings/cpp"
 ]
+default-members = [
+    "proto-build",
+    "proto",
+    "common",
+    "bindings/cpp"
+]
 
 [profile.release]
 opt-level = "s"

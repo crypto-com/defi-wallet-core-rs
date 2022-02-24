@@ -908,6 +908,7 @@ dependencies = [
  "defi-wallet-core-proto",
  "ethers",
  "eyre",
+ "grpc-web-client",
  "prost",
  "rand 0.6.5",
  "rand_core 0.6.3",
@@ -917,6 +918,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "siwe",
+ "tendermint",
  "tendermint-rpc",
  "thiserror",
  "tokio",
@@ -924,6 +926,7 @@ dependencies = [
  "uniffi",
  "uniffi_build",
  "uniffi_macros",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -934,6 +937,7 @@ dependencies = [
  "cxx",
  "cxx-build",
  "defi-wallet-core-common",
+ "defi-wallet-core-proto",
  "serde_json",
 ]
 
@@ -945,6 +949,7 @@ dependencies = [
  "cosmrs",
  "prost",
  "prost-types",
+ "serde",
  "tendermint-proto",
  "tonic",
 ]
@@ -955,8 +960,12 @@ version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "defi-wallet-core-common",
+ "defi-wallet-core-proto",
  "ethers",
+ "grpc-web-client",
+ "reqwest",
  "tendermint",
+ "tendermint-rpc",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
@@ -1748,6 +1757,29 @@ dependencies = [
  "ff 0.11.0",
  "rand_core 0.6.3",
  "subtle",
+]
+
+[[package]]
+name = "grpc-web-client"
+version = "0.1.2"
+source = "git+https://github.com/titanous/grpc-web-client#dd15cde2f36ab10546c332a7bbcb55b1738018a5"
+dependencies = [
+ "base64 0.13.0",
+ "byteorder",
+ "bytes",
+ "futures",
+ "getrandom",
+ "http",
+ "http-body",
+ "httparse",
+ "hyper",
+ "js-sys",
+ "prost",
+ "tonic",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-streams",
+ "web-sys",
 ]
 
 [[package]]
@@ -4398,6 +4430,19 @@ checksum = "d0e560d44db5e73b69a9757a15512fe7e1ef93ed2061c928871a4025798293dd"
 dependencies = [
  "proc-macro2",
  "quote",
+]
+
+[[package]]
+name = "wasm-streams"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "076e644811919817f3d28f9344a7d359d8a45cc72a7187c7ace7281d081a74ad"
+dependencies = [
+ "futures",
+ "js-sys",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]

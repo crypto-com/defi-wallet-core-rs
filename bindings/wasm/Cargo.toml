@@ -32,3 +32,7 @@ tendermint = "0.23"
 wasm-bindgen-test = "0.3.28"
 ethers = { git = "https://github.com/gakonst/ethers-rs", rev="faba6e014da854e296d095541679e852e2288eec" }
 wasm-timer = "0.2.5"
+tendermint-rpc = "0.23"
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
+grpc-web-client = { git = "https://github.com/titanous/grpc-web-client"}
