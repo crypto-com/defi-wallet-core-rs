@@ -584,6 +584,7 @@ mod tests {
     use cosmrs::proto;
     use cosmrs::Tx;
     use prost::Message;
+    use cosmrs::Coin;
 
     const TX_INFO: CosmosSDKTxInfo = CosmosSDKTxInfo {
         account_number: 1,
