@@ -9,6 +9,6 @@ rust-version = "1.57"
 prost = "0.9"
 prost-build = "0.9"
 regex = "1"
-tonic = "0.6"
-tonic-build = "0.6"
+tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "transport"] }
+tonic-build = { version = "0.6", default-features = false, features = ["rustfmt", "prost", "transport"] }
 walkdir = "2"

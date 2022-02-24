@@ -1,9 +1,13 @@
 // ! NFT module support
 
-use crate::{msg_wrapper, proto, AccountId, ErrorReport, Msg, Result};
+use crate::{
+    build_signed_single_msg_tx, msg_wrapper, proto, AccountId, CosmosSDKMsg, CosmosSDKTxInfo,
+    ErrorReport, ErrorWrapper, Msg, Result, SecretKey,
+};
 use eyre::WrapErr;
 use std::fmt::Display;
 use std::str::FromStr;
+use std::sync::Arc;
 use thiserror::Error;
 
 /// The denomination ID of the NFT
@@ -279,7 +283,7 @@ msg_wrapper! {
         /// The unique ID of the denomination.
         pub denom_id: DenomId,
         /// The name of the NFT being minted.
-        pub name: DenomName,
+        pub name: String,
         /// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
         pub uri: TokenUri,
         /// The data of the NFT.
@@ -299,7 +303,7 @@ msg_wrapper! {
        /// The unique ID of the denomination, necessary as multiple denominations are able to be represented on each chain.
        pub denom_id: DenomId,
        /// The name of the NFT being edited.
-       pub name: DenomName,
+       pub name: String,
        /// The URI pointing to a JSON object that contains subsequent tokenData information off-chain
        pub uri: TokenUri,
        /// The data of the NFT
@@ -333,6 +337,114 @@ msg_wrapper! {
        /// The account address of the user burning the token.
        pub sender: AccountId,
    }
+}
+
+/// creates the signed transaction
+/// for `MsgIssueDenom` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+pub fn get_nft_issue_denom_signed_tx(
+    tx_info: CosmosSDKTxInfo,
+    secret_key: Arc<SecretKey>,
+    id: String,
+    name: String,
+    schema: String,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    build_signed_single_msg_tx(
+        tx_info,
+        CosmosSDKMsg::NftIssueDenom { id, name, schema },
+        secret_key,
+    )
+}
+
+/// creates the signed transaction
+/// for `MsgMintNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+#[allow(clippy::too_many_arguments)]
+pub fn get_nft_mint_signed_tx(
+    tx_info: CosmosSDKTxInfo,
+    secret_key: Arc<SecretKey>,
+    id: String,
+    denom_id: String,
+    name: String,
+    uri: String,
+    data: String,
+    recipient: String,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    build_signed_single_msg_tx(
+        tx_info,
+        CosmosSDKMsg::NftMint {
+            id,
+            denom_id,
+            name,
+            uri,
+            data,
+            recipient,
+        },
+        secret_key,
+    )
+}
+
+/// creates the signed transaction
+/// for `MsgEditNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+pub fn get_nft_edit_signed_tx(
+    tx_info: CosmosSDKTxInfo,
+    secret_key: Arc<SecretKey>,
+    id: String,
+    denom_id: String,
+    name: String,
+    uri: String,
+    data: String,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    build_signed_single_msg_tx(
+        tx_info,
+        CosmosSDKMsg::NftEdit {
+            id,
+            denom_id,
+            name,
+            uri,
+            data,
+        },
+        secret_key,
+    )
+}
+
+/// creates the signed transaction
+/// for `MsgTransferNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+pub fn get_nft_transfer_signed_tx(
+    tx_info: CosmosSDKTxInfo,
+    secret_key: Arc<SecretKey>,
+    id: String,
+    denom_id: String,
+    recipient: String,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    build_signed_single_msg_tx(
+        tx_info,
+        CosmosSDKMsg::NftTransfer {
+            id,
+            denom_id,
+            recipient,
+        },
+        secret_key,
+    )
+}
+
+/// creates the signed transaction
+/// for `MsgBurnNft` from the Chainmain nft module
+/// wasm-bindgen only supports the C-style enums,
+/// hences this duplicate function
+pub fn get_nft_burn_signed_tx(
+    tx_info: CosmosSDKTxInfo,
+    secret_key: Arc<SecretKey>,
+    id: String,
+    denom_id: String,
+) -> Result<Vec<u8>, ErrorWrapper> {
+    build_signed_single_msg_tx(tx_info, CosmosSDKMsg::NftBurn { id, denom_id }, secret_key)
 }
 
 #[cfg(test)]
@@ -573,7 +685,7 @@ mod test {
         let msg_mint_nft = MsgMintNft {
             id: "testtokenid".parse::<TokenId>().unwrap(),
             denom_id: "testdenomid".parse::<DenomId>().unwrap(),
-            name: "testtokenid".parse::<DenomName>().unwrap(),
+            name: "".to_owned(),
             uri: "testuri".parse::<TokenUri>().unwrap(),
             data: "".to_owned(),
             sender: sender_account_id.clone(),
@@ -583,7 +695,7 @@ mod test {
         let msg_edit_nft = MsgEditNft {
             id: "testtokenid".parse::<TokenId>().unwrap(),
             denom_id: "testdenomid".parse::<DenomId>().unwrap(),
-            name: "newname".parse::<DenomName>().unwrap(),
+            name: "newname".to_owned(),
             uri: "newuri".parse::<TokenUri>().unwrap(),
             data: "".to_owned(),
             sender: sender_account_id.clone(),

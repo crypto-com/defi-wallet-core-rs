@@ -1,20 +1,8 @@
+use super::error::RestError;
 #[cfg(not(target_arch = "wasm32"))]
 use cosmos_sdk_proto::cosmos::tx::v1beta1::{service_client::ServiceClient, SimulateRequest};
 use serde::{Deserialize, Serialize};
 use tendermint_rpc::{endpoint::broadcast::tx_sync, request, response};
-
-/// wrapper around API errors
-#[derive(Debug, thiserror::Error)]
-pub enum RestError {
-    #[error("HTTP request error: {0}")]
-    RequestError(reqwest::Error),
-    #[error("Missing result in the JSON-RPC response")]
-    MissingResult,
-    #[error("Async Runtime error")]
-    AsyncRuntimeError,
-    #[error("gRPC error")]
-    GRPCError,
-}
 
 /// Response from the balance API
 #[derive(Serialize, Deserialize)]
@@ -154,12 +142,12 @@ pub fn get_account_details_blocking(
 /// given the gRPC endpoint and the raw signed transaction bytes,
 /// it'll submit the transaction for simulating its execution and return the used gas.
 #[cfg(not(target_arch = "wasm32"))]
-pub fn simulate_blocking(gprc_url: &str, tx: Vec<u8>) -> Result<u64, RestError> {
+pub fn simulate_blocking(grpc_url: &str, tx: Vec<u8>) -> Result<u64, RestError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
     let result = rt.block_on(async move {
-        let mut client = ServiceClient::connect(gprc_url.to_owned())
+        let mut client = ServiceClient::connect(grpc_url.to_owned())
             .await
-            .map_err(|_err| RestError::GRPCError)?;
+            .map_err(RestError::GRPCTransportError)?;
         let request = SimulateRequest {
             tx_bytes: tx,
             ..Default::default()
@@ -167,7 +155,7 @@ pub fn simulate_blocking(gprc_url: &str, tx: Vec<u8>) -> Result<u64, RestError> 
         let res = client
             .simulate(request)
             .await
-            .map_err(|_err| RestError::GRPCError)?;
+            .map_err(RestError::GRPCError)?;
         res.into_inner().gas_info.ok_or(RestError::MissingResult)
     })?;
     Ok(result.gas_used)

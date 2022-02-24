@@ -1,19 +1,16 @@
-pub use crate::ibc::Height;
-pub use cosmrs::*;
-
-use crate::ibc::*;
-use crate::nft::*;
+use super::ibc::*;
+use super::nft::*;
 use crate::SecretKey;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::UniffiCustomTypeConverter;
 use cosmrs::bank::MsgSend;
-use cosmrs::bip32::{
-    secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE,
-};
+use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
+use cosmrs::bip32::{PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE};
 use cosmrs::crypto::{self, secp256k1::VerifyingKey};
 use cosmrs::distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward};
 use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
 use cosmrs::tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo};
+use cosmrs::{AccountId, Any, Coin, ErrorReport};
 use eyre::{eyre, Context};
 use std::sync::Arc;
 
@@ -373,7 +370,7 @@ impl CosmosSDKMsg {
                 let msg_send = MsgMintNft {
                     id: id.parse::<TokenId>()?,
                     denom_id: denom_id.parse::<DenomId>()?,
-                    name: name.parse::<DenomName>()?,
+                    name: name.to_owned(),
                     uri: uri.parse::<TokenUri>()?,
                     data: data.to_owned(),
                     sender: sender_address,
@@ -391,7 +388,7 @@ impl CosmosSDKMsg {
                 let msg_send = MsgEditNft {
                     id: id.parse::<TokenId>()?,
                     denom_id: denom_id.parse::<DenomId>()?,
-                    name: name.parse::<DenomName>()?,
+                    name: name.to_owned(),
                     uri: uri.parse::<TokenUri>()?,
                     data: data.to_owned(),
                     sender: sender_address,
@@ -619,6 +616,7 @@ mod tests {
     use crate::*;
     use cosmrs::crypto::secp256k1::SigningKey;
     use cosmrs::proto;
+    use cosmrs::Tx;
     use prost::Message;
 
     const TX_INFO: CosmosSDKTxInfo = CosmosSDKTxInfo {
