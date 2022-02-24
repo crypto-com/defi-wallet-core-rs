@@ -1,4 +1,4 @@
-/// eth contract types generated from ABI
+/// Eth contract types generated from ABI
 pub mod contract;
 /// interactions with remote node RPC / API (querying, broadcast etc.)
 pub mod node;
