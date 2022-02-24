@@ -1,11 +1,9 @@
 /// Eth contract types generated from ABI
 pub mod contract;
-/// NFT functionality
-pub mod nft;
 /// interactions with remote node RPC / API (querying, broadcast etc.)
-mod node;
+pub mod node;
 /// transaction building etc.
-mod transaction;
+pub mod transaction;
 /// HD wallet-related functionality
 mod wallet;
 
@@ -14,6 +12,8 @@ mod wallet;
 mod login;
 
 pub use defi_wallet_core_proto as proto;
+// expose all proto related types (e.g. for uniffi)
+pub use proto::chainmain::nft::v1::*;
 
 pub use eyre::{Report as ErrorReport, Result};
 

@@ -1,6 +1,7 @@
 
 #include "cxx.h"
 #include "lib.rs.h"
+#include <cassert>
 #include <iostream>
 using namespace std;
 using namespace org::defi_wallet_core;
@@ -46,6 +47,7 @@ void process() {
   cout << "export MYMNEMONICS=\"your mnemonics\"" << endl;
   cout << "export MYCOSMOSRPC=\"http://yourcosmosnode:1317\"" << endl;
   cout << "export MYTENDERMINTRPC=\"http://yourcosmosnode:26657\"" << endl;
+  cout << "export MYGRPC=\"http://yourcosmosnode:9091\"" << endl;
   cout << "export MYCHAINID=your-chainid-1" << endl;
   cout << "export MYFROM=cro1yourwalletaddress" << endl;
   cout << "export MYTO=cro1yourreceiveraddress" << endl;
@@ -58,6 +60,7 @@ void process() {
   string myamount = getEnv("MYAMOUNT");
   string myservercosmos = getEnv("MYCOSMOSRPC");         /* 1317 port */
   string myservertendermint = getEnv("MYTENDERMINTRPC"); /* 26657 port */
+  string mygrpc = getEnv("MYGRPC"); /* 9091 port */
   rust::cxxbridge1::Box<Wallet> mywallet = createWallet(mymnemonics);
   cout << "transfer from " << myfrom << " to " << myto << " amount " << myamount
        << endl;
@@ -81,6 +84,13 @@ void process() {
   rust::cxxbridge1::Vec<uint8_t> signedtx =
       get_single_bank_send_signed_tx(tx_info, *privatekey, myto, 1, "basecro");
   broadcast_tx(myservertendermint, signedtx);
+
+
+  rust::cxxbridge1::Box<GrpcClient> grpc_client = new_grpc_client(mygrpc);
+  // grpc_client->supply("hello", "world");
+
+  rust::cxxbridge1::Vec<DenomRaw> denoms = grpc_client->denoms();
+  cout << denoms.size() << endl;
 }
 int main() {
   try {

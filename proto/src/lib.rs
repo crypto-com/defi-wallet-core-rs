@@ -24,6 +24,7 @@ pub mod chainmain {
     /// nft
     pub mod nft {
         pub mod v1 {
+            use serde::{Deserialize, Serialize};
             include!("prost/chainmain.nft.v1.rs");
         }
     }
@@ -41,16 +42,16 @@ impl MsgProto for chainmain::nft::v1::MsgIssueDenom {
 }
 
 impl MsgProto for chainmain::nft::v1::MsgMintNft {
-    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgMintNft";
+    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgMintNFT";
 }
 
 impl MsgProto for chainmain::nft::v1::MsgEditNft {
-    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgEditNft";
+    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgEditNFT";
 }
 impl MsgProto for chainmain::nft::v1::MsgTransferNft {
-    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgTransferNft";
+    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgTransferNFT";
 }
 
 impl MsgProto for chainmain::nft::v1::MsgBurnNft {
-    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgBurnNft";
+    const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgBurnNFT";
 }
