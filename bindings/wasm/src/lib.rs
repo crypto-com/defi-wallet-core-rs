@@ -581,6 +581,8 @@ pub fn get_ibc_transfer_signed_tx(
     revision_number: u64,
     timeout_timestamp: u64,
 ) -> Result<Vec<u8>, JsValue> {
+    // TODO: Need to support converting receiver from hex address to bech32 here.
+
     build_signed_single_msg_tx(
         tx_info.into(),
         CosmosSDKMsg::IbcTransfer {

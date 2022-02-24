@@ -494,7 +494,7 @@ impl CosmosSDKMsg {
             } => {
                 MsgTransfer {
                     sender: sender_address,
-                    receiver: receiver.to_owned(),
+                    receiver: receiver.parse::<AccountId>()?,
                     source_port: source_port.to_owned(),
                     source_channel: source_channel.to_owned(),
                     /// FIXME: Both token and timeout height should not be None value.

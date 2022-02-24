@@ -13,6 +13,7 @@ login = ["siwe"]
 
 [dependencies]
 anyhow = "1"
+bech32 = "0.7"
 bip39 = "1"
 eyre = "0.6"
 # NOTE: add `features = ["legacy"]` if non-EIP-1559 network support is required

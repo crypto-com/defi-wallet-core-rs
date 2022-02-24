@@ -902,6 +902,7 @@ name = "defi-wallet-core-common"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bech32",
  "bip39",
  "cosmos-sdk-proto",
  "cosmrs",

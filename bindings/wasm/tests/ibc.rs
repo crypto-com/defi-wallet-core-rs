@@ -22,12 +22,7 @@ async fn test_transfer() {
     let private_key = get_private_key(DELEGATOR1_MNEMONIC);
     let _beginning_balance = query_balance(DELEGATOR1).await;
 
-    send_transfer_msg(
-        &private_key,
-        DELEGATOR1,
-        "0x81080a7e991bcDdDBA8C2302A70f45d6Bd369Ab5",
-    )
-    .await;
+    send_transfer_msg(&private_key, DELEGATOR1, DELEGATOR2).await;
 
     Delay::new(Duration::from_millis(3000)).await.unwrap();
 

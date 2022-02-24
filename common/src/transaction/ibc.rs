@@ -13,7 +13,7 @@ pub struct MsgTransfer {
     /// the sender address
     pub sender: AccountId,
     /// the recipient address on the destination chain
-    pub receiver: String,
+    pub receiver: AccountId,
     /// the port on which the packet will be sent
     pub source_port: String,
     /// the channel by which the packet will be sent
@@ -58,7 +58,7 @@ impl TryFrom<&transfer::v1::MsgTransfer> for MsgTransfer {
     fn try_from(proto: &transfer::v1::MsgTransfer) -> Result<MsgTransfer> {
         Ok(MsgTransfer {
             sender: proto.sender.parse()?,
-            receiver: proto.receiver.to_owned(),
+            receiver: proto.receiver.parse()?,
             source_port: proto.source_port.to_owned(),
             source_channel: proto.source_channel.to_owned(),
             token: proto.token.as_ref().map(TryFrom::try_from).transpose()?,
@@ -78,7 +78,7 @@ impl From<&MsgTransfer> for transfer::v1::MsgTransfer {
     fn from(msg: &MsgTransfer) -> transfer::v1::MsgTransfer {
         transfer::v1::MsgTransfer {
             sender: msg.sender.to_string(),
-            receiver: msg.receiver.to_owned(),
+            receiver: msg.receiver.to_string(),
             source_port: msg.source_port.to_owned(),
             source_channel: msg.source_channel.to_owned(),
             token: msg.token.as_ref().map(Into::into),
