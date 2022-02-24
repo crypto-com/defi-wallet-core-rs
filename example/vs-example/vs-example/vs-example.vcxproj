@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClCompile Include="lib.rs.cc" />
     <ClCompile Include="main.cc" />
+    <ClCompile Include="cronos.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bindings.h" />

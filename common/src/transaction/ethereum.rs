@@ -116,18 +116,38 @@ pub fn construct_unsigned_eth_tx(
         .to_vec())
 }
 
-/// constructs a signed simple transfer of Eth/native token on a given network
+pub struct CronosTxInfo {
+    pub to_address: String,
+    pub amount: EthAmount,
+    pub nonce: String,
+    pub gas_limit: String,
+    pub gas_price: EthAmount,
+    pub data: Option<Vec<u8>>,
+}
+
 pub fn build_signed_eth_tx(
-    to_hex: &str,
-    amount: EthAmount,
+    tx_info: CronosTxInfo,
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
 ) -> Result<Vec<u8>, EthError> {
-    let tx = construct_simple_eth_transfer_tx(to_hex, amount)?;
+    let mut tx: TransactionRequest =
+        construct_simple_eth_transfer_tx(&tx_info.to_address, tx_info.amount)?;
+    tx.nonce = Some(
+        U256::from_dec_str(&tx_info.nonce)
+            .map_err(|e| EthError::ParseError(ConversionError::FromDecStrError(e)))?,
+    );
+    tx.gas = Some(
+        U256::from_dec_str(&tx_info.gas_limit)
+            .map_err(|e| EthError::ParseError(ConversionError::FromDecStrError(e)))?,
+    );
+    tx.gas_price = Some(tx_info.gas_price.try_into().map_err(EthError::ParseError)?);
+    if let Some(data) = tx_info.data {
+        tx.data = Some(data.into());
+    }
+    tx.chain_id = Some(network.get_chain_id().into());
     let wallet =
         LocalWallet::from(secret_key.get_signing_key()).with_chain_id(network.get_chain_id());
     let typed_tx = TypedTransaction::Legacy(tx.clone());
-
     let sig = wallet.sign_transaction_sync(&typed_tx);
     let signed_tx = &tx.rlp_signed(&sig);
     Ok(signed_tx.to_vec())
@@ -159,16 +179,20 @@ mod tests {
     #[test]
     fn eth_signing_works() {
         let secret_key = SecretKey::new();
-
-        let tx_raw = build_signed_eth_tx(
-            "0x2c600e0a72b3ae39e9b27d2e310b180abe779368",
-            EthAmount::EthDecimal {
+        let tx_info = CronosTxInfo {
+            to_address: "0x2c600e0a72b3ae39e9b27d2e310b180abe779368".to_string(),
+            amount: EthAmount::EthDecimal {
                 amount: "1".to_string(),
             },
-            EthNetwork::Cronos,
-            Arc::new(secret_key),
-        )
-        .expect("ok signed tx");
+            nonce: "0".to_string(),
+            gas_limit: "21000".to_string(),
+            gas_price: EthAmount::WeiDecimal {
+                amount: "7".to_string(),
+            },
+            data: Some(vec![]),
+        };
+        let tx_raw = build_signed_eth_tx(tx_info, EthNetwork::Cronos, Arc::new(secret_key))
+            .expect("ok signed tx");
         assert!(Rlp::new(&tx_raw).payload_info().is_ok());
     }
 }

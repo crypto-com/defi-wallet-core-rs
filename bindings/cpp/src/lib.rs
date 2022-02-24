@@ -2,9 +2,9 @@ use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx,
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
-    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, EthError, HDWallet, Height, LoginInfo,
-    Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey, SingleCoin, WalletCoin,
-    COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, CronosTxInfo, EthError, HDWallet, Height,
+    LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey, SingleCoin,
+    WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use defi_wallet_core_common::{transaction, Client};
 use defi_wallet_core_proto as proto;
@@ -440,6 +440,8 @@ mod ffi {
         CronosMainnet,
         /// Cosmos Hub mainnet
         CosmosHub,
+        /// Ethereum
+        Ethereum,
     }
 
     pub enum MnemonicWordCount {
@@ -450,10 +452,34 @@ mod ffi {
         /// Word 24
         TwentyFour,
     }
+    pub enum EthNetwork {
+        EthereumMainnet,
+        RopstenTestnet,
+        KovanTestnet,
+        RinkebyTestnet,
+        GoerliTestnet,
+        Cronos,
+        CronosTestnet,
+        Custom,
+    }
 
-    pub struct StringTuple {
-        pub value: String,
-        pub error: String,
+    pub enum EthAmount {
+        /// 10^-18 ETH
+        WeiDecimal,
+        /// 10^-9 ETH
+        GweiDecimal,
+        EthDecimal,
+    }
+
+    pub struct CronosTxInfoRaw {
+        pub to_address: String,
+        pub amount: String,
+        pub amount_unit: EthAmount,
+        pub nonce: String,
+        pub gas_limit: String,
+        pub gas_price: String,
+        pub gas_price_unit: EthAmount,
+        pub data: Vec<u8>,
     }
 
     pub struct CosmosSDKTxInfoRaw {
@@ -478,7 +504,6 @@ mod ffi {
         /// the coin type to use
         pub coin_type: u32,
     }
-
     pub struct CosmosAccountInfoRaw {
         pub account_number: u64,
         pub sequence_number: u64,
@@ -524,6 +549,8 @@ mod ffi {
 
         fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>>;
         fn get_default_address(self: &Wallet, coin: CoinType) -> Result<String>;
+        fn get_address(self: &Wallet, coin: CoinType, index: u32) -> Result<String>;
+        fn get_eth_address(self: &Wallet, index: u32) -> Result<String>;
         fn get_key(self: &Wallet, derivation_path: String) -> Result<Box<PrivateKey>>;
         fn new_privatekey() -> Box<PrivateKey>;
         fn new_privatekey_from_bytes(bytes: Vec<u8>) -> Result<Box<PrivateKey>>;
@@ -633,20 +660,50 @@ mod ffi {
         fn sign_logininfo(self: &CppLoginInfo, private_key: &PrivateKey) -> Result<Vec<u8>>;
         fn verify_logininfo(self: &CppLoginInfo, signature: &[u8]) -> Result<Vec<u8>>;
 
+        pub fn new_eth_tx_info() -> CronosTxInfoRaw;
+        pub fn build_eth_signed_tx(
+            tx_info: CronosTxInfoRaw,
+            network: EthNetwork,
+            custom_network_id: u64,
+            secret_key: &PrivateKey,
+        ) -> Result<Vec<u8>>;
+
+        pub fn get_eth_balance(address: &str, api_url: &str) -> Result<String>;
+
+        pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String>;
+
+        pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result<String>;
     } // end of RUST block
 } // end of ffi block
 
 use ffi::CoinType;
 impl From<CoinType> for WalletCoin {
     fn from(coin: CoinType) -> Self {
-        WalletCoin::CosmosSDK {
-            network: match coin {
-                CoinType::CryptoOrgMainnet => Network::CryptoOrgMainnet,
-                CoinType::CryptoOrgTestnet => Network::CryptoOrgTestnet,
-                CoinType::CronosMainnet => Network::CronosMainnet,
-                CoinType::CosmosHub => Network::CosmosHub,
-                _ => Network::CryptoOrgTestnet,
+        match coin {
+            CoinType::CryptoOrgMainnet => WalletCoin::CosmosSDK {
+                network: Network::CryptoOrgMainnet,
             },
+            CoinType::CryptoOrgTestnet => WalletCoin::CosmosSDK {
+                network: Network::CryptoOrgTestnet,
+            },
+            CoinType::CronosMainnet => WalletCoin::CosmosSDK {
+                network: Network::CronosMainnet,
+            },
+            CoinType::CosmosHub => WalletCoin::CosmosSDK {
+                network: Network::CosmosHub,
+            },
+            _ => WalletCoin::Ethereum,
+        }
+    }
+}
+
+impl From<ffi::EthNetwork> for defi_wallet_core_common::EthNetwork {
+    fn from(network: ffi::EthNetwork) -> Self {
+        match network {
+            ffi::EthNetwork::EthereumMainnet => {
+                defi_wallet_core_common::EthNetwork::EthereumMainnet
+            }
+            _ => defi_wallet_core_common::EthNetwork::RopstenTestnet,
         }
     }
 }
@@ -725,7 +782,15 @@ fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>> {
 
 impl Wallet {
     pub fn get_default_address(&self, coin: CoinType) -> Result<String> {
-        Ok(self.wallet.get_default_address(coin.into())?)
+        self.get_address(coin, 0)
+    }
+
+    pub fn get_address(&self, coin: CoinType, index: u32) -> Result<String> {
+        Ok(self.wallet.get_address(coin.into(), index)?)
+    }
+
+    pub fn get_eth_address(&self, index: u32) -> Result<String> {
+        self.get_address(CoinType::Ethereum, index)
     }
 
     pub fn get_key(&self, derivation_path: String) -> Result<Box<PrivateKey>> {
@@ -1148,5 +1213,102 @@ impl CppLoginInfo {
             .map_err(|_e| EthError::SignatureError)?;
         let result = self.logininfo.msg.verify(sig)?;
         Ok(result)
+    }
+}
+fn convert_amount(
+    amount: &str,
+    amount_unit: ffi::EthAmount,
+) -> Result<defi_wallet_core_common::EthAmount> {
+    match amount_unit {
+        ffi::EthAmount::WeiDecimal => Ok(defi_wallet_core_common::EthAmount::WeiDecimal {
+            amount: amount.to_string(),
+        }),
+        ffi::EthAmount::GweiDecimal => Ok(defi_wallet_core_common::EthAmount::GweiDecimal {
+            amount: amount.to_string(),
+        }),
+        ffi::EthAmount::EthDecimal => Ok(defi_wallet_core_common::EthAmount::EthDecimal {
+            amount: amount.to_string(),
+        }),
+        _ => Err(anyhow!("invalid coin unit, use correct enum for coin unit")),
+    }
+}
+fn convert_network(
+    network: ffi::EthNetwork,
+    custom_network_id: u64,
+) -> Result<defi_wallet_core_common::EthNetwork> {
+    match network {
+        ffi::EthNetwork::EthereumMainnet => {
+            Ok(defi_wallet_core_common::EthNetwork::EthereumMainnet)
+        }
+        ffi::EthNetwork::RopstenTestnet => Ok(defi_wallet_core_common::EthNetwork::RopstenTestnet),
+        ffi::EthNetwork::KovanTestnet => Ok(defi_wallet_core_common::EthNetwork::KovanTestnet),
+        ffi::EthNetwork::RinkebyTestnet => Ok(defi_wallet_core_common::EthNetwork::RinkebyTestnet),
+        ffi::EthNetwork::GoerliTestnet => Ok(defi_wallet_core_common::EthNetwork::GoerliTestnet),
+        ffi::EthNetwork::Cronos => Ok(defi_wallet_core_common::EthNetwork::Cronos),
+        ffi::EthNetwork::CronosTestnet => Ok(defi_wallet_core_common::EthNetwork::CronosTestnet),
+        _ => Ok(defi_wallet_core_common::EthNetwork::Custom {
+            chain_id: custom_network_id,
+        }),
+    }
+}
+
+impl From<ffi::CronosTxInfoRaw> for CronosTxInfo {
+    fn from(info: ffi::CronosTxInfoRaw) -> Self {
+        CronosTxInfo {
+            to_address: info.to_address,
+            amount: convert_amount(&info.amount, info.amount_unit).unwrap(),
+            nonce: info.nonce,
+            gas_limit: info.gas_limit,
+            gas_price: convert_amount(&info.gas_price, info.gas_price_unit).unwrap(),
+            data: Some(info.data),
+        }
+    }
+}
+
+/// sign cronos tx with private key
+pub fn build_eth_signed_tx(
+    tx_info: ffi::CronosTxInfoRaw,
+    network: ffi::EthNetwork,
+    custom_network_id: u64,
+    private_key: &PrivateKey,
+) -> Result<Vec<u8>> {
+    let signedtx = defi_wallet_core_common::build_signed_eth_tx(
+        tx_info.into(),
+        convert_network(network, custom_network_id)?,
+        private_key.key.clone(),
+    )?;
+    Ok(signedtx)
+}
+
+/// get balance from cronos node
+pub fn get_eth_balance(address: &str, api_url: &str) -> Result<String> {
+    let res = defi_wallet_core_common::get_eth_balance_blocking(address, api_url)?;
+    Ok(res)
+}
+
+/// get nonce from cronos node , which transsaction count of the address
+pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
+    let res = defi_wallet_core_common::get_eth_transaction_count_blocking(address, api_url)?;
+    // convert res to string
+    Ok(res.to_string())
+}
+
+/// broadcast signed cronos tx
+pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result<String> {
+    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(raw_tx, web3api_url)?;
+    Ok(res)
+}
+
+/// create cronos tx info to sign
+pub fn new_eth_tx_info() -> ffi::CronosTxInfoRaw {
+    ffi::CronosTxInfoRaw {
+        to_address: "".to_string(),
+        amount: "0".to_string(),
+        amount_unit: ffi::EthAmount::EthDecimal,
+        nonce: "0".to_string(),
+        gas_limit: "21000".to_string(),
+        gas_price: "7".to_string(),
+        gas_price_unit: ffi::EthAmount::WeiDecimal,
+        data: vec![],
     }
 }
