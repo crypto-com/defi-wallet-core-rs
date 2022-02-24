@@ -29,7 +29,7 @@ pub struct MsgTransfer {
 }
 
 impl MsgTransfer {
-    const TYPE_URL: &'static str = "/cosmos.ibc.applications.transfer.v1.MsgTranfer";
+    const TYPE_URL: &'static str = "/ibc.applications.transfer.v1.MsgTransfer";
 
     /// Serialize this message proto as [`Any`].
     pub fn to_any(&self) -> Result<Any> {
