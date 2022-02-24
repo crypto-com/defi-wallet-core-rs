@@ -1020,6 +1020,7 @@ pub fn get_distribution_withdraw_reward_signed_tx(
 
 /// creates the signed transaction
 /// for `MsgTransfer` from the Cosmos SDK ibc module
+#[allow(clippy::too_many_arguments)]
 pub fn get_ibc_transfer_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
