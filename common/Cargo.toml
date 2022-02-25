@@ -16,7 +16,7 @@ anyhow = "1"
 bech32 = "0.7"
 bip39 = "1"
 # FIXME: Set to a release version after upgrading dependency `tendermint` in cosmos-rust (as PR https://github.com/cosmos/cosmos-rust/pull/178).
-cosmrs = { git = "https://github.com/stevenatcrypto/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a" }
+cosmrs = { git = "https://github.com/crypto-com/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a" }
 eyre = "0.6"
 # NOTE: add `features = ["legacy"]` if non-EIP-1559 network support is required
 ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "faba6e014da854e296d095541679e852e2288eec" }
@@ -45,13 +45,13 @@ grpc-web-client = { git = "https://github.com/titanous/grpc-web-client"}
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # FIXME: Set to a release version after upgrading dependency `tendermint` in cosmos-rust (as PR https://github.com/cosmos/cosmos-rust/pull/178).
-cosmos-sdk-proto = { git = "https://github.com/stevenatcrypto/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a", default-features = false, features = ["cosmwasm"] }
+cosmos-sdk-proto = { git = "https://github.com/crypto-com/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a", default-features = false, features = ["cosmwasm"] }
 defi-wallet-core-proto = { version = "0.1", path = "../proto" }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # FIXME: Set to a release version after upgrading dependency `tendermint` in cosmos-rust (as PR https://github.com/cosmos/cosmos-rust/pull/178).
-cosmos-sdk-proto = { git = "https://github.com/stevenatcrypto/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a", features = ["grpc"] }
+cosmos-sdk-proto = { git = "https://github.com/crypto-com/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a", features = ["grpc"] }
 defi-wallet-core-proto = { version = "0.1", path = "../proto", features = ["transport"] }
 tokio = { version = "1", features = ["rt"] }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
