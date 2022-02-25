@@ -17,6 +17,9 @@ use wasm_timer::Delay;
 
 use tendermint_rpc::endpoint::broadcast::tx_sync::Response;
 
+use defi_wallet_core_proto as proto;
+use proto::chainmain::nft::v1::{BaseNft, Collection, Denom, Owner};
+
 wasm_bindgen_test_configure!(run_in_browser);
 
 pub struct NftConfig {
@@ -83,14 +86,14 @@ impl NftWallet {
             .unwrap()
     }
 
-    async fn issue(&self, id: &str, name: &str, schema: &str) -> Response {
+    async fn issue(&self, denom: Denom) -> Response {
         self.broadcast(
             get_nft_issue_denom_signed_tx(
                 get_tx_info(self.address.to_string()).await,
                 self.key.clone(),
-                id.to_owned(),
-                name.to_owned(),
-                schema.to_owned(),
+                denom.id,
+                denom.name,
+                denom.schema,
             )
             .unwrap(),
         )
@@ -177,11 +180,10 @@ async fn test_nft() {
     //
     // issue, SIGNER1
     //
-    let res = wallet
-        .issue(
-            "testdenomid",
-            "testdenomname",
-            r#"
+    let denom1 = Denom {
+        id: "testdenomid".to_owned(),
+        name: "testdenomname".to_owned(),
+        schema: r#"
                     {
                         "title":"Asset Metadata",
                         "type":"object",
@@ -199,19 +201,20 @@ async fn test_nft() {
                                 "description":"testdescription"
                             }
                         }
-                    }"#,
-        )
-        .await;
+                    }"#
+        .to_owned(),
+        creator: SIGNER1.to_owned(), // not used
+    };
+    let res = wallet.issue(denom1.clone()).await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
 
     //
     // issue, SIGNER1
     //
-    let res = wallet
-        .issue(
-            "testdenomid2",
-            "testdenomname2",
-            r#"
+    let denom2 = Denom {
+        id: "testdenomid2".to_owned(),
+        name: "testdenomname2".to_owned(),
+        schema: r#"
                     {
                         "title":"Asset Metadata",
                         "type":"object",
@@ -229,66 +232,95 @@ async fn test_nft() {
                                 "description":"testdescription"
                             }
                         }
-                    }"#,
-        )
-        .await;
+                    }"#
+        .to_owned(),
+        creator: SIGNER1.to_owned(), // not used
+    };
+    let res = wallet.issue(denom2.clone()).await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
     let _ = Delay::new(Duration::from_millis(3000)).await;
 
     let res = wallet
         .grpc_web_client
-        .supply("testdenomid".to_owned(), SIGNER1.to_owned())
+        .supply(denom1.clone().id, SIGNER1.to_owned())
         .await;
     assert!(res.is_ok());
-    // console_log!("client.supply: {:?}", res);
+    let supply = res.unwrap().into_serde::<u64>().unwrap();
+    assert_eq!(supply, 0);
 
     let res = wallet
         .grpc_web_client
-        .owner("testdenomid".to_owned(), SIGNER1.to_owned())
+        .owner(denom1.clone().id, SIGNER1.to_owned())
         .await;
     assert!(res.is_ok());
-    // console_log!("client.owner: {:?}", res);
+    let owner = res.unwrap().into_serde::<Owner>().unwrap();
+    assert_eq!(owner.address, SIGNER1.to_owned());
+    assert_eq!(owner.id_collections, vec![]);
+
+    let res = wallet.grpc_web_client.collection(denom2.clone().id).await;
+    assert!(res.is_ok());
+    let collection = res.unwrap().into_serde::<Collection>().unwrap();
+    assert_eq!(collection.denom, Some(denom2.clone()));
+    assert_eq!(collection.nfts.len(), 0);
+
+    let res = wallet.grpc_web_client.denom(denom2.clone().id).await;
+    assert!(res.is_ok());
+    let denom = res.unwrap().into_serde::<Denom>().unwrap();
+    assert_eq!(denom, denom2.clone());
 
     let res = wallet
         .grpc_web_client
-        .collection("testdenomid2".to_owned())
+        .denom_by_name(denom1.clone().name)
         .await;
     assert!(res.is_ok());
-    // console_log!("client.collection: {:?}", res);
-
-    let res = wallet
-        .grpc_web_client
-        .denom("testdenomid2".to_owned())
-        .await;
-    assert!(res.is_ok());
-    // console_log!("client.denom: {:?}", res);
-
-    let res = wallet
-        .grpc_web_client
-        .denom_by_name("testdenomname".to_owned())
-        .await;
-    assert!(res.is_ok());
-    // console_log!("client.denom_by_name: {:?}", res);
+    let denom = res.unwrap().into_serde::<Denom>().unwrap();
+    assert_eq!(denom, denom1.clone());
 
     let res = wallet.grpc_web_client.denoms().await;
     assert!(res.is_ok());
-    // console_log!("client.denoms: {:?}", res);
+    let denoms = res.unwrap().into_serde::<Vec<Denom>>().unwrap();
+    assert_eq!(denoms.len(), 2);
+    assert_eq!(denoms[0], denom1.clone());
+    assert_eq!(denoms[1], denom2);
 
     //
     // mint, SIGNER1
     //
+    let tokenid = "testtokenid";
     let res = wallet
-        .mint("testtokenid", "testdenomid", "", "testuri", "", SIGNER2)
+        .mint(tokenid, &denom1.clone().id, "", "testuri", "", SIGNER2)
         .await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
     let _ = Delay::new(Duration::from_millis(3000)).await;
 
+    // Check nft after minting
     let res = wallet
         .grpc_web_client
-        .nft("testdenomid".to_owned(), "testtokenid".to_owned())
+        .nft(denom1.clone().id, tokenid.to_owned())
         .await;
     assert!(res.is_ok());
-    console_log!("minted nft: {:?}", res);
+    let nft = res.unwrap().into_serde::<BaseNft>().unwrap();
+    assert_eq!(nft.owner, SIGNER2.to_owned());
+
+    // Check collection after minting
+    let res = wallet.grpc_web_client.collection(denom1.clone().id).await;
+    assert!(res.is_ok());
+    let collection = res.unwrap().into_serde::<Collection>().unwrap();
+    assert_eq!(collection.denom, Some(denom1.clone()));
+    assert_eq!(collection.nfts.len(), 1);
+
+    // check owner before transferring
+    let res = wallet
+        .grpc_web_client
+        .owner(denom1.clone().id, SIGNER2.to_owned())
+        .await;
+    assert!(res.is_ok());
+    let owner = res.unwrap().into_serde::<Owner>().unwrap();
+    assert_eq!(owner.address, SIGNER2.to_owned());
+    assert_eq!(owner.id_collections.len(), 1);
+    assert_eq!(owner.id_collections[0].denom_id, denom1.clone().id);
+    assert_eq!(owner.id_collections[0].token_ids.len(), 1);
+    assert_eq!(owner.id_collections[0].token_ids[0], tokenid.to_owned());
 
     //
     // transfer, SIGNER2 -> SIGNER1
@@ -298,15 +330,30 @@ async fn test_nft() {
         .tendermint_rpc(TENDERMINT_RPC_URL)
         .grpc_web_url(GRPC_WEB_URL)
         .finalize();
-    let res = wallet.transfer("testtokenid", "testdenomid", SIGNER1).await;
+    let res = wallet.transfer(tokenid, &denom1.clone().id, SIGNER1).await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
     let _ = Delay::new(Duration::from_millis(3000)).await;
     let res = wallet
         .grpc_web_client
-        .nft("testdenomid".to_owned(), "testtokenid".to_owned())
+        .nft(denom1.clone().id, tokenid.to_owned())
         .await;
     assert!(res.is_ok());
-    console_log!("transferred nft: {:?}", res);
+    let nft = res.unwrap().into_serde::<BaseNft>().unwrap();
+    assert_eq!(nft.owner, SIGNER1.to_owned());
+    assert_eq!(owner.id_collections.len(), 1);
+    assert_eq!(owner.id_collections[0].denom_id, denom1.clone().id);
+    assert_eq!(owner.id_collections[0].token_ids.len(), 1);
+    assert_eq!(owner.id_collections[0].token_ids[0], tokenid.to_owned());
+
+    // check owner after transferring
+    let res = wallet
+        .grpc_web_client
+        .owner(denom1.clone().id, SIGNER2.to_owned())
+        .await;
+    assert!(res.is_ok());
+    let owner = res.unwrap().into_serde::<Owner>().unwrap();
+    assert_eq!(owner.address, SIGNER2.to_owned());
+    assert_eq!(owner.id_collections, vec![]);
 
     //
     // edit, SIGNER1
@@ -317,27 +364,54 @@ async fn test_nft() {
         .grpc_web_url(GRPC_WEB_URL)
         .finalize();
     let res = wallet
-        .edit("testtokenid", "testdenomid", "newname", "newuri", "")
+        .edit(tokenid, &denom1.clone().id, "newname", "newuri", "newdata")
         .await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
     let _ = Delay::new(Duration::from_millis(3000)).await;
     let res = wallet
         .grpc_web_client
-        .nft("testdenomid".to_owned(), "testtokenid".to_owned())
+        .nft(denom1.clone().id, tokenid.to_owned())
         .await;
     assert!(res.is_ok());
-    console_log!("edited nft: {:?}", res);
+    let nft = res.unwrap().into_serde::<BaseNft>().unwrap();
+    assert_eq!(nft.name, "newname".to_owned());
+    assert_eq!(nft.uri, "newuri".to_owned());
+    assert_eq!(nft.data, "newdata".to_owned());
+
+    // check supply before burning
+    let res = wallet
+        .grpc_web_client
+        .supply(denom1.clone().id, SIGNER1.to_owned())
+        .await;
+    assert!(res.is_ok());
+    let supply = res.unwrap().into_serde::<u64>().unwrap();
+    assert_eq!(supply, 1);
 
     //
     // burn, SIGNER 1
     //
-    let res = wallet.burn("testtokenid", "testdenomid").await;
+    let res = wallet.burn(tokenid, &denom1.clone().id).await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
     let _ = Delay::new(Duration::from_millis(3000)).await;
     let res = wallet
         .grpc_web_client
-        .nft("testdenomid".to_owned(), "testtokenid".to_owned())
+        .nft(denom1.clone().id, tokenid.to_owned())
         .await;
     assert!(res.is_err());
-    console_log!("burned nft: {:?}", res);
+
+    // check supply after burning
+    let res = wallet
+        .grpc_web_client
+        .supply(denom1.clone().id, SIGNER1.to_owned())
+        .await;
+    assert!(res.is_ok());
+    let supply = res.unwrap().into_serde::<u64>().unwrap();
+    assert_eq!(supply, 0);
+
+    // Check collection after burning
+    let res = wallet.grpc_web_client.collection(denom1.clone().id).await;
+    assert!(res.is_ok());
+    let collection = res.unwrap().into_serde::<Collection>().unwrap();
+    assert_eq!(collection.denom, Some(denom1));
+    assert_eq!(collection.nfts.len(), 0);
 }
