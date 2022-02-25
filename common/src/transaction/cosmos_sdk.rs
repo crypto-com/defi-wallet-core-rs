@@ -1,4 +1,3 @@
-use super::ibc::*;
 use super::nft::*;
 use crate::SecretKey;
 #[cfg(not(target_arch = "wasm32"))]
@@ -12,6 +11,14 @@ use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
 use cosmrs::tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo};
 use cosmrs::{AccountId, Any, Coin, ErrorReport};
 use eyre::{eyre, Context};
+use ibc::applications::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
+use ibc::core::ics24_host::identifier::{ChannelId, PortId};
+use ibc::signer::Signer;
+use ibc::timestamp::Timestamp;
+use ibc::tx_msg::Msg as IbcMsg;
+use ibc::Height;
+use ibc_proto::cosmos::base::v1beta1::Coin as IbcCoin;
+use std::str::FromStr;
 use std::sync::Arc;
 
 /// human-readable bech32 prefix for Crypto.org Chain accounts
@@ -157,6 +164,63 @@ impl TryInto<Coin> for &SingleCoin {
             SingleCoin::Other { amount, denom } => Ok(Coin {
                 amount: amount.parse()?,
                 denom: denom.parse()?,
+            }),
+        }
+    }
+}
+
+impl TryInto<IbcCoin> for &SingleCoin {
+    type Error = ErrorReport;
+
+    fn try_into(self) -> eyre::Result<IbcCoin> {
+        match self {
+            SingleCoin::BaseCRO { amount } => Ok(IbcCoin {
+                amount: amount.to_string(),
+                denom: "basecro".to_owned(),
+            }),
+            SingleCoin::TestnetBaseCRO { amount } => Ok(IbcCoin {
+                amount: amount.to_string(),
+                denom: "basetcro".to_owned(),
+            }),
+            SingleCoin::TestnetCRO { amount } => {
+                let base_amount = amount
+                    .checked_mul(10 ^ 8)
+                    .ok_or_else(|| eyre!("integer overflow"))?;
+                Ok(IbcCoin {
+                    amount: base_amount.to_string(),
+                    denom: "basetcro".to_owned(),
+                })
+            }
+            SingleCoin::CRO { amount, network } => {
+                let decimals = match network {
+                    Network::CronosMainnet => 10 ^ 18,
+                    _ => 10 ^ 8,
+                };
+                // FIXME: convert to Decimal when it supports multiplication
+                let base_amount = amount
+                    .checked_mul(decimals)
+                    .ok_or_else(|| eyre!("integer overflow"))?;
+                Ok(IbcCoin {
+                    amount: base_amount.to_string(),
+                    denom: "basecro".to_owned(),
+                })
+            }
+            SingleCoin::UATOM { amount } => Ok(IbcCoin {
+                amount: amount.to_string(),
+                denom: "uatom".to_owned(),
+            }),
+            SingleCoin::ATOM { amount } => {
+                let base_amount = amount
+                    .checked_mul(1_000_000)
+                    .ok_or_else(|| eyre!("integer overflow"))?;
+                Ok(IbcCoin {
+                    amount: base_amount.to_string(),
+                    denom: "uatom".to_owned(),
+                })
+            }
+            SingleCoin::Other { amount, denom } => Ok(IbcCoin {
+                amount: amount.to_owned(),
+                denom: denom.to_owned(),
             }),
         }
     }
@@ -491,19 +555,16 @@ impl CosmosSDKMsg {
                 token,
                 timeout_height,
                 timeout_timestamp,
-            } => {
-                MsgTransfer {
-                    sender: sender_address,
-                    receiver: receiver.parse::<AccountId>()?,
-                    source_port: source_port.to_owned(),
-                    source_channel: source_channel.to_owned(),
-                    /// FIXME: Both token and timeout height should not be None value.
-                    token: Some(token.try_into()?),
-                    timeout_height: Some(timeout_height.clone()),
-                    timeout_timestamp: *timeout_timestamp,
-                }
-                .to_any()
+            } => Ok(MsgTransfer {
+                sender: Signer::new(sender_address),
+                receiver: Signer::new(receiver),
+                source_port: PortId::from_str(source_port)?,
+                source_channel: ChannelId::from_str(source_channel)?,
+                token: Some(token.try_into()?),
+                timeout_height: *timeout_height,
+                timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
             }
+            .to_any()),
         }
     }
 }
