@@ -39,7 +39,7 @@ cpp: prepare_cpp
 	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
-	cd $(cpp_example) && make
+	source ./scripts/.env && cd $(cpp_example) && make
 
 cppx86_64:
 	cargo build --release --target x86_64-apple-darwin
@@ -69,7 +69,6 @@ wasm-tests:
 
 cpp-ci-tests:
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
-	source ./scripts/.env
 	make cpp
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"

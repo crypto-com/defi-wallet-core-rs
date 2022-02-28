@@ -92,7 +92,49 @@ void process() {
   rust::cxxbridge1::Vec<DenomRaw> denoms = grpc_client->denoms();
   cout << denoms.size() << endl;
 }
+
+void test_login() {
+  cout << "testing login" << endl;
+
+  // no \n in end of string
+  std::string info =
+      "service.org wants you to sign in with your Ethereum account:\n"
+      "0xD09F7C8C4529CB5D387AA17E33D707C529A6F694\n"
+      "\n"
+      "I accept the ServiceOrg Terms of Service: https://service.org/tos\n"
+      "\n"
+      "URI: https://service.org/login\n"
+      "Version: 1\n"
+      "Chain ID: 1\n"
+      "Nonce: 32891756\n"
+      "Issued At: 2021-09-30T16:25:24Z\n"
+      "Resources:\n"
+      "- ipfs://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq/\n"
+      "- https://example.com/my-web2-claim.json";
+  rust::cxxbridge1::Box<CppLoginInfo> logininfo = new_logininfo(info);
+
+  rust::cxxbridge1::String mymnemonics = getEnv("MYMNEMONICS");
+  rust::cxxbridge1::Box<Wallet> mywallet = createWallet(mymnemonics);
+
+  char hdpath[100];
+  int coin_type = 60; // eth cointype
+  snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", coin_type);
+  rust::cxxbridge1::Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
+
+  rust::cxxbridge1::String default_address =
+      mywallet->get_default_address(CoinType::CronosMainnet);
+  rust::cxxbridge1::Vec<uint8_t> signature =
+      logininfo->sign_logininfo(*privatekey);
+  assert(signature.size() == 65);
+  rust::Slice<const uint8_t> slice{signature.data(), signature.size()};
+  logininfo->verify_logininfo(slice);
+}
+
 int main() {
+  // unit test
+  test_login();
+
+  // integration test
   try {
     process();
   } catch (const rust::cxxbridge1::Error &e) {
