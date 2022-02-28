@@ -1,20 +1,25 @@
-use std::sync::Arc;
-
+use super::nft::*;
 use crate::SecretKey;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::UniffiCustomTypeConverter;
-use cosmrs::{
-    bank::MsgSend,
-    bip32::{secp256k1::ecdsa::SigningKey, PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE},
-    crypto::{self, secp256k1::VerifyingKey},
-    distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward},
-    staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate},
-    tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo},
-    AccountId, Any, Coin, ErrorReport,
-};
+use cosmrs::bank::MsgSend;
+use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
+use cosmrs::bip32::{PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE};
+use cosmrs::crypto::{self, secp256k1::VerifyingKey};
+use cosmrs::distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward};
+use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
+use cosmrs::tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo};
+use cosmrs::{AccountId, Any, Coin, ErrorReport};
 use eyre::{eyre, Context};
-
-use super::nft::*;
+use ibc::applications::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
+use ibc::core::ics24_host::identifier::{ChannelId, PortId};
+use ibc::signer::Signer;
+use ibc::timestamp::Timestamp;
+use ibc::tx_msg::Msg as IbcMsg;
+use ibc::Height;
+use ibc_proto::cosmos::base::v1beta1::Coin as IbcCoin;
+use std::str::FromStr;
+use std::sync::Arc;
 
 /// human-readable bech32 prefix for Crypto.org Chain accounts
 pub const CRYPTO_ORG_BECH32_HRP: &str = "cro";
@@ -159,6 +164,63 @@ impl TryInto<Coin> for &SingleCoin {
             SingleCoin::Other { amount, denom } => Ok(Coin {
                 amount: amount.parse()?,
                 denom: denom.parse()?,
+            }),
+        }
+    }
+}
+
+impl TryInto<IbcCoin> for &SingleCoin {
+    type Error = ErrorReport;
+
+    fn try_into(self) -> eyre::Result<IbcCoin> {
+        match self {
+            SingleCoin::BaseCRO { amount } => Ok(IbcCoin {
+                amount: amount.to_string(),
+                denom: "basecro".to_owned(),
+            }),
+            SingleCoin::TestnetBaseCRO { amount } => Ok(IbcCoin {
+                amount: amount.to_string(),
+                denom: "basetcro".to_owned(),
+            }),
+            SingleCoin::TestnetCRO { amount } => {
+                let base_amount = amount
+                    .checked_mul(10 ^ 8)
+                    .ok_or_else(|| eyre!("integer overflow"))?;
+                Ok(IbcCoin {
+                    amount: base_amount.to_string(),
+                    denom: "basetcro".to_owned(),
+                })
+            }
+            SingleCoin::CRO { amount, network } => {
+                let decimals = match network {
+                    Network::CronosMainnet => 10 ^ 18,
+                    _ => 10 ^ 8,
+                };
+                // FIXME: convert to Decimal when it supports multiplication
+                let base_amount = amount
+                    .checked_mul(decimals)
+                    .ok_or_else(|| eyre!("integer overflow"))?;
+                Ok(IbcCoin {
+                    amount: base_amount.to_string(),
+                    denom: "basecro".to_owned(),
+                })
+            }
+            SingleCoin::UATOM { amount } => Ok(IbcCoin {
+                amount: amount.to_string(),
+                denom: "uatom".to_owned(),
+            }),
+            SingleCoin::ATOM { amount } => {
+                let base_amount = amount
+                    .checked_mul(1_000_000)
+                    .ok_or_else(|| eyre!("integer overflow"))?;
+                Ok(IbcCoin {
+                    amount: base_amount.to_string(),
+                    denom: "uatom".to_owned(),
+                })
+            }
+            SingleCoin::Other { amount, denom } => Ok(IbcCoin {
+                amount: amount.to_owned(),
+                denom: denom.to_owned(),
             }),
         }
     }
@@ -316,6 +378,23 @@ pub enum CosmosSDKMsg {
         /// validator address in bech32
         validator_address: String,
     },
+    /// MsgTransfer
+    IbcTransfer {
+        /// the recipient address on the destination chain
+        receiver: String,
+        /// the port on which the packet will be sent
+        source_port: String,
+        /// the channel by which the packet will be sent
+        source_channel: String,
+        /// the tokens to be transferred
+        token: SingleCoin,
+        /// Timeout height relative to the current block height.
+        /// The timeout is disabled when set to 0.
+        timeout_height: Height,
+        /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
+        /// The timeout is disabled when set to 0.
+        timeout_timestamp: u64,
+    },
 }
 
 impl CosmosSDKMsg {
@@ -469,6 +548,23 @@ impl CosmosSDKMsg {
                 };
                 msg.to_any()
             }
+            CosmosSDKMsg::IbcTransfer {
+                receiver,
+                source_port,
+                source_channel,
+                token,
+                timeout_height,
+                timeout_timestamp,
+            } => Ok(MsgTransfer {
+                sender: Signer::new(sender_address),
+                receiver: Signer::new(receiver),
+                source_port: PortId::from_str(source_port)?,
+                source_channel: ChannelId::from_str(source_channel)?,
+                token: Some(token.try_into()?),
+                timeout_height: *timeout_height,
+                timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
+            }
+            .to_any()),
         }
     }
 }

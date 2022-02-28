@@ -11,8 +11,9 @@ edition = "2021"
 rust-version = "1.57"
 
 [dependencies]
-cosmrs = "0.4"
-cosmos-sdk-proto = { version = "0.9", default-features = false }
+# FIXME: Set to a release version after upgrading dependency `tendermint` in cosmos-rust (as PR https://github.com/cosmos/cosmos-rust/pull/178).
+cosmrs = { git = "https://github.com/crypto-com/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a" }
+cosmos-sdk-proto = { git = "https://github.com/crypto-com/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a", default-features = false }
 prost = "0.9"
 prost-types = "0.9"
 tendermint-proto = "0.23"

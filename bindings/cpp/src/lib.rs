@@ -2,12 +2,14 @@ use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx,
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
-    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, HDWallet, Network, PublicKeyBytesWrapper,
-    RawRpcAccountResponse, SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, EthError, HDWallet, Height, LoginInfo,
+    Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey, SingleCoin, WalletCoin,
+    COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use defi_wallet_core_common::{transaction, Client};
 use defi_wallet_core_proto as proto;
 use proto::chainmain::nft::v1::{BaseNft, Collection, Denom, IdCollection, Owner};
+use std::str::FromStr;
 use std::sync::Arc;
 
 pub struct GrpcClient(Client);
@@ -267,6 +269,25 @@ pub enum CosmosSDKMsgRaw {
         /// validator address in bech32
         validator_address: String,
     },
+    /// MsgTransfer
+    IbcTransfer {
+        /// the recipient address on the destination chain
+        receiver: String,
+        /// the port on which the packet will be sent
+        source_port: String,
+        /// the channel by which the packet will be sent
+        source_channel: String,
+        /// the tokens to be transferred
+        denom: String,
+        token: u64,
+        /// Timeout height relative to the current block height.
+        /// The timeout is disabled when set to 0.
+        revision_height: u64,
+        revision_number: u64,
+        /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
+        /// The timeout is disabled when set to 0.
+        timeout_timestamp: u64,
+    },
 }
 
 impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
@@ -374,8 +395,36 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
                     validator_address: validator_address.to_owned(),
                 }
             }
+            CosmosSDKMsgRaw::IbcTransfer {
+                receiver,
+                source_port,
+                source_channel,
+                denom,
+                token,
+                revision_height,
+                revision_number,
+                timeout_timestamp,
+            } => CosmosSDKMsg::IbcTransfer {
+                receiver: receiver.to_owned(),
+                source_port: source_port.to_owned(),
+                source_channel: source_channel.to_owned(),
+                token: SingleCoin::Other {
+                    amount: format!("{}", token),
+                    denom: denom.to_owned(),
+                },
+                timeout_height: Height {
+                    revision_height: *revision_height,
+                    revision_number: *revision_number,
+                },
+                timeout_timestamp: *timeout_timestamp,
+            },
         }
     }
+}
+
+// wrapper for LoginInfo
+pub struct CppLoginInfo {
+    pub logininfo: LoginInfo,
 }
 
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
@@ -566,8 +615,26 @@ mod ffi {
             private_key: &PrivateKey,
             validator_address: String,
         ) -> Result<Vec<u8>>;
-    }
-}
+        fn get_ibc_transfer_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            receiver: String,
+            source_port: String,
+            source_channel: String,
+            denom: String,
+            token: u64,
+            revision_height: u64,
+            revision_number: u64,
+            timeout_timestamp: u64,
+        ) -> Result<Vec<u8>>;
+
+        type CppLoginInfo;
+        fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>>;
+        fn sign_logininfo(self: &CppLoginInfo, private_key: &PrivateKey) -> Result<Vec<u8>>;
+        fn verify_logininfo(self: &CppLoginInfo, signature: &[u8]) -> Result<Vec<u8>>;
+
+    } // end of RUST block
+} // end of ffi block
 
 use ffi::CoinType;
 impl From<CoinType> for WalletCoin {
@@ -964,6 +1031,45 @@ pub fn get_distribution_withdraw_reward_signed_tx(
 }
 
 /// creates the signed transaction
+/// for `MsgTransfer` from the Cosmos SDK ibc module
+#[allow(clippy::too_many_arguments)]
+pub fn get_ibc_transfer_signed_tx(
+    tx_info: ffi::CosmosSDKTxInfoRaw,
+    private_key: &PrivateKey,
+    receiver: String,
+    source_port: String,
+    source_channel: String,
+    denom: String,
+    token: u64,
+    revision_height: u64,
+    revision_number: u64,
+    timeout_timestamp: u64,
+) -> Result<Vec<u8>> {
+    // TODO: Need to support converting receiver from hex address to bech32 here.
+
+    let ret = build_signed_single_msg_tx(
+        tx_info.into(),
+        CosmosSDKMsg::IbcTransfer {
+            receiver,
+            source_port,
+            source_channel,
+            token: SingleCoin::Other {
+                amount: format!("{}", token),
+                denom,
+            },
+            timeout_height: Height {
+                revision_height,
+                revision_number,
+            },
+            timeout_timestamp,
+        },
+        private_key.key.clone(),
+    )?;
+
+    Ok(ret)
+}
+
+/// creates the signed transaction
 pub fn get_msg_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
@@ -1018,4 +1124,29 @@ pub fn query_account_balance(
 pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Result<String> {
     let resp = broadcast_tx_sync_blocking(&tendermint_rpc_url, raw_signed_tx)?;
     Ok(serde_json::to_string(&resp)?)
+}
+
+fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>> {
+    let msg = siwe::Message::from_str(&msg)?;
+    let logininfo = LoginInfo { msg };
+    Ok(Box::new(CppLoginInfo { logininfo }))
+}
+
+impl CppLoginInfo {
+    pub fn sign_logininfo(&self, private_key: &PrivateKey) -> anyhow::Result<Vec<u8>> {
+        let message = self.logininfo.msg.to_string();
+        let secretkey = private_key.key.clone();
+        let ret = secretkey
+            .sign_eth(message.as_bytes(), self.logininfo.msg.chain_id)
+            .map(|x| x.to_vec())?;
+        Ok(ret)
+    }
+
+    pub fn verify_logininfo(&self, signature: &[u8]) -> anyhow::Result<Vec<u8>> {
+        let sig: [u8; 65] = signature
+            .try_into()
+            .map_err(|_e| EthError::SignatureError)?;
+        let result = self.logininfo.msg.verify(sig)?;
+        Ok(result)
+    }
 }
