@@ -1,14 +1,13 @@
 # !! This script must run in project root folder (same path as MakeFile) !!
-# Requirements: pystarport, supervisor, chain-maind, cronosd
+# Requirements: pystarport, supervisor, chain-maind, cronosd, hermes
 
 # Set timeout to wasm tests
 export WASM_BINDGEN_TEST_TIMEOUT=60
 
-./start-all
+./scripts/start-all
 
 # Do wasm tests
-sleep 5
 cd ../bindings/wasm/
 wasm-pack test --chrome --headless
 
-./stop-all
+./scripts/stop-all

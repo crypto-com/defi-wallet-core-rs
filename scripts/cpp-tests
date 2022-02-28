@@ -1,11 +1,11 @@
 # !! This script must run in project root folder (same path as MakeFile) !!
 # Requirements: pystarport, supervisor, chain-maind, cronosd, hermes
 
-./start-all
+./scripts/start-all
 
 # Do cpp tests
 sleep 5
 source ./scripts/.env
 make cpp
 
-./stop-all
+./scripts/stop-all
