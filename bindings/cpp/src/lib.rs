@@ -2,13 +2,14 @@ use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx,
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
-    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, HDWallet, Height, Network,
-    PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey, SingleCoin, WalletCoin,
+    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, EthError, HDWallet, Height, LoginInfo,
+    Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey, SingleCoin, WalletCoin,
     COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use defi_wallet_core_common::{transaction, Client};
 use defi_wallet_core_proto as proto;
 use proto::chainmain::nft::v1::{BaseNft, Collection, Denom, IdCollection, Owner};
+use std::str::FromStr;
 use std::sync::Arc;
 
 pub struct GrpcClient(Client);
@@ -421,6 +422,11 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
     }
 }
 
+// wrapper for LoginInfo
+pub struct CppLoginInfo {
+    pub logininfo: LoginInfo,
+}
+
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
 #[allow(clippy::too_many_arguments)]
 mod ffi {
@@ -621,8 +627,14 @@ mod ffi {
             revision_number: u64,
             timeout_timestamp: u64,
         ) -> Result<Vec<u8>>;
-    }
-}
+
+        type CppLoginInfo;
+        fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>>;
+        fn sign_logininfo(self: &CppLoginInfo, private_key: &PrivateKey) -> Result<Vec<u8>>;
+        fn verify_logininfo(self: &CppLoginInfo, signature: &[u8]) -> Result<Vec<u8>>;
+
+    } // end of RUST block
+} // end of ffi block
 
 use ffi::CoinType;
 impl From<CoinType> for WalletCoin {
@@ -1112,4 +1124,29 @@ pub fn query_account_balance(
 pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Result<String> {
     let resp = broadcast_tx_sync_blocking(&tendermint_rpc_url, raw_signed_tx)?;
     Ok(serde_json::to_string(&resp)?)
+}
+
+fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>> {
+    let msg = siwe::Message::from_str(&msg)?;
+    let logininfo = LoginInfo { msg };
+    Ok(Box::new(CppLoginInfo { logininfo }))
+}
+
+impl CppLoginInfo {
+    pub fn sign_logininfo(&self, private_key: &PrivateKey) -> anyhow::Result<Vec<u8>> {
+        let message = self.logininfo.msg.to_string();
+        let secretkey = private_key.key.clone();
+        let ret = secretkey
+            .sign_eth(message.as_bytes(), self.logininfo.msg.chain_id)
+            .map(|x| x.to_vec())?;
+        Ok(ret)
+    }
+
+    pub fn verify_logininfo(&self, signature: &[u8]) -> anyhow::Result<Vec<u8>> {
+        let sig: [u8; 65] = signature
+            .try_into()
+            .map_err(|_e| EthError::SignatureError)?;
+        let result = self.logininfo.msg.verify(sig)?;
+        Ok(result)
+    }
 }
