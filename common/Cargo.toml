@@ -13,11 +13,15 @@ login = ["siwe"]
 
 [dependencies]
 anyhow = "1"
+bech32 = "0.7"
 bip39 = "1"
+# FIXME: Set to a release version after upgrading dependency `tendermint` in cosmos-rust (as PR https://github.com/cosmos/cosmos-rust/pull/178).
+cosmrs = { git = "https://github.com/crypto-com/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a" }
 eyre = "0.6"
 # NOTE: add `features = ["legacy"]` if non-EIP-1559 network support is required
-ethers = { git = "https://github.com/gakonst/ethers-rs", rev="faba6e014da854e296d095541679e852e2288eec" }
-cosmrs = "0.4"
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "faba6e014da854e296d095541679e852e2288eec" }
+ibc = { version = "0.12", default-features = false }
+ibc-proto = { version = "0.16", default-features = false }
 prost = "0.9"
 # NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
 # FIXME: https://github.com/rust-bitcoin/rust-bip39/issues/14
@@ -39,16 +43,18 @@ wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 # Check https://github.com/hyperium/tonic/issues/645
 grpc-web-client = { git = "https://github.com/titanous/grpc-web-client"}
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-defi-wallet-core-proto = { version = "0.1", path = "../proto", features = ["transport"] }
-cosmos-sdk-proto = { version = "0.9", features = ["grpc"] }
-tokio = { version = "1", features = ["rt"] }
-tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
-
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+# FIXME: Set to a release version after upgrading dependency `tendermint` in cosmos-rust (as PR https://github.com/cosmos/cosmos-rust/pull/178).
+cosmos-sdk-proto = { git = "https://github.com/crypto-com/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a", default-features = false, features = ["cosmwasm"] }
 defi-wallet-core-proto = { version = "0.1", path = "../proto" }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost"] }
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# FIXME: Set to a release version after upgrading dependency `tendermint` in cosmos-rust (as PR https://github.com/cosmos/cosmos-rust/pull/178).
+cosmos-sdk-proto = { git = "https://github.com/crypto-com/cosmos-rust", rev = "163add13d6623ea853b44b0a1596cb4430b4102a", features = ["grpc"] }
+defi-wallet-core-proto = { version = "0.1", path = "../proto", features = ["transport"] }
+tokio = { version = "1", features = ["rt"] }
+tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
 
 [build-dependencies]
 uniffi_build = { version = "^0.17", features=["builtin-bindgen"] }
