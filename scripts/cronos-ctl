@@ -1,0 +1,95 @@
+# !! This script can be run in current path (scripts folder) or root folder (same as MakeFile)
+start_script=$(
+            if [ -f "./start-cronos" ]; then
+               echo "./start-cronos"
+            else
+                if [ -f "./scripts/start-cronos" ]; then
+                   echo "./scripts/start-cronos"
+                fi
+            fi
+)
+
+config_file=$(
+            if [ -f "./cronos-devnet.yaml" ]; then
+               echo "./cronos-devnet.yaml"
+            else
+                if [ -f "./scripts/cronos-devnet.yaml" ]; then
+                   echo "./scripts/cronos-devnet.yaml"
+                fi
+            fi
+)
+
+
+case $1 in
+    start)
+        if [ -f /tmp/current_cronos_working_path ]; then
+            tmpdir=$(cat /tmp/current_cronos_working_path)
+            echo "cronos's working directory: " $tmpdir
+            taskfile=$tmpdir/tasks.ini
+            if [ -f "$taskfile" ]; then
+                echo "Restart cronos..."
+                supervisord -c $taskfile &
+            else
+                echo "$taskfile does not exist"
+            fi
+        else
+            echo "Starting cronos..."
+            tmpdir=$(mktemp -d -t cronos-XXXXXXXXXX)
+            echo "cronos's working directory: " $tmpdir
+            echo $tmpdir > /tmp/current_cronos_working_path
+            if [ -f "$start_script" ]; then
+               $start_script $config_file .env $tmpdir --base_port 26800 &
+            else
+               echo "No start-cronos script is found."
+            fi
+        fi
+        ;;
+    stop)
+        echo "Stopping cronos..."
+        if [ -f /tmp/current_cronos_working_path ]; then
+            tmpdir=$(cat /tmp/current_cronos_working_path)
+            echo "cronos's working directory: " $tmpdir
+            pidfile=$tmpdir/supervisord.pid
+            # sleep 5
+            if [ -f "$pidfile" ]; then
+                pid=$(cat $tmpdir/supervisord.pid)
+                echo "cronos PID:" $pid
+                kill -s QUIT $pid
+            else
+                echo "$pidfile does not exist"
+            fi
+        else
+            echo "/tmp/current_cronos_working_path does not exist"
+        fi
+
+        ;;
+    status)
+        echo "checking cronos..."
+        if [ -f /tmp/current_cronos_working_path ]; then
+            tmpdir=$(cat /tmp/current_cronos_working_path)
+            echo "cronos's working directory: " $tmpdir
+            pidfile=$tmpdir/supervisord.pid
+            if [ -f "$pidfile" ]; then
+                pid=$(cat $tmpdir/supervisord.pid)
+                echo "cronos PID:" $pid
+            else
+                echo "$pidfile does not exist"
+            fi
+        else
+            echo "/tmp/current_cronos_working_path does not exist"
+        fi
+        ;;
+
+    clear)
+        echo "clearing cronos..."
+        if [ -f /tmp/current_cronos_working_path ]; then
+            tmpdir=$(cat /tmp/current_cronos_working_path)
+            echo "Removing directory: " $tmpdir
+            rm -rf $tmpdir
+            echo "Removing /tmp/current_cronos_working_path file"
+            rm /tmp/current_cronos_working_path
+        else
+            echo "/tmp/current_cronos_working_path does not exist"
+        fi
+        ;;
+esac
