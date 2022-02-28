@@ -678,9 +678,9 @@ mod tests {
     use cosmrs::bank::MsgSend;
     use cosmrs::crypto::secp256k1::SigningKey;
     use cosmrs::proto;
+    use cosmrs::Coin;
     use cosmrs::Tx;
     use prost::Message;
-    use cosmrs::Coin;
 
     const TX_INFO: CosmosSDKTxInfo = CosmosSDKTxInfo {
         account_number: 1,
@@ -1251,6 +1251,65 @@ mod tests {
         assert_eq!(
             hex::encode(tx_raw),
             "0a690a640a1c2f636861696e6d61696e2e6e66742e76312e4d73674275726e4e465412440a0965646974696f6e30311208646f6d696e676f311a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a4046e4de5a3c55bd27c2e359315e9b52bb684cc0c3e9d470e77a4d922a1bf2c1b334b3504ce639cc94ed84f403f5af4878ae4efea3a696caf9da49597bed2717d9"
+        );
+    }
+
+    #[test]
+    fn ibc_transfer_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::IbcTransfer {
+                source_channel: "channel-3".to_string(),
+                source_port: "transfer".to_string(),
+                receiver: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+                token: SingleCoin::Other {
+                    amount: "100000000".to_string(),
+                    denom: "basetcro".to_string(),
+                },
+                timeout_height: Height {
+                    revision_number: 0,
+                    revision_height: 0,
+                },
+                timeout_timestamp: 1645800000000000000,
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0aca010ac4010a292f6962632e6170706c69636174696f6e732e7472616e736665722e76312e4d73675472616e736665721296010a087472616e7366657212096368616e6e656c2d331a150a08626173657463726f1209313030303030303030222d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a2a2d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a3200388080da9a95ccc3eb1618a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::IbcTransfer {
+                source_channel: "channel-3".to_string(),
+                source_port: "transfer".to_string(),
+                receiver: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+                token: SingleCoin::Other {
+                    amount: "100000000".to_string(),
+                    denom: "basetcro".to_string(),
+                },
+                timeout_height: Height {
+                    revision_number: 0,
+                    revision_height: 0,
+                },
+                timeout_timestamp: 1645800000000000000,
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0aca010ac4010a292f6962632e6170706c69636174696f6e732e7472616e736665722e76312e4d73675472616e736665721296010a087472616e7366657212096368616e6e656c2d331a150a08626173657463726f1209313030303030303030222d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a2a2d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a3200388080da9a95ccc3eb1618a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a409cee761ef007f4e0020dc1fe85610affd7555227e15cd068a364659ed58b638e725f543da0e1c6e8d39076ea9400de778053650053cbf2c98f3f72499938b97d"
         );
     }
 
