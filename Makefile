@@ -58,21 +58,18 @@ python-tests:
 
 wasm-ci-tests:
 	export WASM_BINDGEN_TEST_TIMEOUT=60
-	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
-	sleep 10
+	@nix-shell ./integration_tests/shell.nix --run "scripts/start-all"
 	cd bindings/wasm/ && wasm-pack test --chrome --headless
-	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
-	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
+	@nix-shell ./integration_tests/shell.nix --run "scripts/stop-all"
 
 wasm-tests:
 	./scripts/wasm-tests
 
 cpp-ci-tests:
-	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
+	@nix-shell ./integration_tests/shell.nix --run "scripts/start-all"
 	source ./scripts/.env
 	make cpp
-	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
-	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
+	@nix-shell ./integration_tests/shell.nix --run "scripts/stop-all"
 
 cpp-tests:
 	./scripts/cpp-tests

@@ -1,0 +1,22 @@
+# !! This script must run in project root folder (same path as MakeFile) !!
+# Requirements: pystarport, supervisor, chain-maind, cronosd, hermes
+
+cd scripts
+
+# Clear and restart chainmain
+./chainmain-ctl stop
+./chainmain-ctl clear
+./chainmain-ctl start
+
+# Clear and restart cronos
+./cronos-ctl stop
+./cronos-ctl clear
+./cronos-ctl start
+
+# Clear and restart hermes
+sleep 15
+./hermes-ctl stop
+./hermes-ctl clear
+./hermes-ctl start
+
+cd ../
