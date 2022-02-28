@@ -33,4 +33,5 @@ hermes  -c $NEWCONFIG keys list chainmain-1
 hermes  -c $NEWCONFIG keys list cronos_777-1
 
 hermes -c $NEWCONFIG create channel chainmain-1 cronos_777-1 --port-a transfer --port-b transfer
-hermes -c $NEWCONFIG  start
+hermes -c $NEWCONFIG  start &
+echo $! > $DATA/supervisord.pid

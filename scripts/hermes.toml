@@ -21,7 +21,7 @@ gas_price = { price = 1000000, denom = 'basecro' }
 max_msg_num = 4
 max_tx_size = 1048576
 clock_drift = '5s'
-trusting_period = '14days'
+trusting_period = '20s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
@@ -39,6 +39,6 @@ store_prefix = 'ibc'
 max_gas = 9000000
 gas_price = { price = 10000000000000, denom = 'basetcro' }
 clock_drift = '5s'
-trusting_period = '14days'
+trusting_period = '20s'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'ethermint', proto_type = { pk_type = '/ethermint.crypto.v1.ethsecp256k1.PubKey' } }
