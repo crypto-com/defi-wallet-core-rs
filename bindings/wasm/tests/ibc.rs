@@ -29,12 +29,11 @@ async fn test_transfer() {
     let after_transfer_balance = query_cronos_balance(CRONOS_DELEGATOR1).await;
 
     assert_eq!(
-        dst_after_transfer_balance,
+        after_transfer_balance,
         RawRpcBalance {
             denom: CRONOS_DENOM.to_owned(),
-            amount: (U256::from_dec_str(&dst_beginning_balance.amount).unwrap()
-                + 5u64 * 10u64.pow(10))
-            .to_string(),
+            amount: (U256::from_dec_str(&beginning_balance.amount).unwrap() + 5u64 * 10u64.pow(10))
+                .to_string(),
         }
     );
 }
