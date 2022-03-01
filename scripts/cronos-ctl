@@ -38,7 +38,7 @@ case $1 in
             echo "cronos's working directory: " $tmpdir
             echo $tmpdir > /tmp/current_cronos_working_path
             if [ -f "$start_script" ]; then
-               $start_script $config_file .env $tmpdir --base_port 26700 &
+               $start_script $config_file .env $tmpdir --base_port 26650 &
             else
                echo "No start-cronos script is found."
             fi

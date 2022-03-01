@@ -35,7 +35,7 @@ async fn test_delegate_and_unbound() {
         account.sequence,
         50000000,
         25000000000,
-        DENOM.to_owned(),
+        CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),
         CHAIN_ID.to_owned(),
@@ -44,7 +44,7 @@ async fn test_delegate_and_unbound() {
     );
 
     // Query balance before delegating.
-    let beginning_balance = query_balance(DELEGATOR1).await;
+    let beginning_balance = query_chainmain_balance(DELEGATOR1).await;
 
     // Send Delegate message.
     let signed_tx = get_staking_delegate_signed_tx(
@@ -52,7 +52,7 @@ async fn test_delegate_and_unbound() {
         private_key.clone(),
         VALIDATOR1.to_owned(),
         100000000000,
-        DENOM.to_owned(),
+        CHAINMAIN_DENOM.to_owned(),
         true,
     )
     .unwrap();
@@ -65,8 +65,8 @@ async fn test_delegate_and_unbound() {
     Delay::new(Duration::from_millis(3000)).await.unwrap();
 
     // Query and compare balance after delegating.
-    let after_delegating_balance = query_balance(DELEGATOR1).await;
-    assert_eq!(after_delegating_balance.denom, DENOM.to_owned());
+    let after_delegating_balance = query_chainmain_balance(DELEGATOR1).await;
+    assert_eq!(after_delegating_balance.denom, CHAINMAIN_DENOM.to_owned());
 
     // Balance should be equal to or greater than the previous balance since reward withdrawal.
     assert!(
@@ -85,7 +85,7 @@ async fn test_delegate_and_unbound() {
         account.sequence,
         50000000,
         25000000000,
-        DENOM.to_owned(),
+        CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),
         CHAIN_ID.to_owned(),
@@ -99,7 +99,7 @@ async fn test_delegate_and_unbound() {
         private_key,
         VALIDATOR1.to_owned(),
         50000000000,
-        DENOM.to_owned(),
+        CHAINMAIN_DENOM.to_owned(),
         true,
     )
     .unwrap();
@@ -112,8 +112,8 @@ async fn test_delegate_and_unbound() {
     Delay::new(Duration::from_millis(4000)).await.unwrap();
 
     // Query and compare balance after unbonding.
-    let after_unbonding_balance = query_balance(DELEGATOR1).await;
-    assert_eq!(after_unbonding_balance.denom, DENOM.to_owned());
+    let after_unbonding_balance = query_chainmain_balance(DELEGATOR1).await;
+    assert_eq!(after_unbonding_balance.denom, CHAINMAIN_DENOM.to_owned());
 
     // TODO:
     // The value of unbonding_time is set to 30s in `scripts/chainmain-devnet.yaml`
@@ -146,7 +146,7 @@ async fn test_redelegate() {
         account.sequence,
         50000000,
         25000000000,
-        DENOM.to_owned(),
+        CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),
         CHAIN_ID.to_owned(),
@@ -155,7 +155,7 @@ async fn test_redelegate() {
     );
 
     // Query balance before delegating.
-    let beginning_balance = query_balance(DELEGATOR2).await;
+    let beginning_balance = query_chainmain_balance(DELEGATOR2).await;
 
     // Send Delegate message.
     let signed_tx = get_staking_delegate_signed_tx(
@@ -163,7 +163,7 @@ async fn test_redelegate() {
         private_key.clone(),
         VALIDATOR1.to_owned(),
         100000000000,
-        DENOM.to_owned(),
+        CHAINMAIN_DENOM.to_owned(),
         true,
     )
     .unwrap();
@@ -175,8 +175,8 @@ async fn test_redelegate() {
     Delay::new(Duration::from_millis(3000)).await.unwrap();
 
     // Query and compare balance after delegating.
-    let after_delegating_balance = query_balance(DELEGATOR2).await;
-    assert_eq!(after_delegating_balance.denom, DENOM.to_owned());
+    let after_delegating_balance = query_chainmain_balance(DELEGATOR2).await;
+    assert_eq!(after_delegating_balance.denom, CHAINMAIN_DENOM.to_owned());
 
     // Balance should be equal to or greater than the previous balance since reward withdrawal.
     assert!(
@@ -195,7 +195,7 @@ async fn test_redelegate() {
         account.sequence,
         50000000,
         25000000000,
-        DENOM.to_owned(),
+        CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),
         CHAIN_ID.to_owned(),
@@ -210,7 +210,7 @@ async fn test_redelegate() {
         VALIDATOR1.to_owned(),
         VALIDATOR2.to_owned(),
         50000000000,
-        DENOM.to_owned(),
+        CHAINMAIN_DENOM.to_owned(),
         true,
     )
     .unwrap();
@@ -222,9 +222,9 @@ async fn test_redelegate() {
     Delay::new(Duration::from_millis(4000)).await.unwrap();
 
     // Query and compare balance after redelegating.
-    let after_redelegating_balance = query_balance(DELEGATOR2).await;
+    let after_redelegating_balance = query_chainmain_balance(DELEGATOR2).await;
 
-    assert_eq!(after_redelegating_balance.denom, DENOM.to_owned());
+    assert_eq!(after_redelegating_balance.denom, CHAINMAIN_DENOM.to_owned());
 
     // Balance should be equal to or greater than the balance after delegating.
     // Since rewards are withdrawn from source validator.

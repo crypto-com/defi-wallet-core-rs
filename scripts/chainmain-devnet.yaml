@@ -41,7 +41,7 @@ chainmain-1:
     app_state:
       staking:
         params:
-          unbonding_time: "30s"
+          unbonding_time: "1209700s"
       gov:
         voting_params:
           voting_period: "1814400s"
