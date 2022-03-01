@@ -676,8 +676,10 @@ mod tests {
     use std::sync::Arc;
 
     use crate::*;
+    use cosmrs::bank::MsgSend;
     use cosmrs::crypto::secp256k1::SigningKey;
     use cosmrs::proto;
+    use cosmrs::Coin;
     use cosmrs::Tx;
     use prost::Message;
 
@@ -690,6 +692,8 @@ mod tests {
         memo_note: None,
         network: Network::CosmosHub,
     };
+
+    const WORDS: &str = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
 
     #[test]
     fn signdoc_construction_works() {
@@ -773,8 +777,7 @@ mod tests {
 
     #[test]
     fn signing_check() {
-        let words = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
-        let wallet = HDWallet::recover_wallet(words.to_string(), None).expect("wallet");
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
 
         let private_key = wallet
             .get_key("m/44'/118'/0'/0/0".to_string())
@@ -784,6 +787,12 @@ mod tests {
         assert_eq!(
             keystr,
             "cbdff41bb60c39f7b85d6378586951f61cf1e8a33c0a034b1f9f98ffe3ad18cf"
+        );
+
+        let pubkeys = private_key.get_public_key_bytes();
+        assert_eq!(
+            hex::encode(pubkeys),
+            "028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c520"
         );
 
         let cosmos_address = wallet
@@ -808,7 +817,11 @@ mod tests {
             PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
         )
         .expect("ok signed payload");
-        println!("payload_raw:{}", hex::encode(payload_raw));
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0a96010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a1a100a057561746f6d12073130303030303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
 
         let tx_raw = build_signed_single_msg_tx(
             TX_INFO,
@@ -820,6 +833,504 @@ mod tests {
         )
         .expect("ok signed tx");
 
-        println!("tx_raw:{}", hex::encode(tx_raw));
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0a96010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a1a100a057561746f6d12073130303030303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a40aa554d4be2ac72d644002296882c188de39944efd21fc021bf1202721fff40d05e9c86d398b11bb94e16cf79dd4866eca22d84b6785bd0098ed353615585485c"
+        );
+    }
+
+    #[test]
+    fn staking_delegate_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::StakingDelegate {
+                validator_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+                amount: SingleCoin::UATOM { amount: 100 },
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0aa0010a9a010a232f636f736d6f732e7374616b696e672e763162657461312e4d736744656c656761746512730a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b331a0c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::StakingDelegate {
+                validator_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+                amount: SingleCoin::UATOM { amount: 100 },
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0aa0010a9a010a232f636f736d6f732e7374616b696e672e763162657461312e4d736744656c656761746512730a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b331a0c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a404d71f59fb847a319b5cd4a831eed8c9baa4051a656392be6c981f95d5debf552011318ac433caf47e8df57d6fb133cf9f5d91db031dff59beb2d98b7e041a125"
+        );
+    }
+
+    #[test]
+    fn staking_undelegate_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::StakingUndelegate {
+                validator_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+                amount: SingleCoin::UATOM { amount: 100 },
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0aa2010a9c010a252f636f736d6f732e7374616b696e672e763162657461312e4d7367556e64656c656761746512730a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b331a0c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::StakingUndelegate {
+                validator_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+                amount: SingleCoin::UATOM { amount: 100 },
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0aa2010a9c010a252f636f736d6f732e7374616b696e672e763162657461312e4d7367556e64656c656761746512730a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b331a0c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a407c468b64e58510b3dc20259d6042f280b8ee9e9aca6a0b3bfc21d931509659b70169aad7543970b65c8bc6aa3bccbb8868ce85d3eece042396492e6dc666404a"
+        );
+    }
+
+    #[test]
+    fn staking_begin_redelegate_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::StakingBeginRedelegate {
+                validator_src_address: "cosmosvaloper1l5s7tnj28a7zxeeckhgwlhjys8dlrrefd5hqdp"
+                    .to_string(),
+                validator_dst_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+                amount: SingleCoin::UATOM { amount: 100 },
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0ade010ad8010a2a2f636f736d6f732e7374616b696e672e763162657461312e4d7367426567696e526564656c656761746512a9010a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572316c357337746e6a323861377a786565636b6867776c686a797338646c727265666435687164701a34636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b33220c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::StakingBeginRedelegate {
+                validator_src_address: "cosmosvaloper1l5s7tnj28a7zxeeckhgwlhjys8dlrrefd5hqdp"
+                    .to_string(),
+                validator_dst_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+                amount: SingleCoin::UATOM { amount: 100 },
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0ade010ad8010a2a2f636f736d6f732e7374616b696e672e763162657461312e4d7367426567696e526564656c656761746512a9010a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572316c357337746e6a323861377a786565636b6867776c686a797338646c727265666435687164701a34636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b33220c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a40de252fd4e12b786c499d62ea5cc7070899acff3b88d6438c5542529a4a18d15755496029a1936865658b872ec9765d92a8394bad2443da84e73536917a65139f"
+        );
+    }
+
+    #[test]
+    fn distribution_setwithdraw_address_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::DistributionSetWithdrawAddress {
+                withdraw_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0a9a010a94010a322f636f736d6f732e646973747269627574696f6e2e763162657461312e4d7367536574576974686472617741646472657373125e0a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::DistributionSetWithdrawAddress {
+                withdraw_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0a9a010a94010a322f636f736d6f732e646973747269627574696f6e2e763162657461312e4d7367536574576974686472617741646472657373125e0a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a40c29ab82aec56651fb33a4df92f499bb4624d0be31cd51d64df234a4d380282bb5ebda7aa54a84d8075f6b2ffb0b5fa5f98118b108888fcfdbbaf4efaca4ffdba"
+        );
+    }
+
+    #[test]
+    fn distribution_withdraw_delegator_reward_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::DistributionWithdrawDelegatorReward {
+                validator_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0aa6010aa0010a372f636f736d6f732e646973747269627574696f6e2e763162657461312e4d7367576974686472617744656c656761746f7252657761726412650a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b3318a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::DistributionWithdrawDelegatorReward {
+                validator_address: "cosmosvaloper19dyl0uyzes4k23lscla02n06fc22h4uq4e64k3"
+                    .to_string(),
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0aa6010aa0010a372f636f736d6f732e646973747269627574696f6e2e763162657461312e4d7367576974686472617744656c656761746f7252657761726412650a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b3318a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a40ae166e9cc8489ded5e6dc82e99d0b7ee017fc0234a70c0851cff133c811e92165391c5404c474278ed8cbe85b28f1cf4ee6e59071ccdf3d495dddfd12c4029f1"
+        );
+    }
+
+    #[test]
+    fn nft_issue_denom_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::NftIssueDenom {
+                id: "edition01".to_string(),
+                name: "domingo1".to_string(),
+                schema: "test".to_string(),
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0a720a6d0a1f2f636861696e6d61696e2e6e66742e76312e4d7367497373756544656e6f6d124a0a0965646974696f6e30311208646f6d696e676f311a0474657374222d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::NftIssueDenom {
+                id: "edition01".to_string(),
+                name: "domingo1".to_string(),
+                schema: "test".to_string(),
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0a720a6d0a1f2f636861696e6d61696e2e6e66742e76312e4d7367497373756544656e6f6d124a0a0965646974696f6e30311208646f6d696e676f311a0474657374222d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a404d0eb09d0735c80d8dfa9a7113beeff4dc38fb6f6bdfcad1a39ff0153ba5eaa3236d8413abcd31c62755946238656b80df428c7d05b43fcff3531dfae7687064"
+        );
+    }
+
+    #[test]
+    fn nft_transfer_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::NftTransfer {
+                id: "edition01".to_string(),
+                denom_id: "domingo1".to_string(),
+                recipient: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0a9d010a97010a202f636861696e6d61696e2e6e66742e76312e4d73675472616e736665724e465412730a0965646974696f6e30311208646f6d696e676f311a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a222d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::NftTransfer {
+                id: "edition01".to_string(),
+                denom_id: "domingo1".to_string(),
+                recipient: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0a9d010a97010a202f636861696e6d61696e2e6e66742e76312e4d73675472616e736665724e465412730a0965646974696f6e30311208646f6d696e676f311a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a222d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a409645a66de4809f282349fce4a80f8478d78b0b0c0d8d23f4ebe7430589fed7123e0e432f244e7b991130a475db8e2d5f90ae5f933682763afea798f78da156ff"
+        );
+    }
+
+    #[test]
+    fn nft_mint_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::NftMint {
+                id: "edition01".to_string(),
+                denom_id: "domingo1".to_string(),
+                name: "test".to_string(),
+                uri: "test".to_string(),
+                data: "test".to_string(),
+                recipient: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0aac010aa6010a1c2f636861696e6d61696e2e6e66742e76312e4d73674d696e744e46541285010a0965646974696f6e30311208646f6d696e676f311a04746573742204746573742a0474657374322d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a3a2d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::NftMint {
+                id: "edition01".to_string(),
+                denom_id: "domingo1".to_string(),
+                name: "test".to_string(),
+                uri: "test".to_string(),
+                data: "test".to_string(),
+                recipient: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0aac010aa6010a1c2f636861696e6d61696e2e6e66742e76312e4d73674d696e744e46541285010a0965646974696f6e30311208646f6d696e676f311a04746573742204746573742a0474657374322d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a3a2d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a401a3eb24123103ee0ec2856315311b8c9c01e3e54249beb18bec91864834c6ffd7605e2a866fa7307f2786bc15e9075fa8d73cd188924eb7bded6214c858f9fdf"
+        );
+    }
+
+    #[test]
+    fn nft_edit_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::NftEdit {
+                id: "edition01".to_string(),
+                denom_id: "domingo1".to_string(),
+                name: "test".to_string(),
+                uri: "test".to_string(),
+                data: "test".to_string(),
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0a7b0a760a1c2f636861696e6d61696e2e6e66742e76312e4d7367456469744e465412560a0965646974696f6e30311208646f6d696e676f311a04746573742204746573742a0474657374322d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::NftEdit {
+                id: "edition01".to_string(),
+                denom_id: "domingo1".to_string(),
+                name: "test".to_string(),
+                uri: "test".to_string(),
+                data: "test".to_string(),
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0a7b0a760a1c2f636861696e6d61696e2e6e66742e76312e4d7367456469744e465412560a0965646974696f6e30311208646f6d696e676f311a04746573742204746573742a0474657374322d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a401134c4d5d9c1c6f5435e2dcc701512401c4220249b54ffc7c0e6793311399e9d60207caf1c175cbfc6ab999c7d8e75ef5f66931f73829e03f1ea9d3987bf442e"
+        );
+    }
+
+    #[test]
+    fn nft_burn_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::NftBurn {
+                id: "edition01".to_string(),
+                denom_id: "domingo1".to_string(),
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0a690a640a1c2f636861696e6d61696e2e6e66742e76312e4d73674275726e4e465412440a0965646974696f6e30311208646f6d696e676f311a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::NftBurn {
+                id: "edition01".to_string(),
+                denom_id: "domingo1".to_string(),
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0a690a640a1c2f636861696e6d61696e2e6e66742e76312e4d73674275726e4e465412440a0965646974696f6e30311208646f6d696e676f311a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a18a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a4046e4de5a3c55bd27c2e359315e9b52bb684cc0c3e9d470e77a4d922a1bf2c1b334b3504ce639cc94ed84f403f5af4878ae4efea3a696caf9da49597bed2717d9"
+        );
+    }
+
+    #[test]
+    fn ibc_transfer_check() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
+        let payload_raw = get_single_msg_sign_payload(
+            TX_INFO,
+            CosmosSDKMsg::IbcTransfer {
+                source_channel: "channel-3".to_string(),
+                source_port: "transfer".to_string(),
+                receiver: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+                token: SingleCoin::Other {
+                    amount: "100000000".to_string(),
+                    denom: "basetcro".to_string(),
+                },
+                timeout_height: Height {
+                    revision_number: 0,
+                    revision_height: 0,
+                },
+                timeout_timestamp: 1645800000000000000,
+            },
+            PublicKeyBytesWrapper(private_key.get_public_key_bytes()),
+        )
+        .expect("ok signed payload");
+
+        assert_eq!(
+            hex::encode(payload_raw),
+            "0aca010ac4010a292f6962632e6170706c69636174696f6e732e7472616e736665722e76312e4d73675472616e736665721296010a087472616e7366657212096368616e6e656c2d331a150a08626173657463726f1209313030303030303030222d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a2a2d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a3200388080da9a95ccc3eb1618a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a0b636f736d6f736875622d342001"
+        );
+
+        let tx_raw = build_signed_single_msg_tx(
+            TX_INFO,
+            CosmosSDKMsg::IbcTransfer {
+                source_channel: "channel-3".to_string(),
+                source_port: "transfer".to_string(),
+                receiver: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+                token: SingleCoin::Other {
+                    amount: "100000000".to_string(),
+                    denom: "basetcro".to_string(),
+                },
+                timeout_height: Height {
+                    revision_number: 0,
+                    revision_height: 0,
+                },
+                timeout_timestamp: 1645800000000000000,
+            },
+            private_key,
+        )
+        .expect("ok signed tx");
+
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0aca010ac4010a292f6962632e6170706c69636174696f6e732e7472616e736665722e76312e4d73675472616e736665721296010a087472616e7366657212096368616e6e656c2d331a150a08626173657463726f1209313030303030303030222d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a2a2d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a3200388080da9a95ccc3eb1618a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a409cee761ef007f4e0020dc1fe85610affd7555227e15cd068a364659ed58b638e725f543da0e1c6e8d39076ea9400de778053650053cbf2c98f3f72499938b97d"
+        );
+    }
+
+    #[test]
+    fn message_check() {
+        let amount = &SingleCoin::ATOM { amount: 1 };
+        let amount_coin: Coin = amount.try_into().unwrap();
+        let sender_address = &"cosmos1l5s7tnj28a7zxeeckhgwlhjys8dlrrefgqr4pj".to_string();
+        let sender_account_id = sender_address.parse::<AccountId>().unwrap();
+        let recipient_address = &"cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string();
+        let recipient_account_id = recipient_address.parse::<AccountId>().unwrap();
+        let msg_send = MsgSend {
+            from_address: sender_account_id,
+            to_address: recipient_account_id,
+            amount: vec![amount_coin],
+        };
+
+        assert_eq!(
+            hex::encode(msg_send.to_any().unwrap_or_default().value),
+            "0a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a1a100a057561746f6d120731303030303030"
+        );
     }
 }

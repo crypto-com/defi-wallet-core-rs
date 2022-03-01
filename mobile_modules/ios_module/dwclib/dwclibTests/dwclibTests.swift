@@ -55,6 +55,13 @@ class dwclibTests: XCTestCase {
         print("sigedTx:",sigedTx)
     }
 
+    func testBuildSignedMsgTxWork() throws {
+        var wallet = try? HdWallet.recoverWallet(mnemonicPhrase: words24, password: "")
+        var priv = try? wallet?.getKey(derivationPath: "m/44'/118'/0'/0/0")
+        var sigedTx = try? buildSignedMsgTx(txInfo: txinfo1(), msgs: [CosmosSdkMsg.bankSend(recipientAddress: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z", amount: SingleCoin.atom(amount: 1)),CosmosSdkMsg.bankSend(recipientAddress: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx", amount: SingleCoin.atom(amount: 2))], secretKey: priv!)
+        print("sigedTx:",sigedTx)
+    }
+
     func testPerformanceExample() throws {
         // This is an example of a performance test case.
         self.measure {
