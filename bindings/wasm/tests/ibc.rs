@@ -21,26 +21,12 @@ wasm_bindgen_test_configure!(run_in_browser);
 #[wasm_bindgen_test]
 async fn test_transfer() {
     let private_key = get_private_key(SIGNER1_MNEMONIC);
-    let src_beginning_balance = query_chainmain_balance(SIGNER1).await;
-    let dst_beginning_balance = query_cronos_balance(CRONOS_DELEGATOR1).await;
+    let beginning_balance = query_cronos_balance(CRONOS_DELEGATOR1).await;
 
     send_transfer_msg(&private_key, SIGNER1, CRONOS_DELEGATOR1).await;
     Delay::new(Duration::from_millis(6000)).await.unwrap();
 
-    let src_after_transfer_balance = query_chainmain_balance(SIGNER1).await;
-
-    assert_eq!(
-        src_after_transfer_balance,
-        RawRpcBalance {
-            denom: CHAINMAIN_DENOM.to_owned(),
-            amount: (U256::from_dec_str(&src_beginning_balance.amount).unwrap()
-                - 25000000000u64
-                - 5u64)
-                .to_string(),
-        }
-    );
-
-    let dst_after_transfer_balance = query_cronos_balance(CRONOS_DELEGATOR1).await;
+    let after_transfer_balance = query_cronos_balance(CRONOS_DELEGATOR1).await;
 
     assert_eq!(
         dst_after_transfer_balance,
