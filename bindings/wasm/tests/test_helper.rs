@@ -33,6 +33,11 @@ pub(crate) const DELEGATOR2_MNEMONIC: &str = "strong pyramid worth tennis option
 pub(crate) const SIGNER1_MNEMONIC: &str = "shed crumble dismiss loyal latin million oblige gesture shrug still oxygen custom remove ribbon disorder palace addict again blanket sad flock consider obey popular";
 pub(crate) const SIGNER2_MNEMONIC: &str = "night renew tonight dinner shaft scheme domain oppose echo summer broccoli agent face guitar surface belt veteran siren poem alcohol menu custom crunch index";
 
+pub(crate) const DEFAULT_GAS_LIMIT: u64 = 50_000_000;
+pub(crate) const DEFAULT_FEE_AMOUNT: u64 = 25_000_000_000;
+
+pub(crate) const DEFAULT_WAITING_DURATION: Duration = Duration::from_secs(3);
+
 // Helper functions
 
 pub(crate) async fn query_account(address: &str) -> RawRpcAccountStatus {
@@ -76,7 +81,7 @@ pub(crate) async fn query_cronos_balance(address: &str) -> RawRpcBalance {
 
 pub(crate) async fn get_tx_info(address: String) -> CosmosSDKTxInfoRaw {
     // Delay to wait the tx is included in the block, could be improved by waiting block
-    let _ = Delay::new(Duration::from_millis(3000)).await;
+    let _ = Delay::new(DEFAULT_WAITING_DURATION).await;
     let account_details = query_account_details(CHAINMAIN_API_URL.to_owned(), address)
         .await
         .unwrap()
@@ -91,8 +96,8 @@ pub(crate) async fn get_tx_info(address: String) -> CosmosSDKTxInfoRaw {
     CosmosSDKTxInfoRaw::new(
         account.account_number,
         account.sequence, // the sequence returned by server is what we need for next tx
-        50000000,
-        25000000000,
+        DEFAULT_GAS_LIMIT,
+        DEFAULT_FEE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),

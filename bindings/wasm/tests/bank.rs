@@ -4,7 +4,6 @@
 
 mod test_helper;
 
-use core::time::Duration;
 use defi_wallet_core_common::{Network, RawRpcBalance};
 use defi_wallet_core_wasm::{
     broadcast_tx, get_single_bank_send_signed_tx, CoinType, CosmosSDKTxInfoRaw, Wallet,
@@ -29,8 +28,8 @@ async fn test_get_single_bank_send_signed_tx() {
     let tx_info = CosmosSDKTxInfoRaw::new(
         account.account_number,
         account.sequence,
-        50000000,
-        25000000000,
+        DEFAULT_GAS_LIMIT,
+        DEFAULT_FEE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),
@@ -56,7 +55,7 @@ async fn test_get_single_bank_send_signed_tx() {
         .unwrap();
 
     // Delay to wait the tx is included in the block, could be improved by waiting block
-    Delay::new(Duration::from_millis(3000)).await.unwrap();
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
 
     let balance = query_chainmain_balance(SIGNER2).await;
 

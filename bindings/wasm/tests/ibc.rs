@@ -29,7 +29,7 @@ async fn test_transfer() {
     let beginning_balance = query_cronos_balance(CRONOS_DELEGATOR1).await;
 
     send_transfer_msg(&private_key, SIGNER1, CRONOS_DELEGATOR1).await;
-    Delay::new(Duration::from_millis(6000)).await.unwrap();
+    Delay::new(Duration::from_secs(6)).await.unwrap();
 
     let after_transfer_balance = query_cronos_balance(CRONOS_DELEGATOR1).await;
 
@@ -50,8 +50,8 @@ async fn build_tx_info(address: &str) -> CosmosSDKTxInfoRaw {
     CosmosSDKTxInfoRaw::new(
         account.account_number,
         account.sequence,
-        50000000,
-        25000000000,
+        DEFAULT_GAS_LIMIT,
+        DEFAULT_FEE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),

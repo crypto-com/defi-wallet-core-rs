@@ -4,7 +4,6 @@
 
 mod test_helper;
 
-use core::time::Duration;
 use defi_wallet_core_common::Network;
 use defi_wallet_core_wasm::{
     broadcast_tx, get_staking_delegate_signed_tx, get_staking_redelegate_signed_tx,
@@ -33,8 +32,8 @@ async fn test_delegate_and_unbound() {
     let tx_info = CosmosSDKTxInfoRaw::new(
         account.account_number,
         account.sequence,
-        50000000,
-        25000000000,
+        DEFAULT_GAS_LIMIT,
+        DEFAULT_FEE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),
@@ -51,7 +50,7 @@ async fn test_delegate_and_unbound() {
         tx_info,
         private_key.clone(),
         VALIDATOR1.to_owned(),
-        100000000000,
+        100_000_000_000,
         CHAINMAIN_DENOM.to_owned(),
         true,
     )
@@ -62,7 +61,7 @@ async fn test_delegate_and_unbound() {
         .unwrap();
 
     // Delay to wait the tx is included in the block, could be improved by waiting block
-    Delay::new(Duration::from_millis(3000)).await.unwrap();
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
 
     // Query and compare balance after delegating.
     let after_delegating_balance = query_chainmain_balance(DELEGATOR1).await;
@@ -72,8 +71,8 @@ async fn test_delegate_and_unbound() {
     assert!(
         U256::from_dec_str(&after_delegating_balance.amount).unwrap()
             >= U256::from_dec_str(&beginning_balance.amount).unwrap()
-                - 100000000000u64
-                - 25000000000u64
+                - 100_000_000_000_u64
+                - 25_000_000_000_u64
     );
 
     // Query account for unbonding. Since `account.sequence` is changed.
@@ -83,8 +82,8 @@ async fn test_delegate_and_unbound() {
     let tx_info = CosmosSDKTxInfoRaw::new(
         account.account_number,
         account.sequence,
-        50000000,
-        25000000000,
+        DEFAULT_GAS_LIMIT,
+        DEFAULT_FEE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),
@@ -98,7 +97,7 @@ async fn test_delegate_and_unbound() {
         tx_info,
         private_key,
         VALIDATOR1.to_owned(),
-        50000000000,
+        50_000_000_000,
         CHAINMAIN_DENOM.to_owned(),
         true,
     )
@@ -109,7 +108,7 @@ async fn test_delegate_and_unbound() {
         .unwrap();
 
     // Delay to wait the tx is included in the block, could be improved by waiting block
-    Delay::new(Duration::from_millis(4000)).await.unwrap();
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
 
     // Query and compare balance after unbonding.
     let after_unbonding_balance = query_chainmain_balance(DELEGATOR1).await;
@@ -125,8 +124,8 @@ async fn test_delegate_and_unbound() {
     // Balance should be equal to or greater than the previous balance since reward withdrawal.
     // assert!(
     //     U256::from_dec_str(&after_unbonding_balance.amount).unwrap()
-    //         >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() + 50000000000u64
-    //             - 25000000000u64
+    //         >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() + 50_000_000_000_u64
+    //             - 25_000_000_000_u64
     // );
 }
 
@@ -144,8 +143,8 @@ async fn test_redelegate() {
     let tx_info = CosmosSDKTxInfoRaw::new(
         account.account_number,
         account.sequence,
-        50000000,
-        25000000000,
+        DEFAULT_GAS_LIMIT,
+        DEFAULT_FEE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),
@@ -162,7 +161,7 @@ async fn test_redelegate() {
         tx_info,
         private_key.clone(),
         VALIDATOR1.to_owned(),
-        100000000000,
+        100_000_000_000,
         CHAINMAIN_DENOM.to_owned(),
         true,
     )
@@ -172,7 +171,7 @@ async fn test_redelegate() {
         .unwrap();
 
     // Delay to wait the tx is included in the block, could be improved by waiting block
-    Delay::new(Duration::from_millis(3000)).await.unwrap();
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
 
     // Query and compare balance after delegating.
     let after_delegating_balance = query_chainmain_balance(DELEGATOR2).await;
@@ -182,8 +181,8 @@ async fn test_redelegate() {
     assert!(
         U256::from_dec_str(&after_delegating_balance.amount).unwrap()
             >= U256::from_dec_str(&beginning_balance.amount).unwrap()
-                - 100000000000u64
-                - 25000000000u64
+                - 100_000_000_000_u64
+                - 25_000_000_000_u64
     );
 
     // Query account for redelegating. Since `account.sequence` is changed.
@@ -193,8 +192,8 @@ async fn test_redelegate() {
     let tx_info = CosmosSDKTxInfoRaw::new(
         account.account_number,
         account.sequence,
-        50000000,
-        25000000000,
+        DEFAULT_GAS_LIMIT,
+        DEFAULT_FEE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),
@@ -209,7 +208,7 @@ async fn test_redelegate() {
         private_key,
         VALIDATOR1.to_owned(),
         VALIDATOR2.to_owned(),
-        50000000000,
+        50_000_000_000,
         CHAINMAIN_DENOM.to_owned(),
         true,
     )
@@ -219,7 +218,7 @@ async fn test_redelegate() {
         .unwrap();
 
     // Delay to wait the tx is included in the block, could be improved by waiting block
-    Delay::new(Duration::from_millis(4000)).await.unwrap();
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
 
     // Query and compare balance after redelegating.
     let after_redelegating_balance = query_chainmain_balance(DELEGATOR2).await;
@@ -230,6 +229,6 @@ async fn test_redelegate() {
     // Since rewards are withdrawn from source validator.
     assert!(
         U256::from_dec_str(&after_redelegating_balance.amount).unwrap()
-            >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() - 25000000000u64
+            >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() - 25_000_000_000_u64
     );
 }
