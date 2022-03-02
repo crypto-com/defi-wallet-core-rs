@@ -1,6 +1,7 @@
 //! Test suite for ibc messages.
 
 #![cfg(target_arch = "wasm32")]
+#![cfg(feature = "ibc-test")]
 
 mod test_helper;
 

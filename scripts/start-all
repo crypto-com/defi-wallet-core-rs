@@ -6,7 +6,7 @@ cd scripts
 # Clear and restart chainmain
 ./chainmain-ctl stop
 ./chainmain-ctl clear
-./chainmain-ctl start
+./chainmain-ctl start ./chainmain-devnet.yaml
 
 # Clear and restart cronos
 ./cronos-ctl stop

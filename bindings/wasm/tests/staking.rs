@@ -114,19 +114,12 @@ async fn test_delegate_and_unbound() {
     let after_unbonding_balance = query_chainmain_balance(DELEGATOR1).await;
     assert_eq!(after_unbonding_balance.denom, CHAINMAIN_DENOM.to_owned());
 
-    // TODO:
-    // The value of unbonding_time is set to 30s in `scripts/chainmain-devnet.yaml`
-    // (because of `trusting_period` of `scripts/hermes.toml` cannot be set to such low and
-    // must be less than unbonding_time).
-    // We cannot wait for 30s here, and may only test with `chainmain` and another configuration
-    // with a lower unbonding_time.
-
     // Balance should be equal to or greater than the previous balance since reward withdrawal.
-    // assert!(
-    //     U256::from_dec_str(&after_unbonding_balance.amount).unwrap()
-    //         >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() + 50_000_000_000_u64
-    //             - 25_000_000_000_u64
-    // );
+    assert!(
+        U256::from_dec_str(&after_unbonding_balance.amount).unwrap()
+            >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() + 50_000_000_000_u64
+                - 25_000_000_000_u64
+    );
 }
 
 #[wasm_bindgen_test]

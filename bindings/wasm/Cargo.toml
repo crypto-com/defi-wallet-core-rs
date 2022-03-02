@@ -9,6 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["console_error_panic_hook"]
+ibc-test = []
 
 [dependencies]
 defi-wallet-core-common = { path = "../../common" }
