@@ -1,4 +1,3 @@
-
 cpp_example = ./example/cpp-example
 
 .PHONY: wasm android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests
@@ -39,7 +38,7 @@ cpp: prepare_cpp
 	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
-	source ./scripts/.env && cd $(cpp_example) && make
+	. ./scripts/.env && cd $(cpp_example) && make
 
 cppx86_64:
 	cargo build --release --target x86_64-apple-darwin
