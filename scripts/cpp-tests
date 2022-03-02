@@ -17,7 +17,6 @@ script_dir=$(pwd)
 # Do cpp tests
 cd ../
 sleep 5
-source ./scripts/.env
 make cpp
 
 cd $script_dir
