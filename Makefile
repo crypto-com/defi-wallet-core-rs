@@ -76,6 +76,7 @@ full-wasm-tests:
 
 cpp-ci-tests:
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
+	sleep 10
 	make cpp
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
