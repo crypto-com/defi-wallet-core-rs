@@ -14,6 +14,11 @@ use test_helper::*;
 use wasm_bindgen_test::*;
 use wasm_timer::{Delay, SystemTime, UNIX_EPOCH};
 
+// basecro is a 8 decimals token and basetcro is a 18 decimals token
+const DECIMAL_RATIO: u64 = 10_u64.pow(10); // basetcro to basecro
+
+const TRANSFER_AMOUNT: u64 = 5; // basecro
+
 wasm_bindgen_test_configure!(run_in_browser);
 
 // This test case only tests if message `MsgTransfer` could be processed for now.
@@ -32,7 +37,8 @@ async fn test_transfer() {
         after_transfer_balance,
         RawRpcBalance {
             denom: CRONOS_DENOM.to_owned(),
-            amount: (U256::from_dec_str(&beginning_balance.amount).unwrap() + 5u64 * 10u64.pow(10))
+            amount: (U256::from_dec_str(&beginning_balance.amount).unwrap()
+                + TRANSFER_AMOUNT * DECIMAL_RATIO)
                 .to_string(),
         }
     );
