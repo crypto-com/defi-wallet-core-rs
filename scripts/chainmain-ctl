@@ -1,4 +1,5 @@
 # !! This script can be run in current path (scripts folder) or root folder (same as MakeFile)
+
 start_script=$(
             if [ -f "./start-chainmain" ]; then
                echo "./start-chainmain"
@@ -10,15 +11,18 @@ start_script=$(
 )
 
 config_file=$(
-            if [ -f "./chainmain-devnet.yaml" ]; then
-               echo "./chainmain-devnet.yaml"
-            else
-                if [ -f "./scripts/chainmain-devnet.yaml" ]; then
-                   echo "./scripts/chainmain-devnet.yaml"
+            if [ -z "$2" ]; then
+                if [ -f "./chainmain-devnet-alone.yaml" ]; then
+                   echo "./chainmain-devnet-alone.yaml"
+                else
+                    if [ -f "./scripts/chainmain-devnet-alone.yaml" ]; then
+                       echo "./scripts/chainmain-devnet-alone.yaml"
+                    fi
                 fi
+            else
+                echo $2
             fi
 )
-
 
 case $1 in
     start)

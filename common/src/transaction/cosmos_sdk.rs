@@ -561,6 +561,7 @@ impl CosmosSDKMsg {
                 source_port: PortId::from_str(source_port)?,
                 source_channel: ChannelId::from_str(source_channel)?,
                 token: Some(token.try_into()?),
+                // TODO: timeout_height and timeout_timestamp cannot both be 0.
                 timeout_height: *timeout_height,
                 timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
             }

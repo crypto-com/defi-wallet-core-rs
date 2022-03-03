@@ -4,7 +4,6 @@
 
 mod test_helper;
 
-use core::time::Duration;
 use defi_wallet_core_wasm::{
     broadcast_tx, get_nft_burn_signed_tx, get_nft_edit_signed_tx, get_nft_issue_denom_signed_tx,
     get_nft_mint_signed_tx, get_nft_transfer_signed_tx, CoinType, GrpcWebClient, PrivateKey,
@@ -238,7 +237,7 @@ async fn test_nft() {
     };
     let res = wallet.issue(denom2.clone()).await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
-    let _ = Delay::new(Duration::from_millis(3000)).await;
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
 
     let res = wallet
         .grpc_web_client
@@ -291,7 +290,7 @@ async fn test_nft() {
         .mint(tokenid, &denom1.clone().id, "", "testuri", "", SIGNER2)
         .await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
-    let _ = Delay::new(Duration::from_millis(3000)).await;
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
 
     // Check nft after minting
     let res = wallet
@@ -332,7 +331,7 @@ async fn test_nft() {
         .finalize();
     let res = wallet.transfer(tokenid, &denom1.clone().id, SIGNER1).await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
-    let _ = Delay::new(Duration::from_millis(3000)).await;
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
     let res = wallet
         .grpc_web_client
         .nft(denom1.clone().id, tokenid.to_owned())
@@ -367,7 +366,7 @@ async fn test_nft() {
         .edit(tokenid, &denom1.clone().id, "newname", "newuri", "newdata")
         .await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
-    let _ = Delay::new(Duration::from_millis(3000)).await;
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
     let res = wallet
         .grpc_web_client
         .nft(denom1.clone().id, tokenid.to_owned())
@@ -392,7 +391,7 @@ async fn test_nft() {
     //
     let res = wallet.burn(tokenid, &denom1.clone().id).await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
-    let _ = Delay::new(Duration::from_millis(3000)).await;
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
     let res = wallet
         .grpc_web_client
         .nft(denom1.clone().id, tokenid.to_owned())

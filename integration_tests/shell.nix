@@ -11,5 +11,6 @@ mkShell {
     (import ../nix/testenv.nix { inherit pkgs; })
     (import ../nix/chainmain.nix { inherit pkgs; })
     (import ../nix/cronos.nix { inherit pkgs; })
+    (import ../nix/hermes.nix { inherit pkgs; })
   ];
 }

@@ -4,7 +4,6 @@
 
 mod test_helper;
 
-use core::time::Duration;
 use defi_wallet_core_common::{Network, RawRpcBalance};
 use defi_wallet_core_wasm::{
     broadcast_tx, get_single_bank_send_signed_tx, CoinType, CosmosSDKTxInfoRaw, Wallet,
@@ -29,9 +28,9 @@ async fn test_get_single_bank_send_signed_tx() {
     let tx_info = CosmosSDKTxInfoRaw::new(
         account.account_number,
         account.sequence,
-        50000000,
-        25000000000,
-        DENOM.to_owned(),
+        DEFAULT_GAS_LIMIT,
+        DEFAULT_FEE_AMOUNT,
+        CHAINMAIN_DENOM.to_owned(),
         0,
         Some("".to_owned()),
         CHAIN_ID.to_owned(),
@@ -40,25 +39,30 @@ async fn test_get_single_bank_send_signed_tx() {
     );
 
     // Query account balance from devnet
-    let beginning_balance = query_balance(SIGNER2).await;
+    let beginning_balance = query_chainmain_balance(SIGNER2).await;
 
-    let signed_tx =
-        get_single_bank_send_signed_tx(tx_info, key, SIGNER2.to_owned(), 100, DENOM.to_owned())
-            .unwrap();
+    let signed_tx = get_single_bank_send_signed_tx(
+        tx_info,
+        key,
+        SIGNER2.to_owned(),
+        100,
+        CHAINMAIN_DENOM.to_owned(),
+    )
+    .unwrap();
 
     broadcast_tx(TENDERMINT_RPC_URL.to_owned(), signed_tx)
         .await
         .unwrap();
 
     // Delay to wait the tx is included in the block, could be improved by waiting block
-    Delay::new(Duration::from_millis(3000)).await.unwrap();
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
 
-    let balance = query_balance(SIGNER2).await;
+    let balance = query_chainmain_balance(SIGNER2).await;
 
     assert_eq!(
         balance,
         RawRpcBalance {
-            denom: DENOM.to_owned(),
+            denom: CHAINMAIN_DENOM.to_owned(),
             amount: (U256::from_dec_str(&beginning_balance.amount).unwrap() + 100).to_string()
         }
     );

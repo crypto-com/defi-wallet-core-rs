@@ -31,12 +31,12 @@ async fn test_query_account_details() {
 #[wasm_bindgen_test]
 async fn test_query_account_balance() {
     // Query account balance from devnet
-    let balance = query_balance(COMMUNITY).await;
+    let balance = query_chainmain_balance(COMMUNITY).await;
 
     assert_eq!(
         balance,
         RawRpcBalance {
-            denom: DENOM.to_owned(),
+            denom: CHAINMAIN_DENOM.to_owned(),
             amount: "1000000000000000000000".to_owned()
         }
     );

@@ -1,0 +1,108 @@
+# !! This script can be run in current path (scripts folder) or root folder (same as MakeFile)
+start_script=$(
+            if [ -f "./start-hermes" ]; then
+               echo "./start-hermes"
+            else
+                if [ -f "./scripts/start-hermes" ]; then
+                   echo "./scripts/start-hermes"
+                fi
+            fi
+)
+
+config_file=$(
+            if [ -f "./hermes.toml" ]; then
+               echo "./hermes.toml"
+            else
+                if [ -f "./scripts/hermes.toml" ]; then
+                   echo "./scripts/hermes.toml"
+                fi
+            fi
+)
+
+env_file=$(
+            if [ -f "./.env" ]; then
+               echo "./.env"
+            else
+                if [ -f "./scripts/.env" ]; then
+                   echo "./scripts/.env"
+                fi
+            fi
+)
+
+clear() {
+    if [ -f /tmp/current_hermes_working_path ]; then
+        tmpdir=$(cat /tmp/current_hermes_working_path)
+        echo "Removing directory: " $tmpdir
+        rm -rf $tmpdir
+        echo "Removing /tmp/current_hermes_working_path file"
+        rm /tmp/current_hermes_working_path
+    else
+        echo "/tmp/current_hermes_working_path does not exist"
+    fi
+}
+
+get_status() {
+    if [ -f /tmp/current_hermes_working_path ]; then
+        tmpdir=$(cat /tmp/current_hermes_working_path)
+        echo "hermes's working directory: " $tmpdir
+        pidfile=$tmpdir/supervisord.pid
+        if [ -f "$pidfile" ]; then
+            pid=$(cat $tmpdir/supervisord.pid)
+            echo "hermes PID:" $pid
+        else
+            echo "$pidfile does not exist"
+        fi
+    else
+        echo "/tmp/current_hermes_working_path does not exist"
+    fi
+}
+
+start() {
+    tmpdir=$(mktemp -d -t hermes-XXXXXXXXXX)
+    echo "hermes's working directory: " $tmpdir
+    echo $tmpdir > /tmp/current_hermes_working_path
+    if [ -f "$start_script" ]; then
+       source $env_file
+       $start_script $config_file $tmpdir
+    else
+       echo "No start-hermes script is found."
+    fi
+}
+
+stop() {
+    if [ -f /tmp/current_hermes_working_path ]; then
+        tmpdir=$(cat /tmp/current_hermes_working_path)
+        echo "hermes's working directory: " $tmpdir
+        pidfile=$tmpdir/supervisord.pid
+        if [ -f "$pidfile" ]; then
+            pid=$(cat $tmpdir/supervisord.pid)
+            echo "hermes PID:" $pid
+            kill -9 $pid
+        else
+            echo "$pidfile does not exist"
+        fi
+    else
+        echo "/tmp/current_hermes_working_path does not exist"
+    fi
+}
+
+case $1 in
+    start)
+        echo "Starting hermes..."
+        stop
+        start
+        ;;
+    stop)
+        echo "Stopping hermes..."
+        stop
+        ;;
+    status)
+        echo "Checking hermes..."
+        get_status
+        ;;
+    clear)
+        echo "clearing hermes..."
+        stop
+        clear
+        ;;
+esac
