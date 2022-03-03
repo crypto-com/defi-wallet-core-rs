@@ -1,0 +1,37 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "Inner",
+  "sourceName": "contracts/TestMessageCall.sol",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "TestEvent",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "test",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080604052348015600f57600080fd5b5060b98061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c8063f8a8fd6d14602d575b600080fd5b60336045565b60408051918252519081900360200190f35b60408051602a815290516000917f1440c4dd67b4344ea1905ec0318995133b550f168b4ee959a0da6b503d7d2414919081900360200190a150602a9056fea2646970667358221220fed9b04533131cf3a90d98909f0d1918e91a73387aba38c3d26447075031dc5164736f6c63430006060033",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c8063f8a8fd6d14602d575b600080fd5b60336045565b60408051918252519081900360200190f35b60408051602a815290516000917f1440c4dd67b4344ea1905ec0318995133b550f168b4ee959a0da6b503d7d2414919081900360200190a150602a9056fea2646970667358221220fed9b04533131cf3a90d98909f0d1918e91a73387aba38c3d26447075031dc5164736f6c63430006060033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

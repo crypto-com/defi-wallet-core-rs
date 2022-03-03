@@ -1,0 +1,18 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "Destroyee",
+  "sourceName": "contracts/TestSuicide.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "destroy",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080604052348015600f57600080fd5b50606e80601d6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c806383197ef014602d575b600080fd5b60336035565b005b33fffea264697066735822122076a0e9afcc2fdc86d87967a335b4f3c672553e69bf35a47af07ea4d342859d1364736f6c63430006060033",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c806383197ef014602d575b600080fd5b60336035565b005b33fffea264697066735822122076a0e9afcc2fdc86d87967a335b4f3c672553e69bf35a47af07ea4d342859d1364736f6c63430006060033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
