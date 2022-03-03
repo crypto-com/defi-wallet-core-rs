@@ -24,8 +24,6 @@ trusting_period = '14days'
 trust_threshold = { numerator = '1', denominator = '3' }
 address_type = { derivation = 'cosmos' }
 
-
-
 [[chains]]
 id = 'cronos_777-1'
 rpc_addr = 'http://127.0.0.1:26657'

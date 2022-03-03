@@ -17,7 +17,6 @@ export WASM_BINDGEN_TEST_TIMEOUT=60
 # Start chainmain
 ./chainmain-ctl start
 
-
 # Do wasm tests
 sleep 5
 cd ../bindings/wasm/
