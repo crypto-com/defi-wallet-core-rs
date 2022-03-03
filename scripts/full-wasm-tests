@@ -1,0 +1,12 @@
+# !! This script must run in project root folder (same path as MakeFile) !!
+# Requirements: pystarport, supervisor, chain-maind, cronosd, hermes
+
+# Test basic cases
+./scripts/wasm-tests
+
+# Test for ibc transfer
+./scripts/start-all
+cd bindings/wasm/
+wasm-pack test --chrome --headless -- --features ibc-test --test ibc
+cd ../..
+./scripts/stop-all

@@ -63,7 +63,7 @@ wasm-ci-tests:
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/start-all"
-	cd bindings/wasm/ && wasm-pack test --chrome --headless -- --features ibc-test && cd ../..
+	cd bindings/wasm/ && wasm-pack test --chrome --headless -- --features ibc-test --test ibc && cd ../..
 	@nix-shell ./integration_tests/shell.nix --run "scripts/stop-all"
 
 wasm-tests:
