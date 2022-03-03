@@ -9,6 +9,10 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["console_error_panic_hook"]
+# This feature is used to restrict test cases of ibc. The ibc cases only be
+# tested when running with `--features ibc-test`.
+# Since both `--skip` (cargo test) and `#[ignore]` attribute have no effect for
+# `wasm-pack test`. So use this feature as an alternative.
 ibc-test = []
 
 [dependencies]
