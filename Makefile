@@ -66,11 +66,13 @@ wasm-ci-tests:
 	cd bindings/wasm/ && wasm-pack test --chrome --headless -- --features ibc-test --test ibc && cd ../..
 	@nix-shell ./integration_tests/shell.nix --run "scripts/stop-all"
 
+# No ibc test
 wasm-tests:
-	./scripts/wasm-tests
+	sh ./scripts/wasm-tests
 
+# Full test with ibc cases
 full-wasm-tests:
-	./scripts/full-wasm-tests
+	sh ./scripts/full-wasm-tests
 
 cpp-ci-tests:
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
@@ -79,7 +81,7 @@ cpp-ci-tests:
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
 
 cpp-tests:
-	./scripts/cpp-tests
+	sh ./scripts/cpp-tests
 
 lint-py:
 	flake8 --show-source --count --statistics \

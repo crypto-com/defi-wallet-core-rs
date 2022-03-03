@@ -13,7 +13,7 @@ start_script=$(
 config_file=$(
             if [ -z "$2" ]; then
                 if [ -f "./chainmain-devnet-alone.yaml" ]; then
-                   echo "./chainmain-devnet.yaml"
+                   echo "./chainmain-devnet-alone.yaml"
                 else
                     if [ -f "./scripts/chainmain-devnet-alone.yaml" ]; then
                        echo "./scripts/chainmain-devnet-alone.yaml"
