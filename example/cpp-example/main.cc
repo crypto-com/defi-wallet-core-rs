@@ -3,6 +3,7 @@
 #include "lib.rs.h"
 #include <cassert>
 #include <iostream>
+void cronos_process();
 using namespace std;
 using namespace org::defi_wallet_core;
 CosmosSDKTxInfoRaw build_txinfo() {
@@ -60,7 +61,7 @@ void process() {
   string myamount = getEnv("MYAMOUNT");
   string myservercosmos = getEnv("MYCOSMOSRPC");         /* 1317 port */
   string myservertendermint = getEnv("MYTENDERMINTRPC"); /* 26657 port */
-  string mygrpc = getEnv("MYGRPC"); /* 9091 port */
+  string mygrpc = getEnv("MYGRPC");                      /* 9091 port */
   rust::cxxbridge1::Box<Wallet> mywallet = createWallet(mymnemonics);
   cout << "transfer from " << myfrom << " to " << myto << " amount " << myamount
        << endl;
@@ -84,7 +85,6 @@ void process() {
   rust::cxxbridge1::Vec<uint8_t> signedtx =
       get_single_bank_send_signed_tx(tx_info, *privatekey, myto, 1, "basecro");
   broadcast_tx(myservertendermint, signedtx);
-
 
   rust::cxxbridge1::Box<GrpcClient> grpc_client = new_grpc_client(mygrpc);
   // grpc_client->supply("hello", "world");
@@ -131,12 +131,10 @@ void test_login() {
 }
 
 int main() {
-  // unit test
-  test_login();
-
-  // integration test
   try {
-    process();
+    process();        // chain-main
+    test_login();     // decentralized login
+    cronos_process(); // cronos
   } catch (const rust::cxxbridge1::Error &e) {
     cout << "error:" << e.what() << endl;
   }

@@ -59,6 +59,16 @@ pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<String,
     format_units(result, "ether").map_err(EthError::ParseError)
 }
 
+pub async fn get_eth_transaction_count(address: &str, web3api_url: &str) -> Result<U256, EthError> {
+    let to = Address::from_str(address).map_err(|_| EthError::HexConversion)?;
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let result = provider
+        .get_transaction_count(to, None)
+        .await
+        .map_err(|_| EthError::BalanceFail)?;
+    Ok(result)
+}
+
 /// given the account address and contract information, it returns the amount of ERC20/ERC721/ERC1155 token it owns
 pub async fn get_contract_balance(
     account_address: &str,
@@ -203,7 +213,7 @@ pub async fn broadcast_contract_transfer_tx(
 
 /// given the plain transfer details, it'll construct, sign and broadcast
 /// a corresponding transaction.
-/// If successful, itt returns the transaction receipt.
+/// If successful, it returns the transaction receipt.
 pub async fn broadcast_sign_eth_tx(
     to_hex: &str,
     amount: EthAmount,
@@ -228,6 +238,25 @@ pub async fn broadcast_sign_eth_tx(
     Ok(tx_receipt)
 }
 
+/// broadcast signed eth tx to cronos in async
+/// If successful, it returns the transaction receipt
+/// (blocking; not compiled to wasm).
+pub async fn broadcast_eth_signed_raw_tx(
+    raw_tx: Vec<u8>,
+    web3api_url: &str,
+) -> Result<TransactionReceipt, EthError> {
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let pending_tx = provider
+        .send_raw_transaction(raw_tx.into())
+        .await
+        .map_err(|_e| EthError::SendTxFail)?;
+    let tx_receipt = pending_tx
+        .await
+        .map_err(|_| EthError::SendTxFail)?
+        .ok_or(EthError::MempoolDrop)?;
+    Ok(tx_receipt)
+}
+
 /// Returns the corresponding account's native token balance
 /// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
 /// (blocking; not compiled to wasm).
@@ -235,6 +264,18 @@ pub async fn broadcast_sign_eth_tx(
 pub fn get_eth_balance_blocking(address: &str, web3api_url: &str) -> Result<String, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     rt.block_on(get_eth_balance(address, web3api_url))
+}
+
+/// Returns the corresponding account's native token balance
+/// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
+/// (blocking; not compiled to wasm).
+#[cfg(not(target_arch = "wasm32"))]
+pub fn get_eth_transaction_count_blocking(
+    address: &str,
+    web3api_url: &str,
+) -> Result<U256, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    rt.block_on(get_eth_transaction_count(address, web3api_url))
 }
 
 /// Returns the corresponding account's contract token balance in a hexadecimal string,
@@ -280,7 +321,7 @@ pub fn broadcast_sign_eth_tx_blocking(
 
 /// given the contract transfer details, it'll construct, sign and broadcast
 /// a corresponding transfer transaction.
-/// If successful, itt returns the transaction hash/id.
+/// If successful, it returns the transaction hash/id.
 /// (blocking; not compiled to wasm).
 #[cfg(not(target_arch = "wasm32"))]
 pub fn broadcast_contract_transfer_tx_blocking(
@@ -296,5 +337,18 @@ pub fn broadcast_contract_transfer_tx_blocking(
         secret_key,
         web3api_url,
     ))?;
+    Ok(result.transaction_hash.encode_hex())
+}
+
+/// broadcast signed eth tx to cronos in blocking
+/// If successful, it returns the transaction hash/id.
+/// (blocking; not compiled to wasm).
+#[cfg(not(target_arch = "wasm32"))]
+pub fn broadcast_eth_signed_raw_tx_blocking(
+    raw_tx: Vec<u8>,
+    web3api_url: &str,
+) -> Result<String, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    let result = rt.block_on(broadcast_eth_signed_raw_tx(raw_tx, web3api_url))?;
     Ok(result.transaction_hash.encode_hex())
 }

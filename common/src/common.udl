@@ -95,6 +95,16 @@ dictionary CosmosSDKTxInfo {
     Network network;
 };
 
+dictionary CronosTxInfo{
+    string to_address;
+    EthAmount amount;
+    string nonce;
+    string gas_limit;
+    EthAmount gas_price;
+    sequence<u8>? data;
+};
+
+
 dictionary Height {
     u64 revision_number;
     u64 revision_height;
@@ -262,6 +272,7 @@ interface EthAmount {
 };
 
 
+
 interface Client {
     [Throws=RestError,Name=new_blocking]
     constructor(string grpc_web_url);
@@ -318,7 +329,7 @@ namespace common {
   [Throws=EthError]
   sequence<u8> construct_unsigned_eth_tx([ByRef] string from_hex, [ByRef] string to_hex, EthAmount amount, EthNetwork network);
   [Throws=EthError]
-  sequence<u8> build_signed_eth_tx([ByRef] string to_hex, EthAmount amount, EthNetwork network, SecretKey secret_key);
+  sequence<u8> build_signed_eth_tx(CronosTxInfo tx_info, EthNetwork network, SecretKey secret_key);
   [Throws=EthError]
   string get_eth_balance_blocking([ByRef] string address, [ByRef] string web3api_url);
   [Throws=EthError]
