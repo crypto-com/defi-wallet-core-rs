@@ -13,6 +13,7 @@ use ethers::utils::hex::ToHex;
 /// Information needed for querying balance on different common contract types.
 /// The balance in the case of ERC721 returns the number of non-fungible tokens
 /// of the same type the account holds (e.g. the number of cryptokitties).
+#[derive(Clone)]
 pub enum ContractBalance {
     Erc20 {
         contract_address: String,
