@@ -722,7 +722,10 @@ pub async fn broadcast_transfer_eth(
         EthAmount::EthDecimal {
             amount: eth_amount_decimal,
         },
-        EthNetwork::Custom { chain_id },
+        EthNetwork::Custom {
+            chain_id,
+            legacy: false,
+        },
         private_key.key,
         &web3_api_url,
     )
@@ -781,7 +784,10 @@ pub async fn broadcast_transfer_contract(
     }?;
     let receipt = broadcast_contract_transfer_tx(
         details,
-        EthNetwork::Custom { chain_id },
+        EthNetwork::Custom {
+            chain_id,
+            legacy: false,
+        },
         private_key.key,
         &web3_api_url,
     )

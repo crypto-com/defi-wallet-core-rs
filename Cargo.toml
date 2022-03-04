@@ -20,6 +20,6 @@ debug = true
 lto = "thin"
 
 [patch.crates-io]
-ethers-core = { git = "https://github.com/gakonst/ethers-rs", rev="faba6e014da854e296d095541679e852e2288eec" }
-ethers = { git = "https://github.com/gakonst/ethers-rs", rev="faba6e014da854e296d095541679e852e2288eec" }
+ethers-core = { git = "https://github.com/gakonst/ethers-rs", rev="de275db56a1be948cf4a543e1837f5add6f4750c" }
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev="de275db56a1be948cf4a543e1837f5add6f4750c" }
 siwe= { git = "https://github.com/crypto-com/siwe-rs.git", rev="ead288bc6de086046ce8d15188e167a391079d11"}

@@ -1,7 +1,7 @@
 use std::{str::FromStr, sync::Arc};
 
-use crate::contract::*;
 use crate::{construct_simple_eth_transfer_tx, EthAmount, EthError, EthNetwork, SecretKey};
+use crate::{contract::*, WalletCoin};
 use ethers::prelude::{
     Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware, TransactionReceipt,
     U256,
@@ -59,6 +59,7 @@ pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<String,
     format_units(result, "ether").map_err(EthError::ParseError)
 }
 
+/// given the account address, it returns the nonce / number of transactions sent from the account
 pub async fn get_eth_transaction_count(address: &str, web3api_url: &str) -> Result<U256, EthError> {
     let to = Address::from_str(address).map_err(|_| EthError::HexConversion)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
@@ -118,16 +119,17 @@ pub async fn get_contract_balance(
 
 /// given the contract transfer details, it'll construct, sign and broadcast
 /// a corresponding transfer transaction.
-/// If successful, itt returns the transaction receipt.
+/// If successful, it returns the transaction receipt.
 pub async fn broadcast_contract_transfer_tx(
     transfer_details: ContractTransfer,
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
 ) -> Result<TransactionReceipt, EthError> {
+    let (chain_id, _legacy) = network.to_chain_params()?;
+
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
-    let wallet =
-        LocalWallet::from(secret_key.get_signing_key()).with_chain_id(network.get_chain_id());
+    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match transfer_details {
         ContractTransfer::Erc20 {
@@ -221,10 +223,14 @@ pub async fn broadcast_sign_eth_tx(
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
 ) -> Result<TransactionReceipt, EthError> {
-    let tx = construct_simple_eth_transfer_tx(to_hex, amount)?;
+    let (chain_id, legacy) = network.to_chain_params()?;
+
+    let from_address = WalletCoin::Ethereum
+        .derive_address(&secret_key.get_signing_key())
+        .map_err(|_| EthError::HexConversion)?;
+    let tx = construct_simple_eth_transfer_tx(&from_address, to_hex, amount, legacy, chain_id)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
-    let wallet =
-        LocalWallet::from(secret_key.get_signing_key()).with_chain_id(network.get_chain_id());
+    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
 
     let pending_tx = client
@@ -238,9 +244,8 @@ pub async fn broadcast_sign_eth_tx(
     Ok(tx_receipt)
 }
 
-/// broadcast signed eth tx to cronos in async
+/// broadcast a previously signed ethereum tx async
 /// If successful, it returns the transaction receipt
-/// (blocking; not compiled to wasm).
 pub async fn broadcast_eth_signed_raw_tx(
     raw_tx: Vec<u8>,
     web3api_url: &str,
@@ -266,8 +271,8 @@ pub fn get_eth_balance_blocking(address: &str, web3api_url: &str) -> Result<Stri
     rt.block_on(get_eth_balance(address, web3api_url))
 }
 
-/// Returns the corresponding account's native token balance
-/// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
+/// Returns the corresponding account's nonce / number of transactions
+/// sent from it.
 /// (blocking; not compiled to wasm).
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_eth_transaction_count_blocking(
@@ -340,7 +345,7 @@ pub fn broadcast_contract_transfer_tx_blocking(
     Ok(result.transaction_hash.encode_hex())
 }
 
-/// broadcast signed eth tx to cronos in blocking
+/// broadcast a previously signed ethereum tx.
 /// If successful, it returns the transaction hash/id.
 /// (blocking; not compiled to wasm).
 #[cfg(not(target_arch = "wasm32"))]

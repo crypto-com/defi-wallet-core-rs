@@ -95,13 +95,14 @@ dictionary CosmosSDKTxInfo {
     Network network;
 };
 
-dictionary CronosTxInfo{
+dictionary EthTxInfo {
     string to_address;
     EthAmount amount;
     string nonce;
     string gas_limit;
     EthAmount gas_price;
     sequence<u8>? data;
+    boolean legacy_tx;
 };
 
 
@@ -253,25 +254,17 @@ enum EthError {
 };
 
 [Enum]
-interface EthNetwork {
-    EthereumMainnet();
-    RopstenTestnet();
-    KovanTestnet();
-    RinkebyTestnet();
-    GoerliTestnet();
-    Cronos();
-    CronosTestnet();
-    Custom(u64 chain_id);
-};
-
-[Enum]
 interface EthAmount {
     WeiDecimal(string amount);
     GweiDecimal(string amount);
     EthDecimal(string amount);
 };
 
-
+[Enum]
+ interface EthNetwork {
+     Known(string name);
+     Custom(u64 chain_id, boolean legacy);
+ };
 
 interface Client {
     [Throws=RestError,Name=new_blocking]
@@ -327,9 +320,9 @@ namespace common {
   [Throws=RestError]
   TxBroadcastResult broadcast_tx_sync_blocking([ByRef] string tendermint_rpc_url, sequence<u8> raw_signed_tx);
   [Throws=EthError]
-  sequence<u8> construct_unsigned_eth_tx([ByRef] string from_hex, [ByRef] string to_hex, EthAmount amount, EthNetwork network);
+  sequence<u8> construct_unsigned_eth_tx([ByRef] string from_hex, [ByRef] string to_hex, EthAmount amount, EthNetwork network, boolean legacy_tx);
   [Throws=EthError]
-  sequence<u8> build_signed_eth_tx(CronosTxInfo tx_info, EthNetwork network, SecretKey secret_key);
+  sequence<u8> build_signed_eth_tx(EthTxInfo tx_info, EthNetwork network, SecretKey secret_key);
   [Throws=EthError]
   string get_eth_balance_blocking([ByRef] string address, [ByRef] string web3api_url);
   [Throws=EthError]
