@@ -38,4 +38,4 @@ def test_basic(chainmain, cronos):
     print("Name:", contract.functions.name().call())
     print("Symbol:", contract.functions.symbol().call())
     print("Balance:", contract.functions.balanceOf(ADDRS["community"]).call())
-    assert (contract.functions.balanceOf(ADDRS["community"]).call(), 1)
+    assert contract.functions.balanceOf(ADDRS["community"]).call() == 1
