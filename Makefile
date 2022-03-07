@@ -1,3 +1,4 @@
+
 cpp_example = ./example/cpp-example
 
 .PHONY: wasm android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests
@@ -38,7 +39,7 @@ cpp: prepare_cpp
 	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
-	. ./scripts/.env && cd $(cpp_example) && make
+	source ./scripts/.env && cd $(cpp_example) && make
 
 cppx86_64:
 	cargo build --release --target x86_64-apple-darwin
@@ -74,14 +75,10 @@ full-wasm-tests:
 	sh ./scripts/full-wasm-tests
 
 cpp-ci-tests:
-	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
-	sleep 10
 	make cpp
-	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
-	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
+	make cpp-tests
 
-cpp-tests:
-	sh ./scripts/cpp-tests
+cpp-tests: python-tests
 
 lint-py:
 	flake8 --show-source --count --statistics \
