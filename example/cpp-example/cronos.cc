@@ -31,7 +31,7 @@ void cronos_process() {
   eth_tx_info.amount = "1";
   eth_tx_info.amount_unit = org::defi_wallet_core::EthAmount::EthDecimal;
   rust::Vec<::std::uint8_t> signedtx =
-    build_eth_signed_tx(eth_tx_info, "cronos", *privatekey);
+    build_eth_signed_tx(eth_tx_info, 777, true, *privatekey);
   rust::cxxbridge1::String balance =
       get_eth_balance(myaddress1.c_str(), mycronosrpc);
   cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
