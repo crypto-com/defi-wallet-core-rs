@@ -5,7 +5,7 @@ ifeq ($(UNAME), Darwin)
 endif
 
 ifeq ($(UNAME), Linux)
-	FLAGS=-lpthread -lssl -lcrypto
+	FLAGS=-lpthread -lssl -lcrypto -ldl
 endif
 
 all: static dynamic
