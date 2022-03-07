@@ -4,7 +4,7 @@ ifeq ($(UNAME), Darwin)
 	FLAGS=-framework Security -framework CoreFoundation
 endif
 
-ifeq ($(UNAME_S), Linux)
+ifeq ($(UNAME), Linux)
 	FLAGS=-lpthread -lssl -lcrypto
 endif
 
