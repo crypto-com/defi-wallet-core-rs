@@ -656,6 +656,13 @@ mod ffi {
             network: &str,
             secret_key: &PrivateKey,
         ) -> Result<Vec<u8>>;
+        #[cxx_name = "build_eth_signed_tx"]
+        pub fn build_custom_eth_signed_tx(
+            tx_info: EthTxInfoRaw,
+            chain_id: u64,
+            legacy: bool,
+            secret_key: &PrivateKey,
+        ) -> Result<Vec<u8>>;
 
         pub fn get_eth_balance(address: &str, api_url: &str) -> Result<String>;
 
@@ -1236,6 +1243,21 @@ pub fn build_eth_signed_tx(
         EthNetwork::Known {
             name: network.into(),
         },
+        private_key.key.clone(),
+    )?;
+    Ok(signedtx)
+}
+
+/// sign cronos tx with private key in custom network
+pub fn build_custom_eth_signed_tx(
+    tx_info: ffi::EthTxInfoRaw,
+    chain_id: u64,
+    legacy: bool,
+    private_key: &PrivateKey,
+) -> Result<Vec<u8>> {
+    let signedtx = defi_wallet_core_common::build_signed_eth_tx(
+        tx_info.into(),
+        EthNetwork::Custom { chain_id, legacy },
         private_key.key.clone(),
     )?;
     Ok(signedtx)
