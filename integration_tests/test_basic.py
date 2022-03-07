@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import os
 import subprocess
 from pathlib import Path
 
@@ -51,9 +50,9 @@ def test_basic(chainmain, cronos):
     )
     contract = erc721.deploy(w3)
     print("ERC721 address:", contract.address)
-    tx = contract.functions.awardItem(ADDRS["signer1"], "https://game.example/item-id-8u5h2m.json").buildTransaction(
-        {"from": ADDRS["signer1"]}
-    )
+    tx = contract.functions.awardItem(
+        ADDRS["signer1"], "https://game.example/item-id-8u5h2m.json"
+    ).buildTransaction({"from": ADDRS["signer1"]})
     erc721.send(tx)
     print("Name:", contract.functions.name().call())
     print("Symbol:", contract.functions.symbol().call())
