@@ -10,8 +10,8 @@ use ethers::utils::format_units;
 #[cfg(not(target_arch = "wasm32"))]
 use ethers::utils::hex::ToHex;
 
-/// Information needed for approving spender to withdraw from your account
-/// multiple times, up to specified amount on different common contract types.
+/// Information needed for approving operator to withdraw from your account on
+/// different common contract types.
 pub enum ContractApproval {
     Erc20 {
         contract_address: String,
