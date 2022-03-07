@@ -24,14 +24,14 @@ void cronos_process() {
   snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
   rust::cxxbridge1::Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
   rust::cxxbridge1::Vec<uint8_t> data;
-  org::defi_wallet_core::CronosTxInfoRaw eth_tx_info =   new_eth_tx_info();
+  org::defi_wallet_core::EthTxInfoRaw eth_tx_info = new_eth_tx_info();
   cout << myaddress2 << endl;
   eth_tx_info.to_address = myaddress2.c_str();
   eth_tx_info.nonce = nonce1;
   eth_tx_info.amount = "1";
   eth_tx_info.amount_unit = org::defi_wallet_core::EthAmount::EthDecimal;
   rust::Vec<::std::uint8_t> signedtx =
-      build_eth_signed_tx(eth_tx_info, EthNetwork::Custom, 9000, *privatekey);
+      build_eth_signed_tx(eth_tx_info, "cronos", *privatekey);
   rust::cxxbridge1::String balance =
       get_eth_balance(myaddress1.c_str(), mycronosrpc);
   cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;

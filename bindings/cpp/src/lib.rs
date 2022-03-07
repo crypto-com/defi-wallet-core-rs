@@ -2,9 +2,9 @@ use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx,
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
-    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, CronosTxInfo, EthError, HDWallet, Height,
-    LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey, SingleCoin,
-    WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, EthError, EthNetwork, EthTxInfo, HDWallet,
+    Height, LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey,
+    SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use defi_wallet_core_common::{transaction, Client};
 use defi_wallet_core_proto as proto;
@@ -422,7 +422,7 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
     }
 }
 
-// wrapper for LoginInfo
+/// wrapper for LoginInfo
 pub struct CppLoginInfo {
     pub logininfo: LoginInfo,
 }
@@ -452,16 +452,6 @@ mod ffi {
         /// Word 24
         TwentyFour,
     }
-    pub enum EthNetwork {
-        EthereumMainnet,
-        RopstenTestnet,
-        KovanTestnet,
-        RinkebyTestnet,
-        GoerliTestnet,
-        Cronos,
-        CronosTestnet,
-        Custom,
-    }
 
     pub enum EthAmount {
         /// 10^-18 ETH
@@ -471,7 +461,7 @@ mod ffi {
         EthDecimal,
     }
 
-    pub struct CronosTxInfoRaw {
+    pub struct EthTxInfoRaw {
         pub to_address: String,
         pub amount: String,
         pub amount_unit: EthAmount,
@@ -660,11 +650,10 @@ mod ffi {
         fn sign_logininfo(self: &CppLoginInfo, private_key: &PrivateKey) -> Result<Vec<u8>>;
         fn verify_logininfo(self: &CppLoginInfo, signature: &[u8]) -> Result<Vec<u8>>;
 
-        pub fn new_eth_tx_info() -> CronosTxInfoRaw;
+        pub fn new_eth_tx_info() -> EthTxInfoRaw;
         pub fn build_eth_signed_tx(
-            tx_info: CronosTxInfoRaw,
-            network: EthNetwork,
-            custom_network_id: u64,
+            tx_info: EthTxInfoRaw,
+            network: &str,
             secret_key: &PrivateKey,
         ) -> Result<Vec<u8>>;
 
@@ -693,17 +682,6 @@ impl From<CoinType> for WalletCoin {
                 network: Network::CosmosHub,
             },
             _ => WalletCoin::Ethereum,
-        }
-    }
-}
-
-impl From<ffi::EthNetwork> for defi_wallet_core_common::EthNetwork {
-    fn from(network: ffi::EthNetwork) -> Self {
-        match network {
-            ffi::EthNetwork::EthereumMainnet => {
-                defi_wallet_core_common::EthNetwork::EthereumMainnet
-            }
-            _ => defi_wallet_core_common::EthNetwork::RopstenTestnet,
         }
     }
 }
@@ -1232,49 +1210,32 @@ fn convert_amount(
         _ => Err(anyhow!("invalid coin unit, use correct enum for coin unit")),
     }
 }
-fn convert_network(
-    network: ffi::EthNetwork,
-    custom_network_id: u64,
-) -> Result<defi_wallet_core_common::EthNetwork> {
-    match network {
-        ffi::EthNetwork::EthereumMainnet => {
-            Ok(defi_wallet_core_common::EthNetwork::EthereumMainnet)
-        }
-        ffi::EthNetwork::RopstenTestnet => Ok(defi_wallet_core_common::EthNetwork::RopstenTestnet),
-        ffi::EthNetwork::KovanTestnet => Ok(defi_wallet_core_common::EthNetwork::KovanTestnet),
-        ffi::EthNetwork::RinkebyTestnet => Ok(defi_wallet_core_common::EthNetwork::RinkebyTestnet),
-        ffi::EthNetwork::GoerliTestnet => Ok(defi_wallet_core_common::EthNetwork::GoerliTestnet),
-        ffi::EthNetwork::Cronos => Ok(defi_wallet_core_common::EthNetwork::Cronos),
-        ffi::EthNetwork::CronosTestnet => Ok(defi_wallet_core_common::EthNetwork::CronosTestnet),
-        _ => Ok(defi_wallet_core_common::EthNetwork::Custom {
-            chain_id: custom_network_id,
-        }),
-    }
-}
 
-impl From<ffi::CronosTxInfoRaw> for CronosTxInfo {
-    fn from(info: ffi::CronosTxInfoRaw) -> Self {
-        CronosTxInfo {
+impl From<ffi::EthTxInfoRaw> for EthTxInfo {
+    fn from(info: ffi::EthTxInfoRaw) -> Self {
+        EthTxInfo {
             to_address: info.to_address,
             amount: convert_amount(&info.amount, info.amount_unit).unwrap(),
             nonce: info.nonce,
             gas_limit: info.gas_limit,
             gas_price: convert_amount(&info.gas_price, info.gas_price_unit).unwrap(),
             data: Some(info.data),
+            legacy_tx: false,
         }
     }
 }
 
 /// sign cronos tx with private key
 pub fn build_eth_signed_tx(
-    tx_info: ffi::CronosTxInfoRaw,
-    network: ffi::EthNetwork,
-    custom_network_id: u64,
+    tx_info: ffi::EthTxInfoRaw,
+    network: &str,
     private_key: &PrivateKey,
 ) -> Result<Vec<u8>> {
     let signedtx = defi_wallet_core_common::build_signed_eth_tx(
         tx_info.into(),
-        convert_network(network, custom_network_id)?,
+        EthNetwork::Known {
+            name: network.into(),
+        },
         private_key.key.clone(),
     )?;
     Ok(signedtx)
@@ -1300,8 +1261,8 @@ pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result
 }
 
 /// create cronos tx info to sign
-pub fn new_eth_tx_info() -> ffi::CronosTxInfoRaw {
-    ffi::CronosTxInfoRaw {
+pub fn new_eth_tx_info() -> ffi::EthTxInfoRaw {
+    ffi::EthTxInfoRaw {
         to_address: "".to_string(),
         amount: "0".to_string(),
         amount_unit: ffi::EthAmount::EthDecimal,
