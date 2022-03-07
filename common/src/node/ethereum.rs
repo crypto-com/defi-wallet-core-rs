@@ -10,6 +10,31 @@ use ethers::utils::format_units;
 #[cfg(not(target_arch = "wasm32"))]
 use ethers::utils::hex::ToHex;
 
+/// Information needed for approving spender to withdraw from your account
+/// multiple times, up to specified amount on different common contract types.
+pub enum ContractApproval {
+    Erc20 {
+        contract_address: String,
+        approved_address: String,
+        amount_hex: String,
+    },
+    Erc721Approve {
+        contract_address: String,
+        approved_address: String,
+        token_id: String,
+    },
+    Erc721SetApprovalForAll {
+        contract_address: String,
+        approved_address: String,
+        approved: bool,
+    },
+    Erc1155 {
+        contract_address: String,
+        approved_address: String,
+        approved: bool,
+    },
+}
+
 /// Information needed for querying balance on different common contract types.
 /// The balance in the case of ERC721 returns the number of non-fungible tokens
 /// of the same type the account holds (e.g. the number of cryptokitties).
@@ -28,8 +53,14 @@ pub enum ContractBalance {
 
 /// Information needed for transferring tokens on different common contract types
 pub enum ContractTransfer {
-    Erc20 {
+    Erc20Transfer {
         contract_address: String,
+        to_address: String,
+        amount_hex: String,
+    },
+    Erc20TransferFrom {
+        contract_address: String,
+        from_address: String,
         to_address: String,
         amount_hex: String,
     },
@@ -117,6 +148,110 @@ pub async fn get_contract_balance(
     }
 }
 
+/// given the contract approval details, it'll construct, sign and broadcast a
+/// corresponding approval transaction.
+/// If successful, it returns the transaction receipt.
+pub async fn broadcast_contract_approval_tx(
+    approval_details: ContractApproval,
+    network: EthNetwork,
+    secret_key: Arc<SecretKey>,
+    web3api_url: &str,
+) -> Result<TransactionReceipt, EthError> {
+    let (chain_id, _legacy) = network.to_chain_params()?;
+
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
+    let client = SignerMiddleware::new(provider, wallet);
+    match approval_details {
+        ContractApproval::Erc20 {
+            contract_address,
+            approved_address,
+            amount_hex,
+        } => {
+            let contract_address =
+                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
+            let approved_address =
+                Address::from_str(&approved_address).map_err(|_| EthError::HexConversion)?;
+            let amount = U256::from_str(&amount_hex).map_err(|_| EthError::HexConversion)?;
+            let contract = Erc20Contract::new(contract_address, Arc::new(client));
+            let pending_tx = contract
+                .approve(approved_address, amount)
+                .send()
+                .await
+                .map_err(|_| EthError::SendTxFail)?
+                .await;
+            let tx_receipt = pending_tx
+                .map_err(|_| EthError::SendTxFail)?
+                .ok_or(EthError::MempoolDrop)?;
+            Ok(tx_receipt)
+        }
+        ContractApproval::Erc721Approve {
+            contract_address,
+            approved_address,
+            token_id,
+        } => {
+            let contract_address =
+                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
+            let approved_address =
+                Address::from_str(&approved_address).map_err(|_| EthError::HexConversion)?;
+            let token_id = U256::from_str(&token_id).map_err(|_| EthError::HexConversion)?;
+            let contract = Erc721Contract::new(contract_address, Arc::new(client));
+            let pending_tx = contract
+                .approve(approved_address, token_id)
+                .send()
+                .await
+                .map_err(|_| EthError::SendTxFail)?
+                .await;
+            let tx_receipt = pending_tx
+                .map_err(|_| EthError::SendTxFail)?
+                .ok_or(EthError::MempoolDrop)?;
+            Ok(tx_receipt)
+        }
+        ContractApproval::Erc721SetApprovalForAll {
+            contract_address,
+            approved_address,
+            approved,
+        } => {
+            let contract_address =
+                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
+            let approved_address =
+                Address::from_str(&approved_address).map_err(|_| EthError::HexConversion)?;
+            let contract = Erc721Contract::new(contract_address, Arc::new(client));
+            let pending_tx = contract
+                .set_approval_for_all(approved_address, approved)
+                .send()
+                .await
+                .map_err(|_| EthError::SendTxFail)?
+                .await;
+            let tx_receipt = pending_tx
+                .map_err(|_| EthError::SendTxFail)?
+                .ok_or(EthError::MempoolDrop)?;
+            Ok(tx_receipt)
+        }
+        ContractApproval::Erc1155 {
+            contract_address,
+            approved_address,
+            approved,
+        } => {
+            let contract_address =
+                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
+            let approved_address =
+                Address::from_str(&approved_address).map_err(|_| EthError::HexConversion)?;
+            let contract = Erc1155Contract::new(contract_address, Arc::new(client));
+            let pending_tx = contract
+                .set_approval_for_all(approved_address, approved)
+                .send()
+                .await
+                .map_err(|_| EthError::SendTxFail)?
+                .await;
+            let tx_receipt = pending_tx
+                .map_err(|_| EthError::SendTxFail)?
+                .ok_or(EthError::MempoolDrop)?;
+            Ok(tx_receipt)
+        }
+    }
+}
+
 /// given the contract transfer details, it'll construct, sign and broadcast
 /// a corresponding transfer transaction.
 /// If successful, it returns the transaction receipt.
@@ -132,7 +267,7 @@ pub async fn broadcast_contract_transfer_tx(
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match transfer_details {
-        ContractTransfer::Erc20 {
+        ContractTransfer::Erc20Transfer {
             contract_address,
             to_address,
             amount_hex,
@@ -144,6 +279,30 @@ pub async fn broadcast_contract_transfer_tx(
             let contract = Erc20Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .transfer(to_address, amount)
+                .send()
+                .await
+                .map_err(|_| EthError::SendTxFail)?
+                .await;
+            let tx_receipt = pending_tx
+                .map_err(|_| EthError::SendTxFail)?
+                .ok_or(EthError::MempoolDrop)?;
+            Ok(tx_receipt)
+        }
+        ContractTransfer::Erc20TransferFrom {
+            contract_address,
+            from_address,
+            to_address,
+            amount_hex,
+        } => {
+            let contract_address =
+                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
+            let from_address =
+                Address::from_str(&from_address).map_err(|_| EthError::HexConversion)?;
+            let to_address = Address::from_str(&to_address).map_err(|_| EthError::HexConversion)?;
+            let amount = U256::from_str(&amount_hex).map_err(|_| EthError::HexConversion)?;
+            let contract = Erc20Contract::new(contract_address, Arc::new(client));
+            let pending_tx = contract
+                .transfer_from(from_address, to_address, amount)
                 .send()
                 .await
                 .map_err(|_| EthError::SendTxFail)?
@@ -317,6 +476,27 @@ pub fn broadcast_sign_eth_tx_blocking(
     let result = rt.block_on(broadcast_sign_eth_tx(
         to_hex,
         amount,
+        network,
+        secret_key,
+        web3api_url,
+    ))?;
+    Ok(result.transaction_hash.encode_hex())
+}
+
+/// given the contract approval details, it'll construct, sign and broadcast a
+/// corresponding approval transaction.
+/// If successful, it returns the transaction hash/id.
+/// (blocking; not compiled to wasm).
+#[cfg(not(target_arch = "wasm32"))]
+pub fn broadcast_contract_approval_tx_blocking(
+    approval_details: ContractApproval,
+    network: EthNetwork,
+    secret_key: Arc<SecretKey>,
+    web3api_url: &str,
+) -> Result<String, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    let result = rt.block_on(broadcast_contract_approval_tx(
+        approval_details,
         network,
         secret_key,
         web3api_url,

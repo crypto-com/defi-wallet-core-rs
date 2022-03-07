@@ -3,12 +3,12 @@
 use std::sync::Arc;
 
 use defi_wallet_core_common::{
-    broadcast_contract_transfer_tx, broadcast_sign_eth_tx, broadcast_tx_sync, build_signed_msg_tx,
-    build_signed_single_msg_tx, get_account_balance, get_account_details, get_contract_balance,
-    get_eth_balance, get_single_msg_sign_payload, BalanceApiVersion, ContractBalance,
-    ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Height,
-    Network, PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin,
-    COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    broadcast_contract_approval_tx, broadcast_contract_transfer_tx, broadcast_sign_eth_tx,
+    broadcast_tx_sync, build_signed_msg_tx, build_signed_single_msg_tx, get_account_balance,
+    get_account_details, get_contract_balance, get_eth_balance, get_single_msg_sign_payload,
+    BalanceApiVersion, ContractApproval, ContractBalance, ContractTransfer, CosmosSDKMsg,
+    CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Height, Network, PublicKeyBytesWrapper,
+    SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 
 use defi_wallet_core_common::node;
@@ -735,6 +735,64 @@ pub async fn broadcast_transfer_eth(
     Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
 }
 
+/// construct, sign and broadcast an approval of a ERC20/ERC721/ERC1155 token
+#[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
+pub async fn broadcast_approval_contract(
+    web3_api_url: String,
+    approved_address: String,
+    contract_address: String,
+    contract_type: ContractType,
+    amount_hex: Option<String>,
+    token_id: Option<String>,
+    approved: Option<bool>,
+    chain_id: u64,
+    private_key: PrivateKey,
+) -> Result<JsValue, JsValue> {
+    let details = match (contract_type, amount_hex, token_id, approved) {
+        (ContractType::Erc20, Some(amount_hex), _, _) => Ok(ContractApproval::Erc20 {
+            contract_address,
+            approved_address,
+            amount_hex,
+        }),
+        (ContractType::Erc721, _, Some(token_id), _) => Ok(ContractApproval::Erc721Approve {
+            contract_address,
+            approved_address,
+            token_id,
+        }),
+        (ContractType::Erc721, _, _, Some(approved)) => {
+            Ok(ContractApproval::Erc721SetApprovalForAll {
+                contract_address,
+                approved_address,
+                approved,
+            })
+        }
+        (ContractType::Erc1155, _, _, Some(approved)) => Ok(ContractApproval::Erc1155 {
+            contract_address,
+            approved_address,
+            approved,
+        }),
+        (ContractType::Erc20, None, _, _) => Err(JsValue::from_str("missing amount")),
+        (ContractType::Erc721, _, None, None) => {
+            Err(JsValue::from_str("missing token id or approved"))
+        }
+        (ContractType::Erc1155, _, _, None) => Err(JsValue::from_str("missing approved")),
+    }?;
+    let receipt = broadcast_contract_approval_tx(
+        details,
+        EthNetwork::Custom {
+            chain_id,
+            legacy: false,
+        },
+        private_key.key,
+        &web3_api_url,
+    )
+    .await
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+
+    Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+}
+
 /// construct, sign and broadcast a transfer of a ERC20/ERC721/ERC1155 token
 #[wasm_bindgen]
 #[allow(clippy::too_many_arguments)]
@@ -750,11 +808,19 @@ pub async fn broadcast_transfer_contract(
     private_key: PrivateKey,
 ) -> Result<JsValue, JsValue> {
     let details = match (contract_type, amount_hex, token_id, from_address) {
-        (ContractType::Erc20, Some(amount_hex), _, _) => Ok(ContractTransfer::Erc20 {
+        (ContractType::Erc20, Some(amount_hex), _, None) => Ok(ContractTransfer::Erc20Transfer {
             contract_address,
-            amount_hex,
             to_address,
+            amount_hex,
         }),
+        (ContractType::Erc20, Some(amount_hex), _, Some(from_address)) => {
+            Ok(ContractTransfer::Erc20TransferFrom {
+                contract_address,
+                from_address,
+                to_address,
+                amount_hex,
+            })
+        }
         (ContractType::Erc721, _, Some(token_id), Some(from_address)) => {
             Ok(ContractTransfer::Erc721 {
                 contract_address,
@@ -767,19 +833,19 @@ pub async fn broadcast_transfer_contract(
             Ok(ContractTransfer::Erc1155 {
                 contract_address,
                 token_id,
-                amount_hex,
                 from_address,
                 to_address,
+                amount_hex,
             })
+        }
+        (ContractType::Erc1155, None, _, _) | (ContractType::Erc20, None, _, _) => {
+            Err(JsValue::from_str("missing amount"))
         }
         (ContractType::Erc1155, _, None, _) | (ContractType::Erc721, _, None, _) => {
             Err(JsValue::from_str("missing token id"))
         }
         (ContractType::Erc1155, _, _, None) | (ContractType::Erc721, _, _, None) => {
             Err(JsValue::from_str("missing from address"))
-        }
-        (ContractType::Erc1155, None, _, _) | (ContractType::Erc20, None, _, _) => {
-            Err(JsValue::from_str("missing amount"))
         }
     }?;
     let receipt = broadcast_contract_transfer_tx(

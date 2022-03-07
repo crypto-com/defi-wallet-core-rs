@@ -195,6 +195,14 @@ interface CosmosSDKClient {
 };
 
 [Enum]
+interface ContractApproval {
+  Erc20(string contract_address, string approved_address, string amount_hex);
+  Erc721Approve(string contract_address, string approved_address, string token_id);
+  Erc721SetApprovalForAll(string contract_address, string approved_address, boolean approved);
+  Erc1155(string contract_address, string approved_address, boolean approved);
+};
+
+[Enum]
 interface ContractBalance {
   Erc20(string contract_address);
   Erc721(string contract_address);
@@ -203,7 +211,8 @@ interface ContractBalance {
 
 [Enum]
 interface ContractTransfer {
-  Erc20(string contract_address, string to_address, string amount_hex);
+  Erc20Transfer(string contract_address, string to_address, string amount_hex);
+  Erc20TransferFrom(string contract_address, string from_address, string to_address, string amount_hex);
   Erc721(string contract_address, string token_id, string from_address, string to_address);
   Erc1155(string contract_address, string token_id, string from_address, string to_address, string amount_hex);
 };
@@ -329,6 +338,8 @@ namespace common {
   string get_contract_balance_blocking([ByRef] string account_address, ContractBalance contract_details, [ByRef] string web3api_url);
   [Throws=EthError]
   string broadcast_sign_eth_tx_blocking([ByRef] string to_hex, EthAmount amount, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
+  [Throws=EthError]
+  string broadcast_contract_approval_tx_blocking(ContractApproval approval_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
   [Throws=EthError]
   string broadcast_contract_transfer_tx_blocking(ContractTransfer transfer_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
   string bytes_to_hex(sequence<u8> data);
