@@ -88,19 +88,3 @@ class Contract:
             return self.contract
         else:
             return self.contract
-
-
-class ERC721(Contract):
-    "ERC721 contract."
-
-    def transfer(self, string):
-        "Call contract on `w3` and return the receipt."
-        transaction = self.contract.functions.setGreeting(string).buildTransaction(
-            {
-                "chainId": self.chain_id,
-                "from": self.address,
-            }
-        )
-        receipt = self.send(transaction)
-        assert string == self.contract.functions.greet().call()
-        return receipt
