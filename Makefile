@@ -47,7 +47,7 @@ cppx86_64:
 	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
 	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
-	cd $(cpp_example) && make x86_64
+	cd $(cpp_example) && make x86_64_build
 
 
 proto:
