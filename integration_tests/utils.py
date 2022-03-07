@@ -20,13 +20,9 @@ ACCOUNTS = {
 KEYS = {name: account.key for name, account in ACCOUNTS.items()}
 ADDRS = {name: account.address for name, account in ACCOUNTS.items()}
 TEST_CONTRACTS = {
-    "Gravity": "Gravity.sol",
-    "Greeter": "Greeter.sol",
-    "TestERC20A": "TestERC20A.sol",
+    "TestERC20": "TestERC20.sol",
     "TestERC721": "TestERC721.sol",
-    "TestRevert": "TestRevert.sol",
-    "TestERC20Utility": "TestERC20Utility.sol",
-    "TestMessageCall": "TestMessageCall.sol",
+    "TestERC1155": "TestERC1155.sol",
 }
 
 

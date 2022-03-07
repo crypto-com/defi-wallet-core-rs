@@ -1,17 +1,26 @@
-pragma solidity 0.8.10;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract TestERC721 is ERC721 {
-    constructor (string memory _name, string memory _symbol) public
-        ERC721(_name, _symbol)
-    {
-    }
+contract TestERC721 is ERC721URIStorage {
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
 
-    function mint(
-        address _to,
-        uint256 _tokenId
-    ) public
+    constructor() ERC721("GameItem", "ITM") {}
+
+    function awardItem(address player, string memory tokenURI)
+        public
+        returns (uint256)
     {
-        super._safeMint(_to, _tokenId);
+        _tokenIds.increment();
+
+        uint256 newItemId = _tokenIds.current();
+        _mint(player, newItemId);
+        _setTokenURI(newItemId, tokenURI);
+
+        return newItemId;
     }
 }

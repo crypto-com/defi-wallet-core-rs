@@ -29,23 +29,60 @@ def test_basic(chainmain, cronos):
     w3 = cronos.w3
     print(w3.eth.get_block_number())
 
-    ERC721 = Contract(
+    print("Signer1 address:", ADDRS["signer1"])
+
+    # ERC20
+    erc20 = Contract(
+        CONTRACTS["TestERC20"],
+        KEYS["signer1"],
+    )
+    contract = erc20.deploy(w3, 100000000000000000000000000)
+    print("ERC20 address:", contract.address)
+    print("Name:", contract.functions.name().call())
+    print("Symbol:", contract.functions.symbol().call())
+    print("Decimals:", contract.functions.decimals().call())
+    print("Total Supply:", contract.functions.totalSupply().call())
+    print("Balance:", contract.functions.balanceOf(ADDRS["signer1"]).call())
+
+    # ERC721
+    erc721 = Contract(
         CONTRACTS["TestERC721"],
         KEYS["signer1"],
     )
-
-    contract = ERC721.deploy(w3, "MyTestERC721Token", "MyTestERC721")
-    print("Signer1 address:", ADDRS["signer1"])
+    contract = erc721.deploy(w3)
     print("ERC721 address:", contract.address)
-    tx = contract.functions.mint(ADDRS["signer1"], 1).buildTransaction(
-        {"from": ADDRS["signer1"], "gas": 500000}
+    tx = contract.functions.awardItem(ADDRS["signer1"], "https://game.example/item-id-8u5h2m.json").buildTransaction(
+        {"from": ADDRS["signer1"]}
     )
-    ERC721.send(tx)
+    erc721.send(tx)
     print("Name:", contract.functions.name().call())
     print("Symbol:", contract.functions.symbol().call())
     print("Balance:", contract.functions.balanceOf(ADDRS["signer1"]).call())
+    print("Owner:", contract.functions.ownerOf(1).call())
+    print("tokenURI:", contract.functions.tokenURI(1).call())
     assert contract.functions.balanceOf(ADDRS["signer1"]).call() == 1
 
+    # ERC1155
+    erc1155 = Contract(
+        CONTRACTS["TestERC1155"],
+        KEYS["signer1"],
+    )
+    contract = erc1155.deploy(w3)
+    print("ERC1155 address:", contract.address)
+    print("Balance of GOLD:", contract.functions.balanceOf(ADDRS["signer1"], 0).call())
+    print(
+        "Balance of SILVER:", contract.functions.balanceOf(ADDRS["signer1"], 1).call()
+    )
+    print(
+        "Balance of THORS_HAMMER:",
+        contract.functions.balanceOf(ADDRS["signer1"], 2).call(),
+    )
+    print("Balance of SWORD:", contract.functions.balanceOf(ADDRS["signer1"], 3).call())
+    print(
+        "Balance of SHIELD:", contract.functions.balanceOf(ADDRS["signer1"], 4).call()
+    )
+
+    # Test cppexample
     cmd = Path(__file__).parent / "../example/cpp-example/cppexample"
     output = subprocess.getoutput(str(cmd))
     print(output)
