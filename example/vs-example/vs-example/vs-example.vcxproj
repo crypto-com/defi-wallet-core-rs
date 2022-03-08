@@ -139,6 +139,7 @@
   <ItemGroup>
     <ClCompile Include="main.cc" />
     <ClCompile Include="cronos.cc" />
+    <ClCompile Include="user.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bindings.h" />

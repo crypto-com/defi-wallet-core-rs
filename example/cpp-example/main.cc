@@ -1,10 +1,12 @@
 #include "defi-wallet-core-cpp/src/lib.rs.h"
 #include "defi-wallet-core-cpp/src/nft.rs.h"
 #include "rust/cxx.h"
+
 #include <cassert>
 #include <chrono>
 #include <iostream>
 #include <thread>
+
 
 void cronos_process();
 using namespace std;
@@ -32,9 +34,8 @@ string getEnv(string key) {
   }
   return ret;
 }
-rust::cxxbridge1::Box<Wallet>
-createWallet(rust::cxxbridge1::String mymnemonics) {
-
+rust::cxxbridge1::Box<Wallet> createWallet(
+    rust::cxxbridge1::String mymnemonics) {
   try {
     rust::cxxbridge1::Box<Wallet> mywallet = restore_wallet(mymnemonics, "");
     return mywallet;
@@ -281,7 +282,7 @@ void test_login() {
   rust::cxxbridge1::Box<Wallet> mywallet = createWallet(mymnemonics);
 
   char hdpath[100];
-  int coin_type = 60; // eth cointype
+  int coin_type = 60;  // eth cointype
   snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", coin_type);
   rust::cxxbridge1::Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
 

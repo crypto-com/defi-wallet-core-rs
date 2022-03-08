@@ -12,6 +12,11 @@ anyhow = "1"
 serde="1"
 serde_json="1"
 siwe = { version = "0.2" }
+tokio={version="1.17.0", features=["full"]}
+hex="0.4.3"
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "de275db56a1be948cf4a543e1837f5add6f4750c" }
+
+
 
 [build-dependencies]
 cxx-build = "1"

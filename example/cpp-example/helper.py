@@ -12,6 +12,10 @@ VS_EXAMPLE_PATH = "../vs-example/vs-example"
 
 INITIAL_INCLUDE = '#include "defi-wallet-core-cpp/src/lib.rs.h"'
 FINAL_INCLUDE = '#include "lib.rs.h"'
+
+INITIAL_INCLUDE2 = '#include "defi-wallet-core-cpp/include/user.h"'
+FINAL_INCLUDE2 = '#include "user.h"'
+
 TARGET_DIR = "../../target/release"
 
 OUT_DIR = "../../target/cxxbridge"
@@ -20,6 +24,25 @@ OUT_DIR = "../../target/cxxbridge"
 def copy_to(output_path):
     copy_cxxbridge(output_path)
     copy_lib_files(output_path)
+    copy_cc_files(output_path)
+
+
+def copy_cc_files(output_path):
+    shutil.copy("../../bindings/cpp/include/user.h", output_path)
+    shutil.copy("../../bindings/cpp/src/user.cc", output_path)
+    replace_include(
+        os.path.join(output_path, "user.cc"), INITIAL_INCLUDE2, FINAL_INCLUDE2
+    )
+
+
+def replace_include(filename, oldword, newword):
+    # read file
+    with open(filename) as f:
+        s = f.read()
+    # replace, write file
+    with open(filename, "w") as f:
+        s = s.replace(oldword, newword)
+        f.write(s)
 
 
 # copy the generated binding files: `*.cc` and `*.h` to `output_path`
@@ -37,9 +60,7 @@ def copy_cxxbridge(output_path):
                 continue
 
         # Safely write the changed content, if found in the file
-        with open(filename, "w") as f:
-            s = s.replace(INITIAL_INCLUDE, FINAL_INCLUDE)
-            f.write(s)
+        replace_include(filename, INITIAL_INCLUDE, FINAL_INCLUDE)
 
     # copy the bindings, need python 3.8+
     shutil.copytree(OUT_DIR, output_path, dirs_exist_ok=True)

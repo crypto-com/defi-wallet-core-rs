@@ -10,10 +10,14 @@ use defi_wallet_core_common::{
 use std::str::FromStr;
 use std::sync::Arc;
 
+mod cronos;
 mod nft;
 
 mod contract;
 
+use cronos::CronosTxManager;
+use ethers::prelude::TransactionReceipt;
+use hex::ToHex;
 /// Wrapper of `CosmosSDKMsg`
 ///
 /// For now, types used as extern Rust types are required to be defined by the same crate that
@@ -347,7 +351,30 @@ pub mod ffi {
         pub sequence_number: u64,
     }
 
+    #[derive(Debug, Default)]
+    pub struct CronosTransactionReceiptRaw {
+        pub success: bool,
+        pub message: String,
+        pub jobid: String,
+        //-------
+        pub transaction_hash: String,
+        pub transaction_index: String,
+        pub block_hash: String,
+        pub block_number: String,
+        pub cumulative_gas_used: String,
+        pub gas_used: String,
+        pub contract_address: String,
+        pub logs: Vec<String>,
+        /// Status: either 1 (success) or 0 (failure)
+        pub status: String,
+        pub root: String,
+        pub logs_bloom: String,
+        pub transaction_type: String,
+        pub effective_gas_price: String,
+    }
+
     extern "Rust" {
+        pub fn test_cpp_from_rust();
         pub fn query_account_details(api_url: String, address: String) -> Result<String>;
         pub fn query_account_details_info(
             api_url: String,
@@ -362,6 +389,7 @@ pub mod ffi {
         ) -> Result<String>;
         type PrivateKey;
         type CosmosSDKMsgRaw;
+
         pub fn get_msg_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -464,11 +492,85 @@ pub mod ffi {
 
         pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String>;
 
-        pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result<String>;
+        // broadcast eth tx blocking
+        pub fn broadcast_eth_signed_raw_tx(
+            raw_tx: Vec<u8>,
+            web3api_url: &str,
+        ) -> Result<CronosTransactionReceiptRaw>;
+
+        // broadcast eth tx async
+        type CronosTx;
+        fn new_cronos_tx() -> Result<Box<CronosTx>>;
+        pub fn start_working(self: &'static mut CronosTx) -> bool;
+        pub fn stop_working(self: &'static mut CronosTx) -> bool;
+
+        pub fn broadcast_eth_signed_raw_tx_async(
+            self: &'static mut CronosTx,
+            raw_tx: Vec<u8>,
+            web3api_url: String,
+            jobid: String,
+        ) -> Result<()>;
+        pub fn get_broadcast_tx_async(
+            self: &'static mut CronosTx,
+        ) -> Result<CronosTransactionReceiptRaw>;
+        pub fn get_broadcast_tx_blocking(
+            self: &'static mut CronosTx,
+        ) -> Result<CronosTransactionReceiptRaw>;
 
     } // end of RUST block
 } // end of ffi block
 
+use ffi::CronosTransactionReceiptRaw;
+impl From<TransactionReceipt> for CronosTransactionReceiptRaw {
+    fn from(src: TransactionReceipt) -> Self {
+        ffi::CronosTransactionReceiptRaw {
+            success: false,
+            message: "".to_string(),
+            jobid: "".to_string(),
+            transaction_hash: src.transaction_hash.encode_hex(),
+            transaction_index: src.transaction_index.to_string(),
+            block_hash: match src.block_hash {
+                Some(block_hash) => block_hash.encode_hex(),
+                None => "".into(),
+            },
+            block_number: match src.block_number {
+                Some(block_number) => block_number.to_string(),
+                None => "".into(),
+            },
+            cumulative_gas_used: src.cumulative_gas_used.to_string(),
+            gas_used: match src.gas_used {
+                Some(gas_used) => gas_used.to_string(),
+                None => "".into(),
+            },
+            contract_address: match src.contract_address {
+                Some(contract_address) => contract_address.encode_hex(),
+                None => "".into(),
+            },
+            status: match src.status {
+                Some(v) => v.to_string(),
+                None => "".into(),
+            },
+            root: match src.root {
+                Some(v) => v.encode_hex(),
+                None => "".into(),
+            },
+            logs_bloom: src.logs_bloom.encode_hex(),
+            transaction_type: match src.transaction_type {
+                Some(v) => v.to_string(),
+                None => "".into(),
+            },
+            effective_gas_price: match src.effective_gas_price {
+                Some(v) => v.to_string(),
+                None => "".into(),
+            },
+            logs: src
+                .logs
+                .iter()
+                .map(|log| serde_json::to_string(&log).unwrap())
+                .collect(),
+        }
+    }
+}
 use ffi::CoinType;
 impl From<CoinType> for WalletCoin {
     fn from(coin: CoinType) -> Self {
@@ -971,22 +1073,12 @@ pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
 }
 
 /// broadcast signed cronos tx
-pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result<String> {
-    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(raw_tx, web3api_url);
-    match res {
-        Ok(txhash) => Ok(txhash),
-        Err(e) => match e {
-            EthError::BroadcastTxFail(message) => {
-                return Err(anyhow!(
-                    "broadcast_eth_signed_raw_tx_blocking error {}",
-                    message,
-                ));
-            }
-            _ => {
-                return Err(anyhow!("broadcast_eth_signed_raw_tx error {:?}", e));
-            }
-        },
-    }
+pub fn broadcast_eth_signed_raw_tx(
+    raw_tx: Vec<u8>,
+    web3api_url: &str,
+) -> Result<CronosTransactionReceiptRaw> {
+    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(raw_tx, web3api_url)?;
+    Ok(res.into())
 }
 
 /// create cronos tx info to sign
@@ -1001,4 +1093,46 @@ pub fn new_eth_tx_info() -> ffi::EthTxInfoRaw {
         gas_price_unit: ffi::EthAmount::WeiDecimal,
         data: vec![],
     }
+}
+
+pub struct CronosTx {
+    manager: CronosTxManager,
+}
+fn new_cronos_tx() -> Result<Box<CronosTx>> {
+    let manager = CronosTxManager::new()?;
+    Ok(Box::new(CronosTx { manager }))
+}
+
+impl CronosTx {
+    pub fn start_working(self: &'static mut CronosTx) -> bool {
+        self.manager.start_working()
+    }
+    pub fn stop_working(self: &'static mut CronosTx) -> bool {
+        self.manager.stop_working()
+    }
+    pub fn broadcast_eth_signed_raw_tx_async(
+        self: &'static mut CronosTx,
+        raw_tx: Vec<u8>,
+        web3api_url: String,
+        jobid: String,
+    ) -> Result<()> {
+        self.manager
+            .broadcast_eth_signed_raw_tx_async(raw_tx, web3api_url, jobid)
+    }
+
+    pub fn get_broadcast_tx_async(
+        self: &'static mut CronosTx,
+    ) -> Result<CronosTransactionReceiptRaw> {
+        self.manager.get_broadcast_tx_async()
+    }
+
+    pub fn get_broadcast_tx_blocking(
+        self: &'static mut CronosTx,
+    ) -> Result<CronosTransactionReceiptRaw> {
+        self.manager.get_broadcast_tx_blocking()
+    }
+}
+
+pub fn test_cpp_from_rust() {
+    println!("test_cpp_from_rust.................");
 }

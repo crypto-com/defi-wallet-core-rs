@@ -714,10 +714,10 @@ pub fn broadcast_contract_batch_transfer_tx_blocking(
 pub fn broadcast_eth_signed_raw_tx_blocking(
     raw_tx: Vec<u8>,
     web3api_url: &str,
-) -> Result<String, EthError> {
+) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_eth_signed_raw_tx(raw_tx, web3api_url))?;
-    Ok(result.transaction_hash.encode_hex())
+    Ok(result)
 }
 
 #[inline]
