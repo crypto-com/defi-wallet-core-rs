@@ -1,4 +1,4 @@
-use ethers::prelude::{Chain, Eip1559TransactionRequest, ParseChainError};
+use ethers::prelude::{Chain, Eip1559TransactionRequest, ParseChainError, ProviderError};
 use ethers::types::transaction::eip2718::TypedTransaction;
 use ethers::{
     prelude::{Address, LocalWallet, Signer, TransactionRequest, U256},
@@ -19,6 +19,8 @@ pub enum EthError {
     NodeUrl,
     #[error("Transaction sending failed")]
     SendTxFail,
+    #[error("Transaction sending failed: {0}")]
+    BroadcastTxFail(ProviderError),
     #[error("Transaction dropped from the mempool")]
     MempoolDrop,
     #[error("Failed to obtain an account balance")]
