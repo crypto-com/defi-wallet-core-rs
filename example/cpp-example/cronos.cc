@@ -42,44 +42,44 @@ void cronos_process() {
   cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
 
   rust::cxxbridge1::Box<ContractBalance> erc20_details =
-      erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A");
+      erc20_balance("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A");
   rust::cxxbridge1::String erc20_balance =
       get_contract_balance(myaddress1, *erc20_details, mycronosrpc);
   cout << "GOLD balance=" << erc20_balance.c_str() << endl;
 
 
   rust::cxxbridge1::Box<ContractBalance> erc721_details =
-      erc721("0x2305f3980715c9D247455504080b41072De38aB9");
+      erc721_balance("0x2305f3980715c9D247455504080b41072De38aB9");
   rust::cxxbridge1::String erc721_balance =
       get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
   cout << "GameItem balance=" << erc721_balance.c_str() << endl;
 
   rust::cxxbridge1::Box<ContractBalance> erc1155_details_0 =
-      erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "0");
+      erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "0");
   rust::cxxbridge1::String erc1155_balance_0 =
       get_contract_balance(myaddress1, *erc1155_details_0, mycronosrpc);
   cout << "Balance of GOLD=" << erc1155_balance_0.c_str() << endl;
 
   rust::cxxbridge1::Box<ContractBalance> erc1155_details_1 =
-      erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "1");
+      erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "1");
   rust::cxxbridge1::String erc1155_balance_1 =
       get_contract_balance(myaddress1, *erc1155_details_1, mycronosrpc);
   cout << "Balance of SILVER=" << erc1155_balance_1.c_str() << endl;
 
   rust::cxxbridge1::Box<ContractBalance> erc1155_details_2 =
-      erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "2");
+      erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "2");
   rust::cxxbridge1::String erc1155_balance_2 =
       get_contract_balance(myaddress1, *erc1155_details_2, mycronosrpc);
   cout << "Balance of THORS_HAMMER=" << erc1155_balance_2.c_str() << endl;
 
   rust::cxxbridge1::Box<ContractBalance> erc1155_details_3 =
-      erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "3");
+      erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "3");
   rust::cxxbridge1::String erc1155_balance_3 =
       get_contract_balance(myaddress1, *erc1155_details_3, mycronosrpc);
   cout << "Balance of SWORD=" << erc1155_balance_3.c_str() << endl;
 
   rust::cxxbridge1::Box<ContractBalance> erc1155_details_4 =
-      erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "4");
+      erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "4");
   rust::cxxbridge1::String erc1155_balance_4 =
       get_contract_balance(myaddress1, *erc1155_details_4, mycronosrpc);
   cout << "Balance of SHIELD=" << erc1155_balance_4.c_str() << endl;

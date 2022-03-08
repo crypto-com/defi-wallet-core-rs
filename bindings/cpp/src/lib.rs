@@ -520,9 +520,9 @@ pub mod ffi {
         pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result<String>;
 
         type ContractBalance;
-        fn erc20(contract_address: String) -> Box<ContractBalance>;
-        fn erc721(contract_address: String) -> Box<ContractBalance>;
-        fn erc1155(contract_address: String, token_id: String) -> Box<ContractBalance>;
+        fn erc20_balance(contract_address: String) -> Box<ContractBalance>;
+        fn erc721_balance(contract_address: String) -> Box<ContractBalance>;
+        fn erc1155_balance(contract_address: String, token_id: String) -> Box<ContractBalance>;
         pub fn get_contract_balance(
             address: &str,
             contract_details: &ContractBalance,
