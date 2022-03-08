@@ -64,19 +64,37 @@ pub enum ContractTransfer {
         to_address: String,
         amount_hex: String,
     },
-    Erc721 {
+    Erc721TransferFrom {
         contract_address: String,
-        token_id: String,
         from_address: String,
         to_address: String,
+        token_id: String,
     },
-    Erc1155 {
+    Erc721SafeTransferFrom {
         contract_address: String,
-        token_id: String,
         from_address: String,
         to_address: String,
+        token_id: String,
+    },
+    Erc721SafeTransferFromWithAdditionalData {
+        contract_address: String,
+        from_address: String,
+        to_address: String,
+        token_id: String,
+        additional_data: Vec<u8>,
+    },
+    Erc1155SafeTransferFrom {
+        contract_address: String,
+        from_address: String,
+        to_address: String,
+        token_id: String,
         amount_hex: String,
+        additional_data: Vec<u8>,
     },
+    // TODO:
+    // May support ERC-1155 function safeBatchTransferFrom individually. Since
+    // this batch function could transfer multiple token_ids (Vec<String>) and
+    // amounts (Vec<String>).
 }
 
 /// given the account address, it returns the amount of native token it owns
@@ -312,11 +330,35 @@ pub async fn broadcast_contract_transfer_tx(
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
-        ContractTransfer::Erc721 {
+        ContractTransfer::Erc721TransferFrom {
             contract_address,
-            token_id,
             from_address,
             to_address,
+            token_id,
+        } => {
+            let contract_address =
+                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
+            let token_id = U256::from_str(&token_id).map_err(|_| EthError::HexConversion)?;
+            let to_address = Address::from_str(&to_address).map_err(|_| EthError::HexConversion)?;
+            let from_address =
+                Address::from_str(&from_address).map_err(|_| EthError::HexConversion)?;
+            let contract = Erc721Contract::new(contract_address, Arc::new(client));
+            let pending_tx = contract
+                .transfer_from(from_address, to_address, token_id)
+                .send()
+                .await
+                .map_err(|_| EthError::SendTxFail)?
+                .await;
+            let tx_receipt = pending_tx
+                .map_err(|_| EthError::SendTxFail)?
+                .ok_or(EthError::MempoolDrop)?;
+            Ok(tx_receipt)
+        }
+        ContractTransfer::Erc721SafeTransferFrom {
+            contract_address,
+            from_address,
+            to_address,
+            token_id,
         } => {
             let contract_address =
                 Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
@@ -336,12 +378,43 @@ pub async fn broadcast_contract_transfer_tx(
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
-        ContractTransfer::Erc1155 {
+        ContractTransfer::Erc721SafeTransferFromWithAdditionalData {
             contract_address,
-            token_id,
             from_address,
             to_address,
+            token_id,
+            additional_data,
+        } => {
+            let contract_address =
+                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
+            let token_id = U256::from_str(&token_id).map_err(|_| EthError::HexConversion)?;
+            let to_address = Address::from_str(&to_address).map_err(|_| EthError::HexConversion)?;
+            let from_address =
+                Address::from_str(&from_address).map_err(|_| EthError::HexConversion)?;
+            let contract = Erc721Contract::new(contract_address, Arc::new(client));
+            let pending_tx = contract
+                .safe_transfer_from_with_additional_data(
+                    from_address,
+                    to_address,
+                    token_id,
+                    additional_data.into(),
+                )
+                .send()
+                .await
+                .map_err(|_| EthError::SendTxFail)?
+                .await;
+            let tx_receipt = pending_tx
+                .map_err(|_| EthError::SendTxFail)?
+                .ok_or(EthError::MempoolDrop)?;
+            Ok(tx_receipt)
+        }
+        ContractTransfer::Erc1155SafeTransferFrom {
+            contract_address,
+            from_address,
+            to_address,
+            token_id,
             amount_hex,
+            additional_data,
         } => {
             let contract_address =
                 Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
@@ -358,7 +431,7 @@ pub async fn broadcast_contract_transfer_tx(
                     to_address,
                     token_id,
                     amount,
-                    Default::default(),
+                    additional_data.into(),
                 )
                 .send()
                 .await

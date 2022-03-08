@@ -213,8 +213,10 @@ interface ContractBalance {
 interface ContractTransfer {
   Erc20Transfer(string contract_address, string to_address, string amount_hex);
   Erc20TransferFrom(string contract_address, string from_address, string to_address, string amount_hex);
-  Erc721(string contract_address, string token_id, string from_address, string to_address);
-  Erc1155(string contract_address, string token_id, string from_address, string to_address, string amount_hex);
+  Erc721TransferFrom(string contract_address, string from_address, string to_address, string token_id);
+  Erc721SafeTransferFrom(string contract_address, string from_address, string to_address, string token_id);
+  Erc721SafeTransferFromWithAdditionalData(string contract_address, string from_address, string to_address, string token_id, sequence<u8> additional_data);
+  Erc1155SafeTransferFrom(string contract_address, string from_address, string to_address, string token_id, string amount_hex, sequence<u8> additional_data);
 };
 
 dictionary Denom {
