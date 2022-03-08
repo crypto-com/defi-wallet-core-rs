@@ -33,7 +33,7 @@ impl GrpcClient {
         let owner = self
             .0
             .owner_blocking(denom_id, owner)?
-            .ok_or(anyhow::anyhow!("No Owner"))?;
+            .ok_or(anyhow!("No Owner"))?;
         Ok(Box::new(owner.into()))
     }
 
@@ -42,7 +42,7 @@ impl GrpcClient {
         let collection = self
             .0
             .collection_blocking(denom_id)?
-            .ok_or(anyhow::anyhow!("No Collection"))?;
+            .ok_or(anyhow!("No Collection"))?;
         Ok(Box::new(collection.into()))
     }
 
@@ -51,7 +51,7 @@ impl GrpcClient {
         let denom = self
             .0
             .denom_blocking(denom_id)?
-            .ok_or(anyhow::anyhow!("No denom"))?;
+            .ok_or(anyhow!("No denom"))?;
         Ok(Box::new(denom.into()))
     }
 
@@ -60,7 +60,7 @@ impl GrpcClient {
         let denom = self
             .0
             .denom_by_name_blocking(denom_name)?
-            .ok_or(anyhow::anyhow!("No denom"))?;
+            .ok_or(anyhow!("No denom"))?;
         Ok(Box::new(denom.into()))
     }
 
@@ -75,7 +75,7 @@ impl GrpcClient {
         let nft = self
             .0
             .nft_blocking(denom_id, token_id)?
-            .ok_or(anyhow::anyhow!("No Nft"))?;
+            .ok_or(anyhow!("No Nft"))?;
         Ok(Box::new(nft.into()))
     }
 }
@@ -1183,7 +1183,7 @@ fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>> {
 }
 
 impl CppLoginInfo {
-    pub fn sign_logininfo(&self, private_key: &PrivateKey) -> anyhow::Result<Vec<u8>> {
+    pub fn sign_logininfo(&self, private_key: &PrivateKey) -> Result<Vec<u8>> {
         let message = self.logininfo.msg.to_string();
         let secretkey = private_key.key.clone();
         let ret = secretkey
@@ -1192,7 +1192,7 @@ impl CppLoginInfo {
         Ok(ret)
     }
 
-    pub fn verify_logininfo(&self, signature: &[u8]) -> anyhow::Result<Vec<u8>> {
+    pub fn verify_logininfo(&self, signature: &[u8]) -> Result<Vec<u8>> {
         let sig: [u8; 65] = signature
             .try_into()
             .map_err(|_e| EthError::SignatureError)?;

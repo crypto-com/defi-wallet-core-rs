@@ -39,4 +39,4 @@ jobs:
       - name: Run wasm tests
         run: make wasm-ci-tests
       - name: Run cpp tests
-        run: make cpp-tests
+        run: make cpp-ci-tests
