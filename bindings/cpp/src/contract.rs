@@ -1,19 +1,23 @@
 use anyhow::Result;
 
+/// Wrapper of `ContractBalance`
 pub struct ContractBalance(defi_wallet_core_common::ContractBalance);
 
+/// Contruct a boxed erc20 ContractBalance struct
 pub fn erc20_balance(contract_address: String) -> Box<ContractBalance> {
     Box::new(ContractBalance(
         defi_wallet_core_common::ContractBalance::Erc20 { contract_address },
     ))
 }
 
+/// Contruct a boxed erc20 ContractBalance struct
 pub fn erc721_balance(contract_address: String) -> Box<ContractBalance> {
     Box::new(ContractBalance(
         defi_wallet_core_common::ContractBalance::Erc721 { contract_address },
     ))
 }
 
+/// Contruct a boxed erc20 ContractBalance struct
 pub fn erc1155_balance(contract_address: String, token_id: String) -> Box<ContractBalance> {
     Box::new(ContractBalance(
         defi_wallet_core_common::ContractBalance::Erc1155 {
