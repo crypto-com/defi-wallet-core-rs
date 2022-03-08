@@ -1106,7 +1106,6 @@ pub async fn broadcast_approval_contract(
 
 /// construct, sign and broadcast a transfer of a ERC20/ERC721/ERC1155 token
 #[wasm_bindgen]
-#[allow(clippy::too_many_arguments)]
 pub async fn broadcast_transfer_contract(
     details: ContractTransferDetails,
     web3_api_url: String,
