@@ -82,6 +82,7 @@ def test_basic(chainmain, cronos):
     )
 
     # Test cppexample
+    # TODO Pass input and assert output
     cmd = Path(__file__).parent / "../example/cpp-example/cppexample"
     output = subprocess.getoutput(str(cmd))
     print(output)
