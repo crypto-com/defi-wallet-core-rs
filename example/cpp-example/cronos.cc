@@ -21,6 +21,7 @@ void cronos_process() {
   auto nonce1 = get_eth_nonce(myaddress1.c_str(), mycronosrpc);
   char hdpath[100];
   int cointype = 60;
+  int chainid = 777; // defined in cronos-devnet.yaml
   snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
   rust::cxxbridge1::Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
   rust::cxxbridge1::Vec<uint8_t> data;
@@ -31,7 +32,7 @@ void cronos_process() {
   eth_tx_info.amount = "1";
   eth_tx_info.amount_unit = org::defi_wallet_core::EthAmount::EthDecimal;
   rust::Vec<::std::uint8_t> signedtx =
-    build_eth_signed_tx(eth_tx_info, 777, true, *privatekey);
+      build_eth_signed_tx(eth_tx_info, chainid, true, *privatekey);
   rust::cxxbridge1::String balance =
       get_eth_balance(myaddress1.c_str(), mycronosrpc);
   cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
