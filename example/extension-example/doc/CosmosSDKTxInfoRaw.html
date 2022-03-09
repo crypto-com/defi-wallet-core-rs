@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: CosmosSDKTxInfoRaw</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Class: CosmosSDKTxInfoRaw</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2><span class="attribs"><span class="type-signature"></span></span>CosmosSDKTxInfoRaw<span class="signature">(account_number, sequence_number, gas_limit, fee_amount, fee_denom, timeout_height, memo_note, chain_id, bech32hrp, coin_type)</span><span class="type-signature"></span></h2>
+        
+            <div class="class-description">the common transaction data needed for Cosmos SDK transactions
+(raw duplicate needed for Wasm -- TODO: unify common structures?)</div>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+    <h2>Constructor</h2>
+    
+
+    
+    <h4 class="name" id="CosmosSDKTxInfoRaw"><span class="type-signature"></span>new CosmosSDKTxInfoRaw<span class="signature">(account_number, sequence_number, gas_limit, fee_amount, fee_denom, timeout_height, memo_note, chain_id, bech32hrp, coin_type)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    constructor for JS -- TODO: some builder API wrapper?
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>account_number</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">BigInt</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>sequence_number</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">BigInt</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>gas_limit</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">BigInt</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>fee_amount</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">BigInt</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>fee_denom</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>timeout_height</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>memo_note</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">undefined</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>chain_id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>bech32hrp</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>coin_type</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1300">line 1300</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="CosmosSDKTxInfoRaw.html">CosmosSDKTxInfoRaw</a></dt>
+            <dd></dd>
+        </dl>
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id="account_number"><span class="type-signature"></span>account_number<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    global account number of the sender
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1323">line 1323</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="account_number"><span class="type-signature"></span>account_number<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    global account number of the sender
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1341">line 1341</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="bech32hrp"><span class="type-signature"></span>bech32hrp<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    bech32 human readable prefix
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1521">line 1521</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="bech32hrp"><span class="type-signature"></span>bech32hrp<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    bech32 human readable prefix
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1537">line 1537</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="chain_id"><span class="type-signature"></span>chain_id<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    the network chain id
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1497">line 1497</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="chain_id"><span class="type-signature"></span>chain_id<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    the network chain id
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1513">line 1513</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="coin_type"><span class="type-signature"></span>coin_type<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    the coin type to use
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1545">line 1545</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="coin_type"><span class="type-signature"></span>coin_type<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    the coin type to use
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1553">line 1553</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="fee_amount"><span class="type-signature"></span>fee_amount<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    the amount fee to be paid (gas_limit * gas_price)
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1404">line 1404</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="fee_amount"><span class="type-signature"></span>fee_amount<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    the amount fee to be paid (gas_limit * gas_price)
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1422">line 1422</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="fee_denom"><span class="type-signature"></span>fee_denom<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    the fee's denomination
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1431">line 1431</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="fee_denom"><span class="type-signature"></span>fee_denom<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    the fee's denomination
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1447">line 1447</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="gas_limit"><span class="type-signature"></span>gas_limit<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    the maximum gas limit
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1377">line 1377</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="gas_limit"><span class="type-signature"></span>gas_limit<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    the maximum gas limit
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1395">line 1395</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="memo_note"><span class="type-signature"></span>memo_note<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    optional memo
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1469">line 1469</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="memo_note"><span class="type-signature"></span>memo_note<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    optional memo
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1489">line 1489</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="sequence_number"><span class="type-signature"></span>sequence_number<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    equivalent of "account nonce"
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1350">line 1350</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="sequence_number"><span class="type-signature"></span>sequence_number<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    equivalent of "account nonce"
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1368">line 1368</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="timeout_height"><span class="type-signature"></span>timeout_height<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    transaction timeout
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1455">line 1455</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="timeout_height"><span class="type-signature"></span>timeout_height<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    transaction timeout
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="defi_wallet_core_wasm.js.html">defi_wallet_core_wasm.js</a>, <a href="defi_wallet_core_wasm.js.html#line1463">line 1463</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="ContractApprovalDetails.html">ContractApprovalDetails</a></li><li><a href="ContractTransferDetails.html">ContractTransferDetails</a></li><li><a href="CosmosSDKTxInfoRaw.html">CosmosSDKTxInfoRaw</a></li><li><a href="GrpcWebClient.html">GrpcWebClient</a></li><li><a href="IntoUnderlyingByteSource.html">IntoUnderlyingByteSource</a></li><li><a href="IntoUnderlyingSink.html">IntoUnderlyingSink</a></li><li><a href="IntoUnderlyingSource.html">IntoUnderlyingSource</a></li><li><a href="PipeOptions.html">PipeOptions</a></li><li><a href="PrivateKey.html">PrivateKey</a></li><li><a href="QueuingStrategy.html">QueuingStrategy</a></li><li><a href="ReadableStreamGetReaderOptions.html">ReadableStreamGetReaderOptions</a></li><li><a href="Wallet.html">Wallet</a></li></ul><h3>Global</h3><ul><li><a href="global.html#broadcast_approval_contract">broadcast_approval_contract</a></li><li><a href="global.html#broadcast_transfer_contract">broadcast_transfer_contract</a></li><li><a href="global.html#broadcast_transfer_eth">broadcast_transfer_eth</a></li><li><a href="global.html#broadcast_tx">broadcast_tx</a></li><li><a href="global.html#bytes2hex">bytes2hex</a></li><li><a href="global.html#CoinType">CoinType</a></li><li><a href="global.html#ContractType">ContractType</a></li><li><a href="global.html#CosmosHub">CosmosHub</a></li><li><a href="global.html#CronosMainnet">CronosMainnet</a></li><li><a href="global.html#CryptoOrgMainnet">CryptoOrgMainnet</a></li><li><a href="global.html#CryptoOrgTestnet">CryptoOrgTestnet</a></li><li><a href="global.html#Eighteen">Eighteen</a></li><li><a href="global.html#get_distribution_set_withdraw_address_signed_tx">get_distribution_set_withdraw_address_signed_tx</a></li><li><a href="global.html#get_distribution_withdraw_reward_signed_tx">get_distribution_withdraw_reward_signed_tx</a></li><li><a href="global.html#get_ibc_transfer_signed_tx">get_ibc_transfer_signed_tx</a></li><li><a href="global.html#get_nft_burn_signed_tx">get_nft_burn_signed_tx</a></li><li><a href="global.html#get_nft_edit_signed_tx">get_nft_edit_signed_tx</a></li><li><a href="global.html#get_nft_issue_denom_signed_tx">get_nft_issue_denom_signed_tx</a></li><li><a href="global.html#get_nft_mint_signed_tx">get_nft_mint_signed_tx</a></li><li><a href="global.html#get_nft_transfer_signed_tx">get_nft_transfer_signed_tx</a></li><li><a href="global.html#get_single_bank_send_signdoc">get_single_bank_send_signdoc</a></li><li><a href="global.html#get_single_bank_send_signed_tx">get_single_bank_send_signed_tx</a></li><li><a href="global.html#get_staking_delegate_signed_tx">get_staking_delegate_signed_tx</a></li><li><a href="global.html#get_staking_redelegate_signed_tx">get_staking_redelegate_signed_tx</a></li><li><a href="global.html#get_staking_unbond_signed_tx">get_staking_unbond_signed_tx</a></li><li><a href="global.html#MnemonicWordCount">MnemonicWordCount</a></li><li><a href="global.html#query_account_balance">query_account_balance</a></li><li><a href="global.html#query_account_contract_token_balance">query_account_contract_token_balance</a></li><li><a href="global.html#query_account_details">query_account_details</a></li><li><a href="global.html#query_account_eth_balance">query_account_eth_balance</a></li><li><a href="global.html#Twelve">Twelve</a></li><li><a href="global.html#TwentyFour">TwentyFour</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Thu Mar 10 2022 04:52:19 GMT+0800 (中国标准时间)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
