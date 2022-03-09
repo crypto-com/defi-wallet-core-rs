@@ -1,0 +1,10 @@
+{
+  "name": "Extension test!",
+  "version": "1.0",
+  "manifest_version": 2,
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {},
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+}
