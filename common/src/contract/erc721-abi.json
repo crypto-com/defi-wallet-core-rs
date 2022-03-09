@@ -232,7 +232,7 @@
 				"type": "bytes"
 			}
 		],
-		"name": "safeTransferFromWithAdditionalData",
+		"name": "safeTransferFrom",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"

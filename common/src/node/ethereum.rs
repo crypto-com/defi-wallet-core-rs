@@ -393,7 +393,7 @@ pub async fn broadcast_contract_transfer_tx(
                 Address::from_str(&from_address).map_err(|_| EthError::HexConversion)?;
             let contract = Erc721Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
-                .safe_transfer_from_with_additional_data(
+                .safe_transfer_from_with_data(
                     from_address,
                     to_address,
                     token_id,
