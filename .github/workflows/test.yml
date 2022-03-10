@@ -23,8 +23,6 @@ jobs:
           # github don't pass secrets for pull request from fork repos,
           # in that case the push is disabled naturally.
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
-      - name: Run python tests
-        run: make python-tests
       - name: 'Tar debug files'
         if: failure()
         run: tar cfz debug_files.tar.gz -C /tmp/pytest-of-runner .

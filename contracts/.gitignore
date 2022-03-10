@@ -1,0 +1,8 @@
+/node_modules
+/typechain
+/artifacts/*
+/cache
+
+!/artifacts
+/artifacts/*
+!/artifacts/contracts
