@@ -2,94 +2,136 @@ use super::{ffi, PrivateKey};
 use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{transaction, Client};
 use defi_wallet_core_proto as proto;
-use proto::chainmain::nft::v1::{BaseNft, Collection, Denom, IdCollection, Owner};
+use std::fmt;
 
 /// Wrapper of proto::chainmain::nft::v1::Denom
-///
-/// For now, types used as extern Rust types are required to be defined by the same crate that
-/// contains the bridge using them. This restriction may be lifted in the future.
-/// Check https://cxx.rs/extern-rust.html
-pub struct DenomRaw {
-    pub id: String,
-    pub name: String,
-    pub schema: String,
-    pub creator: String,
+/// It is a rust opaque type, internals can not be seen in C++
+pub struct Denom(proto::chainmain::nft::v1::Denom);
+
+impl fmt::Display for Denom {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{:?}",
+            serde_json::to_string(&self.0).map_err(|_| fmt::Error)?
+        )
+    }
 }
 
-impl From<Denom> for DenomRaw {
-    fn from(d: Denom) -> DenomRaw {
-        DenomRaw {
-            id: d.id,
-            name: d.name,
-            schema: d.schema,
-            creator: d.creator,
-        }
+impl Denom {
+    pub fn id(&self) -> String {
+        self.0.id.clone()
+    }
+    pub fn name(&self) -> String {
+        self.0.name.clone()
+    }
+    pub fn schema(&self) -> String {
+        self.0.schema.clone()
+    }
+    pub fn creator(&self) -> String {
+        self.0.creator.clone()
     }
 }
 
 /// Wrapper of proto::chainmain::nft::v1::BaseNft
-///
-/// For now, types used as extern Rust types are required to be defined by the same crate that
-/// contains the bridge using them. This restriction may be lifted in the future.
-/// Check https://cxx.rs/extern-rust.html
-pub struct BaseNftRaw {
-    pub id: String,
-    pub name: String,
-    pub uri: String,
-    pub data: String,
-    pub owner: String,
+/// It is a rust opaque type, internals can not be seen in C++
+pub struct BaseNft(proto::chainmain::nft::v1::BaseNft);
+
+impl BaseNft {
+    pub fn id(&self) -> String {
+        self.0.id.clone()
+    }
+    pub fn name(&self) -> String {
+        self.0.name.clone()
+    }
+    pub fn uri(&self) -> String {
+        self.0.uri.clone()
+    }
+    pub fn data(&self) -> String {
+        self.0.data.clone()
+    }
+    pub fn owner(&self) -> String {
+        self.0.owner.clone()
+    }
 }
 
-impl From<BaseNft> for BaseNftRaw {
-    fn from(d: BaseNft) -> BaseNftRaw {
-        BaseNftRaw {
-            id: d.id,
-            name: d.name,
-            uri: d.uri,
-            data: d.data,
-            owner: d.owner,
-        }
+impl fmt::Display for BaseNft {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{:?}",
+            serde_json::to_string(&self.0).map_err(|_| fmt::Error)?
+        )
     }
 }
 
 /// Wrapper of proto::chainmain::nft::v1::Owner
-///
-/// For now, types used as extern Rust types are required to be defined by the same crate that
-/// contains the bridge using them. This restriction may be lifted in the future.
-/// Check https://cxx.rs/extern-rust.html
-pub struct OwnerRaw {
-    pub address: String,
-    pub id_collections: Vec<IdCollection>,
+/// It is a rust opaque type, internals can not be seen in C++
+pub struct Owner(proto::chainmain::nft::v1::Owner);
+impl fmt::Display for Owner {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{:?}",
+            serde_json::to_string(&self.0).map_err(|_| fmt::Error)?
+        )
+    }
 }
 
-impl From<Owner> for OwnerRaw {
-    fn from(d: Owner) -> OwnerRaw {
-        OwnerRaw {
-            address: d.address,
-            id_collections: d.id_collections,
-        }
+pub struct IdCollection(proto::chainmain::nft::v1::IdCollection);
+impl Owner {
+    pub fn address(&self) -> String {
+        self.0.address.clone()
+    }
+    pub fn id_collections(&self) -> Vec<IdCollection> {
+        self.0
+            .id_collections
+            .clone()
+            .into_iter()
+            .map(|v| IdCollection(v))
+            .collect()
+    }
+}
+impl IdCollection {
+    pub fn denom_id(&self) -> String {
+        self.0.denom_id.clone()
+    }
+    pub fn token_ids(&self) -> Vec<String> {
+        self.0.token_ids.clone()
     }
 }
 
 /// Wrapper of proto::chainmain::nft::v1::Collection
-///
-/// For now, types used as extern Rust types are required to be defined by the same crate that
-/// contains the bridge using them. This restriction may be lifted in the future.
-/// Check https://cxx.rs/extern-rust.html
-pub struct CollectionRaw {
-    pub denom: Option<Denom>,
-    pub nfts: Vec<BaseNft>,
-}
-
-impl From<Collection> for CollectionRaw {
-    fn from(d: Collection) -> CollectionRaw {
-        CollectionRaw {
-            denom: d.denom,
-            nfts: d.nfts,
-        }
+/// It is a rust opaque type, internals can not be seen in C++
+pub struct Collection(proto::chainmain::nft::v1::Collection);
+impl fmt::Display for Collection {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{:?}",
+            serde_json::to_string(&self.0).map_err(|_| fmt::Error)?
+        )
     }
 }
+impl Collection {
+    pub fn denom(&self) -> Result<Box<Denom>> {
+        match self.0.denom.clone() {
+            Some(d) => Ok(Box::new(Denom(d))),
+            None => Err(anyhow!("No Denom")),
+        }
+    }
+    pub fn nfts(&self) -> Vec<BaseNft> {
+        self.0
+            .nfts
+            .clone()
+            .into_iter()
+            .map(|v| BaseNft(v))
+            .collect()
+    }
+}
+
 /// Wrapper of `Client`
+/// It is a rust opaque type, internals can not be seen in C++
 pub struct GrpcClient(Client);
 
 /// Create a new grpc client
@@ -107,54 +149,54 @@ impl GrpcClient {
     }
 
     /// Owner queries the NFTs of the specified owner
-    pub fn owner(&self, denom_id: String, owner: String) -> Result<Box<OwnerRaw>> {
+    pub fn owner(&self, denom_id: String, owner: String) -> Result<Box<Owner>> {
         let owner = self
             .0
             .owner_blocking(denom_id, owner)?
-            .ok_or_else(|| anyhow!("No Owner"))?;
-        Ok(Box::new(owner.into()))
+            .ok_or(anyhow!("No Owner"))?;
+        Ok(Box::new(Owner(owner)))
     }
 
     /// Collection queries the NFTs of the specified denom
-    pub fn collection(&self, denom_id: String) -> Result<Box<CollectionRaw>> {
+    pub fn collection(&self, denom_id: String) -> Result<Box<Collection>> {
         let collection = self
             .0
             .collection_blocking(denom_id)?
-            .ok_or_else(|| anyhow!("No Collection"))?;
-        Ok(Box::new(collection.into()))
+            .ok_or(anyhow!("No Collection"))?;
+        Ok(Box::new(Collection(collection)))
     }
 
     /// Denom queries the definition of a given denom
-    pub fn denom(&self, denom_id: String) -> Result<Box<DenomRaw>> {
+    pub fn denom(&self, denom_id: String) -> Result<Box<Denom>> {
         let denom = self
             .0
             .denom_blocking(denom_id)?
-            .ok_or_else(|| anyhow!("No denom"))?;
-        Ok(Box::new(denom.into()))
+            .ok_or(anyhow!("No denom"))?;
+        Ok(Box::new(Denom(denom)))
     }
 
     /// DenomByName queries the definition of a given denom by name
-    pub fn denom_by_name(&self, denom_name: String) -> Result<Box<DenomRaw>> {
+    pub fn denom_by_name(&self, denom_name: String) -> Result<Box<Denom>> {
         let denom = self
             .0
             .denom_by_name_blocking(denom_name)?
-            .ok_or_else(|| anyhow!("No denom"))?;
-        Ok(Box::new(denom.into()))
+            .ok_or(anyhow!("No denom"))?;
+        Ok(Box::new(Denom(denom)))
     }
 
     /// Denoms queries all the denoms
-    pub fn denoms(&self) -> Result<Vec<DenomRaw>> {
+    pub fn denoms(&self) -> Result<Vec<Denom>> {
         let denoms = self.0.denoms_blocking()?;
-        Ok(denoms.into_iter().map(|v| v.into()).collect())
+        Ok(denoms.into_iter().map(|v| Denom(v)).collect())
     }
 
     /// NFT queries the NFT for the given denom and token ID
-    pub fn nft(&self, denom_id: String, token_id: String) -> Result<Box<BaseNftRaw>> {
+    pub fn nft(&self, denom_id: String, token_id: String) -> Result<Box<BaseNft>> {
         let nft = self
             .0
             .nft_blocking(denom_id, token_id)?
-            .ok_or_else(|| anyhow!("No Nft"))?;
-        Ok(Box::new(nft.into()))
+            .ok_or(anyhow!("No Nft"))?;
+        Ok(Box::new(BaseNft(nft)))
     }
 }
 

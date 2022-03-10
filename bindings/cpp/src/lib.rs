@@ -436,16 +436,36 @@ pub mod ffi {
         type GrpcClient;
         fn new_grpc_client(grpc_url: String) -> Result<Box<GrpcClient>>;
         fn supply(self: &GrpcClient, denom_id: String, owner: String) -> Result<u64>;
-        type OwnerRaw;
-        pub fn owner(self: &GrpcClient, denom_id: String, owner: String) -> Result<Box<OwnerRaw>>;
-        type CollectionRaw;
-        pub fn collection(self: &GrpcClient, denom_id: String) -> Result<Box<CollectionRaw>>;
-        type DenomRaw;
-        pub fn denom(self: &GrpcClient, denom_id: String) -> Result<Box<DenomRaw>>;
-        pub fn denom_by_name(self: &GrpcClient, denom_name: String) -> Result<Box<DenomRaw>>;
-        fn denoms(self: &GrpcClient) -> Result<Vec<DenomRaw>>;
-        type BaseNftRaw;
-        fn nft(self: &GrpcClient, denom_id: String, token_id: String) -> Result<Box<BaseNftRaw>>;
+        type Owner;
+        pub fn to_string(self: &Owner) -> String;
+        pub fn address(self: &Owner) -> String;
+        type IdCollection;
+        pub fn id_collections(self: &Owner) -> Vec<IdCollection>;
+        pub fn denom_id(self: &IdCollection) -> String;
+        pub fn token_ids(self: &IdCollection) -> Vec<String>;
+        pub fn owner(self: &GrpcClient, denom_id: String, owner: String) -> Result<Box<Owner>>;
+        type Collection;
+        pub fn to_string(self: &Collection) -> String;
+        pub fn denom(self: &Collection) -> Result<Box<Denom>>;
+        pub fn nfts(self: &Collection) -> Vec<BaseNft>;
+        pub fn collection(self: &GrpcClient, denom_id: String) -> Result<Box<Collection>>;
+        type Denom;
+        pub fn id(self: &Denom) -> String;
+        pub fn name(self: &Denom) -> String;
+        pub fn schema(self: &Denom) -> String;
+        pub fn creator(self: &Denom) -> String;
+        pub fn to_string(self: &Denom) -> String;
+        pub fn denom(self: &GrpcClient, denom_id: String) -> Result<Box<Denom>>;
+        pub fn denom_by_name(self: &GrpcClient, denom_name: String) -> Result<Box<Denom>>;
+        fn denoms(self: &GrpcClient) -> Result<Vec<Denom>>;
+        type BaseNft;
+        pub fn id(self: &BaseNft) -> String;
+        pub fn name(self: &BaseNft) -> String;
+        pub fn uri(self: &BaseNft) -> String;
+        pub fn data(self: &BaseNft) -> String;
+        pub fn owner(self: &BaseNft) -> String;
+        pub fn to_string(self: &BaseNft) -> String;
+        fn nft(self: &GrpcClient, denom_id: String, token_id: String) -> Result<Box<BaseNft>>;
         fn get_staking_delegate_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,

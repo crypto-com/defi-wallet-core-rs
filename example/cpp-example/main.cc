@@ -2,16 +2,21 @@
 #include "cxx.h"
 #include "lib.rs.h"
 #include <cassert>
+#include <chrono>
 #include <iostream>
+#include <thread>
+
 void cronos_process();
 using namespace std;
 using namespace org::defi_wallet_core;
+using namespace std::this_thread; // sleep_for, sleep_until
+using namespace std::chrono;      // nanoseconds, system_clock, seconds
 CosmosSDKTxInfoRaw build_txinfo() {
   CosmosSDKTxInfoRaw ret;
   ret.account_number = 0;
   ret.sequence_number = 0;
-  ret.gas_limit = 100000;
-  ret.fee_amount = 1000000;
+  ret.gas_limit = 5000000;
+  ret.fee_amount = 25000000000;
   ret.fee_denom = "basecro";
   ret.timeout_height = 0;
   ret.memo_note = "";
@@ -38,6 +43,97 @@ createWallet(rust::cxxbridge1::String mymnemonics) {
     cout << "export MYMNEMONICS=<your mnemonics>" << endl;
     throw e;
   }
+}
+
+void test_chainmain_nft(CosmosSDKTxInfoRaw tx_info, PrivateKey &privatekey,
+                        string myfrom, string myto) {
+
+  string myservertendermint = getEnv("MYTENDERMINTRPC");
+  string mygrpc = getEnv("MYGRPC");
+
+  // chainmain nft tests
+  tx_info.sequence_number += 1;
+  auto denom_id = "testdenomid";
+  auto denom_name = "testdenomname";
+  auto schema = R""""(
+                                {
+                                "title":"Asset Metadata",
+                                "type":"object",
+                                "properties":{
+                                "name":{
+                                "type":"string",
+                                "description":"testidentity"
+                              },
+                                "description":{
+                                "type":"string",
+                                "description":"testdescription"
+                              },
+                                "image":{
+                                "type":"string",
+                                "description":"testdescription"
+                              }
+                              }
+                              })"""";
+
+  rust::cxxbridge1::Vec<uint8_t> signedtx = get_nft_issue_denom_signed_tx(
+      tx_info, privatekey, denom_id, denom_name, schema);
+
+  rust::cxxbridge1::String resp = broadcast_tx(myservertendermint, signedtx);
+  cout << "issue response: " << resp << endl;
+
+  tx_info.sequence_number += 1;
+  signedtx = get_nft_mint_signed_tx(tx_info, privatekey, "testtokenid",
+                                    "testdenomid", "", "testuri", "", myto);
+  resp = broadcast_tx(myservertendermint, signedtx);
+  cout << "mint response: " << resp << endl;
+
+  sleep_for(seconds(3));
+  rust::cxxbridge1::Box<GrpcClient> grpc_client = new_grpc_client(mygrpc);
+
+  rust::cxxbridge1::Vec<Denom> denoms = grpc_client->denoms();
+  assert(denoms.size() == 1);
+  assert(denoms[0].id() == "testdenomid");
+  assert(denoms[0].name() == "testdenomname");
+  assert(denoms[0].creator() == myfrom);
+
+  rust::cxxbridge1::Box<BaseNft> nft =
+      grpc_client->nft("testdenomid", "testtokenid");
+  cout << "nft: " << nft->to_string() << endl;
+  rust::cxxbridge1::Box<Collection> collection =
+      grpc_client->collection("testdenomid");
+  cout << "collection: " << collection->to_string() << endl;
+  rust::cxxbridge1::Box<Owner> owner = grpc_client->owner("testdenomid", myto);
+  cout << "owner: " << owner->to_string() << endl;
+
+  tx_info.sequence_number += 1;
+  signedtx = get_nft_transfer_signed_tx(tx_info, privatekey, "testtokenid",
+                                        "testdenomid", myfrom);
+  resp = broadcast_tx(myservertendermint, signedtx);
+  cout << "transfer response: " << resp << endl;
+  nft = grpc_client->nft("testdenomid", "testtokenid");
+  cout << "nft: " << nft->to_string() << endl;
+  owner = grpc_client->owner("testdenomid", myto);
+  cout << "owner: " << owner->to_string() << endl;
+
+  tx_info.sequence_number += 1;
+  signedtx =
+      get_nft_edit_signed_tx(tx_info, privatekey, "testtokenid", "testdenomid",
+                             "newname", "newuri", "newdata");
+  resp = broadcast_tx(myservertendermint, signedtx);
+  cout << "edit response: " << resp << endl;
+  nft = grpc_client->nft("testdenomid", "testtokenid");
+  cout << "nft: " << nft->to_string() << endl;
+  int supply = grpc_client->supply("testdenomid", myto);
+  cout << "supply: " << supply << endl;
+
+  tx_info.sequence_number += 1;
+  signedtx =
+      get_nft_burn_signed_tx(tx_info, privatekey, "testtokenid", "testdenomid");
+  resp = broadcast_tx(myservertendermint, signedtx);
+  cout << "burn response: " << resp << endl;
+  collection =
+      grpc_client->collection("testdenomid");
+  cout << "collection: " << collection->to_string() << endl;
 }
 
 void process() {
@@ -84,14 +180,13 @@ void process() {
   rust::cxxbridge1::Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
   rust::cxxbridge1::Vec<uint8_t> signedtx =
       get_single_bank_send_signed_tx(tx_info, *privatekey, myto, 1, "basecro");
-  broadcast_tx(myservertendermint, signedtx);
+  rust::cxxbridge1::String resp = broadcast_tx(myservertendermint, signedtx);
 
-  rust::cxxbridge1::Box<GrpcClient> grpc_client = new_grpc_client(mygrpc);
-  // grpc_client->supply("hello", "world");
+  // chainmain nft tests
+  test_chainmain_nft(tx_info, *privatekey, myfrom, myto);
 
-  rust::cxxbridge1::Vec<DenomRaw> denoms = grpc_client->denoms();
-  cout << denoms.size() << endl;
 }
+
 
 void test_login() {
   cout << "testing login" << endl;
