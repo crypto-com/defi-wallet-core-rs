@@ -141,6 +141,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="lib.rs.cc" />
+    <ClCompile Include="nft.rs.cc" />
     <ClCompile Include="main.cc" />
     <ClCompile Include="cronos.cc" />
   </ItemGroup>
