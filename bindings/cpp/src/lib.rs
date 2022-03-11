@@ -1031,8 +1031,21 @@ pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
 
 /// broadcast signed cronos tx
 pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result<String> {
-    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(raw_tx, web3api_url)?;
-    Ok(res)
+    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(raw_tx, web3api_url);
+    match res {
+        Ok(txhash) => Ok(txhash),
+        Err(e) => match e {
+            EthError::BroadcastTxFail(message) => {
+                return Err(anyhow!(
+                    "broadcast_eth_signed_raw_tx_blocking error {}",
+                    message,
+                ));
+            }
+            _ => {
+                return Err(anyhow!("broadcast_eth_signed_raw_tx error {:?}", e));
+            }
+        },
+    }
 }
 
 /// create cronos tx info to sign
