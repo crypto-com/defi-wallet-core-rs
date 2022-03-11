@@ -6,6 +6,7 @@
 #include <iostream>
 #include <thread>
 
+#include "nft.rs.h"
 void cronos_process();
 using namespace std;
 using namespace org::defi_wallet_core;
@@ -92,18 +93,18 @@ void test_chainmain_nft(CosmosSDKTxInfoRaw tx_info, PrivateKey &privatekey,
 
   rust::cxxbridge1::Vec<Denom> denoms = grpc_client->denoms();
   assert(denoms.size() == 1);
-  assert(denoms[0].id() == "testdenomid");
-  assert(denoms[0].name() == "testdenomname");
-  assert(denoms[0].creator() == myfrom);
+  assert(denoms[0].id == "testdenomid");
+  assert(denoms[0].name == "testdenomname");
+  assert(denoms[0].creator == myfrom);
 
-  rust::cxxbridge1::Box<BaseNft> nft =
+  BaseNft nft =
       grpc_client->nft("testdenomid", "testtokenid");
-  cout << "nft: " << nft->to_string() << endl;
-  rust::cxxbridge1::Box<Collection> collection =
+  cout << "nft: " << nft.to_string() << endl;
+  Collection collection =
       grpc_client->collection("testdenomid");
-  cout << "collection: " << collection->to_string() << endl;
-  rust::cxxbridge1::Box<Owner> owner = grpc_client->owner("testdenomid", myto);
-  cout << "owner: " << owner->to_string() << endl;
+  cout << "collection: " << collection.to_string() << endl;
+  Owner owner = grpc_client->owner("testdenomid", myto);
+  cout << "owner: " << owner.to_string() << endl;
 
   tx_info.sequence_number += 1;
   signedtx = get_nft_transfer_signed_tx(tx_info, privatekey, "testtokenid",
@@ -111,9 +112,9 @@ void test_chainmain_nft(CosmosSDKTxInfoRaw tx_info, PrivateKey &privatekey,
   resp = broadcast_tx(myservertendermint, signedtx);
   cout << "transfer response: " << resp << endl;
   nft = grpc_client->nft("testdenomid", "testtokenid");
-  cout << "nft: " << nft->to_string() << endl;
+  cout << "nft: " << nft.to_string() << endl;
   owner = grpc_client->owner("testdenomid", myto);
-  cout << "owner: " << owner->to_string() << endl;
+  cout << "owner: " << owner.to_string() << endl;
 
   tx_info.sequence_number += 1;
   signedtx =
@@ -122,7 +123,7 @@ void test_chainmain_nft(CosmosSDKTxInfoRaw tx_info, PrivateKey &privatekey,
   resp = broadcast_tx(myservertendermint, signedtx);
   cout << "edit response: " << resp << endl;
   nft = grpc_client->nft("testdenomid", "testtokenid");
-  cout << "nft: " << nft->to_string() << endl;
+  cout << "nft: " << nft.to_string() << endl;
   int supply = grpc_client->supply("testdenomid", myto);
   cout << "supply: " << supply << endl;
 
@@ -133,7 +134,7 @@ void test_chainmain_nft(CosmosSDKTxInfoRaw tx_info, PrivateKey &privatekey,
   cout << "burn response: " << resp << endl;
   collection =
       grpc_client->collection("testdenomid");
-  cout << "collection: " << collection->to_string() << endl;
+  cout << "collection: " << collection.to_string() << endl;
 }
 
 void process() {

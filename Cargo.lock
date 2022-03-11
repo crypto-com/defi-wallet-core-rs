@@ -948,6 +948,7 @@ dependencies = [
  "cxx-build",
  "defi-wallet-core-common",
  "defi-wallet-core-proto",
+ "serde",
  "serde_json",
  "siwe",
 ]
