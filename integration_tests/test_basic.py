@@ -86,3 +86,5 @@ def test_basic(chainmain, cronos):
     cmd = Path(__file__).parent / "../example/cpp-example/cppexample"
     output = subprocess.getoutput(str(cmd))
     print(output)
+    if "Assertion failed" in output:
+        assert False

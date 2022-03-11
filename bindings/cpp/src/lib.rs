@@ -10,7 +10,6 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 mod nft;
-pub use nft::nft_ffi;
 use nft::*;
 
 mod contract;
