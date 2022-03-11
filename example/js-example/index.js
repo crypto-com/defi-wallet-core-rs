@@ -1,8 +1,10 @@
 import * as wasm from "@crypto-com/defi-wallet-core-wasm";
 
 const wallet = new wasm.Wallet();
-const address = wallet.get_default_address(wasm.CoinType.CosmosHub);
-console.log(address);
+const cosmos_hub_address = wallet.get_default_address(wasm.CoinType.CosmosHub);
+console.log(`Wallet Cosmos Hub address: ${cosmos_hub_address}`);
+const eth_address = wallet.get_default_address(wasm.CoinType.Ethereum);
+console.log(`Wallet Ethereum address: ${eth_address}`);
 
 const pubkey = new Uint8Array([3, 127, 12, 203, 79, 3, 211, 37, 157, 178, 152, 47, 245, 142, 167, 89, 207, 9, 218, 144, 20, 147, 186, 114, 170, 114, 137, 201, 226, 149, 141, 113, 14]);
 const account_number = BigInt(1);
