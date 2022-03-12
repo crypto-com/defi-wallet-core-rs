@@ -273,6 +273,240 @@ impl From<CosmosSDKTxInfoRaw> for CosmosSDKTxInfo {
     }
 }
 
+/// Cosmos message wrapper
+#[derive(Clone)]
+#[wasm_bindgen]
+pub struct CosmosMsg {
+    msg: CosmosSDKMsg,
+}
+
+#[wasm_bindgen]
+impl CosmosMsg {
+    /// construct BankSend message
+    #[wasm_bindgen]
+    pub fn build_bank_send_msg(recipient_address: String, amount: u64, denom: String) -> Self {
+        Self {
+            msg: CosmosSDKMsg::BankSend {
+                recipient_address,
+                amount: SingleCoin::Other {
+                    amount: amount.to_string(),
+                    denom,
+                },
+            },
+        }
+    }
+
+    /// construct NftIssueDenom message
+    #[wasm_bindgen]
+    pub fn build_nft_issue_denom_msg(id: String, name: String, schema: String) -> Self {
+        Self {
+            msg: CosmosSDKMsg::NftIssueDenom {
+                id: id,
+                name: name,
+                schema: schema,
+            },
+        }
+    }
+
+    /// construct NftMint message
+    #[wasm_bindgen]
+    pub fn build_nft_mint_msg(
+        id: String,
+        denom_id: String,
+        name: String,
+        uri: String,
+        data: String,
+        recipient: String,
+    ) -> Self {
+        Self {
+            msg: CosmosSDKMsg::NftMint {
+                id,
+                denom_id,
+                name,
+                uri,
+                data,
+                recipient,
+            },
+        }
+    }
+
+    /// construct NftEdit message
+    #[wasm_bindgen]
+    pub fn build_nft_edit_msg(
+        id: String,
+        denom_id: String,
+        name: String,
+        uri: String,
+        data: String,
+    ) -> Self {
+        Self {
+            msg: CosmosSDKMsg::NftEdit {
+                id,
+                denom_id,
+                name,
+                uri,
+                data,
+            },
+        }
+    }
+
+    /// construct NftTransfer message
+    pub fn build_nft_transfer_msg(id: String, denom_id: String, recipient: String) -> Self {
+        Self {
+            msg: CosmosSDKMsg::NftTransfer {
+                id,
+                denom_id,
+                recipient,
+            },
+        }
+    }
+
+    /// construct NftBurn message
+    pub fn build_nft_burn_msg(id: String, denom_id: String) -> Self {
+        Self {
+            msg: CosmosSDKMsg::NftBurn { id, denom_id },
+        }
+    }
+
+    /// construct StakingBeginRedelegate message
+    pub fn build_staking_begin_redelegate_msg(
+        validator_src_address: String,
+        validator_dst_address: String,
+        amount: u64,
+        denom: String,
+    ) -> Self {
+        Self {
+            msg: CosmosSDKMsg::StakingBeginRedelegate {
+                validator_src_address,
+                validator_dst_address,
+                amount: SingleCoin::Other {
+                    amount: amount.to_string(),
+                    denom,
+                },
+            },
+        }
+    }
+
+    /// construct StakingDelegate message
+    pub fn build_staking_delegate_msg(
+        validator_address: String,
+        amount: u64,
+        denom: String,
+    ) -> Self {
+        Self {
+            msg: CosmosSDKMsg::StakingDelegate {
+                validator_address,
+                amount: SingleCoin::Other {
+                    amount: amount.to_string(),
+                    denom,
+                },
+            },
+        }
+    }
+
+    /// construct StakingUndelegate message
+    pub fn build_staking_undelegate_msg(
+        validator_address: String,
+        amount: u64,
+        denom: String,
+    ) -> Self {
+        Self {
+            msg: CosmosSDKMsg::StakingUndelegate {
+                validator_address,
+                amount: SingleCoin::Other {
+                    amount: amount.to_string(),
+                    denom,
+                },
+            },
+        }
+    }
+
+    /// construct DistributionSetWithdrawAddress message
+    pub fn build_distribution_set_withdraw_address_msg(withdraw_address: String) -> Self {
+        Self {
+            msg: CosmosSDKMsg::DistributionSetWithdrawAddress { withdraw_address },
+        }
+    }
+
+    /// construct DistributionWithdrawDelegatorReward message
+    pub fn build_distribution_withdraw_delegator_reward_msg(validator_address: String) -> Self {
+        Self {
+            msg: CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address },
+        }
+    }
+
+    /// construct IbcTransfer message
+    pub fn build_ibc_transfer_msg(
+        receiver: String,
+        source_port: String,
+        source_channel: String,
+        denom: String,
+        token: u64,
+        revision_height: u64,
+        revision_number: u64,
+        timeout_timestamp: u64,
+    ) -> Self {
+        Self {
+            msg: CosmosSDKMsg::IbcTransfer {
+                receiver,
+                source_port,
+                source_channel,
+                token: SingleCoin::Other {
+                    amount: token.to_string(),
+                    denom,
+                },
+                timeout_height: Height {
+                    revision_height,
+                    revision_number,
+                },
+                timeout_timestamp,
+            },
+        }
+    }
+}
+
+/// Cosmos transaction
+#[wasm_bindgen]
+pub struct CosmosTx {
+    msgs: Vec<CosmosMsg>,
+}
+
+#[wasm_bindgen]
+impl CosmosTx {
+    /// Create a Cosmos transaction
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self { msgs: vec![] }
+    }
+
+    /// Add a Cosmos message to transaction
+    #[wasm_bindgen]
+    pub fn add_msg(&mut self, msg: CosmosMsg) {
+        self.msgs.push(msg);
+    }
+
+    /// Get the count of pending messages
+    #[wasm_bindgen]
+    pub fn get_msg_count(&self) -> usize {
+        self.msgs.len()
+    }
+
+    /// Sign the transaction and move out all pending messages
+    #[wasm_bindgen]
+    pub fn sign_into(
+        &mut self,
+        private_key: PrivateKey,
+        tx_info: CosmosSDKTxInfoRaw,
+    ) -> Result<Vec<u8>, JsValue> {
+        build_signed_msg_tx(
+            tx_info.into(),
+            self.msgs.drain(..).map(|m| m.msg).collect(),
+            private_key.key,
+        )
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }
+}
+
 /// creates the transaction signing payload (`SignDoc`)
 /// for `MsgSend` from the Cosmos SDK bank module
 /// wasm-bindgen only supports the C-style enums,
