@@ -274,7 +274,6 @@ impl From<CosmosSDKTxInfoRaw> for CosmosSDKTxInfo {
 }
 
 /// Cosmos message wrapper
-#[derive(Clone)]
 #[wasm_bindgen]
 pub struct CosmosMsg {
     msg: CosmosSDKMsg,

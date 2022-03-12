@@ -17,6 +17,10 @@ use wasm_timer::Delay;
 
 wasm_bindgen_test_configure!(run_in_browser);
 
+const DELEGATE_AMOUNT: u64 = 100_000_000_000;
+const REDELEGATE_AMOUNT: u64 = 50_000_000_000;
+const UNBOND_AMOUNT: u64 = 50_000_000_000;
+
 #[wasm_bindgen_test]
 async fn test_delegate_and_unbound() {
     // Get private key.
@@ -50,7 +54,7 @@ async fn test_delegate_and_unbound() {
         tx_info,
         private_key.clone(),
         VALIDATOR1.to_owned(),
-        100_000_000_000,
+        DELEGATE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         true,
     )
@@ -71,8 +75,8 @@ async fn test_delegate_and_unbound() {
     assert!(
         U256::from_dec_str(&after_delegating_balance.amount).unwrap()
             >= U256::from_dec_str(&beginning_balance.amount).unwrap()
-                - 100_000_000_000_u64
-                - 25_000_000_000_u64
+                - DELEGATE_AMOUNT
+                - DEFAULT_FEE_AMOUNT
     );
 
     // Query account for unbonding. Since `account.sequence` is changed.
@@ -97,7 +101,7 @@ async fn test_delegate_and_unbound() {
         tx_info,
         private_key,
         VALIDATOR1.to_owned(),
-        50_000_000_000,
+        UNBOND_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         true,
     )
@@ -117,8 +121,8 @@ async fn test_delegate_and_unbound() {
     // Balance should be equal to or greater than the previous balance since reward withdrawal.
     assert!(
         U256::from_dec_str(&after_unbonding_balance.amount).unwrap()
-            >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() + 50_000_000_000_u64
-                - 25_000_000_000_u64
+            >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() + UNBOND_AMOUNT
+                - DEFAULT_FEE_AMOUNT
     );
 }
 
@@ -154,7 +158,7 @@ async fn test_redelegate() {
         tx_info,
         private_key.clone(),
         VALIDATOR1.to_owned(),
-        100_000_000_000,
+        DELEGATE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         true,
     )
@@ -174,8 +178,8 @@ async fn test_redelegate() {
     assert!(
         U256::from_dec_str(&after_delegating_balance.amount).unwrap()
             >= U256::from_dec_str(&beginning_balance.amount).unwrap()
-                - 100_000_000_000_u64
-                - 25_000_000_000_u64
+                - DELEGATE_AMOUNT
+                - DEFAULT_FEE_AMOUNT
     );
 
     // Query account for redelegating. Since `account.sequence` is changed.
@@ -201,7 +205,7 @@ async fn test_redelegate() {
         private_key,
         VALIDATOR1.to_owned(),
         VALIDATOR2.to_owned(),
-        50_000_000_000,
+        REDELEGATE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
         true,
     )
@@ -222,6 +226,6 @@ async fn test_redelegate() {
     // Since rewards are withdrawn from source validator.
     assert!(
         U256::from_dec_str(&after_redelegating_balance.amount).unwrap()
-            >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() - 25_000_000_000_u64
+            >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() - DEFAULT_FEE_AMOUNT
     );
 }
