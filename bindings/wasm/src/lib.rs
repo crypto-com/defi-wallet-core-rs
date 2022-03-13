@@ -107,17 +107,26 @@ pub enum CoinType {
     CronosMainnet,
     /// Cosmos Hub mainnet
     CosmosHub,
+    /// Ethereum
+    Ethereum,
 }
 
 impl From<CoinType> for WalletCoin {
     fn from(coin: CoinType) -> Self {
-        WalletCoin::CosmosSDK {
-            network: match coin {
-                CoinType::CryptoOrgMainnet => Network::CryptoOrgMainnet,
-                CoinType::CryptoOrgTestnet => Network::CryptoOrgTestnet,
-                CoinType::CronosMainnet => Network::CronosMainnet,
-                CoinType::CosmosHub => Network::CosmosHub,
+        match coin {
+            CoinType::CryptoOrgMainnet => WalletCoin::CosmosSDK {
+                network: Network::CryptoOrgMainnet,
             },
+            CoinType::CryptoOrgTestnet => WalletCoin::CosmosSDK {
+                network: Network::CryptoOrgTestnet,
+            },
+            CoinType::CronosMainnet => WalletCoin::CosmosSDK {
+                network: Network::CronosMainnet,
+            },
+            CoinType::CosmosHub => WalletCoin::CosmosSDK {
+                network: Network::CosmosHub,
+            },
+            CoinType::Ethereum => WalletCoin::Ethereum,
         }
     }
 }

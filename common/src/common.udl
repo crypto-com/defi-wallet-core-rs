@@ -259,6 +259,7 @@ enum EthError {
   "ParseError",
   "NodeUrl",
   "SendTxFail",
+  "BroadcastTxFail",
   "MempoolDrop",
   "BalanceFail",
   "AsyncRuntimeError",

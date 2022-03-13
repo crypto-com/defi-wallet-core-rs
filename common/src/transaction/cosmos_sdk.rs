@@ -494,9 +494,7 @@ impl CosmosSDKMsg {
                     delegator_address: sender_address,
                     validator_src_address,
                     validator_dst_address,
-                    /// Amount should not be None value.
-                    /// It should be fixed after merging PR - https://github.com/cosmos/cosmos-rust/pull/175
-                    amount: Some(amount),
+                    amount,
                 };
                 msg.to_any()
             }
@@ -524,9 +522,7 @@ impl CosmosSDKMsg {
                 let msg = MsgUndelegate {
                     delegator_address: sender_address,
                     validator_address,
-                    /// Amount should not be None value.
-                    /// It should be fixed after merging PR - https://github.com/cosmos/cosmos-rust/pull/175
-                    amount: Some(amount),
+                    amount,
                 };
                 msg.to_any()
             }

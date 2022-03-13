@@ -38,6 +38,7 @@ pub enum ContractApproval {
 /// Information needed for querying balance on different common contract types.
 /// The balance in the case of ERC721 returns the number of non-fungible tokens
 /// of the same type the account holds (e.g. the number of cryptokitties).
+#[derive(Clone)]
 pub enum ContractBalance {
     Erc20 {
         contract_address: String,
@@ -468,10 +469,10 @@ pub async fn broadcast_sign_eth_tx(
     let pending_tx = client
         .send_transaction(tx, None)
         .await
-        .map_err(|_e| EthError::SendTxFail)?;
+        .map_err(|_| EthError::SendTxFail)?;
     let tx_receipt = pending_tx
         .await
-        .map_err(|_| EthError::SendTxFail)?
+        .map_err(EthError::BroadcastTxFail)?
         .ok_or(EthError::MempoolDrop)?;
     Ok(tx_receipt)
 }
@@ -486,10 +487,10 @@ pub async fn broadcast_eth_signed_raw_tx(
     let pending_tx = provider
         .send_raw_transaction(raw_tx.into())
         .await
-        .map_err(|_e| EthError::SendTxFail)?;
+        .map_err(EthError::BroadcastTxFail)?;
     let tx_receipt = pending_tx
         .await
-        .map_err(|_| EthError::SendTxFail)?
+        .map_err(EthError::BroadcastTxFail)?
         .ok_or(EthError::MempoolDrop)?;
     Ok(tx_receipt)
 }

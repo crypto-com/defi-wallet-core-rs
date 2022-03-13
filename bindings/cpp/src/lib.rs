@@ -6,165 +6,14 @@ use defi_wallet_core_common::{
     Height, LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey,
     SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
-use defi_wallet_core_common::{transaction, Client};
-use defi_wallet_core_proto as proto;
-use proto::chainmain::nft::v1::{BaseNft, Collection, Denom, IdCollection, Owner};
 use std::str::FromStr;
 use std::sync::Arc;
 
-pub struct GrpcClient(Client);
+mod nft;
+use nft::*;
 
-/// Create a new grpc client
-// It can only be defined outside the `impl GrpcClient`, otherwise the mod ffi can not find it
-fn new_grpc_client(grpc_url: String) -> Result<Box<GrpcClient>> {
-    let client = Client::new_blocking(grpc_url)?;
-    Ok(Box::new(GrpcClient(client)))
-}
-
-impl GrpcClient {
-    /// Supply queries the total supply of a given denom or owner
-    pub fn supply(&self, denom_id: String, owner: String) -> Result<u64> {
-        let supply = self.0.supply_blocking(denom_id, owner)?;
-        Ok(supply)
-    }
-
-    /// Owner queries the NFTs of the specified owner
-    pub fn owner(&self, denom_id: String, owner: String) -> Result<Box<OwnerRaw>> {
-        let owner = self
-            .0
-            .owner_blocking(denom_id, owner)?
-            .ok_or(anyhow!("No Owner"))?;
-        Ok(Box::new(owner.into()))
-    }
-
-    /// Collection queries the NFTs of the specified denom
-    pub fn collection(&self, denom_id: String) -> Result<Box<CollectionRaw>> {
-        let collection = self
-            .0
-            .collection_blocking(denom_id)?
-            .ok_or(anyhow!("No Collection"))?;
-        Ok(Box::new(collection.into()))
-    }
-
-    /// Denom queries the definition of a given denom
-    pub fn denom(&self, denom_id: String) -> Result<Box<DenomRaw>> {
-        let denom = self
-            .0
-            .denom_blocking(denom_id)?
-            .ok_or(anyhow!("No denom"))?;
-        Ok(Box::new(denom.into()))
-    }
-
-    /// DenomByName queries the definition of a given denom by name
-    pub fn denom_by_name(&self, denom_name: String) -> Result<Box<DenomRaw>> {
-        let denom = self
-            .0
-            .denom_by_name_blocking(denom_name)?
-            .ok_or(anyhow!("No denom"))?;
-        Ok(Box::new(denom.into()))
-    }
-
-    /// Denoms queries all the denoms
-    pub fn denoms(&self) -> Result<Vec<DenomRaw>> {
-        let denoms = self.0.denoms_blocking()?;
-        Ok(denoms.into_iter().map(|v| v.into()).collect())
-    }
-
-    /// NFT queries the NFT for the given denom and token ID
-    pub fn nft(&self, denom_id: String, token_id: String) -> Result<Box<BaseNftRaw>> {
-        let nft = self
-            .0
-            .nft_blocking(denom_id, token_id)?
-            .ok_or(anyhow!("No Nft"))?;
-        Ok(Box::new(nft.into()))
-    }
-}
-
-/// Wrapper of proto::chainmain::nft::v1::Denom
-///
-/// For now, types used as extern Rust types are required to be defined by the same crate that
-/// contains the bridge using them. This restriction may be lifted in the future.
-/// Check https://cxx.rs/extern-rust.html
-pub struct DenomRaw {
-    pub id: String,
-    pub name: String,
-    pub schema: String,
-    pub creator: String,
-}
-
-impl From<Denom> for DenomRaw {
-    fn from(d: Denom) -> DenomRaw {
-        DenomRaw {
-            id: d.id,
-            name: d.name,
-            schema: d.schema,
-            creator: d.creator,
-        }
-    }
-}
-
-/// Wrapper of proto::chainmain::nft::v1::BaseNft
-///
-/// For now, types used as extern Rust types are required to be defined by the same crate that
-/// contains the bridge using them. This restriction may be lifted in the future.
-/// Check https://cxx.rs/extern-rust.html
-pub struct BaseNftRaw {
-    pub id: String,
-    pub name: String,
-    pub uri: String,
-    pub data: String,
-    pub owner: String,
-}
-
-impl From<BaseNft> for BaseNftRaw {
-    fn from(d: BaseNft) -> BaseNftRaw {
-        BaseNftRaw {
-            id: d.id,
-            name: d.name,
-            uri: d.uri,
-            data: d.data,
-            owner: d.owner,
-        }
-    }
-}
-
-/// Wrapper of proto::chainmain::nft::v1::Owner
-///
-/// For now, types used as extern Rust types are required to be defined by the same crate that
-/// contains the bridge using them. This restriction may be lifted in the future.
-/// Check https://cxx.rs/extern-rust.html
-pub struct OwnerRaw {
-    pub address: String,
-    pub id_collections: Vec<IdCollection>,
-}
-
-impl From<Owner> for OwnerRaw {
-    fn from(d: Owner) -> OwnerRaw {
-        OwnerRaw {
-            address: d.address,
-            id_collections: d.id_collections,
-        }
-    }
-}
-
-/// Wrapper of proto::chainmain::nft::v1::Collection
-///
-/// For now, types used as extern Rust types are required to be defined by the same crate that
-/// contains the bridge using them. This restriction may be lifted in the future.
-/// Check https://cxx.rs/extern-rust.html
-pub struct CollectionRaw {
-    pub denom: Option<Denom>,
-    pub nfts: Vec<BaseNft>,
-}
-
-impl From<Collection> for CollectionRaw {
-    fn from(d: Collection) -> CollectionRaw {
-        CollectionRaw {
-            denom: d.denom,
-            nfts: d.nfts,
-        }
-    }
-}
+mod contract;
+use contract::*;
 
 /// Wrapper of `CosmosSDKMsg`
 ///
@@ -429,7 +278,7 @@ pub struct CppLoginInfo {
 
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
 #[allow(clippy::too_many_arguments)]
-mod ffi {
+pub mod ffi {
 
     pub enum CoinType {
         /// Crypto.org Chain mainnet
@@ -669,6 +518,17 @@ mod ffi {
         pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String>;
 
         pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result<String>;
+
+        type ContractBalance;
+        fn erc20_balance(contract_address: String) -> Box<ContractBalance>;
+        fn erc721_balance(contract_address: String) -> Box<ContractBalance>;
+        fn erc1155_balance(contract_address: String, token_id: String) -> Box<ContractBalance>;
+        pub fn get_contract_balance(
+            address: &str,
+            contract_details: &ContractBalance,
+            api_url: &str,
+        ) -> Result<String>;
+
     } // end of RUST block
 } // end of ffi block
 
@@ -854,113 +714,6 @@ pub fn get_single_bank_send_signed_tx(
             },
         },
         private_key.key.clone(),
-    )?;
-
-    Ok(ret)
-}
-
-/// creates the signed transaction
-/// for `MsgIssueDenom` from the Chainmain nft module
-fn get_nft_issue_denom_signed_tx(
-    tx_info: ffi::CosmosSDKTxInfoRaw,
-    private_key: &PrivateKey,
-    id: String,
-    name: String,
-    schema: String,
-) -> Result<Vec<u8>> {
-    let ret = transaction::nft::get_nft_issue_denom_signed_tx(
-        tx_info.into(),
-        private_key.key.clone(),
-        id,
-        name,
-        schema,
-    )?;
-    Ok(ret)
-}
-
-/// creates the signed transaction
-/// for `MsgMintNft` from the Chainmain nft module
-#[allow(clippy::too_many_arguments)]
-fn get_nft_mint_signed_tx(
-    tx_info: ffi::CosmosSDKTxInfoRaw,
-    private_key: &PrivateKey,
-    id: String,
-    denom_id: String,
-    name: String,
-    uri: String,
-    data: String,
-    recipient: String,
-) -> Result<Vec<u8>> {
-    let ret = transaction::nft::get_nft_mint_signed_tx(
-        tx_info.into(),
-        private_key.key.clone(),
-        id,
-        denom_id,
-        name,
-        uri,
-        data,
-        recipient,
-    )?;
-    Ok(ret)
-}
-
-/// creates the signed transaction
-/// for `MsgEditNft` from the Chainmain nft module
-fn get_nft_edit_signed_tx(
-    tx_info: ffi::CosmosSDKTxInfoRaw,
-    private_key: &PrivateKey,
-    id: String,
-    denom_id: String,
-    name: String,
-    uri: String,
-    data: String,
-) -> Result<Vec<u8>> {
-    let ret = transaction::nft::get_nft_edit_signed_tx(
-        tx_info.into(),
-        private_key.key.clone(),
-        id,
-        denom_id,
-        name,
-        uri,
-        data,
-    )?;
-
-    Ok(ret)
-}
-
-/// creates the signed transaction
-/// for `MsgTransferNft` from the Chainmain nft module
-fn get_nft_transfer_signed_tx(
-    tx_info: ffi::CosmosSDKTxInfoRaw,
-    private_key: &PrivateKey,
-    id: String,
-    denom_id: String,
-    recipient: String,
-) -> Result<Vec<u8>> {
-    let ret = transaction::nft::get_nft_transfer_signed_tx(
-        tx_info.into(),
-        private_key.key.clone(),
-        id,
-        denom_id,
-        recipient,
-    )?;
-
-    Ok(ret)
-}
-
-/// creates the signed transaction
-/// for `MsgBurnNft` from the Chainmain nft module
-fn get_nft_burn_signed_tx(
-    tx_info: ffi::CosmosSDKTxInfoRaw,
-    private_key: &PrivateKey,
-    id: String,
-    denom_id: String,
-) -> Result<Vec<u8>> {
-    let ret = transaction::nft::get_nft_burn_signed_tx(
-        tx_info.into(),
-        private_key.key.clone(),
-        id,
-        denom_id,
     )?;
 
     Ok(ret)
@@ -1183,7 +936,7 @@ fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>> {
 }
 
 impl CppLoginInfo {
-    pub fn sign_logininfo(&self, private_key: &PrivateKey) -> Result<Vec<u8>> {
+    pub fn sign_logininfo(&self, private_key: &PrivateKey) -> anyhow::Result<Vec<u8>> {
         let message = self.logininfo.msg.to_string();
         let secretkey = private_key.key.clone();
         let ret = secretkey
@@ -1192,7 +945,7 @@ impl CppLoginInfo {
         Ok(ret)
     }
 
-    pub fn verify_logininfo(&self, signature: &[u8]) -> Result<Vec<u8>> {
+    pub fn verify_logininfo(&self, signature: &[u8]) -> anyhow::Result<Vec<u8>> {
         let sig: [u8; 65] = signature
             .try_into()
             .map_err(|_e| EthError::SignatureError)?;
@@ -1278,8 +1031,21 @@ pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
 
 /// broadcast signed cronos tx
 pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result<String> {
-    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(raw_tx, web3api_url)?;
-    Ok(res)
+    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(raw_tx, web3api_url);
+    match res {
+        Ok(txhash) => Ok(txhash),
+        Err(e) => match e {
+            EthError::BroadcastTxFail(message) => {
+                return Err(anyhow!(
+                    "broadcast_eth_signed_raw_tx_blocking error {}",
+                    message,
+                ));
+            }
+            _ => {
+                return Err(anyhow!("broadcast_eth_signed_raw_tx error {:?}", e));
+            }
+        },
+    }
 }
 
 /// create cronos tx info to sign
