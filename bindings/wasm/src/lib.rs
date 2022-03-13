@@ -4,11 +4,12 @@ use std::sync::Arc;
 
 use defi_wallet_core_common::{
     broadcast_contract_approval_tx, broadcast_contract_transfer_tx, broadcast_sign_eth_tx,
-    broadcast_tx_sync, build_signed_msg_tx, build_signed_single_msg_tx, get_account_balance,
-    get_account_details, get_contract_balance, get_eth_balance, get_single_msg_sign_payload,bytes_to_hex,
-    BalanceApiVersion, ContractApproval, ContractBalance, ContractTransfer, CosmosSDKMsg,
-    CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Height, Network, PublicKeyBytesWrapper,
-    SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    broadcast_tx_sync, build_signed_msg_tx, build_signed_single_msg_tx, bytes_to_hex,
+    get_account_balance, get_account_details, get_contract_balance, get_eth_balance,
+    get_single_msg_sign_payload, BalanceApiVersion, ContractApproval, ContractBalance,
+    ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Height,
+    Network, PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin,
+    COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 
 use defi_wallet_core_common::node;
@@ -206,7 +207,7 @@ impl Wallet {
             .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
         Ok(PrivateKey { key })
     }
-    
+
     /// Get the mnemonic for the wallet
     #[wasm_bindgen]
     pub fn get_backup_mnemonic_phrase(&self) -> Option<String> {
@@ -760,7 +761,7 @@ pub async fn broadcast_transfer_eth(
     )
     .await
     .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
-    
+
     Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
 }
 
