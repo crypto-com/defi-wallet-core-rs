@@ -15,6 +15,7 @@ const STAKING_DELEGATE_AMOUNT = BigInt(100_000_000_000);
 
 testPrivateKey();
 testBuildAndSignCosmosTx();
+testBuildEthereumContractBatchTransfer();
 
 const wallet = new wasm.Wallet();
 logWalletAddresses(wallet);
@@ -89,7 +90,7 @@ function testPrivateKey() {
 
 function testBuildAndSignCosmosTx() {
   // Get private key.
-  let privateKey = new wasm.PrivateKey();
+  const privateKey = new wasm.PrivateKey();
 
   // Construct transaction info.
   const txInfo = new wasm.CosmosSDKTxInfoRaw(
@@ -124,8 +125,20 @@ function testBuildAndSignCosmosTx() {
 
   // Sign the transaction and move out all pending messages.
   console.assert(tx.get_msg_count() === 2, "No message has been added to Cosmos transaction");
-  let txData = tx.sign_into(privateKey, txInfo);
+  const txData = tx.sign_into(privateKey, txInfo);
   console.assert(tx.get_msg_count() === 0, "Pending messages of Cosmos transaction have not been moved out");
 
   console.log(`Signed Cosmos transaction data: ${txData}`);
+}
+
+function testBuildEthereumContractBatchTransfer() {
+  const details = wasm.ContractBatchTransferDetails.build_erc1155_safe_batch_transfer_from(
+    "0x6ac7ea33f8831ea9dcc53393aaa88b25a785dbf0",
+    "0xcd234a471b72ba2f1ccf0a70fcaba648a5eecd8d",
+    "0x343c43a37d37dff08ae8c4a11544c718abb4fcf8",
+    ["0x1344ead983", "0x2b40d6d551"],
+    ["0x6d22", "0x8aaa"],
+    []
+  );
+  console.dir(details);
 }
