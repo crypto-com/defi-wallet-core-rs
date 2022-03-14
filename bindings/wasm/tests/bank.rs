@@ -16,6 +16,8 @@ use wasm_timer::Delay;
 
 wasm_bindgen_test_configure!(run_in_browser);
 
+const BANK_SEND_AMOUNT: u64 = 100;
+
 #[wasm_bindgen_test]
 async fn test_get_single_bank_send_signed_tx() {
     let wallet = Wallet::recover_wallet(SIGNER1_MNEMONIC.to_owned(), None).unwrap();
@@ -45,7 +47,7 @@ async fn test_get_single_bank_send_signed_tx() {
         tx_info,
         key,
         SIGNER2.to_owned(),
-        100,
+        BANK_SEND_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
     )
     .unwrap();
@@ -63,7 +65,8 @@ async fn test_get_single_bank_send_signed_tx() {
         balance,
         RawRpcBalance {
             denom: CHAINMAIN_DENOM.to_owned(),
-            amount: (U256::from_dec_str(&beginning_balance.amount).unwrap() + 100).to_string()
+            amount: (U256::from_dec_str(&beginning_balance.amount).unwrap() + BANK_SEND_AMOUNT)
+                .to_string()
         }
     );
 }
