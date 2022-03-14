@@ -1,10 +1,23 @@
 import * as wasm from "@crypto-com/defi-wallet-core-wasm";
 
+// Constants
+
+const CHAIN_ID = "chainmain-1";
+const CHAINMAIN_DENOM = "basecro";
+const DELEGATOR2 = "cro1tmfhgwp62uhz5y5hqcyl8jkjq22l2cles2lum8";
+const VALIDATOR1 = "crocncl1pk9eajj4zuzpptnadwz6tzfgcpchqvpkvql0a9";
+const DEFAULT_GAS_LIMIT = BigInt(50_000_000);
+const DEFAULT_FEE_AMOUNT = BigInt(25_000_000_000);
+const BANK_SEND_AMOUNT = BigInt(50_000_000_000);
+const STAKING_DELEGATE_AMOUNT = BigInt(100_000_000_000);
+
+// Main workflow
+
+testPrivateKey();
+testBuildAndSignCosmosTx();
+
 const wallet = new wasm.Wallet();
-const cosmos_hub_address = wallet.get_default_address(wasm.CoinType.CosmosHub);
-console.log(`Wallet Cosmos Hub address: ${cosmos_hub_address}`);
-const eth_address = wallet.get_default_address(wasm.CoinType.Ethereum);
-console.log(`Wallet Ethereum address: ${eth_address}`);
+logWalletAddresses(wallet);
 
 const pubkey = new Uint8Array([3, 127, 12, 203, 79, 3, 211, 37, 157, 178, 152, 47, 245, 142, 167, 89, 207, 9, 218, 144, 20, 147, 186, 114, 170, 114, 137, 201, 226, 149, 141, 113, 14]);
 const account_number = BigInt(1);
@@ -19,24 +32,6 @@ const bech32hrp = "cosmos";
 const coin_type = 118;
 
 const tx_info = new wasm.CosmosSDKTxInfoRaw(account_number, sequence_number, gas_limit, fee_amount, fee_denom, timeout_height, memo_note, chain_id, bech32hrp, coin_type);
-
-// const tx_signdoc = wasm.get_single_bank_send_signdoc(tx_info,
-//     pubkey,
-//     "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
-//     BigInt(1000000), "uatom");
-// console.log(tx_signdoc);
-
-// constructs private key from bytes
-const privateKey1 = wasm.PrivateKey.from_bytes([68, 130, 23, 78, 109, 255, 54, 116, 253, 157, 134, 231, 202, 245, 109, 197, 25, 56, 195, 182, 224, 75, 239, 191, 220, 164, 170, 198, 159, 113, 5, 255]);
-logPrivateKeyInternal(privateKey1);
-
-// constructs private key from hex
-const privateKey2 = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
-logPrivateKeyInternal(privateKey2);
-
-// generates a random private key
-const privateKey3 = new wasm.PrivateKey();
-logPrivateKeyInternal(privateKey3);
 
 const signed_tx = wasm.get_single_bank_send_signed_tx(tx_info, privateKey3, "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
 BigInt(1000000), "uatom");
@@ -69,4 +64,68 @@ function logPrivateKeyInternal(privateKey) {
     `\nPrivate Key Bytes: ${privateKeyBytes}`,
     `\nPrivate Key Hex: ${privateKeyHex}`
   );
+}
+
+function logWalletAddresses(wallet) {
+  const cosmos_hub_address = wallet.get_default_address(wasm.CoinType.CosmosHub);
+  console.log(`Wallet Cosmos Hub address: ${cosmos_hub_address}`);
+  const eth_address = wallet.get_default_address(wasm.CoinType.Ethereum);
+  console.log(`Wallet Ethereum address: ${eth_address}`);
+}
+
+function testPrivateKey() {
+  // Construct private key from bytes.
+  const privateKey1 = wasm.PrivateKey.from_bytes([68, 130, 23, 78, 109, 255, 54, 116, 253, 157, 134, 231, 202, 245, 109, 197, 25, 56, 195, 182, 224, 75, 239, 191, 220, 164, 170, 198, 159, 113, 5, 255]);
+  logPrivateKeyInternal(privateKey1);
+
+  // Construct private key from hex.
+  const privateKey2 = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
+  logPrivateKeyInternal(privateKey2);
+
+  // Generate a random private key.
+  const privateKey3 = new wasm.PrivateKey();
+  logPrivateKeyInternal(privateKey3);
+}
+
+function testBuildAndSignCosmosTx() {
+  // Get private key.
+  let privateKey = new wasm.PrivateKey();
+
+  // Construct transaction info.
+  const txInfo = new wasm.CosmosSDKTxInfoRaw(
+    BigInt(1),
+    BigInt(1),
+    DEFAULT_GAS_LIMIT,
+    DEFAULT_FEE_AMOUNT,
+    CHAINMAIN_DENOM,
+    0,
+    "example memo",
+    CHAIN_ID,
+    "cosmos",
+    118,
+  );
+
+  // Create a transaction.
+  const tx = new wasm.CosmosTx();
+
+  // Add a staking delegate message.
+  tx.add_msg(wasm.CosmosMsg.build_staking_delegate_msg(
+      VALIDATOR1,
+      STAKING_DELEGATE_AMOUNT,
+      CHAINMAIN_DENOM,
+  ));
+
+  // Add a bank send message.
+  tx.add_msg(wasm.CosmosMsg.build_bank_send_msg(
+      DELEGATOR2,
+      BANK_SEND_AMOUNT,
+      CHAINMAIN_DENOM,
+  ));
+
+  // Sign the transaction and move out all pending messages.
+  console.assert(tx.get_msg_count() === 2, "No message has been added to Cosmos transaction");
+  let txData = tx.sign_into(privateKey, txInfo);
+  console.assert(tx.get_msg_count() === 0, "Pending messages of Cosmos transaction have not been moved out");
+
+  console.log(`Signed Cosmos transaction data: ${txData}`);
 }
