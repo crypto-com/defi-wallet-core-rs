@@ -1,11 +1,12 @@
-use super::{ffi, PrivateKey};
+use crate::PrivateKey;
 use anyhow::{anyhow, Result};
 use defi_wallet_core_common::{transaction, Client};
 use defi_wallet_core_proto as proto;
 use std::fmt;
 
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
-pub mod nft_ffi {
+mod ffi {
+
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Denom {
         pub id: String,
@@ -43,6 +44,54 @@ pub mod nft_ffi {
         pub nfts: Vec<BaseNft>,
     }
 
+    extern "C++" {
+        include!("defi-wallet-core-cpp/src/lib.rs.h");
+        type CosmosSDKTxInfoRaw = crate::ffi::CosmosSDKTxInfoRaw;
+        type PrivateKey = crate::PrivateKey;
+    }
+
+    extern "Rust" {
+        fn get_nft_issue_denom_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            id: String,
+            name: String,
+            schema: String,
+        ) -> Result<Vec<u8>>;
+        fn get_nft_mint_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            id: String,
+            denom_id: String,
+            name: String,
+            uri: String,
+            data: String,
+            recipient: String,
+        ) -> Result<Vec<u8>>;
+        fn get_nft_edit_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            id: String,
+            denom_id: String,
+            name: String,
+            uri: String,
+            data: String,
+        ) -> Result<Vec<u8>>;
+        fn get_nft_transfer_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            id: String,
+            denom_id: String,
+            recipient: String,
+        ) -> Result<Vec<u8>>;
+        fn get_nft_burn_signed_tx(
+            tx_info: CosmosSDKTxInfoRaw,
+            private_key: &PrivateKey,
+            id: String,
+            denom_id: String,
+        ) -> Result<Vec<u8>>;
+    }
+
     extern "Rust" {
         type GrpcClient;
         fn new_grpc_client(grpc_url: String) -> Result<Box<GrpcClient>>;
@@ -62,9 +111,9 @@ pub mod nft_ffi {
     }
 }
 
-impl From<proto::chainmain::nft::v1::Denom> for nft_ffi::Denom {
-    fn from(d: proto::chainmain::nft::v1::Denom) -> nft_ffi::Denom {
-        nft_ffi::Denom {
+impl From<proto::chainmain::nft::v1::Denom> for ffi::Denom {
+    fn from(d: proto::chainmain::nft::v1::Denom) -> ffi::Denom {
+        ffi::Denom {
             id: d.id,
             name: d.name,
             schema: d.schema,
@@ -73,7 +122,7 @@ impl From<proto::chainmain::nft::v1::Denom> for nft_ffi::Denom {
     }
 }
 
-impl fmt::Display for nft_ffi::Denom {
+impl fmt::Display for ffi::Denom {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -83,9 +132,9 @@ impl fmt::Display for nft_ffi::Denom {
     }
 }
 
-impl From<proto::chainmain::nft::v1::BaseNft> for nft_ffi::BaseNft {
-    fn from(d: proto::chainmain::nft::v1::BaseNft) -> nft_ffi::BaseNft {
-        nft_ffi::BaseNft {
+impl From<proto::chainmain::nft::v1::BaseNft> for ffi::BaseNft {
+    fn from(d: proto::chainmain::nft::v1::BaseNft) -> ffi::BaseNft {
+        ffi::BaseNft {
             id: d.id,
             name: d.name,
             uri: d.uri,
@@ -95,7 +144,7 @@ impl From<proto::chainmain::nft::v1::BaseNft> for nft_ffi::BaseNft {
     }
 }
 
-impl fmt::Display for nft_ffi::BaseNft {
+impl fmt::Display for ffi::BaseNft {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -105,25 +154,25 @@ impl fmt::Display for nft_ffi::BaseNft {
     }
 }
 
-impl From<proto::chainmain::nft::v1::IdCollection> for nft_ffi::IdCollection {
-    fn from(d: proto::chainmain::nft::v1::IdCollection) -> nft_ffi::IdCollection {
-        nft_ffi::IdCollection {
+impl From<proto::chainmain::nft::v1::IdCollection> for ffi::IdCollection {
+    fn from(d: proto::chainmain::nft::v1::IdCollection) -> ffi::IdCollection {
+        ffi::IdCollection {
             denom_id: d.denom_id,
             token_ids: d.token_ids,
         }
     }
 }
 
-impl From<proto::chainmain::nft::v1::Owner> for nft_ffi::Owner {
-    fn from(d: proto::chainmain::nft::v1::Owner) -> nft_ffi::Owner {
-        nft_ffi::Owner {
+impl From<proto::chainmain::nft::v1::Owner> for ffi::Owner {
+    fn from(d: proto::chainmain::nft::v1::Owner) -> ffi::Owner {
+        ffi::Owner {
             address: d.address,
             id_collections: d.id_collections.into_iter().map(|v| v.into()).collect(),
         }
     }
 }
 
-impl fmt::Display for nft_ffi::Owner {
+impl fmt::Display for ffi::Owner {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -133,17 +182,17 @@ impl fmt::Display for nft_ffi::Owner {
     }
 }
 
-impl From<proto::chainmain::nft::v1::Collection> for nft_ffi::Collection {
-    fn from(d: proto::chainmain::nft::v1::Collection) -> nft_ffi::Collection {
+impl From<proto::chainmain::nft::v1::Collection> for ffi::Collection {
+    fn from(d: proto::chainmain::nft::v1::Collection) -> ffi::Collection {
         match d.denom {
-            Some(denom) => nft_ffi::Collection {
+            Some(denom) => ffi::Collection {
                 denom_option: true,
                 denom_value: denom.into(),
                 nfts: d.nfts.into_iter().map(|v| v.into()).collect(),
             },
-            None => nft_ffi::Collection {
+            None => ffi::Collection {
                 denom_option: false,
-                denom_value: nft_ffi::Denom {
+                denom_value: ffi::Denom {
                     id: "".to_owned(),
                     name: "".to_owned(),
                     schema: "".to_owned(),
@@ -155,7 +204,7 @@ impl From<proto::chainmain::nft::v1::Collection> for nft_ffi::Collection {
     }
 }
 
-impl fmt::Display for nft_ffi::Collection {
+impl fmt::Display for ffi::Collection {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -183,7 +232,7 @@ impl GrpcClient {
     }
 
     /// Owner queries the NFTs of the specified owner
-    pub fn owner(&self, denom_id: String, owner: String) -> Result<nft_ffi::Owner> {
+    pub fn owner(&self, denom_id: String, owner: String) -> Result<ffi::Owner> {
         let owner = self
             .0
             .owner_blocking(denom_id, owner)?
@@ -192,7 +241,7 @@ impl GrpcClient {
     }
 
     /// Collection queries the NFTs of the specified denom
-    pub fn collection(&self, denom_id: String) -> Result<nft_ffi::Collection> {
+    pub fn collection(&self, denom_id: String) -> Result<ffi::Collection> {
         let collection = self
             .0
             .collection_blocking(denom_id)?
@@ -201,7 +250,7 @@ impl GrpcClient {
     }
 
     /// Denom queries the definition of a given denom
-    pub fn denom(&self, denom_id: String) -> Result<nft_ffi::Denom> {
+    pub fn denom(&self, denom_id: String) -> Result<ffi::Denom> {
         let denom = self
             .0
             .denom_blocking(denom_id)?
@@ -210,7 +259,7 @@ impl GrpcClient {
     }
 
     /// DenomByName queries the definition of a given denom by name
-    pub fn denom_by_name(&self, denom_name: String) -> Result<nft_ffi::Denom> {
+    pub fn denom_by_name(&self, denom_name: String) -> Result<ffi::Denom> {
         let denom = self
             .0
             .denom_by_name_blocking(denom_name)?
@@ -219,13 +268,13 @@ impl GrpcClient {
     }
 
     /// Denoms queries all the denoms
-    pub fn denoms(&self) -> Result<Vec<nft_ffi::Denom>> {
+    pub fn denoms(&self) -> Result<Vec<ffi::Denom>> {
         let denoms = self.0.denoms_blocking()?;
         Ok(denoms.into_iter().map(|v| v.into()).collect())
     }
 
     /// NFT queries the NFT for the given denom and token ID
-    pub fn nft(&self, denom_id: String, token_id: String) -> Result<nft_ffi::BaseNft> {
+    pub fn nft(&self, denom_id: String, token_id: String) -> Result<ffi::BaseNft> {
         let nft = self
             .0
             .nft_blocking(denom_id, token_id)?

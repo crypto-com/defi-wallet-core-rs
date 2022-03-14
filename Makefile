@@ -37,6 +37,8 @@ build_cpp: prepare_cpp
 	cp $(shell find ./target/release -name "libcxxbridge1.a") $(cpp_example)
 	cp ./target/release/libdefi_wallet_core_cpp.* $(cpp_example)
 	cp -r ./target/cxxbridge/* $(cpp_example)
+# workaround: replace the hard-coded include path
+	find $(cpp_example)/defi-wallet-core-cpp/src -type f -exec sed -i '' -e 's/defi-wallet-core-cpp\/src\/lib.rs.h/lib.rs.h/g' {} \;
 	cd $(cpp_example) && make build
 
 cpp: build_cpp
