@@ -3,12 +3,13 @@
 use std::sync::Arc;
 
 use defi_wallet_core_common::{
-    broadcast_contract_approval_tx, broadcast_contract_transfer_tx, broadcast_sign_eth_tx,
-    broadcast_tx_sync, build_signed_msg_tx, build_signed_single_msg_tx, get_account_balance,
-    get_account_details, get_contract_balance, get_eth_balance, get_single_msg_sign_payload,
-    BalanceApiVersion, ContractApproval, ContractBalance, ContractTransfer, CosmosSDKMsg,
-    CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Height, Network, PublicKeyBytesWrapper,
-    SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    broadcast_contract_approval_tx, broadcast_contract_batch_transfer_tx,
+    broadcast_contract_transfer_tx, broadcast_sign_eth_tx, broadcast_tx_sync, build_signed_msg_tx,
+    build_signed_single_msg_tx, get_account_balance, get_account_details, get_contract_balance,
+    get_eth_balance, get_single_msg_sign_payload, BalanceApiVersion, ContractApproval,
+    ContractBalance, ContractBatchTransfer, ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo,
+    EthAmount, EthNetwork, HDWallet, Height, Network, PublicKeyBytesWrapper, SecretKey, SingleCoin,
+    WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 
 use defi_wallet_core_common::node;
@@ -1323,7 +1324,75 @@ impl TryFrom<ContractTransferDetails> for ContractTransfer {
     }
 }
 
-/// construct, sign and broadcast an approval of a ERC20/ERC721/ERC1155 token
+/// details needed for contract batch-transfer transaction
+/// Fix `amount`, `token_ids` or `additional_data` to optional if any of these
+/// fields is not necessary for other batch-tranfer functions.
+#[wasm_bindgen]
+pub struct ContractBatchTransferDetails {
+    from_address: String,
+    to_address: String,
+    contract_address: String,
+    contract_type: ContractType,
+    amounts: Vec<String>,
+    token_ids: Vec<String>,
+    additional_data: Vec<u8>,
+}
+
+#[wasm_bindgen]
+impl ContractBatchTransferDetails {
+    /// constructs arguments for ERC-1155 function safeBatchTransferFrom
+    /// FIXME:
+    /// 1. Type of `Vec<String>` cannot been bound directly as argument of JS.
+    ///    Reference issue https://github.com/rustwasm/wasm-bindgen/issues/111.
+    /// 2. ERC-1155 function safeBatchTransferFrom requires that both token_ids
+    ///    and amounts are arrays of same length. A wrapper struct containing
+    ///    token_id and amount pair needs serializing functions exported to JS.
+    ///    It seems to be not necessary for just two String fields. Reference
+    ///    about serializing struct to JsValue in
+    ///    https://rustwasm.github.io/docs/wasm-bindgen/reference/arbitrary-data-with-serde.html#serializing-and-deserializing-arbitrary-data-into-and-from-jsvalue-with-serde.
+    #[wasm_bindgen]
+    pub fn build_erc1155_safe_batch_transfer_from(
+        contract_address: String,
+        from_address: String,
+        to_address: String,
+        token_ids: Vec<JsValue>,
+        amounts: Vec<JsValue>,
+        additional_data: Vec<u8>,
+    ) -> Result<ContractBatchTransferDetails, JsValue> {
+        let token_ids = get_string_vec_from_js(token_ids)?;
+        let amounts = get_string_vec_from_js(amounts)?;
+        Ok(Self {
+            from_address,
+            to_address,
+            contract_address,
+            contract_type: ContractType::Erc1155,
+            amounts,
+            token_ids,
+            additional_data,
+        })
+    }
+}
+
+impl TryFrom<ContractBatchTransferDetails> for ContractBatchTransfer {
+    type Error = JsValue;
+
+    fn try_from(details: ContractBatchTransferDetails) -> Result<Self, Self::Error> {
+        match details.contract_type {
+            ContractType::Erc1155 => Ok(ContractBatchTransfer::Erc1155 {
+                contract_address: details.contract_address,
+                from_address: details.from_address,
+                to_address: details.to_address,
+                token_ids: details.token_ids,
+                amounts: details.amounts,
+                additional_data: details.additional_data,
+            }),
+
+            _ => Err(JsValue::from_str("Unsupported contract type")),
+        }
+    }
+}
+
+/// construct, sign and broadcast an approval of an ERC20/ERC721/ERC1155 token
 #[wasm_bindgen]
 pub async fn broadcast_approval_contract(
     details: ContractApprovalDetails,
@@ -1346,7 +1415,7 @@ pub async fn broadcast_approval_contract(
     Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
 }
 
-/// construct, sign and broadcast a transfer of a ERC20/ERC721/ERC1155 token
+/// construct, sign and broadcast a transfer of an ERC20/ERC721/ERC1155 token
 #[wasm_bindgen]
 pub async fn broadcast_transfer_contract(
     details: ContractTransferDetails,
@@ -1355,6 +1424,29 @@ pub async fn broadcast_transfer_contract(
     private_key: PrivateKey,
 ) -> Result<JsValue, JsValue> {
     let receipt = broadcast_contract_transfer_tx(
+        details.try_into()?,
+        EthNetwork::Custom {
+            chain_id,
+            legacy: false,
+        },
+        private_key.key,
+        &web3_api_url,
+    )
+    .await
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+
+    Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+}
+
+/// construct, sign and broadcast batch-transfer of an ERC1155 token
+#[wasm_bindgen]
+pub async fn broadcast_batch_transfer_contract(
+    details: ContractBatchTransferDetails,
+    web3_api_url: String,
+    chain_id: u64,
+    private_key: PrivateKey,
+) -> Result<JsValue, JsValue> {
+    let receipt = broadcast_contract_batch_transfer_tx(
         details.try_into()?,
         EthNetwork::Custom {
             chain_id,
@@ -1417,4 +1509,13 @@ impl GrpcWebClient {
         let nft = self.0.nft(denom_id, token_id).await?;
         JsValue::from_serde(&nft).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
     }
+}
+
+#[inline]
+fn get_string_vec_from_js(values: Vec<JsValue>) -> Result<Vec<String>, JsValue> {
+    values
+        .iter()
+        .map(JsValue::as_string)
+        .collect::<Option<Vec<String>>>()
+        .ok_or_else(|| JsValue::from_str("Not a JS string"))
 }
