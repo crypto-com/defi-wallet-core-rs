@@ -36,9 +36,7 @@ prepare_cpp:
 build_cpp: prepare_cpp
 	cp $(shell find ./target/release -name "libcxxbridge1.a") $(cpp_example)
 	cp ./target/release/libdefi_wallet_core_cpp.* $(cpp_example)
-	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
-	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
-	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
+	cp -r ./target/cxxbridge/* $(cpp_example)
 	cd $(cpp_example) && make build
 
 cpp: build_cpp
