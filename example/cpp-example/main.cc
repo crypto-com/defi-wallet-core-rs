@@ -1,11 +1,11 @@
 #include "defi-wallet-core-cpp/src/lib.rs.h"
+#include "defi-wallet-core-cpp/src/nft.rs.h"
 #include "rust/cxx.h"
 #include <cassert>
 #include <chrono>
 #include <iostream>
 #include <thread>
 
-#include "nft.rs.h"
 void cronos_process();
 using namespace std;
 using namespace org::defi_wallet_core;
@@ -72,8 +72,7 @@ void test_chainmain_nft() {
   auto signer1_sn = detailinfo.sequence_number;
   auto signer1_ac = detailinfo.account_number;
 
-  detailinfo =
-      query_account_details_info(myservercosmos, myto);
+  detailinfo = query_account_details_info(myservercosmos, myto);
   auto signer2_sn = detailinfo.sequence_number;
   auto signer2_ac = detailinfo.account_number;
 
@@ -121,8 +120,9 @@ void test_chainmain_nft() {
   // mint: myfrom -> myto
   signer1_sn += 1;
   tx_info.sequence_number = signer1_sn;
-  signedtx = get_nft_mint_signed_tx(tx_info, *signer1_private_key, token_id, denom_id,
-                                    token_name, token_uri, token_data, myto);
+  signedtx =
+      get_nft_mint_signed_tx(tx_info, *signer1_private_key, token_id, denom_id,
+                             token_name, token_uri, token_data, myto);
   resp = broadcast_tx(myservertendermint, signedtx);
   cout << "mint response: " << resp << endl;
 
@@ -181,8 +181,8 @@ void test_chainmain_nft() {
   tx_info.account_number = signer1_ac;
   signer1_sn += 1;
   tx_info.sequence_number = signer1_sn;
-  signedtx = get_nft_edit_signed_tx(tx_info, *signer1_private_key, token_id, denom_id,
-                                    "newname", "newuri", "newdata");
+  signedtx = get_nft_edit_signed_tx(tx_info, *signer1_private_key, token_id,
+                                    denom_id, "newname", "newuri", "newdata");
   resp = broadcast_tx(myservertendermint, signedtx);
   cout << "edit response: " << resp << endl;
   sleep_for(seconds(3));
@@ -200,7 +200,8 @@ void test_chainmain_nft() {
   // burn
   signer1_sn += 1;
   tx_info.sequence_number = signer1_sn;
-  signedtx = get_nft_burn_signed_tx(tx_info, *signer1_private_key, token_id, denom_id);
+  signedtx =
+      get_nft_burn_signed_tx(tx_info, *signer1_private_key, token_id, denom_id);
   resp = broadcast_tx(myservertendermint, signedtx);
   cout << "burn response: " << resp << endl;
   sleep_for(seconds(3));
@@ -295,10 +296,10 @@ void test_login() {
 
 int main() {
   try {
-    process();        // chain-main
+    process();            // chain-main
     test_chainmain_nft(); // chainmain nft tests
-    test_login();     // decentralized login
-    cronos_process(); // cronos
+    test_login();         // decentralized login
+    cronos_process();     // cronos
   } catch (const rust::cxxbridge1::Error &e) {
     cout << "error:" << e.what() << endl;
   }
