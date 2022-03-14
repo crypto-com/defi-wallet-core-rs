@@ -641,6 +641,27 @@ pub fn broadcast_contract_transfer_tx_blocking(
     Ok(result.transaction_hash.encode_hex())
 }
 
+/// given the contract batch-transfer details, it'll construct, sign and
+/// broadcast a corresponding transfer transaction.
+/// If successful, it returns the transaction hash/id.
+/// (blocking; not compiled to wasm).
+#[cfg(not(target_arch = "wasm32"))]
+pub fn broadcast_contract_batch_transfer_tx_blocking(
+    batch_transfer_details: ContractBatchTransfer,
+    network: EthNetwork,
+    secret_key: Arc<SecretKey>,
+    web3api_url: &str,
+) -> Result<String, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    let result = rt.block_on(broadcast_contract_batch_transfer_tx(
+        batch_transfer_details,
+        network,
+        secret_key,
+        web3api_url,
+    ))?;
+    Ok(result.transaction_hash.encode_hex())
+}
+
 /// broadcast a previously signed ethereum tx.
 /// If successful, it returns the transaction hash/id.
 /// (blocking; not compiled to wasm).
