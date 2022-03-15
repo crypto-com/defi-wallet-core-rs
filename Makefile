@@ -31,23 +31,9 @@ mac_install:
 	brew install ktlint
 	brew install swiftformat
 
-prepare_cpp:
+
+build_cpp:
 	cargo build --package defi-wallet-core-cpp --release
-
-build_cpp: prepare_cpp
-	cp $(shell find ./target/release -name "libcxxbridge1.a") $(cpp_example)
-	cp ./target/release/libdefi_wallet_core_cpp.* $(cpp_example)
-	cp -r ./target/cxxbridge/* $(cpp_example)
-
-# workaround: replace the hard-coded include path
-	ifeq ($(UNAME), Darwin)
-		find $(cpp_example)/defi-wallet-core-cpp/src -type f -exec sed -i '' -e 's/defi-wallet-core-cpp\/src\/lib.rs.h/lib.rs.h/g' {} \;
-	endif
-
-	ifeq ($(UNAME), Linux)
-		find $(cpp_example)/defi-wallet-core-cpp/src -type f -exec sed -i 's/defi-wallet-core-cpp\/src\/lib.rs.h/lib.rs.h/g' {} \;
-	endif
-
 	cd $(cpp_example) && make build
 
 cpp: build_cpp
@@ -55,10 +41,6 @@ cpp: build_cpp
 
 cppx86_64:
 	cargo build --release --target x86_64-apple-darwin
-	cp ./target/x86_64-apple-darwin/release/libdefi_wallet_core_cpp.a $(cpp_example)
-	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
-	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
-	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
 	cd $(cpp_example) && make x86_64_build
 
 

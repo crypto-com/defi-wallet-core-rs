@@ -15,6 +15,7 @@ siwe = { version = "0.2" }
 
 [build-dependencies]
 cxx-build = "1"
+walkdir = "2"
 
 
 [lib]
