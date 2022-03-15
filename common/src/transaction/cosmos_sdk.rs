@@ -733,7 +733,7 @@ mod tests {
     }
 
     #[test]
-    fn signing_works_mutimsg() {
+    fn signing_works() {
         let secret_key = SecretKey::new();
 
         let tx_raw = build_signed_single_msg_tx(
@@ -749,8 +749,12 @@ mod tests {
     }
 
     #[test]
-    fn signing_works() {
-        let secret_key = SecretKey::new();
+    fn signing_works_mutimsg() {
+        let wallet = HDWallet::recover_wallet(WORDS.to_string(), None).expect("wallet");
+        let private_key = wallet
+            .get_key("m/44'/118'/0'/0/0".to_string())
+            .expect("key");
+
         let mut msgs = Vec::new();
 
         msgs.push(CosmosSDKMsg::BankSend {
@@ -763,9 +767,11 @@ mod tests {
             amount: SingleCoin::ATOM { amount: 2 },
         });
 
-        let tx_raw =
-            build_signed_msg_tx(TX_INFO, msgs, Arc::new(secret_key)).expect("ok signed tx");
-        assert!(Tx::from_bytes(&tx_raw).is_ok());
+        let tx_raw = build_signed_msg_tx(TX_INFO, msgs, private_key).expect("ok signed tx");
+        assert_eq!(
+            hex::encode(tx_raw),
+            "0aa9020a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73313964796c3075797a6573346b32336c73636c6130326e3036666332326834757173647771367a1a100a057561746f6d1207313030303030300a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a122d636f736d6f73316138337839347877773437653332726770797474747563783276657878636e326c6332656b781a100a057561746f6d12073230303030303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a406be1c153eda9e3ba022d2e9138c0682991ba6cf6b8b7bdc75ae1adb88b8a977b35e18292b569cb66ffff16189f37a5848648f14caa1084cfb4f7041deda737ae"
+        );
     }
 
     use crate::wallet::HDWallet;

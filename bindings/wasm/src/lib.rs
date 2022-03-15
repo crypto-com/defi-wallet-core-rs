@@ -87,6 +87,16 @@ impl PrivateKey {
     pub fn to_hex(&self) -> String {
         self.key.to_hex()
     }
+
+    /// converts private to address with coin type
+    #[wasm_bindgen]
+    pub fn to_address(&self, coin: CoinType) -> Result<String, JsValue> {
+        let address = self
+            .key
+            .to_address(coin.into())
+            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        Ok(address)
+    }
 }
 
 impl Default for PrivateKey {
@@ -512,6 +522,7 @@ impl CosmosTx {
     }
 
     /// Sign the transaction and move out all pending messages
+    /// will release the function parameter object
     #[wasm_bindgen]
     pub fn sign_into(
         &mut self,
