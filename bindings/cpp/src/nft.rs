@@ -111,7 +111,7 @@ impl GrpcClient {
         let owner = self
             .0
             .owner_blocking(denom_id, owner)?
-            .ok_or(anyhow!("No Owner"))?;
+            .ok_or_else(|| anyhow!("No Owner"))?;
         Ok(Box::new(owner.into()))
     }
 
@@ -120,7 +120,7 @@ impl GrpcClient {
         let collection = self
             .0
             .collection_blocking(denom_id)?
-            .ok_or(anyhow!("No Collection"))?;
+            .ok_or_else(|| anyhow!("No Collection"))?;
         Ok(Box::new(collection.into()))
     }
 
@@ -129,7 +129,7 @@ impl GrpcClient {
         let denom = self
             .0
             .denom_blocking(denom_id)?
-            .ok_or(anyhow!("No denom"))?;
+            .ok_or_else(|| anyhow!("No denom"))?;
         Ok(Box::new(denom.into()))
     }
 
@@ -138,7 +138,7 @@ impl GrpcClient {
         let denom = self
             .0
             .denom_by_name_blocking(denom_name)?
-            .ok_or(anyhow!("No denom"))?;
+            .ok_or_else(|| anyhow!("No denom"))?;
         Ok(Box::new(denom.into()))
     }
 
@@ -153,7 +153,7 @@ impl GrpcClient {
         let nft = self
             .0
             .nft_blocking(denom_id, token_id)?
-            .ok_or(anyhow!("No Nft"))?;
+            .ok_or_else(|| anyhow!("No Nft"))?;
         Ok(Box::new(nft.into()))
     }
 }
