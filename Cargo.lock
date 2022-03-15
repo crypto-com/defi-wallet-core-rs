@@ -975,6 +975,7 @@ dependencies = [
  "ethers",
  "grpc-web-client",
  "reqwest",
+ "serde",
  "tendermint",
  "tendermint-rpc",
  "wasm-bindgen",

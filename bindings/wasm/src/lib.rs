@@ -15,6 +15,7 @@ use defi_wallet_core_common::{
 use defi_wallet_core_common::node;
 use defi_wallet_core_common::transaction;
 
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 /// wasm utilities
 mod utils;
@@ -1341,26 +1342,23 @@ pub struct ContractBatchTransferDetails {
 #[wasm_bindgen]
 impl ContractBatchTransferDetails {
     /// constructs arguments for ERC-1155 function safeBatchTransferFrom
-    /// FIXME:
-    /// 1. Type of `Vec<String>` cannot been bound directly as argument of JS.
-    ///    Reference issue https://github.com/rustwasm/wasm-bindgen/issues/111.
-    /// 2. ERC-1155 function safeBatchTransferFrom requires that both token_ids
-    ///    and hex_amounts are arrays of same length. A wrapper struct
-    ///    containing token_id and amount pair needs serializing functions
-    ///    exported to JS. It seems to be not necessary for just two String
-    ///    fields. Reference about serializing struct to JsValue in
-    ///    https://rustwasm.github.io/docs/wasm-bindgen/reference/arbitrary-data-with-serde.html#serializing-and-deserializing-arbitrary-data-into-and-from-jsvalue-with-serde.
     #[wasm_bindgen]
     pub fn build_erc1155_safe_batch_transfer_from(
         contract_address: String,
         from_address: String,
         to_address: String,
-        token_ids: Vec<JsValue>,
-        hex_amounts: Vec<JsValue>,
+        // Original item type of vector must be TokenAmount.
+        token_amounts: Vec<JsValue>,
         additional_data: Vec<u8>,
     ) -> Result<ContractBatchTransferDetails, JsValue> {
-        let token_ids = get_string_vec_from_js(token_ids)?;
-        let hex_amounts = get_string_vec_from_js(hex_amounts)?;
+        let len = token_amounts.len();
+        let mut token_ids = Vec::with_capacity(len);
+        let mut hex_amounts = Vec::with_capacity(len);
+        for item in token_amounts {
+            let token_amount: TokenAmount = item.try_into()?;
+            token_ids.push(token_amount.token_id);
+            hex_amounts.push(token_amount.hex_amount);
+        }
         Ok(Self {
             from_address,
             to_address,
@@ -1389,6 +1387,38 @@ impl TryFrom<ContractBatchTransferDetails> for ContractBatchTransfer {
 
             _ => Err(JsValue::from_str("Unsupported contract type")),
         }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[wasm_bindgen]
+/// Token ID and amount of hex value pair used for ERC-1155 function
+/// safeBatchTransferFrom which needs the same length of both Token ID and
+/// amount arrays.
+pub struct TokenAmount {
+    token_id: String,
+    hex_amount: String,
+}
+
+#[wasm_bindgen]
+impl TokenAmount {
+    /// Create an instance and serialize it to JsValue.
+    #[wasm_bindgen(constructor)]
+    pub fn new(token_id: String, hex_amount: String) -> Result<JsValue, JsValue> {
+        JsValue::from_serde(&Self {
+            token_id,
+            hex_amount,
+        })
+        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+    }
+}
+
+impl TryFrom<JsValue> for TokenAmount {
+    type Error = JsValue;
+
+    fn try_from(val: JsValue) -> Result<Self, Self::Error> {
+        val.into_serde()
+            .map_err(|e| JsValue::from_str(&format!("error: {e}")))
     }
 }
 
@@ -1509,13 +1539,4 @@ impl GrpcWebClient {
         let nft = self.0.nft(denom_id, token_id).await?;
         JsValue::from_serde(&nft).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
     }
-}
-
-#[inline]
-fn get_string_vec_from_js(values: Vec<JsValue>) -> Result<Vec<String>, JsValue> {
-    values
-        .iter()
-        .map(JsValue::as_string)
-        .collect::<Option<Vec<String>>>()
-        .ok_or_else(|| JsValue::from_str("Not a JS string"))
 }
