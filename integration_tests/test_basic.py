@@ -81,10 +81,12 @@ def test_basic(chainmain, cronos):
         "Balance of SHIELD:", contract.functions.balanceOf(ADDRS["signer1"], 4).call()
     )
 
-    # Test cppexample
+    # Test cppexamplestatic
     # TODO Pass input and assert output
-    cmd = Path(__file__).parent / "../example/cpp-example/cppexample"
+    cmd = Path(__file__).parent / "../example/cpp-example/cppexamplestatic"
     output = subprocess.getoutput(str(cmd))
     print(output)
     if "Assertion failed" in output:
         assert False
+
+    # TODO Test cppexample
