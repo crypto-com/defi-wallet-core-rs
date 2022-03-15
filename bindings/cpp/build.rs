@@ -69,8 +69,6 @@ fn copy_source_output_files(output_path: &str) {
                 } else {
                     println!("cargo:warning=create {:?} failed", f);
                 }
-            } else {
-                println!("cargo:warning=read {:?} failed", f);
             }
         }
     }
@@ -103,25 +101,21 @@ fn copy_cxx_files(output_path: &str) {
     }
     fs::create_dir_all(cxx_output_path.clone()).unwrap();
 
-    let mut files: Vec<PathBuf> = vec![];
-    files.push(include_path.join("rust").join("cxx.h"));
+    let files: Vec<PathBuf> = vec![include_path.join("rust").join("cxx.h")];
     copy_files(files, &cxx_output_path);
 }
 
 /// copy library files: `*.a` and `*.dylib` to `output_path`
 fn copy_lib_files(output_path: &str) {
     let example_path = Path::new(output_path);
-    let mut files: Vec<PathBuf> = vec![];
     // println!("cargo:warning={:?}", env::var("CARGO_TARGET_DIR")); // Not working
     // workaround: concat the library name manually
-    files.push(
+    let mut files: Vec<PathBuf> = vec![
         get_target_path()
             .join(format!("lib{}.a", env::var("CARGO_PKG_NAME").unwrap()).replace("-", "_")),
-    );
-    files.push(
         get_target_path()
             .join(format!("lib{}.dylib", env::var("CARGO_PKG_NAME").unwrap()).replace("-", "_")),
-    );
+    ];
 
     // workaround: search libcxxbridge1.a and push the first one
     let libcxxbridge1_files: Vec<PathBuf> = WalkDir::new(get_target_path())
@@ -153,7 +147,7 @@ fn copy_files(files: Vec<PathBuf>, dst: &Path) {
         match &f.file_name() {
             Some(filename) => {
                 if let Err(e) = std::fs::copy(&f, &dst.join(filename)) {
-                    println!("cargo:warning={:?}", e);
+                    println!("cargo:warning=copy {:?} failed, error: {:?}", f, e);
                 }
             }
             None => {
@@ -164,7 +158,7 @@ fn copy_files(files: Vec<PathBuf>, dst: &Path) {
 }
 
 /// collect files with `extension` in `path`, and save the file list to `files`
-fn collect_files(path: &PathBuf, files: &mut Vec<PathBuf>, extension: &str) {
+fn collect_files(path: &Path, files: &mut Vec<PathBuf>, extension: &str) {
     files.append(
         &mut WalkDir::new(path)
             .into_iter()
@@ -186,5 +180,5 @@ fn get_target_path() -> PathBuf {
     let path = Path::new(&manifest_dir_string)
         .join("../../target")
         .join(profile);
-    return PathBuf::from(path);
+    path
 }
