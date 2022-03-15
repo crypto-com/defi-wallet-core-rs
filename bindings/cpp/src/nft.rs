@@ -5,6 +5,7 @@ use defi_wallet_core_proto as proto;
 use std::fmt;
 
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
+#[allow(clippy::too_many_arguments)]
 mod ffi {
 
     #[derive(Serialize, Deserialize, Debug)]
