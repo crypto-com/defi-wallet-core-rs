@@ -1,4 +1,8 @@
-use std::{env, fs, io::Write, path::{Path, PathBuf}};
+use std::{
+    env, fs,
+    io::Write,
+    path::{Path, PathBuf},
+};
 use walkdir::WalkDir;
 
 const SOURCES: &[&str] = &[
@@ -53,7 +57,6 @@ fn copy_source_output_files(output_path: &str) {
     collect_files(&source_path, &mut files, "cc");
     // println!("cargo:warning={:?}",files);
 
-
     // workaround: replace the include string
     for f in files.clone() {
         if let Ok(contents) = fs::read_to_string(&f) {
@@ -85,7 +88,6 @@ fn copy_source_output_files(output_path: &str) {
     }
     fs::create_dir_all(source_output_path.clone()).unwrap();
     copy_files(files, &source_output_path);
-
 }
 
 /// copy cxx.h to `output_path`
