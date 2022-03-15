@@ -140,8 +140,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="lib.rs.cc" />
-    <ClCompile Include="nft.rs.cc" />
+    <ClCompile Include="defi-wallet-core-app\src\lib.rs.cc" />
+    <ClCompile Include="defi-wallet-core-app\src\nft.rs.cc" />
     <ClCompile Include="main.cc" />
     <ClCompile Include="cronos.cc" />
   </ItemGroup>
