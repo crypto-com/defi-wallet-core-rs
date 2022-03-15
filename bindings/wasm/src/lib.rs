@@ -1333,7 +1333,7 @@ pub struct ContractBatchTransferDetails {
     to_address: String,
     contract_address: String,
     contract_type: ContractType,
-    amounts: Vec<String>,
+    hex_amounts: Vec<String>,
     token_ids: Vec<String>,
     additional_data: Vec<u8>,
 }
@@ -1345,10 +1345,10 @@ impl ContractBatchTransferDetails {
     /// 1. Type of `Vec<String>` cannot been bound directly as argument of JS.
     ///    Reference issue https://github.com/rustwasm/wasm-bindgen/issues/111.
     /// 2. ERC-1155 function safeBatchTransferFrom requires that both token_ids
-    ///    and amounts are arrays of same length. A wrapper struct containing
-    ///    token_id and amount pair needs serializing functions exported to JS.
-    ///    It seems to be not necessary for just two String fields. Reference
-    ///    about serializing struct to JsValue in
+    ///    and hex_amounts are arrays of same length. A wrapper struct
+    ///    containing token_id and amount pair needs serializing functions
+    ///    exported to JS. It seems to be not necessary for just two String
+    ///    fields. Reference about serializing struct to JsValue in
     ///    https://rustwasm.github.io/docs/wasm-bindgen/reference/arbitrary-data-with-serde.html#serializing-and-deserializing-arbitrary-data-into-and-from-jsvalue-with-serde.
     #[wasm_bindgen]
     pub fn build_erc1155_safe_batch_transfer_from(
@@ -1356,17 +1356,17 @@ impl ContractBatchTransferDetails {
         from_address: String,
         to_address: String,
         token_ids: Vec<JsValue>,
-        amounts: Vec<JsValue>,
+        hex_amounts: Vec<JsValue>,
         additional_data: Vec<u8>,
     ) -> Result<ContractBatchTransferDetails, JsValue> {
         let token_ids = get_string_vec_from_js(token_ids)?;
-        let amounts = get_string_vec_from_js(amounts)?;
+        let hex_amounts = get_string_vec_from_js(hex_amounts)?;
         Ok(Self {
             from_address,
             to_address,
             contract_address,
             contract_type: ContractType::Erc1155,
-            amounts,
+            hex_amounts,
             token_ids,
             additional_data,
         })
@@ -1383,7 +1383,7 @@ impl TryFrom<ContractBatchTransferDetails> for ContractBatchTransfer {
                 from_address: details.from_address,
                 to_address: details.to_address,
                 token_ids: details.token_ids,
-                amounts: details.amounts,
+                hex_amounts: details.hex_amounts,
                 additional_data: details.additional_data,
             }),
 

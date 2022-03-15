@@ -101,7 +101,7 @@ pub enum ContractBatchTransfer {
         from_address: String,
         to_address: String,
         token_ids: Vec<String>,
-        amounts: Vec<String>,
+        hex_amounts: Vec<String>,
         additional_data: Vec<u8>,
     },
 }
@@ -453,7 +453,7 @@ pub async fn broadcast_contract_batch_transfer_tx(
             from_address,
             to_address,
             token_ids,
-            amounts,
+            hex_amounts,
             additional_data,
         } => {
             let contract_address = address_from_str(&contract_address)?;
@@ -463,7 +463,7 @@ pub async fn broadcast_contract_batch_transfer_tx(
                 .iter()
                 .map(|val| u256_from_str(val))
                 .collect::<Result<Vec<U256>, _>>()?;
-            let amounts = amounts
+            let amounts = hex_amounts
                 .iter()
                 .map(|val| u256_from_str(val))
                 .collect::<Result<Vec<U256>, _>>()?;
