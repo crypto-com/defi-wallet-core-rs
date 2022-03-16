@@ -40,7 +40,7 @@ cpp: build_cpp
 	. ./scripts/.env && cd $(cpp_example) && make run
 
 cppx86_64:
-	cargo build --release --target x86_64-apple-darwin
+	cd bindings/cpp && cargo run --release --target x86_64-apple-darwin # release is necessary
 	cd $(cpp_example) && make x86_64_build
 
 

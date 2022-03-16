@@ -193,7 +193,7 @@ void test_chainmain_nft() {
   assert(nft.uri == "newuri");
   assert(nft.data == "newdata");
   assert(nft.owner == myfrom);
-  int supply = grpc_client->supply(denom_id, myfrom);
+  uint64_t supply = grpc_client->supply(denom_id, myfrom);
   cout << "supply: " << supply << endl;
   assert(supply == 1);
 
