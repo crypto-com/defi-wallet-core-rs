@@ -88,7 +88,7 @@ fn copy_cxx_files(output_path: &str) {
     copy_files(files, &cxx_output_path);
 }
 
-/// copy library files: `*.a` and `*.dylib` to `output_path`
+/// copy library files: `*.a`, `*.dylib`, and `*.dll.lib` (windows) to `output_path`
 fn copy_lib_files(output_path: &str) {
     let example_path = Path::new(output_path);
     let target_dir = Path::new(TARGET_DIR);
@@ -102,6 +102,9 @@ fn copy_lib_files(output_path: &str) {
         #[allow(clippy::single_char_pattern)]
         target_dir
             .join(format!("lib{}.dylib", env::var("CARGO_PKG_NAME").unwrap()).replace("-", "_")),
+        #[allow(clippy::single_char_pattern)]
+        target_dir
+            .join(format!("{}.dll.lib", env::var("CARGO_PKG_NAME").unwrap()).replace("-", "_")),
     ];
 
     // workaround: search libcxxbridge1.a and push the first one
