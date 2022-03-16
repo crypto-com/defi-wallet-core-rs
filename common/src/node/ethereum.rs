@@ -92,15 +92,23 @@ pub enum ContractTransfer {
         amount_hex: String,
         additional_data: Vec<u8>,
     },
-    // TODO:
-    // May support ERC-1155 function safeBatchTransferFrom individually. Since
-    // this batch function could transfer multiple token_ids (Vec<String>) and
-    // amounts (Vec<String>).
+}
+
+/// Information needed for batch transferring tokens on different common contract types
+pub enum ContractBatchTransfer {
+    Erc1155 {
+        contract_address: String,
+        from_address: String,
+        to_address: String,
+        token_ids: Vec<String>,
+        hex_amounts: Vec<String>,
+        additional_data: Vec<u8>,
+    },
 }
 
 /// given the account address, it returns the amount of native token it owns
 pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<String, EthError> {
-    let to = Address::from_str(address).map_err(|_| EthError::HexConversion)?;
+    let to = address_from_str(address)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let result = provider
         .get_balance(to, None)
@@ -111,7 +119,7 @@ pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<String,
 
 /// given the account address, it returns the nonce / number of transactions sent from the account
 pub async fn get_eth_transaction_count(address: &str, web3api_url: &str) -> Result<U256, EthError> {
-    let to = Address::from_str(address).map_err(|_| EthError::HexConversion)?;
+    let to = address_from_str(address)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let result = provider
         .get_transaction_count(to, None)
@@ -126,14 +134,13 @@ pub async fn get_contract_balance(
     contract_details: ContractBalance,
     web3api_url: &str,
 ) -> Result<U256, EthError> {
-    let address = Address::from_str(account_address).map_err(|_| EthError::HexConversion)?;
+    let address = address_from_str(account_address)?;
     let client = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
 
     match &contract_details {
         ContractBalance::Erc20 { contract_address }
         | ContractBalance::Erc721 { contract_address } => {
-            let contract_address =
-                Address::from_str(contract_address).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(contract_address)?;
             if matches!(contract_details, ContractBalance::Erc20 { .. }) {
                 let contract = Erc20Contract::new(contract_address, Arc::new(client));
                 contract
@@ -154,9 +161,8 @@ pub async fn get_contract_balance(
             contract_address,
             token_id,
         } => {
-            let contract_address =
-                Address::from_str(contract_address).map_err(|_| EthError::HexConversion)?;
-            let token_id = U256::from_str(token_id).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(contract_address)?;
+            let token_id = u256_from_str(token_id)?;
             let contract = Erc1155Contract::new(contract_address, Arc::new(client));
             contract
                 .balance_of(address, token_id)
@@ -187,11 +193,9 @@ pub async fn broadcast_contract_approval_tx(
             approved_address,
             amount_hex,
         } => {
-            let contract_address =
-                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
-            let approved_address =
-                Address::from_str(&approved_address).map_err(|_| EthError::HexConversion)?;
-            let amount = U256::from_str(&amount_hex).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(&contract_address)?;
+            let approved_address = address_from_str(&approved_address)?;
+            let amount = u256_from_str(&amount_hex)?;
             let contract = Erc20Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .approve(approved_address, amount)
@@ -209,11 +213,9 @@ pub async fn broadcast_contract_approval_tx(
             approved_address,
             token_id,
         } => {
-            let contract_address =
-                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
-            let approved_address =
-                Address::from_str(&approved_address).map_err(|_| EthError::HexConversion)?;
-            let token_id = U256::from_str(&token_id).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(&contract_address)?;
+            let approved_address = address_from_str(&approved_address)?;
+            let token_id = u256_from_str(&token_id)?;
             let contract = Erc721Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .approve(approved_address, token_id)
@@ -231,10 +233,8 @@ pub async fn broadcast_contract_approval_tx(
             approved_address,
             approved,
         } => {
-            let contract_address =
-                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
-            let approved_address =
-                Address::from_str(&approved_address).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(&contract_address)?;
+            let approved_address = address_from_str(&approved_address)?;
             let contract = Erc721Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .set_approval_for_all(approved_address, approved)
@@ -252,10 +252,8 @@ pub async fn broadcast_contract_approval_tx(
             approved_address,
             approved,
         } => {
-            let contract_address =
-                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
-            let approved_address =
-                Address::from_str(&approved_address).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(&contract_address)?;
+            let approved_address = address_from_str(&approved_address)?;
             let contract = Erc1155Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .set_approval_for_all(approved_address, approved)
@@ -291,10 +289,9 @@ pub async fn broadcast_contract_transfer_tx(
             to_address,
             amount_hex,
         } => {
-            let contract_address =
-                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
-            let to_address = Address::from_str(&to_address).map_err(|_| EthError::HexConversion)?;
-            let amount = U256::from_str(&amount_hex).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(&contract_address)?;
+            let to_address = address_from_str(&to_address)?;
+            let amount = u256_from_str(&amount_hex)?;
             let contract = Erc20Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .transfer(to_address, amount)
@@ -313,12 +310,10 @@ pub async fn broadcast_contract_transfer_tx(
             to_address,
             amount_hex,
         } => {
-            let contract_address =
-                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
-            let from_address =
-                Address::from_str(&from_address).map_err(|_| EthError::HexConversion)?;
-            let to_address = Address::from_str(&to_address).map_err(|_| EthError::HexConversion)?;
-            let amount = U256::from_str(&amount_hex).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(&contract_address)?;
+            let from_address = address_from_str(&from_address)?;
+            let to_address = address_from_str(&to_address)?;
+            let amount = u256_from_str(&amount_hex)?;
             let contract = Erc20Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .transfer_from(from_address, to_address, amount)
@@ -337,12 +332,10 @@ pub async fn broadcast_contract_transfer_tx(
             to_address,
             token_id,
         } => {
-            let contract_address =
-                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
-            let token_id = U256::from_str(&token_id).map_err(|_| EthError::HexConversion)?;
-            let to_address = Address::from_str(&to_address).map_err(|_| EthError::HexConversion)?;
-            let from_address =
-                Address::from_str(&from_address).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(&contract_address)?;
+            let token_id = u256_from_str(&token_id)?;
+            let to_address = address_from_str(&to_address)?;
+            let from_address = address_from_str(&from_address)?;
             let contract = Erc721Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .transfer_from(from_address, to_address, token_id)
@@ -361,12 +354,10 @@ pub async fn broadcast_contract_transfer_tx(
             to_address,
             token_id,
         } => {
-            let contract_address =
-                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
-            let token_id = U256::from_str(&token_id).map_err(|_| EthError::HexConversion)?;
-            let to_address = Address::from_str(&to_address).map_err(|_| EthError::HexConversion)?;
-            let from_address =
-                Address::from_str(&from_address).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(&contract_address)?;
+            let token_id = u256_from_str(&token_id)?;
+            let to_address = address_from_str(&to_address)?;
+            let from_address = address_from_str(&from_address)?;
             let contract = Erc721Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .safe_transfer_from(from_address, to_address, token_id)
@@ -386,12 +377,10 @@ pub async fn broadcast_contract_transfer_tx(
             token_id,
             additional_data,
         } => {
-            let contract_address =
-                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
-            let token_id = U256::from_str(&token_id).map_err(|_| EthError::HexConversion)?;
-            let to_address = Address::from_str(&to_address).map_err(|_| EthError::HexConversion)?;
-            let from_address =
-                Address::from_str(&from_address).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(&contract_address)?;
+            let token_id = u256_from_str(&token_id)?;
+            let to_address = address_from_str(&to_address)?;
+            let from_address = address_from_str(&from_address)?;
             let contract = Erc721Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .safe_transfer_from_with_data(
@@ -417,14 +406,12 @@ pub async fn broadcast_contract_transfer_tx(
             amount_hex,
             additional_data,
         } => {
-            let contract_address =
-                Address::from_str(&contract_address).map_err(|_| EthError::HexConversion)?;
-            let token_id = U256::from_str(&token_id).map_err(|_| EthError::HexConversion)?;
-            let amount = U256::from_str(&amount_hex).map_err(|_| EthError::HexConversion)?;
+            let contract_address = address_from_str(&contract_address)?;
+            let token_id = u256_from_str(&token_id)?;
+            let amount = u256_from_str(&amount_hex)?;
 
-            let to_address = Address::from_str(&to_address).map_err(|_| EthError::HexConversion)?;
-            let from_address =
-                Address::from_str(&from_address).map_err(|_| EthError::HexConversion)?;
+            let to_address = address_from_str(&to_address)?;
+            let from_address = address_from_str(&from_address)?;
             let contract = Erc1155Contract::new(contract_address, Arc::new(client));
             let pending_tx = contract
                 .safe_transfer_from(
@@ -432,6 +419,61 @@ pub async fn broadcast_contract_transfer_tx(
                     to_address,
                     token_id,
                     amount,
+                    additional_data.into(),
+                )
+                .send()
+                .await
+                .map_err(|_| EthError::SendTxFail)?
+                .await;
+            let tx_receipt = pending_tx
+                .map_err(|_| EthError::SendTxFail)?
+                .ok_or(EthError::MempoolDrop)?;
+            Ok(tx_receipt)
+        }
+    }
+}
+
+/// given the contract batch-transfer details, it'll construct, sign and
+/// broadcast a corresponding transfer transaction.
+/// If successful, it returns the transaction receipt.
+pub async fn broadcast_contract_batch_transfer_tx(
+    details: ContractBatchTransfer,
+    network: EthNetwork,
+    secret_key: Arc<SecretKey>,
+    web3api_url: &str,
+) -> Result<TransactionReceipt, EthError> {
+    let (chain_id, _legacy) = network.to_chain_params()?;
+
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
+    let client = SignerMiddleware::new(provider, wallet);
+    match details {
+        ContractBatchTransfer::Erc1155 {
+            contract_address,
+            from_address,
+            to_address,
+            token_ids,
+            hex_amounts,
+            additional_data,
+        } => {
+            let contract_address = address_from_str(&contract_address)?;
+            let to_address = address_from_str(&to_address)?;
+            let from_address = address_from_str(&from_address)?;
+            let token_ids = token_ids
+                .iter()
+                .map(|val| u256_from_str(val))
+                .collect::<Result<Vec<U256>, _>>()?;
+            let amounts = hex_amounts
+                .iter()
+                .map(|val| u256_from_str(val))
+                .collect::<Result<Vec<U256>, _>>()?;
+            let contract = Erc1155Contract::new(contract_address, Arc::new(client));
+            let pending_tx = contract
+                .safe_batch_transfer_from(
+                    from_address,
+                    to_address,
+                    token_ids,
+                    amounts,
                     additional_data.into(),
                 )
                 .send()
@@ -599,6 +641,27 @@ pub fn broadcast_contract_transfer_tx_blocking(
     Ok(result.transaction_hash.encode_hex())
 }
 
+/// given the contract batch-transfer details, it'll construct, sign and
+/// broadcast a corresponding transfer transaction.
+/// If successful, it returns the transaction hash/id.
+/// (blocking; not compiled to wasm).
+#[cfg(not(target_arch = "wasm32"))]
+pub fn broadcast_contract_batch_transfer_tx_blocking(
+    batch_transfer_details: ContractBatchTransfer,
+    network: EthNetwork,
+    secret_key: Arc<SecretKey>,
+    web3api_url: &str,
+) -> Result<String, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    let result = rt.block_on(broadcast_contract_batch_transfer_tx(
+        batch_transfer_details,
+        network,
+        secret_key,
+        web3api_url,
+    ))?;
+    Ok(result.transaction_hash.encode_hex())
+}
+
 /// broadcast a previously signed ethereum tx.
 /// If successful, it returns the transaction hash/id.
 /// (blocking; not compiled to wasm).
@@ -610,4 +673,14 @@ pub fn broadcast_eth_signed_raw_tx_blocking(
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_eth_signed_raw_tx(raw_tx, web3api_url))?;
     Ok(result.transaction_hash.encode_hex())
+}
+
+#[inline]
+fn address_from_str(address_str: &str) -> Result<Address, EthError> {
+    Address::from_str(address_str).map_err(|_| EthError::HexConversion)
+}
+
+#[inline]
+fn u256_from_str(u256_str: &str) -> Result<U256, EthError> {
+    U256::from_str(u256_str).map_err(|_| EthError::HexConversion)
 }
