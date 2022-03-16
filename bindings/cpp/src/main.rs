@@ -95,7 +95,11 @@ fn copy_lib_files(output_path: &str) {
     // println!("cargo:warning={:?}", env::var("CARGO_TARGET_DIR")); // Not working
     // workaround: concat the library name manually
     let mut files: Vec<PathBuf> = vec![
+        // workaroud: clippy 1.59 thinks "_" is invalid, but replace needs to be &str
+        #[allow(clippy::single_char_pattern)]
         target_dir.join(format!("lib{}.a", env::var("CARGO_PKG_NAME").unwrap()).replace("-", "_")),
+        // workaroud: clippy 1.59 thinks "_" is invalid, but replace needs to be &str
+        #[allow(clippy::single_char_pattern)]
         target_dir
             .join(format!("lib{}.dylib", env::var("CARGO_PKG_NAME").unwrap()).replace("-", "_")),
     ];
