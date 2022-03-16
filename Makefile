@@ -33,7 +33,7 @@ mac_install:
 
 
 build_cpp:
-	cargo build --package defi-wallet-core-cpp --release
+	cd bindings/cpp && cargo run --release # release is necessary
 	cd $(cpp_example) && make build
 
 cpp: build_cpp
