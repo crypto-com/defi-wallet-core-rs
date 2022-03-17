@@ -29,7 +29,12 @@ impl CosmosClient {
     /// - 0 means before 0.42.11 or 0.44.4
     /// - >=1 means after 0.42.11 or 0.44.4
     /// TODO: switch to grpc-web
-    pub fn query_account_balance(&self, address: String, denom: String, api_version: u8) -> Promise {
+    pub fn query_account_balance(
+        &self,
+        address: String,
+        denom: String,
+        api_version: u8,
+    ) -> Promise {
         let api_url = self.config.api_url.to_owned();
         future_to_promise(async move {
             query_account_balance(api_url, address, denom, api_version).await
@@ -40,18 +45,14 @@ impl CosmosClient {
     /// TODO: switch to grpc-web
     pub fn query_account_details(&self, address: String) -> Promise {
         let api_url = self.config.api_url.to_owned();
-        future_to_promise(async move {
-            query_account_details(api_url, address).await
-        })
+        future_to_promise(async move { query_account_details(api_url, address).await })
     }
 
     /// Broadcast a signed transaction.
     #[wasm_bindgen]
     pub fn broadcast_tx(&self, raw_signed_tx: Vec<u8>) -> Promise {
         let tendermint_rpc_url = self.config.tendermint_rpc_url.to_owned();
-        future_to_promise(async move {
-            broadcast_tx(tendermint_rpc_url, raw_signed_tx).await
-        })
+        future_to_promise(async move { broadcast_tx(tendermint_rpc_url, raw_signed_tx).await })
     }
 }
 
