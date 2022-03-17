@@ -33,13 +33,7 @@ const bech32hrp = "cosmos";
 const coin_type = 118;
 
 const tx_info = new wasm.CosmosSDKTxInfoRaw(account_number, sequence_number, gas_limit, fee_amount, fee_denom, timeout_height, memo_note, chain_id, bech32hrp, coin_type);
-<<<<<<< HEAD
-const privateKey1 = new wasm.PrivateKey();
-const signed_tx = wasm.get_single_bank_send_signed_tx(tx_info, privateKey1, "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
-=======
-
 const signed_tx = wasm.get_single_bank_send_signed_tx(tx_info, new wasm.PrivateKey(), "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
->>>>>>> main
 BigInt(1000000), "uatom");
 console.log(signed_tx);
 
