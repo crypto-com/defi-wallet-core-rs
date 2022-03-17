@@ -951,7 +951,6 @@ dependencies = [
  "serde",
  "serde_json",
  "siwe",
- "walkdir",
 ]
 
 [[package]]

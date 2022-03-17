@@ -12,7 +12,6 @@ anyhow = "1"
 serde="1"
 serde_json="1"
 siwe = { version = "0.2" }
-walkdir = "2"
 
 [build-dependencies]
 cxx-build = "1"
