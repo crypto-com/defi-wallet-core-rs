@@ -48,7 +48,6 @@ def copy_cxxbridge(output_path):
 # copy library files: `*.a`, `*.dylib`, and `*.dll.lib` (windows) to `output_path`
 def copy_lib_files(output_path):
     files = []
-    # workaround: concat the library name manually
     files.extend(collect_files("*.a", TARGET_DIR, recursive=False))
     files.extend(collect_files("*.dylib", TARGET_DIR, recursive=False))
     files.extend(collect_files("*.dll.lib", TARGET_DIR, recursive=False))
