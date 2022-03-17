@@ -9,8 +9,11 @@ ifeq ($(UNAME), Linux)
 endif
 
 all: build run
-build: static dynamic
+build: prepare static dynamic
 run: run_static run_dynamic
+
+prepare:
+	python3 helper.py
 
 static:
 	g++ -o cppexamplestatic main.cc cronos.cc libdefi_wallet_core_cpp.a -std=c++11 $(FLAGS)
