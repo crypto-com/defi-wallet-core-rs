@@ -24,6 +24,27 @@ impl CosmosClient {
         Self { config }
     }
 
+    /// Retrieve the account balance for a given address and a denom.
+    /// api-version: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.42.11
+    /// - 0 means before 0.42.11 or 0.44.4
+    /// - >=1 means after 0.42.11 or 0.44.4
+    /// TODO: switch to grpc-web
+    pub fn query_account_balance(&self, address: String, denom: String, api_version: u8) -> Promise {
+        let api_url = self.config.api_url.to_owned();
+        future_to_promise(async move {
+            query_account_balance(api_url, address, denom, api_version).await
+        })
+    }
+
+    /// Retrieve the account details (e.g. sequence and account number) for a given address.
+    /// TODO: switch to grpc-web
+    pub fn query_account_details(&self, address: String) -> Promise {
+        let api_url = self.config.api_url.to_owned();
+        future_to_promise(async move {
+            query_account_details(api_url, address).await
+        })
+    }
+
     /// Broadcast a signed transaction.
     #[wasm_bindgen]
     pub fn broadcast_tx(&self, raw_signed_tx: Vec<u8>) -> Promise {
@@ -44,23 +65,13 @@ pub struct CosmosClientConfig {
 
 #[wasm_bindgen]
 impl CosmosClientConfig {
-    /// Create an instance and serialize it to JsValue.
+    /// Create an instance.
     #[wasm_bindgen(constructor)]
-    pub fn new(api_url: String, tendermint_rpc_url: String) -> Result<JsValue, JsValue> {
-        JsValue::from_serde(&Self {
+    pub fn new(api_url: String, tendermint_rpc_url: String) -> Self {
+        Self {
             api_url,
             tendermint_rpc_url,
-        })
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
-    }
-}
-
-impl TryFrom<JsValue> for CosmosClientConfig {
-    type Error = JsValue;
-
-    fn try_from(val: JsValue) -> Result<Self, Self::Error> {
-        val.into_serde()
-            .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        }
     }
 }
 
