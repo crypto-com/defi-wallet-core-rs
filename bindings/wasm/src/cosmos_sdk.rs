@@ -5,84 +5,62 @@ use defi_wallet_core_common::{
     CosmosSDKTxInfo, Height, Network, PublicKeyBytesWrapper, SingleCoin,
     COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
+use js_sys::Promise;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::future_to_promise;
 
-/// the common transaction data needed for Cosmos SDK transactions
-/// (raw duplicate needed for Wasm -- TODO: unify common structures?)
-#[wasm_bindgen(getter_with_clone)]
-pub struct CosmosSDKTxInfoRaw {
-    /// global account number of the sender
-    pub account_number: u64,
-    /// equivalent of "account nonce"
-    pub sequence_number: u64,
-    /// the maximum gas limit
-    pub gas_limit: u64,
-    /// the amount fee to be paid (gas_limit * gas_price)
-    pub fee_amount: u64,
-    /// the fee's denomination
-    pub fee_denom: String,
-    /// transaction timeout
-    pub timeout_height: u32,
-    /// optional memo
-    pub memo_note: Option<String>,
-    /// the network chain id
-    pub chain_id: String,
-    /// bech32 human readable prefix
-    pub bech32hrp: String,
-    /// the coin type to use
-    pub coin_type: u32,
+/// Cosmos client
+#[wasm_bindgen]
+pub struct CosmosClient {
+    config: CosmosClientConfig,
 }
 
 #[wasm_bindgen]
-impl CosmosSDKTxInfoRaw {
-    /// constructor for JS -- TODO: some builder API wrapper?
+impl CosmosClient {
+    /// Create an instance.
     #[wasm_bindgen(constructor)]
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        account_number: u64,
-        sequence_number: u64,
-        gas_limit: u64,
-        fee_amount: u64,
-        fee_denom: String,
-        timeout_height: u32,
-        memo_note: Option<String>,
-        chain_id: String,
-        bech32hrp: String,
-        coin_type: u32,
-    ) -> Self {
-        Self {
-            account_number,
-            sequence_number,
-            gas_limit,
-            fee_amount,
-            fee_denom,
-            timeout_height,
-            memo_note,
-            chain_id,
-            bech32hrp,
-            coin_type,
-        }
+    pub fn new(config: CosmosClientConfig) -> Self {
+        Self { config }
+    }
+
+    /// Broadcast a signed transaction.
+    #[wasm_bindgen]
+    pub fn broadcast_tx(&self, raw_signed_tx: Vec<u8>) -> Promise {
+        let tendermint_rpc_url = self.config.tendermint_rpc_url.to_owned();
+        future_to_promise(async move {
+            broadcast_tx(tendermint_rpc_url, raw_signed_tx).await
+        })
     }
 }
 
-impl From<CosmosSDKTxInfoRaw> for CosmosSDKTxInfo {
-    fn from(info: CosmosSDKTxInfoRaw) -> Self {
-        CosmosSDKTxInfo {
-            account_number: info.account_number,
-            sequence_number: info.sequence_number,
-            gas_limit: info.gas_limit,
-            fee_amount: SingleCoin::Other {
-                amount: info.fee_amount.to_string(),
-                denom: info.fee_denom,
-            },
-            timeout_height: info.timeout_height,
-            memo_note: info.memo_note,
-            network: Network::Other {
-                chain_id: info.chain_id,
-                coin_type: info.coin_type,
-                bech32hrp: info.bech32hrp,
-            },
-        }
+/// Cosmos client configuration
+#[derive(Serialize, Deserialize)]
+#[wasm_bindgen]
+pub struct CosmosClientConfig {
+    api_url: String,
+    tendermint_rpc_url: String,
+}
+
+#[wasm_bindgen]
+impl CosmosClientConfig {
+    /// Create an instance and serialize it to JsValue.
+    #[wasm_bindgen(constructor)]
+    pub fn new(api_url: String, tendermint_rpc_url: String) -> Result<JsValue, JsValue> {
+        JsValue::from_serde(&Self {
+            api_url,
+            tendermint_rpc_url,
+        })
+        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+    }
+}
+
+impl TryFrom<JsValue> for CosmosClientConfig {
+    type Error = JsValue;
+
+    fn try_from(val: JsValue) -> Result<Self, Self::Error> {
+        val.into_serde()
+            .map_err(|e| JsValue::from_str(&format!("error: {e}")))
     }
 }
 
@@ -316,6 +294,85 @@ impl CosmosTx {
             private_key.key,
         )
         .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }
+}
+
+/// the common transaction data needed for Cosmos SDK transactions
+/// (raw duplicate needed for Wasm -- TODO: unify common structures?)
+#[wasm_bindgen(getter_with_clone)]
+pub struct CosmosSDKTxInfoRaw {
+    /// global account number of the sender
+    pub account_number: u64,
+    /// equivalent of "account nonce"
+    pub sequence_number: u64,
+    /// the maximum gas limit
+    pub gas_limit: u64,
+    /// the amount fee to be paid (gas_limit * gas_price)
+    pub fee_amount: u64,
+    /// the fee's denomination
+    pub fee_denom: String,
+    /// transaction timeout
+    pub timeout_height: u32,
+    /// optional memo
+    pub memo_note: Option<String>,
+    /// the network chain id
+    pub chain_id: String,
+    /// bech32 human readable prefix
+    pub bech32hrp: String,
+    /// the coin type to use
+    pub coin_type: u32,
+}
+
+#[wasm_bindgen]
+impl CosmosSDKTxInfoRaw {
+    /// constructor for JS -- TODO: some builder API wrapper?
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        account_number: u64,
+        sequence_number: u64,
+        gas_limit: u64,
+        fee_amount: u64,
+        fee_denom: String,
+        timeout_height: u32,
+        memo_note: Option<String>,
+        chain_id: String,
+        bech32hrp: String,
+        coin_type: u32,
+    ) -> Self {
+        Self {
+            account_number,
+            sequence_number,
+            gas_limit,
+            fee_amount,
+            fee_denom,
+            timeout_height,
+            memo_note,
+            chain_id,
+            bech32hrp,
+            coin_type,
+        }
+    }
+}
+
+impl From<CosmosSDKTxInfoRaw> for CosmosSDKTxInfo {
+    fn from(info: CosmosSDKTxInfoRaw) -> Self {
+        CosmosSDKTxInfo {
+            account_number: info.account_number,
+            sequence_number: info.sequence_number,
+            gas_limit: info.gas_limit,
+            fee_amount: SingleCoin::Other {
+                amount: info.fee_amount.to_string(),
+                denom: info.fee_denom,
+            },
+            timeout_height: info.timeout_height,
+            memo_note: info.memo_note,
+            network: Network::Other {
+                chain_id: info.chain_id,
+                coin_type: info.coin_type,
+                bech32hrp: info.bech32hrp,
+            },
+        }
     }
 }
 
