@@ -2,18 +2,17 @@
 /// TODO: remove when a new version is published https://github.com/crypto-com/defi-wallet-core-rs/issues/110
 use std::sync::Arc;
 
+use defi_wallet_core_common::node;
+use defi_wallet_core_common::transaction;
 use defi_wallet_core_common::{
     broadcast_contract_approval_tx, broadcast_contract_batch_transfer_tx,
     broadcast_contract_transfer_tx, broadcast_sign_eth_tx, broadcast_tx_sync, build_signed_msg_tx,
-    build_signed_single_msg_tx, get_account_balance, get_account_details, get_contract_balance,bytes_to_hex,
-    get_eth_balance, get_single_msg_sign_payload, BalanceApiVersion, ContractApproval,
-    ContractBalance, ContractBatchTransfer, ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo,
-    EthAmount, EthNetwork, HDWallet, Height, Network, PublicKeyBytesWrapper, SecretKey, SingleCoin,
-    WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    build_signed_single_msg_tx, bytes_to_hex, get_account_balance, get_account_details,
+    get_contract_balance, get_eth_balance, get_single_msg_sign_payload, BalanceApiVersion,
+    ContractApproval, ContractBalance, ContractBatchTransfer, ContractTransfer, CosmosSDKMsg,
+    CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Height, Network, PublicKeyBytesWrapper,
+    SecretKey, SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
-
-use defi_wallet_core_common::node;
-use defi_wallet_core_common::transaction;
 
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -935,6 +934,162 @@ pub async fn broadcast_tx(
     }
 
     Ok(JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+}
+
+/// ethereum contract
+#[wasm_bindgen]
+pub struct Contract {
+    contract: defi_wallet_core_common::transaction::Contract,
+}
+
+#[wasm_bindgen]
+impl Contract {
+    /// Create a Contract instance.(input abi string)
+    #[wasm_bindgen(constructor)]
+    pub fn new(data: &str) -> Self {
+        Self {
+            contract: defi_wallet_core_common::transaction::Contract::new(data),
+        }
+    }
+
+    /// set args to function in contract
+    #[wasm_bindgen]
+    pub fn encode_input(&self, function_name: &str, args: Vec<JsValue>) -> Vec<u8> {
+        let tokens = args
+            .into_iter()
+            .map(|a| {
+                let arg: ContractFunctionArg = a.try_into().unwrap();
+                arg.token
+            })
+            .collect();
+        self.contract.encode_input(function_name, tokens)
+    }
+}
+
+/// contract args
+#[derive(Serialize, Deserialize)]
+#[wasm_bindgen]
+pub struct ContractFunctionArg {
+    token: defi_wallet_core_common::transaction::Token,
+}
+
+#[wasm_bindgen]
+impl ContractFunctionArg {
+    #[wasm_bindgen]
+    pub fn build_address(address_str: &str) -> JsValue {
+        JsValue::from_serde(&Self {
+            token: defi_wallet_core_common::transaction::Token::build_address(address_str),
+        })
+        .unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn build_fixed_bytes(bytes: Vec<u8>) -> JsValue {
+        JsValue::from_serde(&Self {
+            token: defi_wallet_core_common::transaction::Token::FixedBytes(bytes),
+        })
+        .unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn build_bytes(bytes: Vec<u8>) -> JsValue {
+        JsValue::from_serde(&Self {
+            token: defi_wallet_core_common::transaction::Token::Bytes(bytes),
+        })
+        .unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn build_int(int_str: &str) -> JsValue {
+        JsValue::from_serde(&Self {
+            token: defi_wallet_core_common::transaction::Token::build_int(&int_str),
+        })
+        .unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn build_uint(uint_str: &str) -> JsValue {
+        JsValue::from_serde(&Self {
+            token: defi_wallet_core_common::transaction::Token::build_uint(&uint_str),
+        })
+        .unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn build_bool(val: bool) -> JsValue {
+        JsValue::from_serde(&Self {
+            token: defi_wallet_core_common::transaction::Token::Bool(val),
+        })
+        .unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn build_string(val: String) -> JsValue {
+        JsValue::from_serde(&Self {
+            token: defi_wallet_core_common::transaction::Token::String(val),
+        })
+        .unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn build_fixed_array(vec: Vec<JsValue>) -> JsValue {
+        let tokens: Vec<defi_wallet_core_common::transaction::Token> = vec
+            .into_iter()
+            .map(|v| {
+                let v: Self = v.try_into().unwrap();
+                v.token
+            })
+            .collect();
+        JsValue::from_serde(&Self {
+            token: defi_wallet_core_common::transaction::Token::FixedArray(
+                tokens.into_iter().map(Into::into).collect(),
+            ),
+        })
+        .unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn build_array(vec: Vec<JsValue>) -> JsValue {
+        let tokens: Vec<defi_wallet_core_common::transaction::Token> = vec
+            .into_iter()
+            .map(|v| {
+                let v: Self = v.try_into().unwrap();
+                v.token
+            })
+            .collect();
+        JsValue::from_serde(&Self {
+            token: defi_wallet_core_common::transaction::Token::Array(
+                tokens.into_iter().map(Into::into).collect(),
+            ),
+        })
+        .unwrap()
+    }
+
+    #[wasm_bindgen]
+    pub fn build_tuple(vec: Vec<JsValue>) -> JsValue {
+        let tokens: Vec<defi_wallet_core_common::transaction::Token> = vec
+            .into_iter()
+            .map(|v| {
+                let v: Self = v.try_into().unwrap();
+                v.token
+            })
+            .collect();
+        JsValue::from_serde(&Self {
+            token: defi_wallet_core_common::transaction::Token::Tuple(
+                tokens.into_iter().map(Into::into).collect(),
+            ),
+        })
+        .unwrap()
+    }
+}
+
+impl TryFrom<JsValue> for ContractFunctionArg {
+    type Error = JsValue;
+
+    fn try_from(val: JsValue) -> Result<Self, Self::Error> {
+        val.into_serde()
+            .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+    }
 }
 
 /// return the account's balance formatted as ether decimals

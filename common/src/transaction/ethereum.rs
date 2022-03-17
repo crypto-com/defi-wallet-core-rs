@@ -7,6 +7,9 @@ use ethers::{
 use std::{str::FromStr, sync::Arc};
 
 use crate::{SecretKey, WalletCoin};
+use ethers::prelude::abi;
+use ethers::types::H160;
+use serde::{Deserialize, Serialize};
 
 /// Possible errors from Ethereum transaction construction and broadcasting
 #[derive(Debug, thiserror::Error)]
@@ -179,6 +182,77 @@ pub fn build_signed_eth_tx(
     let sig = wallet.sign_hash(tx.sighash(), false);
     let signed_tx = &tx.rlp_signed(&sig);
     Ok(signed_tx.to_vec())
+}
+
+///
+pub struct Contract {
+    abi_contract: abi::Contract,
+}
+
+impl Contract {
+    pub fn new(data: &str) -> Self {
+        Self {
+            abi_contract: abi::Contract::load(data.as_bytes()).unwrap(),
+        }
+    }
+
+    pub fn encode_input(&self, function_name: &str, tokens: Vec<Token>) -> Vec<u8> {
+        let fun = self.abi_contract.function(function_name).unwrap();
+        let tokens: Vec<abi::token::Token> = tokens.into_iter().map(Into::into).collect();
+        fun.encode_input(&tokens).unwrap()
+    }
+}
+
+///
+#[derive(Serialize, Deserialize)]
+pub enum Token {
+    Address(H160),
+    FixedBytes(Vec<u8>),
+    Bytes(Vec<u8>),
+    Int(U256),
+    Uint(U256),
+    Bool(bool),
+    String(String),
+    FixedArray(Vec<Token>),
+    Array(Vec<Token>),
+    Tuple(Vec<Token>),
+}
+
+impl Token {
+    pub fn build_address(address_str: &str) -> Self {
+        Self::Address(Address::from_str(address_str).unwrap())
+    }
+
+    pub fn build_int(u256_str: &str) -> Self {
+        Self::Int(U256::from_str(u256_str).unwrap())
+    }
+
+    pub fn build_uint(u256_str: &str) -> Self {
+        Self::Uint(U256::from_str(u256_str).unwrap())
+    }
+}
+
+impl From<Token> for abi::token::Token {
+    fn from(token: Token) -> Self {
+        match token {
+            Token::Address(val) => abi::token::Token::Address(val),
+            Token::FixedBytes(val) => abi::token::Token::FixedBytes(val),
+            Token::Bytes(val) => abi::token::Token::Bytes(val),
+            Token::Int(val) => abi::token::Token::Int(val),
+            Token::Uint(val) => abi::token::Token::Uint(val),
+            Token::Bool(val) => abi::token::Token::Bool(val),
+            Token::String(val) => abi::token::Token::String(val),
+            Token::FixedArray(vec) => {
+                abi::token::Token::FixedArray(vec.into_iter().map(|val| val.into()).collect())
+            }
+            Token::Array(vec) => {
+                abi::token::Token::FixedArray(vec.into_iter().map(|val| val.into()).collect())
+            }
+            Token::Tuple(vec) => {
+                abi::token::Token::Tuple(vec.into_iter().map(|val| val.into()).collect())
+            }
+        }
+    }
 }
 
 #[cfg(test)]
