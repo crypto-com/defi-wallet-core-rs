@@ -15,6 +15,7 @@ const STAKING_DELEGATE_AMOUNT = BigInt(100_000_000_000);
 
 testPrivateKey();
 testBuildAndSignCosmosTx();
+testBuildEthereumContractBatchTransfer();
 
 const wallet = new wasm.Wallet();
 logWalletAddresses(wallet);
@@ -32,8 +33,13 @@ const bech32hrp = "cosmos";
 const coin_type = 118;
 
 const tx_info = new wasm.CosmosSDKTxInfoRaw(account_number, sequence_number, gas_limit, fee_amount, fee_denom, timeout_height, memo_note, chain_id, bech32hrp, coin_type);
+<<<<<<< HEAD
 const privateKey1 = new wasm.PrivateKey();
 const signed_tx = wasm.get_single_bank_send_signed_tx(tx_info, privateKey1, "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
+=======
+
+const signed_tx = wasm.get_single_bank_send_signed_tx(tx_info, new wasm.PrivateKey(), "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
+>>>>>>> main
 BigInt(1000000), "uatom");
 console.log(signed_tx);
 
@@ -89,7 +95,7 @@ function testPrivateKey() {
 
 function testBuildAndSignCosmosTx() {
   // Get private key.
-  let privateKey = new wasm.PrivateKey();
+  const privateKey = new wasm.PrivateKey();
 
   // Construct transaction info.
   const txInfo = new wasm.CosmosSDKTxInfoRaw(
@@ -124,8 +130,24 @@ function testBuildAndSignCosmosTx() {
 
   // Sign the transaction and move out all pending messages.
   console.assert(tx.get_msg_count() === 2, "No message has been added to Cosmos transaction");
-  let txData = tx.sign_into(privateKey, txInfo);
+  const txData = tx.sign_into(privateKey, txInfo);
   console.assert(tx.get_msg_count() === 0, "Pending messages of Cosmos transaction have not been moved out");
 
   console.log(`Signed Cosmos transaction data: ${txData}`);
+}
+
+function testBuildEthereumContractBatchTransfer() {
+  const details = wasm.ContractBatchTransferDetails.build_erc1155_safe_batch_transfer_from(
+    "0x6ac7ea33f8831ea9dcc53393aaa88b25a785dbf0",
+    "0xcd234a471b72ba2f1ccf0a70fcaba648a5eecd8d",
+    "0x343c43a37d37dff08ae8c4a11544c718abb4fcf8",
+    // Array of token ID and amount of hex value pair
+    [
+      new wasm.TokenAmount("0x1344ead983", "0x6d22"),
+      new wasm.TokenAmount("0x2b40d6d551", "0x8aaa"),
+    ],
+    // Additional data
+    [1, 2, 3]
+  );
+  console.dir(details);
 }

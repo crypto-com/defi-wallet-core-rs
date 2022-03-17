@@ -3,18 +3,19 @@
 use std::sync::Arc;
 
 use defi_wallet_core_common::{
-    broadcast_contract_approval_tx, broadcast_contract_transfer_tx, broadcast_sign_eth_tx,
-    broadcast_tx_sync, build_signed_msg_tx, build_signed_single_msg_tx, bytes_to_hex,
-    get_account_balance, get_account_details, get_contract_balance, get_eth_balance,
-    get_single_msg_sign_payload, BalanceApiVersion, ContractApproval, ContractBalance,
-    ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo, EthAmount, EthNetwork, HDWallet, Height,
-    Network, PublicKeyBytesWrapper, SecretKey, SingleCoin, WalletCoin,
-    COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    broadcast_contract_approval_tx, broadcast_contract_batch_transfer_tx,
+    broadcast_contract_transfer_tx, broadcast_sign_eth_tx, broadcast_tx_sync, build_signed_msg_tx,
+    build_signed_single_msg_tx, get_account_balance, get_account_details, get_contract_balance,bytes_to_hex,
+    get_eth_balance, get_single_msg_sign_payload, BalanceApiVersion, ContractApproval,
+    ContractBalance, ContractBatchTransfer, ContractTransfer, CosmosSDKMsg, CosmosSDKTxInfo,
+    EthAmount, EthNetwork, HDWallet, Height, Network, PublicKeyBytesWrapper, SecretKey, SingleCoin,
+    WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 
 use defi_wallet_core_common::node;
 use defi_wallet_core_common::transaction;
 
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 /// wasm utilities
 mod utils;
@@ -1355,7 +1356,104 @@ impl TryFrom<ContractTransferDetails> for ContractTransfer {
     }
 }
 
-/// construct, sign and broadcast an approval of a ERC20/ERC721/ERC1155 token
+/// details needed for contract batch-transfer transaction
+/// Fix `amount`, `token_ids` or `additional_data` to optional if any of these
+/// fields is not necessary for other batch-tranfer functions.
+#[wasm_bindgen]
+pub struct ContractBatchTransferDetails {
+    from_address: String,
+    to_address: String,
+    contract_address: String,
+    contract_type: ContractType,
+    hex_amounts: Vec<String>,
+    token_ids: Vec<String>,
+    additional_data: Vec<u8>,
+}
+
+#[wasm_bindgen]
+impl ContractBatchTransferDetails {
+    /// constructs arguments for ERC-1155 function safeBatchTransferFrom
+    #[wasm_bindgen]
+    pub fn build_erc1155_safe_batch_transfer_from(
+        contract_address: String,
+        from_address: String,
+        to_address: String,
+        // Original item type of vector must be TokenAmount.
+        token_amounts: Vec<JsValue>,
+        additional_data: Vec<u8>,
+    ) -> Result<ContractBatchTransferDetails, JsValue> {
+        let len = token_amounts.len();
+        let mut token_ids = Vec::with_capacity(len);
+        let mut hex_amounts = Vec::with_capacity(len);
+        for item in token_amounts {
+            let token_amount: TokenAmount = item.try_into()?;
+            token_ids.push(token_amount.token_id);
+            hex_amounts.push(token_amount.hex_amount);
+        }
+        Ok(Self {
+            from_address,
+            to_address,
+            contract_address,
+            contract_type: ContractType::Erc1155,
+            hex_amounts,
+            token_ids,
+            additional_data,
+        })
+    }
+}
+
+impl TryFrom<ContractBatchTransferDetails> for ContractBatchTransfer {
+    type Error = JsValue;
+
+    fn try_from(details: ContractBatchTransferDetails) -> Result<Self, Self::Error> {
+        match details.contract_type {
+            ContractType::Erc1155 => Ok(ContractBatchTransfer::Erc1155 {
+                contract_address: details.contract_address,
+                from_address: details.from_address,
+                to_address: details.to_address,
+                token_ids: details.token_ids,
+                hex_amounts: details.hex_amounts,
+                additional_data: details.additional_data,
+            }),
+
+            _ => Err(JsValue::from_str("Unsupported contract type")),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[wasm_bindgen]
+/// Token ID and amount of hex value pair used for ERC-1155 function
+/// safeBatchTransferFrom which needs the same length of both Token ID and
+/// amount arrays.
+pub struct TokenAmount {
+    token_id: String,
+    hex_amount: String,
+}
+
+#[wasm_bindgen]
+impl TokenAmount {
+    /// Create an instance and serialize it to JsValue.
+    #[wasm_bindgen(constructor)]
+    pub fn new(token_id: String, hex_amount: String) -> Result<JsValue, JsValue> {
+        JsValue::from_serde(&Self {
+            token_id,
+            hex_amount,
+        })
+        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+    }
+}
+
+impl TryFrom<JsValue> for TokenAmount {
+    type Error = JsValue;
+
+    fn try_from(val: JsValue) -> Result<Self, Self::Error> {
+        val.into_serde()
+            .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+    }
+}
+
+/// construct, sign and broadcast an approval of an ERC20/ERC721/ERC1155 token
 #[wasm_bindgen]
 pub async fn broadcast_approval_contract(
     details: ContractApprovalDetails,
@@ -1378,7 +1476,7 @@ pub async fn broadcast_approval_contract(
     Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
 }
 
-/// construct, sign and broadcast a transfer of a ERC20/ERC721/ERC1155 token
+/// construct, sign and broadcast a transfer of an ERC20/ERC721/ERC1155 token
 #[wasm_bindgen]
 pub async fn broadcast_transfer_contract(
     details: ContractTransferDetails,
@@ -1387,6 +1485,29 @@ pub async fn broadcast_transfer_contract(
     private_key: PrivateKey,
 ) -> Result<JsValue, JsValue> {
     let receipt = broadcast_contract_transfer_tx(
+        details.try_into()?,
+        EthNetwork::Custom {
+            chain_id,
+            legacy: false,
+        },
+        private_key.key,
+        &web3_api_url,
+    )
+    .await
+    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+
+    Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+}
+
+/// construct, sign and broadcast batch-transfer of an ERC1155 token
+#[wasm_bindgen]
+pub async fn broadcast_batch_transfer_contract(
+    details: ContractBatchTransferDetails,
+    web3_api_url: String,
+    chain_id: u64,
+    private_key: PrivateKey,
+) -> Result<JsValue, JsValue> {
+    let receipt = broadcast_contract_batch_transfer_tx(
         details.try_into()?,
         EthNetwork::Custom {
             chain_id,

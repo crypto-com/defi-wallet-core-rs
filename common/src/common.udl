@@ -222,6 +222,11 @@ interface ContractTransfer {
   Erc1155SafeTransferFrom(string contract_address, string from_address, string to_address, string token_id, string amount_hex, sequence<u8> additional_data);
 };
 
+[Enum]
+interface ContractBatchTransfer {
+  Erc1155(string contract_address, string from_address, string to_address, sequence<string> token_ids, sequence<string> hex_amounts, sequence<u8> additional_data);
+};
+
 dictionary Denom {
     string id;
     string name;
@@ -348,5 +353,7 @@ namespace common {
   string broadcast_contract_approval_tx_blocking(ContractApproval approval_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
   [Throws=EthError]
   string broadcast_contract_transfer_tx_blocking(ContractTransfer transfer_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
+  [Throws=EthError]
+  string broadcast_contract_batch_transfer_tx_blocking(ContractBatchTransfer batch_transfer_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
   string bytes_to_hex(sequence<u8> data);
 };
