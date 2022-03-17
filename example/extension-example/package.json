@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "@crypto-com/defi-wallet-core-wasm": "^0.1.5"
+    "@crypto-com/defi-wallet-core-wasm": "^0.1.6"
   }
 }
