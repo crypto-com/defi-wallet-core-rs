@@ -80,6 +80,17 @@ build:
 make ios
 ```
 
+### C++
+Build `bindings/cpp` and `example/cpp_example`
+```bash
+make build_cpp
+```
+
+Build `bindings/cpp` and `example/cpp_example`, and run the example programs. Please notice, errors could happen if devnets (chainmain and cronos) are not running.
+```bash
+make cpp
+```
+
 ## Examples
 
 ### WASM
@@ -122,6 +133,12 @@ It is also possible to use `cargo test` instead of `wasm-pack`
     ``` bash
     cargo test
     ```
+### C++
+``` bash
+make cpp-ci-tests # build bindings and examples, then run the test
+# or
+make cpp-tests # run the test without building bindings and examples
+```
 
 ##### References
 - [Testing in headless browsers without wasm-pack](https://rustwasm.github.io/docs/wasm-bindgen/wasm-bindgen-test/browsers.html#appendix-testing-in-headless-browsers-without-wasm-pack)
