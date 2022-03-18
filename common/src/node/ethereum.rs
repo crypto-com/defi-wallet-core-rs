@@ -106,7 +106,6 @@ pub enum ContractBatchTransfer {
     },
 }
 
-
 /// Information needed for querying owner on nft token for Erc721
 #[derive(Clone)]
 pub enum ContractOwner {
@@ -184,7 +183,10 @@ pub async fn get_contract_balance(
 }
 
 /// given the contract information, it returns the owner address
-pub async fn get_token_owner(contract_owner: ContractOwner, web3api_url: &str) -> Result<Address, EthError> {
+pub async fn get_token_owner(
+    contract_owner: ContractOwner,
+    web3api_url: &str,
+) -> Result<Address, EthError> {
     let client = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     match &contract_owner {
         ContractOwner::Erc721 {
@@ -202,7 +204,6 @@ pub async fn get_token_owner(contract_owner: ContractOwner, web3api_url: &str) -
         }
     }
 }
-
 
 /// given the contract approval details, it'll construct, sign and broadcast a
 /// corresponding approval transaction.
@@ -616,10 +617,7 @@ pub fn get_token_owner_blocking(
     web3api_url: &str,
 ) -> Result<Address, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    let result = rt.block_on(get_token_owner(
-        contract_owner,
-        web3api_url,
-    ))?;
+    let result = rt.block_on(get_token_owner(contract_owner, web3api_url))?;
     Ok(result)
 }
 /// given the plain transfer details, it'll construct, sign and broadcast
