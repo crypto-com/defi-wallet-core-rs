@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use cxx::{type_id, ExternType};
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx,
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
@@ -10,7 +11,6 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 mod nft;
-use nft::*;
 
 mod contract;
 use contract::*;
@@ -394,58 +394,6 @@ pub mod ffi {
         fn new_privatekey() -> Box<PrivateKey>;
         fn new_privatekey_from_bytes(bytes: Vec<u8>) -> Result<Box<PrivateKey>>;
         fn new_privatekey_from_hex(hex: String) -> Result<Box<PrivateKey>>;
-        fn get_nft_issue_denom_signed_tx(
-            tx_info: CosmosSDKTxInfoRaw,
-            private_key: &PrivateKey,
-            id: String,
-            name: String,
-            schema: String,
-        ) -> Result<Vec<u8>>;
-        fn get_nft_mint_signed_tx(
-            tx_info: CosmosSDKTxInfoRaw,
-            private_key: &PrivateKey,
-            id: String,
-            denom_id: String,
-            name: String,
-            uri: String,
-            data: String,
-            recipient: String,
-        ) -> Result<Vec<u8>>;
-        fn get_nft_edit_signed_tx(
-            tx_info: CosmosSDKTxInfoRaw,
-            private_key: &PrivateKey,
-            id: String,
-            denom_id: String,
-            name: String,
-            uri: String,
-            data: String,
-        ) -> Result<Vec<u8>>;
-        fn get_nft_transfer_signed_tx(
-            tx_info: CosmosSDKTxInfoRaw,
-            private_key: &PrivateKey,
-            id: String,
-            denom_id: String,
-            recipient: String,
-        ) -> Result<Vec<u8>>;
-        fn get_nft_burn_signed_tx(
-            tx_info: CosmosSDKTxInfoRaw,
-            private_key: &PrivateKey,
-            id: String,
-            denom_id: String,
-        ) -> Result<Vec<u8>>;
-        type GrpcClient;
-        fn new_grpc_client(grpc_url: String) -> Result<Box<GrpcClient>>;
-        fn supply(self: &GrpcClient, denom_id: String, owner: String) -> Result<u64>;
-        type OwnerRaw;
-        pub fn owner(self: &GrpcClient, denom_id: String, owner: String) -> Result<Box<OwnerRaw>>;
-        type CollectionRaw;
-        pub fn collection(self: &GrpcClient, denom_id: String) -> Result<Box<CollectionRaw>>;
-        type DenomRaw;
-        pub fn denom(self: &GrpcClient, denom_id: String) -> Result<Box<DenomRaw>>;
-        pub fn denom_by_name(self: &GrpcClient, denom_name: String) -> Result<Box<DenomRaw>>;
-        fn denoms(self: &GrpcClient) -> Result<Vec<DenomRaw>>;
-        type BaseNftRaw;
-        fn nft(self: &GrpcClient, denom_id: String, token_id: String) -> Result<Box<BaseNftRaw>>;
         fn get_staking_delegate_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -566,6 +514,10 @@ impl From<MnemonicWordCount> for defi_wallet_core_common::MnemonicWordCount {
 
 pub struct PrivateKey {
     key: Arc<SecretKey>,
+}
+unsafe impl ExternType for PrivateKey {
+    type Id = type_id!("org::defi_wallet_core::PrivateKey");
+    type Kind = cxx::kind::Opaque;
 }
 
 /// generates a random private key

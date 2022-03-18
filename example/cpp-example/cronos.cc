@@ -1,5 +1,5 @@
-#include "cxx.h"
-#include "lib.rs.h"
+#include "defi-wallet-core-cpp/src/lib.rs.h"
+#include "rust/cxx.h"
 #include <iostream>
 
 void cronos_process();
