@@ -87,8 +87,7 @@ void cronos_process() {
   cout << "Balance of SHIELD=" << erc1155_balance_4.c_str() << endl;
 
   rust::cxxbridge1::Box<ContractOwner> erc721_owner_detail =
-      // erc721_owner("0x2305f3980715c9D247455504080b41072De38aB9", "1");
-    erc721_owner("0x2305f3980715c9D247455504080b41072De38aB9", "1");
+      erc721_owner("0x2305f3980715c9D247455504080b41072De38aB9", "1");
   rust::cxxbridge1::String erc721_owner =
       get_token_owner(*erc721_owner_detail, mycronosrpc);
   cout << "Owner of token=" << erc721_owner.c_str() << endl;
