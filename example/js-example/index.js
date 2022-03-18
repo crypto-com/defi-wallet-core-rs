@@ -4,6 +4,8 @@ import * as wasm from "@crypto-com/defi-wallet-core-wasm";
 
 const CHAIN_ID = "chainmain-1";
 const CHAINMAIN_DENOM = "basecro";
+const CHAINMAIN_API_URL = "http://127.0.0.1:26804";
+const TENDERMINT_RPC_URL = "http://127.0.0.1:26807";
 const DELEGATOR2 = "cro1tmfhgwp62uhz5y5hqcyl8jkjq22l2cles2lum8";
 const VALIDATOR1 = "crocncl1pk9eajj4zuzpptnadwz6tzfgcpchqvpkvql0a9";
 const DEFAULT_GAS_LIMIT = BigInt(50_000_000);
@@ -14,8 +16,9 @@ const STAKING_DELEGATE_AMOUNT = BigInt(100_000_000_000);
 // Main workflow
 
 testPrivateKey();
-testBuildAndSignCosmosTx();
 testBuildEthereumContractBatchTransfer();
+const txData = testBuildAndSignCosmosTx();
+testCosmosClient(txData);
 
 const wallet = new wasm.Wallet();
 logWalletAddresses(wallet);
@@ -128,6 +131,7 @@ function testBuildAndSignCosmosTx() {
   console.assert(tx.get_msg_count() === 0, "Pending messages of Cosmos transaction have not been moved out");
 
   console.log(`Signed Cosmos transaction data: ${txData}`);
+  return txData;
 }
 
 function testBuildEthereumContractBatchTransfer() {
@@ -144,4 +148,13 @@ function testBuildEthereumContractBatchTransfer() {
     [1, 2, 3]
   );
   console.dir(details);
+}
+
+async function testCosmosClient(txData) {
+  const config = new wasm.CosmosClientConfig(
+    CHAINMAIN_API_URL,
+    TENDERMINT_RPC_URL,
+  );
+  const client = new wasm.CosmosClient(config);
+  await client.broadcast_tx(txData);
 }

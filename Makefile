@@ -1,3 +1,4 @@
+UNAME := $(shell uname)
 
 cpp_example = ./example/cpp-example
 
@@ -33,23 +34,16 @@ mac_install:
 	brew install ktlint
 	brew install swiftformat
 
-prepare_cpp:
-	cargo build --package defi-wallet-core-cpp --release
 
-cpp: prepare_cpp
-	cp $(shell find ./target/release -name "libcxxbridge1.a") $(cpp_example)
-	cp ./target/release/libdefi_wallet_core_cpp.* $(cpp_example)
-	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
-	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
-	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
-	. ./scripts/.env && cd $(cpp_example) && make
+build_cpp:
+	cargo build --package defi-wallet-core-cpp --release
+	cd $(cpp_example) && make build
+
+cpp: build_cpp
+	. ./scripts/.env && cd $(cpp_example) && make run
 
 cppx86_64:
-	cargo build --release --target x86_64-apple-darwin
-	cp ./target/x86_64-apple-darwin/release/libdefi_wallet_core_cpp.a $(cpp_example)
-	cp ./target/cxxbridge/rust/cxx.h $(cpp_example)
-	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.h $(cpp_example)
-	cp ./target/cxxbridge/defi-wallet-core-cpp/src/*.cc $(cpp_example)
+	cargo build --package defi-wallet-core-cpp --release --target x86_64-apple-darwin
 	cd $(cpp_example) && make x86_64_build
 
 
@@ -77,8 +71,7 @@ wasm-tests:
 full-wasm-tests:
 	sh ./scripts/full-wasm-tests
 
-cpp-ci-tests:
-	make cpp
+cpp-ci-tests: build_cpp
 	make cpp-tests
 
 cpp-tests: python-tests
