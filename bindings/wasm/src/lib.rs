@@ -1092,6 +1092,52 @@ impl TryFrom<JsValue> for ContractFunctionArg {
     }
 }
 
+#[wasm_bindgen]
+pub struct EthTxInfo {
+    info: defi_wallet_core_common::transaction::EthTxInfo,
+}
+
+///
+#[wasm_bindgen]
+impl EthTxInfo {
+    /// Create a Contract instance.
+    #[wasm_bindgen(constructor)]
+    pub fn new(
+        to_address: String,
+        amount: String,
+        nonce: String,
+        gas_limit: String,
+        gas_price: String,
+        data: Option<Vec<u8>>,
+        legacy_tx: bool,
+    ) -> Self {
+        Self {
+            info: defi_wallet_core_common::transaction::EthTxInfo {
+                to_address,
+                amount: EthAmount::EthDecimal { amount },
+                nonce,
+                gas_limit,
+                gas_price: EthAmount::EthDecimal { amount: gas_price },
+                data,
+                legacy_tx,
+            },
+        }
+    }
+}
+
+#[wasm_bindgen]
+pub fn build_signed_eth_tx(tx_info: EthTxInfo, chain_id: u64, private_key: PrivateKey) -> Vec<u8> {
+    defi_wallet_core_common::transaction::build_signed_eth_tx(
+        tx_info.info,
+        EthNetwork::Custom {
+            chain_id,
+            legacy: true,
+        },
+        private_key.key,
+    )
+    .unwrap()
+}
+
 /// return the account's balance formatted as ether decimals
 #[wasm_bindgen]
 pub async fn query_account_eth_balance(
