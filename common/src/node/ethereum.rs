@@ -608,7 +608,8 @@ pub fn get_contract_balance_blocking(
     Ok(result.to_string())
 }
 
-/// Returns the owner address of an NFT in a hexadecimal string
+/// Returns the owner address of an NFT in a Fixed-size uninterpreted hash type
+/// with 20 bytes (160 bits) size.
 /// i.e. in its base units unformatted
 /// (blocking; not compiled to wasm).
 #[cfg(not(target_arch = "wasm32"))]
