@@ -974,6 +974,7 @@ dependencies = [
  "defi-wallet-core-proto",
  "ethers",
  "grpc-web-client",
+ "js-sys",
  "reqwest",
  "serde",
  "tendermint",
