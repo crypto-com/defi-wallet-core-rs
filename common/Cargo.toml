@@ -9,6 +9,9 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 
 [features]
 default = []
+# This feature is used to dynamically load ABI contracts. It seems to be
+# error-prone and less security for the end user.
+abi-contract = []
 login = ["siwe"]
 
 [dependencies]

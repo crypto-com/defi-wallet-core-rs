@@ -1,5 +1,7 @@
 use crate::{SecretKey, WalletCoin};
-use ethers::prelude::abi::{self, Contract, Token};
+#[cfg(feature = "abi-contract")]
+use ethers::prelude::abi::Contract;
+use ethers::prelude::abi::{self, Token};
 use ethers::prelude::{
     Address, Chain, Eip1559TransactionRequest, LocalWallet, ParseChainError, ProviderError, Signer,
     TransactionRequest, U256,
@@ -97,10 +99,12 @@ impl TryInto<U256> for EthAmount {
 }
 
 /// Ethereum Contract
+#[cfg(feature = "abi-contract")]
 pub struct EthContract {
     contract: Contract,
 }
 
+#[cfg(feature = "abi-contract")]
 impl EthContract {
     pub fn new(abi_contract: &str) -> Result<Self, EthError> {
         Ok(Self {
