@@ -1,7 +1,4 @@
-use defi_wallet_core_common::{
-    bytes_to_hex, EthAmount, EthNetwork, HDWallet, Network, SecretKey, WalletCoin,
-};
-use serde::{Deserialize, Serialize};
+use defi_wallet_core_common::{bytes_to_hex, HDWallet, Network, SecretKey, WalletCoin};
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 

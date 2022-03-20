@@ -1,15 +1,15 @@
-use ethers::prelude::{Chain, Eip1559TransactionRequest, ParseChainError, ProviderError};
-use ethers::types::transaction::eip2718::TypedTransaction;
-use ethers::{
-    prelude::{Address, LocalWallet, Signer, TransactionRequest, U256},
-    utils::{parse_units, ConversionError},
-};
-use std::{str::FromStr, sync::Arc};
-
 use crate::{SecretKey, WalletCoin};
-use ethers::prelude::abi;
+use ethers::prelude::abi::{self, Contract, Token};
+use ethers::prelude::{
+    Address, Chain, Eip1559TransactionRequest, LocalWallet, ParseChainError, ProviderError, Signer,
+    TransactionRequest, U256,
+};
+use ethers::types::transaction::eip2718::TypedTransaction;
 use ethers::types::H160;
+use ethers::utils::{parse_units, ConversionError};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
+use std::sync::Arc;
 
 /// Possible errors from Ethereum transaction construction and broadcasting
 #[derive(Debug, thiserror::Error)]
@@ -36,6 +36,14 @@ pub enum EthError {
     SignatureError,
     #[error("Chainid error: {0}")]
     ChainidError(ParseChainError),
+    #[error("ABI error: {0}")]
+    AbiError(abi::Error),
+}
+
+impl From<abi::Error> for EthError {
+    fn from(abi_error: abi::Error) -> EthError {
+        EthError::AbiError(abi_error)
+    }
 }
 
 /// Ethereum networks
@@ -84,6 +92,84 @@ impl TryInto<U256> for EthAmount {
             EthAmount::WeiDecimal { amount } => parse_units(amount, "wei"),
             EthAmount::GweiDecimal { amount } => parse_units(amount, "gwei"),
             EthAmount::EthDecimal { amount } => parse_units(amount, "ether"),
+        }
+    }
+}
+
+/// Ethereum Contract
+pub struct EthContract {
+    contract: Contract,
+}
+
+impl EthContract {
+    pub fn new(abi_contract: &str) -> Result<Self, EthError> {
+        Ok(Self {
+            contract: Contract::load(abi_contract.as_bytes())?,
+        })
+    }
+
+    pub fn encode(&self, function_name: &str, tokens: Vec<EthToken>) -> Result<Vec<u8>, EthError> {
+        let function = self.contract.function(function_name)?;
+        let tokens: Vec<Token> = tokens.into_iter().map(Into::into).collect();
+        function.encode_input(&tokens).map_err(Into::into)
+    }
+}
+
+/// Ethereum token
+#[derive(Serialize, Deserialize)]
+pub enum EthToken {
+    Address(H160),
+    FixedBytes(Vec<u8>),
+    Bytes(Vec<u8>),
+    Int(U256),
+    Uint(U256),
+    Bool(bool),
+    String(String),
+    FixedArray(Vec<EthToken>),
+    Array(Vec<EthToken>),
+    Tuple(Vec<EthToken>),
+}
+
+impl EthToken {
+    /// Create from a string of address.
+    pub fn from_address_str(address_str: &str) -> Result<Self, EthError> {
+        Ok(Self::Address(
+            Address::from_str(address_str).map_err(|_| EthError::HexConversion)?,
+        ))
+    }
+
+    /// Create from a string of signed integer.
+    pub fn from_int_str(int_str: &str) -> Result<Self, EthError> {
+        Ok(Self::Int(
+            U256::from_str(int_str).map_err(|_| EthError::HexConversion)?,
+        ))
+    }
+
+    /// Create from a string of unsigned integer.
+    pub fn from_uint_str(uint_str: &str) -> Result<Self, EthError> {
+        Ok(Self::Uint(
+            U256::from_str(uint_str).map_err(|_| EthError::HexConversion)?,
+        ))
+    }
+}
+
+impl From<EthToken> for Token {
+    fn from(eth_token: EthToken) -> Self {
+        match eth_token {
+            EthToken::Address(value) => Token::Address(value),
+            EthToken::FixedBytes(value) => Token::FixedBytes(value),
+            EthToken::Bytes(value) => Token::Bytes(value),
+            EthToken::Int(value) => Token::Int(value),
+            EthToken::Uint(value) => Token::Uint(value),
+            EthToken::Bool(value) => Token::Bool(value),
+            EthToken::String(value) => Token::String(value),
+            EthToken::FixedArray(values) => {
+                Token::FixedArray(values.into_iter().map(Into::into).collect())
+            }
+            EthToken::Array(values) => {
+                Token::FixedArray(values.into_iter().map(Into::into).collect())
+            }
+            EthToken::Tuple(values) => Token::Tuple(values.into_iter().map(Into::into).collect()),
         }
     }
 }
@@ -182,77 +268,6 @@ pub fn build_signed_eth_tx(
     let sig = wallet.sign_hash(tx.sighash(), false);
     let signed_tx = &tx.rlp_signed(&sig);
     Ok(signed_tx.to_vec())
-}
-
-///
-pub struct Contract {
-    abi_contract: abi::Contract,
-}
-
-impl Contract {
-    pub fn new(data: &str) -> Self {
-        Self {
-            abi_contract: abi::Contract::load(data.as_bytes()).unwrap(),
-        }
-    }
-
-    pub fn encode_input(&self, function_name: &str, tokens: Vec<Token>) -> Vec<u8> {
-        let fun = self.abi_contract.function(function_name).unwrap();
-        let tokens: Vec<abi::token::Token> = tokens.into_iter().map(Into::into).collect();
-        fun.encode_input(&tokens).unwrap()
-    }
-}
-
-///
-#[derive(Serialize, Deserialize)]
-pub enum Token {
-    Address(H160),
-    FixedBytes(Vec<u8>),
-    Bytes(Vec<u8>),
-    Int(U256),
-    Uint(U256),
-    Bool(bool),
-    String(String),
-    FixedArray(Vec<Token>),
-    Array(Vec<Token>),
-    Tuple(Vec<Token>),
-}
-
-impl Token {
-    pub fn build_address(address_str: &str) -> Self {
-        Self::Address(Address::from_str(address_str).unwrap())
-    }
-
-    pub fn build_int(u256_str: &str) -> Self {
-        Self::Int(U256::from_str(u256_str).unwrap())
-    }
-
-    pub fn build_uint(u256_str: &str) -> Self {
-        Self::Uint(U256::from_str(u256_str).unwrap())
-    }
-}
-
-impl From<Token> for abi::token::Token {
-    fn from(token: Token) -> Self {
-        match token {
-            Token::Address(val) => abi::token::Token::Address(val),
-            Token::FixedBytes(val) => abi::token::Token::FixedBytes(val),
-            Token::Bytes(val) => abi::token::Token::Bytes(val),
-            Token::Int(val) => abi::token::Token::Int(val),
-            Token::Uint(val) => abi::token::Token::Uint(val),
-            Token::Bool(val) => abi::token::Token::Bool(val),
-            Token::String(val) => abi::token::Token::String(val),
-            Token::FixedArray(vec) => {
-                abi::token::Token::FixedArray(vec.into_iter().map(|val| val.into()).collect())
-            }
-            Token::Array(vec) => {
-                abi::token::Token::FixedArray(vec.into_iter().map(|val| val.into()).collect())
-            }
-            Token::Tuple(vec) => {
-                abi::token::Token::Tuple(vec.into_iter().map(|val| val.into()).collect())
-            }
-        }
-    }
 }
 
 #[cfg(test)]
