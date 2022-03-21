@@ -183,6 +183,7 @@ impl EthTxInfo {
 }
 
 /// Build signed data for an Ethereum transaction.
+/// private_key will be released in this function
 #[wasm_bindgen]
 pub fn build_signed_eth_tx(
     tx_info: EthTxInfo,
