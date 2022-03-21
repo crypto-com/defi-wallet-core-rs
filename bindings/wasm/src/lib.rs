@@ -63,6 +63,16 @@ impl PrivateKey {
         })
     }
 
+    // eth sign message data
+    #[wasm_bindgen]
+    pub fn sign_eth(&self, message: Vec<u8>, chain_id: u64) -> Result<Vec<u8>, JsValue> {
+        let signature = self
+            .key
+            .sign_eth(message.as_ref(), chain_id)
+            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        Ok(signature.to_vec())
+    }
+
     /// gets public key to byte array
     #[wasm_bindgen]
     pub fn get_public_key_bytes(&self) -> Vec<u8> {
