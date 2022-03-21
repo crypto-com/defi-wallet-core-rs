@@ -158,4 +158,116 @@ mod tests {
             "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe77936800000000000000000000000000000000000000000000000000000000000001001ca0d41a62e428616adaa67a8db1480b1230ccdfba46c0370f2366346db262448e7ca0463f17c645ea4d1cbe58e0ac137d85739f9488307e72cf4d94f7ca250ba60eb3"
         );
     }
+
+    #[test]
+    fn abi_contract_erc721_loading_test() {
+        // Read the content of an ABI contract file.
+        let dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+        let mut contract_file_path = PathBuf::new();
+        contract_file_path.push(dir);
+        contract_file_path.push("src/contract/erc721-abi.json");
+        let abi_contract_str = std::fs::read_to_string(contract_file_path).unwrap();
+
+        // Load ABI contract and encode input data.
+        let abi_contract = EthAbiContract::new(&abi_contract_str).unwrap();
+        let tokens = vec![
+            EthAbiToken::from_address_str("0x2c600e0a72b3ae39e9b27d2e310b180abe779368").unwrap(),
+            EthAbiToken::from_uint_str("100").unwrap(),
+        ];
+        let encoded_data = abi_contract.encode("approve", tokens).unwrap();
+        assert_eq!(
+            hex::encode(encoded_data.clone()),
+            "095ea7b30000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000064"
+        );
+
+        // Verify signed transaction data.
+        let secret_key = SecretKey::from_hex(
+            "24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e".to_owned(),
+        )
+        .unwrap();
+        let tx_info = EthTxInfo {
+            to_address: "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d".to_owned(),
+            amount: EthAmount::EthDecimal {
+                amount: 1.to_string(),
+            },
+            nonce: 0.to_string(),
+            gas_limit: 21_000.to_string(),
+            gas_price: EthAmount::WeiDecimal {
+                amount: 1_000.to_string(),
+            },
+            data: Some(encoded_data),
+            legacy_tx: true,
+        };
+
+        let signed_tx_data = build_signed_eth_tx(
+            tx_info,
+            EthNetwork::Custom {
+                chain_id: 0,
+                legacy: true,
+            },
+            Arc::new(secret_key),
+        )
+        .unwrap();
+
+        assert_eq!(
+            hex::encode(signed_tx_data),
+            "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844095ea7b30000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe77936800000000000000000000000000000000000000000000000000000000000000641ba005bc6d7ff98339948608ac528cf3ede094079c653b7a0aecff32dc7ab655172ea05f8847a14b54eafb5376ab03c086b1fd126b113ef33e2a2f03f6bcf0941e2db0"
+        );
+    }
+
+    #[test]
+    fn abi_contract_erc1155_loading_test() {
+        // Read the content of an ABI contract file.
+        let dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+        let mut contract_file_path = PathBuf::new();
+        contract_file_path.push(dir);
+        contract_file_path.push("src/contract/erc1155-abi.json");
+        let abi_contract_str = std::fs::read_to_string(contract_file_path).unwrap();
+
+        // Load ABI contract and encode input data.
+        let abi_contract = EthAbiContract::new(&abi_contract_str).unwrap();
+        let tokens = vec![
+            EthAbiToken::from_address_str("0x2c600e0a72b3ae39e9b27d2e310b180abe779368").unwrap(),
+            EthAbiToken::Bool(true),
+        ];
+        let encoded_data = abi_contract.encode("setApprovalForAll", tokens).unwrap();
+        assert_eq!(
+            hex::encode(encoded_data.clone()),
+            "a22cb4650000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000001"
+        );
+
+        // Verify signed transaction data.
+        let secret_key = SecretKey::from_hex(
+            "24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e".to_owned(),
+        )
+        .unwrap();
+        let tx_info = EthTxInfo {
+            to_address: "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d".to_owned(),
+            amount: EthAmount::EthDecimal {
+                amount: 1.to_string(),
+            },
+            nonce: 0.to_string(),
+            gas_limit: 21_000.to_string(),
+            gas_price: EthAmount::WeiDecimal {
+                amount: 1_000.to_string(),
+            },
+            data: Some(encoded_data),
+            legacy_tx: true,
+        };
+
+        let signed_tx_data = build_signed_eth_tx(
+            tx_info,
+            EthNetwork::Custom {
+                chain_id: 0,
+                legacy: true,
+            },
+            Arc::new(secret_key),
+        )
+        .unwrap();
+        println!(hex::encode(signed_tx_data));
+        assert_eq!(
+            hex::encode(signed_tx_data),
+            "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844a22cb4650000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe77936800000000000000000000000000000000000000000000000000000000000000011ca06ddaa6cffb52c59ce0cf2f9bf4327b5d2d10d250d12fdabc34d41386f25a8372a0216560fefb1f3bc1463b106bef2ea0008f9c6e1b3d566d32e65994ababb3d220"
+        );
+    }
 }
