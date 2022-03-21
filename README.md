@@ -99,6 +99,11 @@ make cpp
 3. `npm install`
 4. `npm start`
 
+### extension example
+1. make wasmweb
+2. `cd example/extension-example`
+3. `npm install`
+
 ## Integration Tests
 ### WASM
 #### Without nix
