@@ -1,4 +1,5 @@
 #include "defi-wallet-core-cpp/src/lib.rs.h"
+#include "defi-wallet-core-cpp/src/contract.rs.h"
 #include "rust/cxx.h"
 #include <iostream>
 
@@ -84,4 +85,10 @@ void cronos_process() {
   rust::cxxbridge1::String erc1155_balance_4 =
       get_contract_balance(myaddress1, *erc1155_details_4, mycronosrpc);
   cout << "Balance of SHIELD=" << erc1155_balance_4.c_str() << endl;
+
+  rust::cxxbridge1::Box<ContractOwner> erc721_owner_detail =
+      erc721_owner("0x2305f3980715c9D247455504080b41072De38aB9", "1");
+  rust::cxxbridge1::String erc721_owner =
+      get_token_owner(*erc721_owner_detail, mycronosrpc);
+  cout << "Owner of token=" << erc721_owner.c_str() << endl;
 }

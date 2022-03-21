@@ -2,8 +2,8 @@ use crate::PrivateKey;
 use defi_wallet_core_common::{
     broadcast_contract_approval_tx, broadcast_contract_batch_transfer_tx,
     broadcast_contract_transfer_tx, broadcast_sign_eth_tx, get_contract_balance, get_eth_balance,
-    ContractApproval, ContractBalance, ContractBatchTransfer, ContractTransfer, EthAmount,
-    EthNetwork, EthToken,
+    get_token_owner, ContractApproval, ContractBalance, ContractBatchTransfer, ContractOwner,
+    ContractTransfer, EthAmount, EthNetwork, EthToken,
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -217,6 +217,24 @@ pub enum ContractType {
     Erc20,
     Erc721,
     Erc1155,
+}
+
+/// return the account's token contract balance formatted as hexadecimals
+#[wasm_bindgen]
+pub async fn query_token_owner(
+    web3_api_url: String,
+    contract_address: String,
+    token_id: String,
+) -> Result<JsValue, JsValue> {
+    let contract_owner = ContractOwner::Erc721 {
+        contract_address,
+        token_id,
+    };
+    let owner = get_token_owner(contract_owner, &web3_api_url)
+        .await
+        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+
+    Ok(JsValue::from_str(&format!("{:?}", owner.to_string())))
 }
 
 /// return the account's token contract balance formatted as hexadecimals
