@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@crypto-com/defi-wallet-core-wasm": "file:../../bindings/wasm/target/wasmweb"
+  }
+}

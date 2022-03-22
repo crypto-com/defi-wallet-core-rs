@@ -63,6 +63,9 @@ interface HDWallet {
     string get_default_address(WalletCoin coin);
 
     [Throws=HdWrapError]
+    string get_address(WalletCoin coin, u32 index);
+
+    [Throws=HdWrapError]
     SecretKey get_key(string derivation_path);
 };
 
@@ -268,6 +271,7 @@ enum EthError {
   "ContractError",
   "SignatureError",
   "ChainidError",
+  "AbiError",
 };
 
 [Enum]

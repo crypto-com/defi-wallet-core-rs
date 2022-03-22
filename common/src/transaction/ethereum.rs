@@ -1,12 +1,17 @@
-use ethers::prelude::{Chain, Eip1559TransactionRequest, ParseChainError, ProviderError};
-use ethers::types::transaction::eip2718::TypedTransaction;
-use ethers::{
-    prelude::{Address, LocalWallet, Signer, TransactionRequest, U256},
-    utils::{parse_units, ConversionError},
-};
-use std::{str::FromStr, sync::Arc};
-
 use crate::{SecretKey, WalletCoin};
+use ethers::prelude::{
+    abi, Address, Chain, Eip1559TransactionRequest, LocalWallet, ParseChainError, ProviderError,
+    Signer, TransactionRequest, U256,
+};
+use ethers::types::transaction::eip2718::TypedTransaction;
+use ethers::utils::{parse_units, ConversionError};
+use std::str::FromStr;
+use std::sync::Arc;
+
+mod abi_contract;
+
+#[cfg(feature = "abi-contract")]
+pub use abi_contract::*;
 
 /// Possible errors from Ethereum transaction construction and broadcasting
 #[derive(Debug, thiserror::Error)]
@@ -33,6 +38,14 @@ pub enum EthError {
     SignatureError,
     #[error("Chainid error: {0}")]
     ChainidError(ParseChainError),
+    #[error("ABI error: {0}")]
+    AbiError(abi::Error),
+}
+
+impl From<abi::Error> for EthError {
+    fn from(abi_error: abi::Error) -> EthError {
+        EthError::AbiError(abi_error)
+    }
 }
 
 /// Ethereum networks
@@ -176,19 +189,18 @@ pub fn build_signed_eth_tx(
         tx.set_data(data.into());
     }
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
-    let sig = wallet.sign_transaction_sync(&tx);
+    let sig = wallet.sign_hash(tx.sighash(), false);
     let signed_tx = &tx.rlp_signed(&sig);
     Ok(signed_tx.to_vec())
 }
 
 #[cfg(test)]
 mod tests {
-
-    use std::sync::Arc;
-
+    use super::*;
+    use crate::{SecretKey, WalletCoin};
+    use ethers::utils::hex;
     use ethers::utils::rlp::Rlp;
-
-    use crate::*;
+    use std::sync::Arc;
 
     #[test]
     fn eth_tx_works() {
@@ -232,5 +244,43 @@ mod tests {
         )
         .expect("ok signed tx");
         assert!(Rlp::new(&tx_raw).payload_info().is_ok());
+    }
+
+    #[test]
+    fn eth_tx_test() {
+        // check normal tx
+        let hex = "24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e";
+        let secret_key =
+            SecretKey::from_hex(hex.to_owned()).expect("Failed to construct Secret Key from hex");
+        println!(
+            "{}",
+            secret_key
+                .to_address(WalletCoin::Ethereum)
+                .expect("address error")
+        );
+        let tx_info = EthTxInfo {
+            to_address: "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d".to_string(),
+            amount: EthAmount::EthDecimal {
+                amount: "1".to_string(),
+            },
+            nonce: "0".to_string(),
+            gas_limit: "21000".to_string(),
+            gas_price: EthAmount::WeiDecimal {
+                amount: "1000".to_string(),
+            },
+            data: Some(vec![]),
+            legacy_tx: true,
+        };
+
+        let tx_raw = build_signed_eth_tx(
+            tx_info,
+            EthNetwork::Custom {
+                chain_id: 0,
+                legacy: true,
+            },
+            Arc::new(secret_key),
+        )
+        .expect("ok signed tx");
+        assert_eq!(hex::encode(tx_raw),"f869808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000801ba01997d312edfb72eea35788c9241eb8a693a23730920149468eda7a114e66f570a063aaa8bb4cec6a129d378487e93fea759782b741109751f8a235b479814289c4");
     }
 }

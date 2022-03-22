@@ -1,4 +1,4 @@
-use defi_wallet_core_common::{HDWallet, Network, SecretKey, WalletCoin};
+use defi_wallet_core_common::{bytes_to_hex, HDWallet, Network, SecretKey, WalletCoin};
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 
@@ -63,6 +63,16 @@ impl PrivateKey {
         })
     }
 
+    // eth sign message data
+    #[wasm_bindgen]
+    pub fn sign_eth(&self, message: Vec<u8>, chain_id: u64) -> Result<Vec<u8>, JsValue> {
+        let signature = self
+            .key
+            .sign_eth(message.as_ref(), chain_id)
+            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        Ok(signature.to_vec())
+    }
+
     /// gets public key to byte array
     #[wasm_bindgen]
     pub fn get_public_key_bytes(&self) -> Vec<u8> {
@@ -85,6 +95,16 @@ impl PrivateKey {
     #[wasm_bindgen]
     pub fn to_hex(&self) -> String {
         self.key.to_hex()
+    }
+
+    /// converts private to address with coin type
+    #[wasm_bindgen]
+    pub fn to_address(&self, coin: CoinType) -> Result<String, JsValue> {
+        let address = self
+            .key
+            .to_address(coin.into())
+            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        Ok(address)
     }
 }
 
@@ -152,6 +172,11 @@ impl From<MnemonicWordCount> for defi_wallet_core_common::MnemonicWordCount {
 }
 
 #[wasm_bindgen]
+pub fn bytes2hex(data: Vec<u8>) -> String {
+    bytes_to_hex(data)
+}
+
+#[wasm_bindgen]
 impl Wallet {
     /// generate a random wallet (with an optional password)
     #[wasm_bindgen(constructor)]
@@ -183,7 +208,16 @@ impl Wallet {
             .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
     }
 
+    /// return the address for a given coin type and index
+    #[wasm_bindgen]
+    pub fn get_address(&self, coin: CoinType, index: u32) -> Result<String, JsValue> {
+        self.wallet
+            .get_address(coin.into(), index)
+            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    }
+
     /// obtain a signing key for a given derivation path
+    /// derivation_path is bip44 key path
     #[wasm_bindgen]
     pub fn get_key(&self, derivation_path: String) -> Result<PrivateKey, JsValue> {
         let key = self
@@ -191,5 +225,11 @@ impl Wallet {
             .get_key(derivation_path)
             .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
         Ok(PrivateKey { key })
+    }
+
+    /// Get the mnemonic for the wallet
+    #[wasm_bindgen]
+    pub fn get_backup_mnemonic_phrase(&self) -> Option<String> {
+        self.wallet.get_backup_mnemonic_phrase()
     }
 }

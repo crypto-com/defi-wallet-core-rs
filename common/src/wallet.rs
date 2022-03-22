@@ -245,6 +245,11 @@ impl SecretKey {
     pub fn to_hex(&self) -> String {
         hex::encode(self.get_signing_key().to_bytes())
     }
+
+    /// converts private to address with coin type
+    pub fn to_address(&self, coin: WalletCoin) -> Result<String, eyre::Report> {
+        coin.derive_address(&self.get_signing_key())
+    }
 }
 
 impl Default for SecretKey {
@@ -545,5 +550,21 @@ mod secret_key_tests {
             ]
         );
         assert_eq!(secret_key.to_hex(), hex);
+    }
+
+    #[test]
+    fn test_secret_key_address() {
+        let hex = "24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e";
+        let secret_key =
+            SecretKey::from_hex(hex.to_owned()).expect("Failed to construct Secret Key from hex");
+
+        assert_eq!(
+            secret_key.get_public_key_hex(),
+            "02059b1fc4b7834d77765a024b6c52f570f19ed5113d8cedea0b90fbae39edda1c"
+        );
+        let address = secret_key
+            .to_address(WalletCoin::Ethereum)
+            .expect("get key address error");
+        assert_eq!(address, "0x714e0ed767d99f8be2b789f9dd1e2113de8eac53");
     }
 }
