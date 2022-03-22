@@ -721,11 +721,11 @@ pub fn broadcast_eth_signed_raw_tx_blocking(
 }
 
 #[inline]
-fn address_from_str(address_str: &str) -> Result<Address, EthError> {
+pub fn address_from_str(address_str: &str) -> Result<Address, EthError> {
     Address::from_str(address_str).map_err(|_| EthError::HexConversion)
 }
 
 #[inline]
-fn u256_from_str(u256_str: &str) -> Result<U256, EthError> {
+pub fn u256_from_str(u256_str: &str) -> Result<U256, EthError> {
     U256::from_str(u256_str).map_err(|_| EthError::HexConversion)
 }
