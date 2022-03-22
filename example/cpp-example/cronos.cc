@@ -1,5 +1,5 @@
-#include "defi-wallet-core-cpp/src/lib.rs.h"
 #include "defi-wallet-core-cpp/src/contract.rs.h"
+#include "defi-wallet-core-cpp/src/lib.rs.h"
 #include "rust/cxx.h"
 #include <iostream>
 
@@ -26,12 +26,12 @@ void cronos_process() {
   snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
   rust::cxxbridge1::Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
   rust::cxxbridge1::Vec<uint8_t> data;
-  org::defi_wallet_core::EthTxInfoRaw eth_tx_info = new_eth_tx_info();
+  EthTxInfoRaw eth_tx_info = new_eth_tx_info();
   cout << myaddress2 << endl;
   eth_tx_info.to_address = myaddress2.c_str();
   eth_tx_info.nonce = nonce1;
   eth_tx_info.amount = "1";
-  eth_tx_info.amount_unit = org::defi_wallet_core::EthAmount::EthDecimal;
+  eth_tx_info.amount_unit = EthAmount::EthDecimal;
   rust::Vec<::std::uint8_t> signedtx =
       build_eth_signed_tx(eth_tx_info, chainid, true, *privatekey);
   rust::cxxbridge1::String balance =
@@ -48,7 +48,6 @@ void cronos_process() {
   rust::cxxbridge1::String erc20_balance =
       get_contract_balance(myaddress1, *erc20_details, mycronosrpc);
   cout << "GOLD balance=" << erc20_balance.c_str() << endl;
-
 
   rust::cxxbridge1::Box<ContractBalance> erc721_details =
       erc721_balance("0x2305f3980715c9D247455504080b41072De38aB9");
@@ -91,4 +90,24 @@ void cronos_process() {
   rust::cxxbridge1::String erc721_owner =
       get_token_owner(*erc721_owner_detail, mycronosrpc);
   cout << "Owner of token=" << erc721_owner.c_str() << endl;
+
+  Erc20 erc20 =
+      new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A", mycronosrpc);
+  cout << "Name of ERC20=" << erc20.name() << endl;
+  cout << "Symbol of ERC20=" << erc20.symbol() << endl;
+  cout << "Decimals of ERC20=" << erc20.decimals() << endl;
+
+  Erc721 erc721 =
+      new_erc721("0x2305f3980715c9D247455504080b41072De38aB9", mycronosrpc);
+  cout << "Name of ERC721=" << erc721.name() << endl;
+  cout << "Symbol of ERC721=" << erc721.symbol() << endl;
+  cout << "Token URI of ERC721=" << erc721.token_uri("1") << endl;
+
+  Erc1155 erc1155 =
+      new_erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", mycronosrpc);
+  cout << "URI of ERC1155=" << erc1155.uri("0") << endl;
+  cout << "URI of ERC1155=" << erc1155.uri("1") << endl;
+  cout << "URI of ERC1155=" << erc1155.uri("2") << endl;
+  cout << "URI of ERC1155=" << erc1155.uri("3") << endl;
+  cout << "URI of ERC1155=" << erc1155.uri("4") << endl;
 }

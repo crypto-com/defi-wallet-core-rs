@@ -69,17 +69,23 @@ def test_basic(chainmain, cronos):
     contract = erc1155.deploy(w3)
     print("ERC1155 address:", contract.address)
     print("Balance of GOLD:", contract.functions.balanceOf(ADDRS["signer1"], 0).call())
+    print("URI of GOLD:", contract.functions.uri(0).call())
+
     print(
         "Balance of SILVER:", contract.functions.balanceOf(ADDRS["signer1"], 1).call()
     )
+    print("URI of SILVER:", contract.functions.uri(1).call())
     print(
         "Balance of THORS_HAMMER:",
         contract.functions.balanceOf(ADDRS["signer1"], 2).call(),
     )
+    print("URI of THORS_HAMMER:", contract.functions.uri(2).call())
     print("Balance of SWORD:", contract.functions.balanceOf(ADDRS["signer1"], 3).call())
+    print("URI of SWORD:", contract.functions.uri(3).call())
     print(
         "Balance of SHIELD:", contract.functions.balanceOf(ADDRS["signer1"], 4).call()
     )
+    print("URI of SHIELD:", contract.functions.uri(4).call())
 
     # Test cppexamplestatic
     # TODO Pass input and assert output
