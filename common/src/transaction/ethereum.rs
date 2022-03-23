@@ -189,7 +189,7 @@ pub fn build_signed_eth_tx(
         tx.set_data(data.into());
     }
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
-    let sig = wallet.sign_hash(tx.sighash(), false);
+    let sig = wallet.sign_transaction_sync(&tx);
     let signed_tx = &tx.rlp_signed(&sig);
     Ok(signed_tx.to_vec())
 }
@@ -281,6 +281,9 @@ mod tests {
             Arc::new(secret_key),
         )
         .expect("ok signed tx");
-        assert_eq!(hex::encode(tx_raw),"f869808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000801ba01997d312edfb72eea35788c9241eb8a693a23730920149468eda7a114e66f570a063aaa8bb4cec6a129d378487e93fea759782b741109751f8a235b479814289c4");
+        assert_eq!(
+            hex::encode(tx_raw),
+            "f869808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a76400008023a01997d312edfb72eea35788c9241eb8a693a23730920149468eda7a114e66f570a063aaa8bb4cec6a129d378487e93fea759782b741109751f8a235b479814289c4",
+        );
     }
 }
