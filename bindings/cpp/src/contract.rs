@@ -54,6 +54,7 @@ pub fn get_token_owner(contract_owner: &ContractOwner, api_url: &str) -> Result<
     Ok(format!("{:?}", res)) // we need the debug version of the address
 }
 
+/// Construct an Erc20 struct
 fn new_erc20(address: String, web3api_url: String) -> ffi::Erc20 {
     ffi::Erc20 {
         address,
@@ -61,22 +62,26 @@ fn new_erc20(address: String, web3api_url: String) -> ffi::Erc20 {
     }
 }
 impl ffi::Erc20 {
+    /// Returns the name of the token
     fn name(&self) -> Result<String> {
         let name = ethereum::erc20::get_name_blocking(&self.address, &self.web3api_url)?;
         Ok(name)
     }
 
+    /// Returns the symbol of the token
     fn symbol(&self) -> Result<String> {
         let symbol = ethereum::erc20::get_symbol_blocking(&self.address, &self.web3api_url)?;
         Ok(symbol)
     }
 
+    /// Returns the number of decimals the token uses
     fn decimals(&self) -> Result<u8> {
         let decimals = ethereum::erc20::get_decimals_blocking(&self.address, &self.web3api_url)?;
         Ok(decimals)
     }
 }
 
+/// Construct an Erc721 struct
 fn new_erc721(address: String, web3api_url: String) -> ffi::Erc721 {
     ffi::Erc721 {
         address,
@@ -84,22 +89,26 @@ fn new_erc721(address: String, web3api_url: String) -> ffi::Erc721 {
     }
 }
 impl ffi::Erc721 {
+    /// Get the descriptive name for a collection of NFTs in this contract
     fn name(&self) -> Result<String> {
         let name = ethereum::erc721::get_name_blocking(&self.address, &self.web3api_url)?;
         Ok(name)
     }
 
+    /// Get the abbreviated name for NFTs in this contract
     fn symbol(&self) -> Result<String> {
         let symbol = ethereum::erc721::get_symbol_blocking(&self.address, &self.web3api_url)?;
         Ok(symbol)
     }
 
+    /// Get the distinct Uniform Resource Identifier (URI) for a given asset
     fn token_uri(&self, token_id: String) -> Result<String> {
         let token_uri =
             ethereum::erc721::get_token_uri_blocking(&self.address, &token_id, &self.web3api_url)?;
         Ok(token_uri)
     }
 }
+/// Construct an Erc1155 struct
 fn new_erc1155(address: String, web3api_url: String) -> ffi::Erc1155 {
     ffi::Erc1155 {
         address,
@@ -107,6 +116,7 @@ fn new_erc1155(address: String, web3api_url: String) -> ffi::Erc1155 {
     }
 }
 impl ffi::Erc1155 {
+    /// Get distinct Uniform Resource Identifier (URI) for a given token
     fn uri(&self, token_id: String) -> Result<String> {
         let uri = ethereum::erc1155::get_uri_blocking(&self.address, &token_id, &self.web3api_url)?;
         Ok(uri)
