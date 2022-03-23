@@ -95,7 +95,7 @@ void cronos_process() {
       new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A", mycronosrpc);
   cout << "Name of ERC20=" << erc20.name() << endl;
   cout << "Symbol of ERC20=" << erc20.symbol() << endl;
-  cout << "Decimals of ERC20=" << erc20.decimals() << endl;
+  cout << "Decimals of ERC20=" << int(erc20.decimals()) << endl;
 
   Erc721 erc721 =
       new_erc721("0x2305f3980715c9D247455504080b41072De38aB9", mycronosrpc);
@@ -105,9 +105,9 @@ void cronos_process() {
 
   Erc1155 erc1155 =
       new_erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", mycronosrpc);
-  cout << "URI of ERC1155=" << erc1155.uri("0") << endl;
-  cout << "URI of ERC1155=" << erc1155.uri("1") << endl;
-  cout << "URI of ERC1155=" << erc1155.uri("2") << endl;
-  cout << "URI of ERC1155=" << erc1155.uri("3") << endl;
-  cout << "URI of ERC1155=" << erc1155.uri("4") << endl;
+  cout << "URI of ERC1155, GOLD=" << erc1155.uri("0") << endl;
+  cout << "URI of ERC1155, SILVER=" << erc1155.uri("1") << endl;
+  cout << "URI of ERC1155, THORS_HAMMER=" << erc1155.uri("2") << endl;
+  cout << "URI of ERC1155, SWORD=" << erc1155.uri("3") << endl;
+  cout << "URI of ERC1155, SHIELD=" << erc1155.uri("4") << endl;
 }
