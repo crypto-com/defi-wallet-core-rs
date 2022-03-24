@@ -2,7 +2,7 @@
 /// FIXME: switch to grpc when grpc-web works in CosmRS: https://github.com/cosmos/cosmos-rust/pull/157
 mod cosmos_sdk;
 /// wrappers around Web3 API + basic contract types
-mod ethereum;
+pub mod ethereum;
 /// wrappers around chainmain NFT grpc/grpc-web API
 pub mod nft;
 

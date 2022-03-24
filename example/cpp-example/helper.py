@@ -65,7 +65,7 @@ def copy_example_files(output_path):
         shutil.copy(f, output_path)
 
 
-# collect files with `pattern` in `path`, and return the matched files
+# collect files with `pattern` in `search path`, and return the matched files
 def collect_files(pattern, search_path, recursive=True):
     result = []
     if recursive:
