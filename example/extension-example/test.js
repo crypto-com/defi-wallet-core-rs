@@ -286,35 +286,36 @@ async function ethereum_demo() {
   const address = wasm.EthContractFunctionArg.build_address("0x2c600e0a72b3ae39e9b27d2e310b180abe779368");
   const amount = wasm.EthContractFunctionArg.build_uint("100");
   const inputData = contract.encode("transfer", [address, amount]);
-  console.assert(wasm.bytes2hex(inputData),"a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000064");
+  console.assert(wasm.bytes2hex(inputData) === "a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000064");
 
   // build transaction with data
   var info1 = new wasm.EthTxInfo(
-    "0x2c600e0a72b3ae39e9b27d2e310b180abe779368",
+    "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d",
     "1",
     "0",
     "21000",
     "1000",
     inputData,
-    false,
+    true,
   );
-  let txData = wasm.build_signed_eth_tx(info1, BigInt(0), priv);
-  console.assert(wasm.bytes2hex(txData),"f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe77936800000000000000000000000000000000000000000000000000000000000000641ba095845d357e85e871c56a4f2a5cb0418f38c2275ea223c79336e64cb4f28c423ea07e1a148e3131bd7a47eb85c336d79c55b953a4f04dc349236256e0c62c3d4754")
+  let txData = wasm.build_signed_eth_tx(info1, BigInt(1), priv);
+  console.log(wasm.bytes2hex(txData));
+  console.assert(wasm.bytes2hex(txData) === "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe779368000000000000000000000000000000000000000000000000000000000000006425a0760334254a823052f95c286f48a2da50cc4b88f5cbe2088d79de620c3855d32ba059ec64d055db5de03e4095dc9d0669b7bff4ae920b1860c99c9be420c354e432")
 
   // build transaction with no data
   priv = wasm.PrivateKey.from_hex("24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e");
   var bufView = new Uint8Array();
   var info2 = new wasm.EthTxInfo(
-    "0x2c600e0a72b3ae39e9b27d2e310b180abe779368",
-    "1",
+    "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d",
+    new wasm.EthTxAmount("1","eth",),
     "0",
     "21000",
-    "1000",
+    new wasm.EthTxAmount("1000","wei",),
     bufView,
-    false,
+    true,
   );
-  txData = wasm.build_signed_eth_tx(info2, BigInt(0), priv);
-  console.assert(wasm.bytes2hex(txData),"f869808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000801ba01997d312edfb72eea35788c9241eb8a693a23730920149468eda7a114e66f570a063aaa8bb4cec6a129d378487e93fea759782b741109751f8a235b479814289c4");
+  txData = wasm.build_signed_eth_tx(info2, BigInt(1), priv);
+  console.assert(wasm.bytes2hex(txData) === "f869808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a76400008026a0f65f41ceaadda3c64f68c4d65b202b89a8dc508bbd0957ba28c61eb65ba694f6a03d5c681c4a5c21f4ad1616aed9a0e0b72344dbcfdeddb60a11bfc19a11e60120");
 
 }
 

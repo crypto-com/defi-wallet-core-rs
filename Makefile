@@ -17,7 +17,7 @@ ios:
 	./ios_build.sh
 
 test:
-	cargo test
+	cargo test --all-features
 
 clean:
 	rm -rf target bindings/android bindings/ios
