@@ -8,6 +8,10 @@ use defi_wallet_core_common::{
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
+mod eip712;
+
+pub use eip712::*;
+
 /// Ethereum contract
 #[wasm_bindgen]
 pub struct EthContract {
