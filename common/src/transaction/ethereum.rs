@@ -1,10 +1,13 @@
 use crate::{SecretKey, WalletCoin};
 use ethers::prelude::{
     abi, Address, Chain, Eip1559TransactionRequest, LocalWallet, ParseChainError, ProviderError,
-    Signer, TransactionRequest, U256,
+    Signer, TransactionRequest, U256, Provider, SignerMiddleware, Wallet, Http,
 };
 use ethers::types::transaction::eip2718::TypedTransaction;
 use ethers::utils::{parse_units, ConversionError};
+use ethers::contract::ContractError;
+use ethers::core::k256::ecdsa::SigningKey;
+use ethers::middleware::signer::SignerMiddlewareError;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -22,8 +25,8 @@ pub enum EthError {
     ParseError(ConversionError),
     #[error("Invalid node Web3 connection URL")]
     NodeUrl,
-    #[error("Transaction sending failed")]
-    SendTxFail,
+    #[error("Transaction sending failed: {0}")]
+    SendTxFail(SignerMiddlewareError<Provider<Http>, Wallet<SigningKey>>),
     #[error("Transaction sending failed: {0}")]
     BroadcastTxFail(ProviderError),
     #[error("Transaction dropped from the mempool")]
@@ -32,8 +35,10 @@ pub enum EthError {
     BalanceFail,
     #[error("Async Runtime error")]
     AsyncRuntimeError,
-    #[error("Contract call error")]
-    ContractError,
+    #[error("Contract Send Error: {0}")]
+    ContractSendError(ContractError<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>),
+    #[error("Contract Call Error: {0}")]
+    ContractCallError(ContractError<Provider<Http>>),
     #[error("Signature error")]
     SignatureError,
     #[error("Chainid error: {0}")]

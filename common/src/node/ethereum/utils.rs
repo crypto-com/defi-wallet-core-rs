@@ -6,6 +6,7 @@ use ethers::prelude::{
     Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware, TransactionReceipt,
     U256,
 };
+
 use ethers::utils::format_units;
 #[cfg(not(target_arch = "wasm32"))]
 use ethers::utils::hex::ToHex;
@@ -156,14 +157,14 @@ pub async fn get_contract_balance(
                     .balance_of(address)
                     .call()
                     .await
-                    .map_err(|_| EthError::ContractError)
+                    .map_err(EthError::ContractCallError)
             } else {
                 let contract = Erc721Contract::new(contract_address, Arc::new(client));
                 contract
                     .balance_of(address)
                     .call()
                     .await
-                    .map_err(|_| EthError::ContractError)
+                    .map_err(EthError::ContractCallError)
             }
         }
         ContractBalance::Erc1155 {
@@ -177,7 +178,7 @@ pub async fn get_contract_balance(
                 .balance_of(address, token_id)
                 .call()
                 .await
-                .map_err(|_| EthError::ContractError)
+                .map_err(EthError::ContractCallError)
         }
     }
 }
@@ -200,7 +201,7 @@ pub async fn get_token_owner(
                 .owner_of(token_id)
                 .call()
                 .await
-                .map_err(|_| EthError::ContractError)
+                .map_err(EthError::ContractCallError)
         }
     }
 }
@@ -233,10 +234,10 @@ pub async fn broadcast_contract_approval_tx(
                 .approve(approved_address, amount)
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -253,10 +254,10 @@ pub async fn broadcast_contract_approval_tx(
                 .approve(approved_address, token_id)
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -272,10 +273,10 @@ pub async fn broadcast_contract_approval_tx(
                 .set_approval_for_all(approved_address, approved)
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -291,10 +292,10 @@ pub async fn broadcast_contract_approval_tx(
                 .set_approval_for_all(approved_address, approved)
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -329,10 +330,10 @@ pub async fn broadcast_contract_transfer_tx(
                 .transfer(to_address, amount)
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -351,10 +352,10 @@ pub async fn broadcast_contract_transfer_tx(
                 .transfer_from(from_address, to_address, amount)
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -373,10 +374,10 @@ pub async fn broadcast_contract_transfer_tx(
                 .transfer_from(from_address, to_address, token_id)
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -395,10 +396,10 @@ pub async fn broadcast_contract_transfer_tx(
                 .safe_transfer_from(from_address, to_address, token_id)
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -423,10 +424,10 @@ pub async fn broadcast_contract_transfer_tx(
                 )
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -455,10 +456,10 @@ pub async fn broadcast_contract_transfer_tx(
                 )
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -510,10 +511,10 @@ pub async fn broadcast_contract_batch_transfer_tx(
                 )
                 .send()
                 .await
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::ContractSendError)?
                 .await;
             let tx_receipt = pending_tx
-                .map_err(|_| EthError::SendTxFail)?
+                .map_err(EthError::BroadcastTxFail)?
                 .ok_or(EthError::MempoolDrop)?;
             Ok(tx_receipt)
         }
@@ -543,7 +544,7 @@ pub async fn broadcast_sign_eth_tx(
     let pending_tx = client
         .send_transaction(tx, None)
         .await
-        .map_err(|_| EthError::SendTxFail)?;
+        .map_err(EthError::SendTxFail)?;
     let tx_receipt = pending_tx
         .await
         .map_err(EthError::BroadcastTxFail)?

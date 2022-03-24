@@ -10,7 +10,7 @@ pub async fn get_name(contract_address: &str, web3api_url: &str) -> Result<Strin
         .name()
         .call()
         .await
-        .map_err(|_| EthError::ContractError)
+        .map_err(EthError::ContractCallError)
 }
 
 pub async fn get_symbol(contract_address: &str, web3api_url: &str) -> Result<String, EthError> {
@@ -21,7 +21,7 @@ pub async fn get_symbol(contract_address: &str, web3api_url: &str) -> Result<Str
         .symbol()
         .call()
         .await
-        .map_err(|_| EthError::ContractError)
+        .map_err(EthError::ContractCallError)
 }
 
 pub async fn get_decimals(contract_address: &str, web3api_url: &str) -> Result<u8, EthError> {
@@ -32,7 +32,7 @@ pub async fn get_decimals(contract_address: &str, web3api_url: &str) -> Result<u
         .decimals()
         .call()
         .await
-        .map_err(|_| EthError::ContractError)
+        .map_err(EthError::ContractCallError)
 }
 
 #[cfg(not(target_arch = "wasm32"))]

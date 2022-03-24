@@ -16,7 +16,7 @@ pub async fn get_uri(
         .uri(token_id)
         .call()
         .await
-        .map_err(|_| EthError::ContractError)
+        .map_err(EthError::ContractCallError)
 }
 
 #[cfg(not(target_arch = "wasm32"))]

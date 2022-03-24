@@ -10,7 +10,7 @@ pub async fn get_name(contract_address: &str, web3api_url: &str) -> Result<Strin
         .name()
         .call()
         .await
-        .map_err(|_| EthError::ContractError)
+        .map_err(EthError::ContractCallError)
 }
 
 pub async fn get_symbol(contract_address: &str, web3api_url: &str) -> Result<String, EthError> {
@@ -21,7 +21,7 @@ pub async fn get_symbol(contract_address: &str, web3api_url: &str) -> Result<Str
         .symbol()
         .call()
         .await
-        .map_err(|_| EthError::ContractError)
+        .map_err(EthError::ContractCallError)
 }
 
 pub async fn get_token_uri(
@@ -37,7 +37,7 @@ pub async fn get_token_uri(
         .token_uri(token_id)
         .call()
         .await
-        .map_err(|_| EthError::ContractError)
+        .map_err(EthError::ContractCallError)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
