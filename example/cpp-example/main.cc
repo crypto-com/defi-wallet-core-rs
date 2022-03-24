@@ -301,7 +301,8 @@ int main() {
     test_login();         // decentralized login
     cronos_process();     // cronos
   } catch (const rust::cxxbridge1::Error &e) {
-    cout << "error:" << e.what() << endl;
+    // Use `Assertion failed`, the same as `assert` function
+    cout << "Assertion failed: " << e.what() << endl;
   }
   return 0;
 }
