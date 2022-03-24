@@ -1,6 +1,8 @@
+use crate::PrivateKey;
 use anyhow::Result;
 use common::get_contract_balance_blocking;
 use common::node::ethereum;
+use common::EthNetwork;
 use defi_wallet_core_common as common;
 
 /// Wrapper of `ContractBalance`
@@ -79,6 +81,56 @@ impl ffi::Erc20 {
         let decimals = ethereum::erc20::get_decimals_blocking(&self.address, &self.web3api_url)?;
         Ok(decimals)
     }
+
+    fn transfer(
+        &self,
+        contract_address: String,
+        to_address: String,
+        amount_hex: String,
+        chain_id: u64,
+        private_key: &PrivateKey,
+    ) -> Result<String> {
+        let receipt = common::broadcast_contract_transfer_tx_blocking(
+            common::ContractTransfer::Erc20Transfer {
+                contract_address,
+                to_address,
+                amount_hex,
+            },
+            EthNetwork::Custom {
+                chain_id,
+                legacy: false,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt.to_string())
+    }
+
+    fn transfer_from(
+        &self,
+        contract_address: String,
+        from_address: String,
+        to_address: String,
+        amount_hex: String,
+        chain_id: u64,
+        private_key: &PrivateKey,
+    ) -> Result<String> {
+        let receipt = common::broadcast_contract_transfer_tx_blocking(
+            common::ContractTransfer::Erc20TransferFrom {
+                contract_address,
+                from_address,
+                to_address,
+                amount_hex,
+            },
+            EthNetwork::Custom {
+                chain_id,
+                legacy: false,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt.to_string())
+    }
 }
 
 /// Construct an Erc721 struct
@@ -107,6 +159,85 @@ impl ffi::Erc721 {
             ethereum::erc721::get_token_uri_blocking(&self.address, &token_id, &self.web3api_url)?;
         Ok(token_uri)
     }
+
+    fn transfer_from(
+        &self,
+        contract_address: String,
+        from_address: String,
+        to_address: String,
+        token_id: String,
+        chain_id: u64,
+        private_key: &PrivateKey,
+    ) -> Result<String> {
+        let receipt = common::broadcast_contract_transfer_tx_blocking(
+            common::ContractTransfer::Erc721TransferFrom {
+                contract_address,
+                from_address,
+                to_address,
+                token_id,
+            },
+            EthNetwork::Custom {
+                chain_id,
+                legacy: false,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt.to_string())
+    }
+
+    fn safe_transfer_from(
+        &self,
+        contract_address: String,
+        from_address: String,
+        to_address: String,
+        token_id: String,
+        chain_id: u64,
+        private_key: &PrivateKey,
+    ) -> Result<String> {
+        let receipt = common::broadcast_contract_transfer_tx_blocking(
+            common::ContractTransfer::Erc721SafeTransferFrom {
+                contract_address,
+                from_address,
+                to_address,
+                token_id,
+            },
+            EthNetwork::Custom {
+                chain_id,
+                legacy: false,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt.to_string())
+    }
+    fn safe_transfer_from_with_data(
+        &self,
+        contract_address: String,
+        from_address: String,
+        to_address: String,
+        token_id: String,
+        additional_data: Vec<u8>,
+        chain_id: u64,
+        private_key: &PrivateKey,
+    ) -> Result<String> {
+        let receipt = common::broadcast_contract_transfer_tx_blocking(
+            common::ContractTransfer::Erc721SafeTransferFromWithAdditionalData {
+                contract_address,
+                from_address,
+                to_address,
+                token_id,
+                additional_data,
+            },
+            EthNetwork::Custom {
+                chain_id,
+                legacy: false,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt.to_string())
+    }
 }
 /// Construct an Erc1155 struct
 fn new_erc1155(address: String, web3api_url: String) -> ffi::Erc1155 {
@@ -120,6 +251,36 @@ impl ffi::Erc1155 {
     fn uri(&self, token_id: String) -> Result<String> {
         let uri = ethereum::erc1155::get_uri_blocking(&self.address, &token_id, &self.web3api_url)?;
         Ok(uri)
+    }
+
+    fn safe_transfer_from(
+        &self,
+        contract_address: String,
+        from_address: String,
+        to_address: String,
+        token_id: String,
+        amount_hex: String,
+        additional_data: Vec<u8>,
+        chain_id: u64,
+        private_key: &PrivateKey,
+    ) -> Result<String> {
+        let receipt = common::broadcast_contract_transfer_tx_blocking(
+            common::ContractTransfer::Erc1155SafeTransferFrom {
+                contract_address,
+                from_address,
+                to_address,
+                token_id,
+                amount_hex,
+                additional_data,
+            },
+            EthNetwork::Custom {
+                chain_id,
+                legacy: false,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt.to_string())
     }
 }
 
@@ -139,6 +300,11 @@ mod ffi {
     pub struct Erc1155 {
         address: String,
         web3api_url: String,
+    }
+
+    extern "C++" {
+        include!("defi-wallet-core-cpp/src/lib.rs.h");
+        type PrivateKey = crate::PrivateKey;
     }
 
     extern "Rust" {
@@ -161,13 +327,71 @@ mod ffi {
         fn name(self: &Erc20) -> Result<String>;
         fn symbol(self: &Erc20) -> Result<String>;
         fn decimals(self: &Erc20) -> Result<u8>;
+        fn transfer(
+            self: &Erc20,
+            contract_address: String,
+            to_address: String,
+            amount_hex: String,
+            chain_id: u64,
+            private_key: &PrivateKey,
+        ) -> Result<String>;
+        fn transfer_from(
+            self: &Erc20,
+            contract_address: String,
+            from_address: String,
+            to_address: String,
+            amount_hex: String,
+            chain_id: u64,
+            private_key: &PrivateKey,
+        ) -> Result<String>;
 
         fn new_erc721(address: String, web3api_url: String) -> Erc721;
         fn name(self: &Erc721) -> Result<String>;
         fn symbol(self: &Erc721) -> Result<String>;
         fn token_uri(self: &Erc721, token_id: String) -> Result<String>;
+        fn transfer_from(
+            self: &Erc721,
+            contract_address: String,
+            from_address: String,
+            to_address: String,
+            token_id: String,
+            chain_id: u64,
+            private_key: &PrivateKey,
+        ) -> Result<String>;
+        fn safe_transfer_from(
+            self: &Erc721,
+            contract_address: String,
+            from_address: String,
+            to_address: String,
+            token_id: String,
+            chain_id: u64,
+            private_key: &PrivateKey,
+        ) -> Result<String>;
+
+        fn safe_transfer_from_with_data(
+            self: &Erc721,
+            contract_address: String,
+            from_address: String,
+            to_address: String,
+            token_id: String,
+            additional_data: Vec<u8>,
+            chain_id: u64,
+            private_key: &PrivateKey,
+        ) -> Result<String>;
 
         fn new_erc1155(address: String, web3api_url: String) -> Erc1155;
         fn uri(self: &Erc1155, token_id: String) -> Result<String>;
+        fn safe_transfer_from(
+            self: &Erc1155,
+            contract_address: String,
+            from_address: String,
+            to_address: String,
+            token_id: String,
+            amount_hex: String,
+            additional_data: Vec<u8>,
+            chain_id: u64,
+            private_key: &PrivateKey,
+        ) -> Result<String>;
+
     }
 }
