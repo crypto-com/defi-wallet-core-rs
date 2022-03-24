@@ -109,7 +109,7 @@ void test_chainmain_nft() {
   Vec<uint8_t> signedtx = get_nft_issue_denom_signed_tx(
       tx_info, *signer1_private_key, denom_id, denom_name, schema);
 
-  String resp = broadcast_tx(myservertendermint, signedtx);
+  String resp = broadcast_tx(myservertendermint, signedtx).tx_hash_hex;
   cout << "issue response: " << resp << endl;
 
   auto token_id = "testtokenid";
@@ -123,7 +123,7 @@ void test_chainmain_nft() {
   signedtx =
       get_nft_mint_signed_tx(tx_info, *signer1_private_key, token_id, denom_id,
                              token_name, token_uri, token_data, myto);
-  resp = broadcast_tx(myservertendermint, signedtx);
+  resp = broadcast_tx(myservertendermint, signedtx).tx_hash_hex;
   cout << "mint response: " << resp << endl;
 
   sleep_for(seconds(3));
@@ -159,7 +159,7 @@ void test_chainmain_nft() {
   tx_info.sequence_number = signer2_sn;
   signedtx = get_nft_transfer_signed_tx(tx_info, *signer2_private_key, token_id,
                                         denom_id, myfrom);
-  resp = broadcast_tx(myservertendermint, signedtx);
+  resp = broadcast_tx(myservertendermint, signedtx).tx_hash_hex;
   cout << "transfer response: " << resp << endl;
   sleep_for(seconds(3));
   nft = grpc_client->nft(denom_id, token_id);
@@ -183,7 +183,7 @@ void test_chainmain_nft() {
   tx_info.sequence_number = signer1_sn;
   signedtx = get_nft_edit_signed_tx(tx_info, *signer1_private_key, token_id,
                                     denom_id, "newname", "newuri", "newdata");
-  resp = broadcast_tx(myservertendermint, signedtx);
+  resp = broadcast_tx(myservertendermint, signedtx).tx_hash_hex;
   cout << "edit response: " << resp << endl;
   sleep_for(seconds(3));
   nft = grpc_client->nft(denom_id, token_id);
@@ -202,7 +202,7 @@ void test_chainmain_nft() {
   tx_info.sequence_number = signer1_sn;
   signedtx =
       get_nft_burn_signed_tx(tx_info, *signer1_private_key, token_id, denom_id);
-  resp = broadcast_tx(myservertendermint, signedtx);
+  resp = broadcast_tx(myservertendermint, signedtx).tx_hash_hex;
   cout << "burn response: " << resp << endl;
   sleep_for(seconds(3));
   supply = grpc_client->supply(denom_id, myfrom);
@@ -254,7 +254,7 @@ void process() {
   rust::cxxbridge1::Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
   rust::cxxbridge1::Vec<uint8_t> signedtx =
       get_single_bank_send_signed_tx(tx_info, *privatekey, myto, 1, "basecro");
-  rust::cxxbridge1::String resp = broadcast_tx(myservertendermint, signedtx);
+  rust::cxxbridge1::String resp = broadcast_tx(myservertendermint, signedtx).tx_hash_hex;
 }
 
 void test_login() {
