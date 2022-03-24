@@ -60,14 +60,14 @@ impl EthAbiToken {
     /// Create from a string of signed integer.
     pub fn from_int_str(int_str: &str) -> Result<Self, EthError> {
         Ok(Self::Int(
-            U256::from_str(int_str).map_err(|_| EthError::HexConversion)?,
+            U256::from_dec_str(int_str).map_err(|_| EthError::HexConversion)?,
         ))
     }
 
     /// Create from a string of unsigned integer.
     pub fn from_uint_str(uint_str: &str) -> Result<Self, EthError> {
         Ok(Self::Uint(
-            U256::from_str(uint_str).map_err(|_| EthError::HexConversion)?,
+            U256::from_dec_str(uint_str).map_err(|_| EthError::HexConversion)?,
         ))
     }
 }
@@ -121,7 +121,7 @@ mod tests {
         let encoded_data = abi_contract.encode("transfer", tokens).unwrap();
         assert_eq!(
             hex::encode(encoded_data.clone()),
-            "a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000100"
+            "a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000064"
         );
 
         // Verify signed transaction data.
@@ -146,7 +146,7 @@ mod tests {
         let signed_tx_data = build_signed_eth_tx(
             tx_info,
             EthNetwork::Custom {
-                chain_id: 0,
+                chain_id: 1,
                 legacy: true,
             },
             Arc::new(secret_key),
@@ -155,7 +155,7 @@ mod tests {
 
         assert_eq!(
             hex::encode(signed_tx_data),
-            "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe77936800000000000000000000000000000000000000000000000000000000000001001ca0d41a62e428616adaa67a8db1480b1230ccdfba46c0370f2366346db262448e7ca0463f17c645ea4d1cbe58e0ac137d85739f9488307e72cf4d94f7ca250ba60eb3"
+            "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe779368000000000000000000000000000000000000000000000000000000000000006425a0760334254a823052f95c286f48a2da50cc4b88f5cbe2088d79de620c3855d32ba059ec64d055db5de03e4095dc9d0669b7bff4ae920b1860c99c9be420c354e432",
         );
     }
 
@@ -177,7 +177,7 @@ mod tests {
         let encoded_data = abi_contract.encode("approve", tokens).unwrap();
         assert_eq!(
             hex::encode(encoded_data.clone()),
-            "095ea7b30000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000100"
+            "095ea7b30000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000064"
         );
 
         // Verify signed transaction data.
@@ -202,7 +202,7 @@ mod tests {
         let signed_tx_data = build_signed_eth_tx(
             tx_info,
             EthNetwork::Custom {
-                chain_id: 0,
+                chain_id: 1,
                 legacy: true,
             },
             Arc::new(secret_key),
@@ -211,7 +211,7 @@ mod tests {
 
         assert_eq!(
             hex::encode(signed_tx_data),
-            "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844095ea7b30000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe77936800000000000000000000000000000000000000000000000000000000000001001ca00eef3b99bfb137fd93d63c98066e5e23e7d66924680a367cfb28fcb991468006a057d2012b639d885ab15854424fd7fd112a75eeab7800ed1e92fa723f67172c70"
+            "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844095ea7b30000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe779368000000000000000000000000000000000000000000000000000000000000006426a06f1b09bd3a1edc708297cfcb9692c21d64d5b663451345eb3be6104e626f261ea010d6c96d7f4c9660921bd5ce51a85e5de1bc8ff84dec72dc84020745d46687b7",
         );
     }
 
@@ -258,7 +258,7 @@ mod tests {
         let signed_tx_data = build_signed_eth_tx(
             tx_info,
             EthNetwork::Custom {
-                chain_id: 0,
+                chain_id: 1,
                 legacy: true,
             },
             Arc::new(secret_key),
@@ -266,7 +266,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             hex::encode(signed_tx_data),
-            "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844a22cb4650000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe77936800000000000000000000000000000000000000000000000000000000000000011ca06ddaa6cffb52c59ce0cf2f9bf4327b5d2d10d250d12fdabc34d41386f25a8372a0216560fefb1f3bc1463b106bef2ea0008f9c6e1b3d566d32e65994ababb3d220"
+            "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844a22cb4650000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe779368000000000000000000000000000000000000000000000000000000000000000126a0baba2566fac3a7cbd4e181e9f7cad3953d2c6b1831662dc44f96cf0ee39a119ba005dbe5ede09fb98d540cf390c88b98d11d86c617c411d502f9acebe3cb4bcbbe",
         );
     }
 }

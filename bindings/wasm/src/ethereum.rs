@@ -149,6 +149,41 @@ impl TryFrom<JsValue> for EthContractFunctionArg {
     }
 }
 
+/// Ethereum price unit object
+/// amount is a decimal number
+/// denom support (wei, gwei, eth)，default is wei
+#[wasm_bindgen]
+pub struct EthTxAmount {
+    amount: String,
+    denom: String,
+}
+
+#[wasm_bindgen]
+impl EthTxAmount {
+    #[wasm_bindgen(constructor)]
+    pub fn new(amount: String, denom: String) -> Self {
+        Self { amount, denom }
+    }
+}
+impl EthTxAmount {
+    pub fn to_eth_amount(self) -> EthAmount {
+        match self.denom.as_str() {
+            "wei" => EthAmount::WeiDecimal {
+                amount: (self.amount),
+            },
+            "gwei" => EthAmount::GweiDecimal {
+                amount: (self.amount),
+            },
+            "eth" => EthAmount::EthDecimal {
+                amount: (self.amount),
+            },
+            _ => EthAmount::WeiDecimal {
+                amount: (self.amount),
+            },
+        }
+    }
+}
+
 /// Data for building an Ethereum transaction
 #[wasm_bindgen]
 pub struct EthTxInfo {
@@ -161,20 +196,20 @@ impl EthTxInfo {
     #[wasm_bindgen(constructor)]
     pub fn new(
         to_address: String,
-        amount: String,
+        amount: EthTxAmount,
         nonce: String,
         gas_limit: String,
-        gas_price: String,
+        gas_price: EthTxAmount,
         data: Option<Vec<u8>>,
         legacy_tx: bool,
     ) -> Self {
         Self {
             info: defi_wallet_core_common::EthTxInfo {
                 to_address,
-                amount: EthAmount::EthDecimal { amount },
+                amount: amount.to_eth_amount(),
                 nonce,
                 gas_limit,
-                gas_price: EthAmount::EthDecimal { amount: gas_price },
+                gas_price: gas_price.to_eth_amount(),
                 data,
                 legacy_tx,
             },
