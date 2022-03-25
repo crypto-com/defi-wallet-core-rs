@@ -291,10 +291,10 @@ async function ethereum_demo() {
   // build transaction with data
   var info1 = new wasm.EthTxInfo(
     "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d",
-    "1",
+    new wasm.EthTxAmount("1","eth"),
     "0",
     "21000",
-    "1000",
+    new wasm.EthTxAmount("1000","wei"),
     inputData,
     true,
   );
@@ -319,7 +319,36 @@ async function ethereum_demo() {
 
 }
 
+async function polygon_demo() {
+  await init();
+
+  const words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
+  let wallet = wasm.Wallet.recover_wallet(words,"");
+  let priv = wallet.get_key_from_index(wasm.CoinType.Polygon,1);
+  console.assert(priv.to_address(wasm.CoinType.Polygon) === "0x68418d0fdb846e8736aa613159035a9d9fde11f0");
+
+  let chain_id = wasm.get_eth_chain_id(wasm.CoinType.Polygon);
+  let is_legacy = wasm.eth_chain_is_legacy(wasm.CoinType.Polygon);
+  console.log(is_legacy);
+
+  var bufView = new Uint8Array();
+  var info = new wasm.EthTxInfo(
+    "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d",
+    new wasm.EthTxAmount("1","eth",),
+    "0",
+    "21000",
+    new wasm.EthTxAmount("1000","wei",),
+    bufView,
+    is_legacy,
+  );
+  let txData = wasm.build_signed_eth_tx(info, chain_id, priv);
+  // console.assert(wasm.bytes2hex(txData) === "f86b808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080820135a01c41699ee874ae206cc364c60ad699a840085ecd72a3c700cf9cae84cefc2373a056dacb5e4a89073ab83f93c6e4ed706019ec68f569d1930c6e29272bd9361525");
+
+}
+
 wallet_demo();
 cosmos_demo();
 ethereum_demo();
+polygon_demo();
+
 console.log("finish");

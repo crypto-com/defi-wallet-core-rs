@@ -1,9 +1,9 @@
-use crate::PrivateKey;
+use crate::{CoinType, PrivateKey};
 use defi_wallet_core_common::{
     broadcast_contract_approval_tx, broadcast_contract_batch_transfer_tx,
     broadcast_contract_transfer_tx, broadcast_sign_eth_tx, get_contract_balance, get_eth_balance,
     get_token_owner, ContractApproval, ContractBalance, ContractBatchTransfer, ContractOwner,
-    ContractTransfer, EthAbiContract, EthAbiToken, EthAmount, EthNetwork,
+    ContractTransfer, EthAbiContract, EthAbiToken, EthAmount, EthNetwork, WalletCoinFunc,
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -182,6 +182,28 @@ impl EthTxAmount {
             },
         }
     }
+}
+
+#[wasm_bindgen]
+pub fn get_eth_chain_id(coin_type: CoinType) -> Result<u64, JsValue> {
+    let (chain_id, _) = WalletCoinFunc {
+        coin: coin_type.into(),
+    }
+    .get_eth_network()
+    .to_chain_params()
+    .map_err(|e| JsValue::from_str(&format!("error: {e}")))?;
+    Ok(chain_id)
+}
+
+#[wasm_bindgen]
+pub fn eth_chain_is_legacy(coin_type: CoinType) -> Result<bool, JsValue> {
+    let (_, legacy) = WalletCoinFunc {
+        coin: coin_type.into(),
+    }
+    .get_eth_network()
+    .to_chain_params()
+    .map_err(|e| JsValue::from_str(&format!("error: {e}")))?;
+    Ok(legacy)
 }
 
 /// Data for building an Ethereum transaction

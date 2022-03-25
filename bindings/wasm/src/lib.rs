@@ -129,6 +129,12 @@ pub enum CoinType {
     CosmosHub,
     /// Ethereum
     Ethereum,
+    /// Cronos
+    Cronos,
+    /// Polygon
+    Polygon,
+    /// BinanceSmartChain
+    BSC,
 }
 
 impl From<CoinType> for WalletCoin {
@@ -147,6 +153,9 @@ impl From<CoinType> for WalletCoin {
                 network: Network::CosmosHub,
             },
             CoinType::Ethereum => WalletCoin::Ethereum,
+            CoinType::Cronos => WalletCoin::Cronos,
+            CoinType::Polygon => WalletCoin::Polygon,
+            CoinType::BSC => WalletCoin::BSC,
         }
     }
 }
@@ -223,6 +232,16 @@ impl Wallet {
         let key = self
             .wallet
             .get_key(derivation_path)
+            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        Ok(PrivateKey { key })
+    }
+
+    /// obtain a signing key for a given CoinType and index
+    #[wasm_bindgen]
+    pub fn get_key_from_index(&self, coin: CoinType, index: u32) -> Result<PrivateKey, JsValue> {
+        let key = self
+            .wallet
+            .get_key_from_index(coin.into(), index)
             .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
         Ok(PrivateKey { key })
     }

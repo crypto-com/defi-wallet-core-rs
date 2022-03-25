@@ -11,6 +11,19 @@ interface Network {
 interface WalletCoin {
     CosmosSDK(Network network);
     Ethereum();
+    Cronos();
+    Polygon();
+    BSC();
+};
+
+interface WalletCoinFunc {
+    constructor(WalletCoin coin);
+    
+    [Throws=HdWrapError]
+    string derive_address([ByRef] SecretKey private_key);
+
+    u32 get_coin_type();
+    EthNetwork get_eth_network();
 };
 
 enum MnemonicWordCount {
@@ -67,6 +80,9 @@ interface HDWallet {
 
     [Throws=HdWrapError]
     SecretKey get_key(string derivation_path);
+
+    [Throws=HdWrapError]
+    SecretKey get_key_from_index(WalletCoin coin, u32 index);
 };
 
 [Enum]

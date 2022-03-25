@@ -1,7 +1,7 @@
 use std::{str::FromStr, sync::Arc};
 
 use crate::{construct_simple_eth_transfer_tx, EthAmount, EthError, EthNetwork, SecretKey};
-use crate::{contract::*, WalletCoin};
+use crate::{contract::*, WalletCoin, WalletCoinFunc};
 use ethers::prelude::{
     Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware, TransactionReceipt,
     U256,
@@ -532,9 +532,11 @@ pub async fn broadcast_sign_eth_tx(
 ) -> Result<TransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
-    let from_address = WalletCoin::Ethereum
-        .derive_address(&secret_key.get_signing_key())
-        .map_err(|_| EthError::HexConversion)?;
+    let from_address = WalletCoinFunc {
+        coin: WalletCoin::Ethereum,
+    }
+    .derive_address(secret_key.as_ref())
+    .map_err(|_| EthError::HexConversion)?;
     let tx = construct_simple_eth_transfer_tx(&from_address, to_hex, amount, legacy, chain_id)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);

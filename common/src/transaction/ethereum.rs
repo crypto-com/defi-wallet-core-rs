@@ -1,4 +1,4 @@
-use crate::{SecretKey, WalletCoin};
+use crate::{SecretKey, WalletCoin, WalletCoinFunc};
 use ethers::prelude::{
     abi, Address, Chain, Eip1559TransactionRequest, LocalWallet, ParseChainError, ProviderError,
     Signer, TransactionRequest, U256,
@@ -110,7 +110,9 @@ pub fn construct_simple_eth_transfer_tx(
     let to = Address::from_str(to_hex).map_err(|_| EthError::HexConversion)?;
     let amount: U256 = amount.try_into().map_err(EthError::ParseError)?;
     if legacy_tx {
-        Ok(TransactionRequest::pay(to, amount)
+        Ok(TransactionRequest::new()
+            .to(to)
+            .value(amount)
             .from(from)
             .chain_id(chain_id)
             .into())
@@ -164,10 +166,11 @@ pub fn build_signed_eth_tx(
     secret_key: Arc<SecretKey>,
 ) -> Result<Vec<u8>, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
-
-    let from_address = WalletCoin::Ethereum
-        .derive_address(&secret_key.get_signing_key())
-        .map_err(|_| EthError::HexConversion)?;
+    let from_address = WalletCoinFunc {
+        coin: WalletCoin::Ethereum,
+    }
+    .derive_address(secret_key.as_ref())
+    .map_err(|_| EthError::HexConversion)?;
     let mut tx: TypedTransaction = construct_simple_eth_transfer_tx(
         &from_address,
         &tx_info.to_address,
@@ -197,7 +200,8 @@ pub fn build_signed_eth_tx(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{SecretKey, WalletCoin};
+    use crate::HDWallet;
+    use crate::{SecretKey, WalletCoin, WalletCoinFunc};
     use ethers::utils::hex;
     use ethers::utils::rlp::Rlp;
     use std::sync::Arc;
@@ -285,5 +289,52 @@ mod tests {
             hex::encode(tx_raw),
             "f869808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a76400008026a0f65f41ceaadda3c64f68c4d65b202b89a8dc508bbd0957ba28c61eb65ba694f6a03d5c681c4a5c21f4ad1616aed9a0e0b72344dbcfdeddb60a11bfc19a11e60120",
         );
+    }
+
+    #[test]
+    fn polygon_tx_test() {
+        let words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
+
+        let wallet = HDWallet::recover_wallet(words.to_owned(), Some("".to_owned()))
+            .expect("Failed to recover wallet");
+        let secret_key = wallet
+            .get_key_from_index(WalletCoin::Polygon, 1)
+            .expect("get_key_from_index error");
+
+        let (_, legacy) = WalletCoinFunc {
+            coin: WalletCoin::Polygon,
+        }
+        .get_eth_network()
+        .to_chain_params()
+        .expect("");
+
+        let tx_info = EthTxInfo {
+            to_address: "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d".to_string(),
+            amount: EthAmount::EthDecimal {
+                amount: "1".to_string(),
+            },
+            nonce: "0".to_string(),
+            gas_limit: "21000".to_string(),
+            gas_price: EthAmount::WeiDecimal {
+                amount: "1000".to_string(),
+            },
+            data: Some(vec![]),
+            legacy_tx: legacy,
+        };
+
+        let tx_raw = build_signed_eth_tx(
+            tx_info,
+            WalletCoinFunc {
+                coin: WalletCoin::Polygon,
+            }
+            .get_eth_network(),
+            secret_key,
+        )
+        .expect("ok signed tx");
+        println!("{}", hex::encode(tx_raw))
+        // assert_eq!(
+        //     hex::encode(tx_raw),
+        //     "f86b808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080820135a01c41699ee874ae206cc364c60ad699a840085ecd72a3c700cf9cae84cefc2373a056dacb5e4a89073ab83f93c6e4ed706019ec68f569d1930c6e29272bd9361525",
+        // );
     }
 }

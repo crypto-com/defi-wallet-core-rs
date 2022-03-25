@@ -1,3 +1,4 @@
+use crate::EthNetwork;
 use crate::Network;
 use bip39::{Language, Mnemonic};
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
@@ -13,9 +14,13 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 /// describes what coin type to use (for HD derivation or address generation)
+#[derive(Clone)]
 pub enum WalletCoin {
     CosmosSDK { network: Network },
     Ethereum,
+    Cronos,
+    Polygon,
+    BSC,
 }
 
 /// describes the number of words in mnemonic
@@ -38,20 +43,60 @@ impl From<MnemonicWordCount> for usize {
     }
 }
 
-impl WalletCoin {
+pub struct WalletCoinFunc {
+    pub coin: WalletCoin,
+}
+
+impl WalletCoinFunc {
+    pub fn new(coin: WalletCoin) -> Self {
+        Self { coin }
+    }
+
     /// get address from a private key
-    pub fn derive_address(&self, private_key: &SigningKey) -> Result<String, eyre::Report> {
-        match self {
+    pub fn derive_address(&self, private_key: &SecretKey) -> Result<String, HdWrapError> {
+        match &self.coin {
             WalletCoin::CosmosSDK { network } => {
                 let bech32_hrp = network.get_bech32_hrp();
-                let pubkey = PublicKey::from(private_key.public_key());
-                pubkey.account_id(bech32_hrp).map(|x| x.to_string())
+                let pubkey = PublicKey::from(private_key.get_signing_key().public_key());
+                pubkey
+                    .account_id(bech32_hrp)
+                    .map(|x| x.to_string())
+                    .map_err(|e| HdWrapError::AccountId(e.into()))
             }
-            WalletCoin::Ethereum => {
-                let address = secret_key_to_address(private_key);
+            WalletCoin::Ethereum | WalletCoin::BSC | WalletCoin::Cronos | WalletCoin::Polygon => {
+                let address = secret_key_to_address(&private_key.get_signing_key());
                 let address_hex: String = address.encode_hex();
                 Ok(format!("0x{}", address_hex))
             }
+        }
+    }
+
+    /// return the HD coin type
+    pub fn get_coin_type(&self) -> u32 {
+        match &self.coin {
+            WalletCoin::CosmosSDK { network } => network.get_coin_type(),
+            WalletCoin::Ethereum | WalletCoin::Cronos | WalletCoin::BSC | WalletCoin::Polygon => 60,
+        }
+    }
+
+    /// return ethereum like chain network
+    pub fn get_eth_network(&self) -> EthNetwork {
+        match self.coin {
+            WalletCoin::Ethereum => EthNetwork::Known {
+                name: ("mainnet".into()),
+            },
+            WalletCoin::BSC => EthNetwork::Known {
+                name: ("bsc".into()),
+            },
+            WalletCoin::Polygon => EthNetwork::Known {
+                name: ("polygon".into()),
+            },
+            WalletCoin::Cronos => EthNetwork::Known {
+                name: ("cronos".into()),
+            },
+            _ => EthNetwork::Known {
+                name: ("mainnet".into()),
+            },
         }
     }
 }
@@ -150,18 +195,8 @@ impl HDWallet {
 
     /// returns the address from index in wallet
     pub fn get_address(&self, coin: WalletCoin, index: u32) -> Result<String, HdWrapError> {
-        let coin_type = match &coin {
-            WalletCoin::CosmosSDK { network } => network.get_coin_type(),
-            WalletCoin::Ethereum => 60,
-        };
-        let derivation_path: DerivationPath = format!("m/44'/{}'/0'/0/{}", coin_type, index)
-            .parse()
-            .map_err(|e: bip32::Error| HdWrapError::HDError(e.into()))?;
-
-        let child_xprv = XPrv::derive_from_path(&self.seed, &derivation_path)
-            .map_err(|e| HdWrapError::HDError(e.into()))?;
-        coin.derive_address(child_xprv.private_key())
-            .map_err(HdWrapError::AccountId)
+        let pkey = self.get_key_from_index(coin.clone(), index)?;
+        pkey.to_address(coin)
     }
 
     /// returns the default address of the wallet
@@ -172,6 +207,21 @@ impl HDWallet {
     /// return the secret key for a given derivation path
     pub fn get_key(&self, derivation_path: String) -> Result<Arc<SecretKey>, HdWrapError> {
         let derivation_path: DerivationPath = derivation_path
+            .parse()
+            .map_err(|e: bip32::Error| HdWrapError::HDError(e.into()))?;
+        let child_xprv = XPrv::derive_from_path(&self.seed, &derivation_path)
+            .map_err(|e| HdWrapError::HDError(e.into()))?;
+        Ok(Arc::new(SecretKey(child_xprv.private_key().clone())))
+    }
+
+    /// return the secret key for a given coin and index
+    pub fn get_key_from_index(
+        &self,
+        coin: WalletCoin,
+        index: u32,
+    ) -> Result<Arc<SecretKey>, HdWrapError> {
+        let coin_type = WalletCoinFunc { coin: coin }.get_coin_type();
+        let derivation_path: DerivationPath = format!("m/44'/{}'/0'/0/{}", coin_type, index)
             .parse()
             .map_err(|e: bip32::Error| HdWrapError::HDError(e.into()))?;
         let child_xprv = XPrv::derive_from_path(&self.seed, &derivation_path)
@@ -196,6 +246,10 @@ impl SecretKey {
     /// generates a random secret key
     pub fn new() -> Self {
         Self(SigningKey::random(&mut OsRng))
+    }
+
+    pub fn from_signing_key(signing_key: SigningKey) -> Self {
+        Self(signing_key)
     }
 
     /// constructs secret key from bytes
@@ -247,8 +301,10 @@ impl SecretKey {
     }
 
     /// converts private to address with coin type
-    pub fn to_address(&self, coin: WalletCoin) -> Result<String, eyre::Report> {
-        coin.derive_address(&self.get_signing_key())
+    pub fn to_address(&self, coin: WalletCoin) -> Result<String, HdWrapError> {
+        WalletCoinFunc { coin: coin }
+            .derive_address(self)
+            .map_err(|e| HdWrapError::AccountId(e.into()))
     }
 }
 
@@ -467,6 +523,23 @@ mod hd_wallet_tests {
         ]
         .to_vec();
         assert_eq!(raw_key, expected_key);
+    }
+
+    #[test]
+    fn test_get_key_from_index() {
+        let words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
+
+        let wallet = HDWallet::recover_wallet(words.to_owned(), Some("".to_owned()))
+            .expect("Failed to recover wallet");
+        let key = wallet
+            .get_key_from_index(WalletCoin::BSC, 1)
+            .expect("get_key_from_index error");
+        assert_eq!(
+            key.to_hex(),
+            "6f53576748877b603718b1aa1e7106aec5e15c1a2f39ea8c4683ac0d5a435a13"
+        );
+        let address = key.to_address(WalletCoin::BSC).expect("address error");
+        assert_eq!(address, "0x68418d0fdb846e8736aa613159035a9d9fde11f0");
     }
 }
 
