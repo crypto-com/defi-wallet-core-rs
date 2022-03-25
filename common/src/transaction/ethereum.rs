@@ -4,6 +4,7 @@ use ethers::prelude::{
     Signer, TransactionRequest, U256,
 };
 use ethers::types::transaction::eip2718::TypedTransaction;
+use ethers::types::transaction::eip712::Eip712Error;
 use ethers::utils::{parse_units, ConversionError};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -40,11 +41,21 @@ pub enum EthError {
     ChainidError(ParseChainError),
     #[error("ABI error: {0}")]
     AbiError(abi::Error),
+    #[error("EIP-712 error: {0}")]
+    Eip712Error(Eip712Error),
+    #[error("Common error: {0}")]
+    CommonError(String),
 }
 
 impl From<abi::Error> for EthError {
     fn from(abi_error: abi::Error) -> EthError {
         EthError::AbiError(abi_error)
+    }
+}
+
+impl From<Eip712Error> for EthError {
+    fn from(eip712_error: Eip712Error) -> EthError {
+        EthError::Eip712Error(eip712_error)
     }
 }
 

@@ -40,9 +40,9 @@ impl Eip712TypedData {
         Ok(Self { internal })
     }
 
-    /// Sign the typed data.
+    /// Encode the typed data.
     #[wasm_bindgen]
-    pub fn sign(&self) -> Result<Vec<u8>, JsValue> {
-        self.internal.sign().map_err(format_to_js_error)
+    pub fn encode(&self) -> Result<String, JsValue> {
+        self.internal.encode().map_err(format_to_js_error)
     }
 }
