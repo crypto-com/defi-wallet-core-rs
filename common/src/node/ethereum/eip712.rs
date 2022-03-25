@@ -1,7 +1,7 @@
 use crate::node::ethereum::abi::{EthAbiParamType, EthAbiToken};
 use crate::{address_from_str, EthError};
 use ethers::prelude::abi::{ParamType, Token};
-use ethers::prelude::{H256, U256};
+use ethers::prelude::U256;
 use ethers::types::transaction::eip712::{self, encode_eip712_type, EIP712Domain, Eip712Error};
 use ethers::utils::keccak256;
 use std::collections::HashMap;
@@ -102,7 +102,7 @@ impl Eip712Domain {
                 version,
                 chain_id: chain_id.into(),
                 verifying_contract: address_from_str(&verifying_contract)?,
-                salt: salt.map(|s| keccak256(s)),
+                salt: salt.map(keccak256),
             },
         })
     }
@@ -134,8 +134,7 @@ fn build_struct_type_hash(struct_name: &str, fields: &[Eip712Field]) -> U256 {
 mod tests {
     use super::*;
     use crate::SecretKey;
-    use ethers::prelude::{Address, LocalWallet, Signer};
-    use std::str::FromStr;
+    use ethers::prelude::{Address, LocalWallet, Signer, H256};
 
     #[test]
     fn test_eip712_sign_typed_data() {

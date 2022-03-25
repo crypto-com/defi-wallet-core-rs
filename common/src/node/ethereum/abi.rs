@@ -35,7 +35,7 @@ impl From<&EthAbiParamType> for ParamType {
                 ParamType::FixedArray(Box::new(ParamType::from(boxed_param_type.as_ref())), *size)
             }
             EthAbiParamType::Tuple(params) => {
-                ParamType::Tuple(params.into_iter().map(Into::into).collect())
+                ParamType::Tuple(params.iter().map(Into::into).collect())
             }
         }
     }
@@ -90,14 +90,12 @@ impl From<&EthAbiToken> for Token {
             EthAbiToken::Bool(value) => Token::Bool(*value),
             EthAbiToken::String(value) => Token::String(value.clone()),
             EthAbiToken::FixedArray(values) => {
-                Token::FixedArray(values.into_iter().map(Into::into).collect())
+                Token::FixedArray(values.iter().map(Into::into).collect())
             }
             EthAbiToken::Array(values) => {
-                Token::FixedArray(values.into_iter().map(Into::into).collect())
+                Token::FixedArray(values.iter().map(Into::into).collect())
             }
-            EthAbiToken::Tuple(values) => {
-                Token::Tuple(values.into_iter().map(Into::into).collect())
-            }
+            EthAbiToken::Tuple(values) => Token::Tuple(values.iter().map(Into::into).collect()),
         }
     }
 }
