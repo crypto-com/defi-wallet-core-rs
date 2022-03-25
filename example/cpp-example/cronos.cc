@@ -36,7 +36,8 @@ void cronos_process() {
       build_eth_signed_tx(eth_tx_info, chainid, true, *privatekey);
   String balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
   cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
-  String txhash = broadcast_eth_signed_raw_tx(signedtx, mycronosrpc);
+  String txhash =
+      broadcast_eth_signed_raw_tx(signedtx, mycronosrpc).transaction_hash;
   cout << "txhash=" << txhash << endl;
   balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
   cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
