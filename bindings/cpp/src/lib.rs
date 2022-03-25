@@ -964,7 +964,11 @@ pub fn broadcast_tx(
     raw_signed_tx: Vec<u8>,
 ) -> Result<ffi::CosmosTransactionReceiptRaw> {
     let resp = broadcast_tx_sync_blocking(&tendermint_rpc_url, raw_signed_tx)?;
-    Ok(resp.into())
+    if 0 == resp.code {
+        Ok(resp.into())
+    } else {
+        Err(anyhow!("{:?}", resp))
+    }
 }
 
 fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>> {
