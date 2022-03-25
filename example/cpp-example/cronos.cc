@@ -107,4 +107,17 @@ void cronos_process() {
   cout << "URI of ERC1155, THORS_HAMMER=" << erc1155.uri("2") << endl;
   cout << "URI of ERC1155, SWORD=" << erc1155.uri("3") << endl;
   cout << "URI of ERC1155, SHIELD=" << erc1155.uri("4") << endl;
+
+  String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
+  Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
+  String signer2_address = signer2_wallet->get_eth_address(0);
+
+  // transfer erc20 token from signer1 to signer2
+  String response = erc20.transfer("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A", signer2_address,
+                 "100", chainid, *privatekey);
+
+  erc20_balance = get_contract_balance(myaddress1, *erc20_details, mycronosrpc);
+  cout << "GOLD balance after trasnfer=" << erc20_balance.c_str() << endl;
+
+
 }

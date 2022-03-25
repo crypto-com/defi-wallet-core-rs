@@ -1,7 +1,6 @@
-use crate::contract::*;
-use crate::{address_from_str, u256_from_str, EthError};
+use super::contract::{Contract, ContractCall};
+use crate::{u256_from_str, EthError};
 use ethers::prelude::{Http, Provider};
-use std::sync::Arc;
 
 pub async fn get_uri(
     contract_address: &str,
@@ -9,14 +8,10 @@ pub async fn get_uri(
     web3api_url: &str,
 ) -> Result<String, EthError> {
     let client = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
-    let contract_address = address_from_str(contract_address)?;
+    let contract = Contract::new_erc1155(&contract_address, client)?;
     let token_id = u256_from_str(token_id)?;
-    let contract = Erc1155Contract::new(contract_address, Arc::new(client));
-    contract
-        .uri(token_id)
-        .call()
-        .await
-        .map_err(EthError::ContractCallError)
+    let call = contract.uri(token_id);
+    ContractCall::new_call(call).call().await
 }
 
 #[cfg(not(target_arch = "wasm32"))]

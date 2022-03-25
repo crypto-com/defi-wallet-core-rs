@@ -1,7 +1,7 @@
 use std::{str::FromStr, sync::Arc};
 
+use crate::WalletCoin;
 use crate::{construct_simple_eth_transfer_tx, EthAmount, EthError, EthNetwork, SecretKey};
-use crate::{contract::*, WalletCoin};
 use ethers::prelude::{
     Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware, TransactionReceipt,
     U256,
@@ -10,6 +10,8 @@ use ethers::prelude::{
 use ethers::utils::format_units;
 #[cfg(not(target_arch = "wasm32"))]
 use ethers::utils::hex::ToHex;
+
+use super::contract::{Contract, ContractCall};
 
 /// Information needed for approving operator to withdraw from your account on
 /// different common contract types.
@@ -147,40 +149,27 @@ pub async fn get_contract_balance(
     let address = address_from_str(account_address)?;
     let client = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
 
-    match &contract_details {
+    let call = match &contract_details {
         ContractBalance::Erc20 { contract_address }
         | ContractBalance::Erc721 { contract_address } => {
-            let contract_address = address_from_str(contract_address)?;
             if matches!(contract_details, ContractBalance::Erc20 { .. }) {
-                let contract = Erc20Contract::new(contract_address, Arc::new(client));
-                contract
-                    .balance_of(address)
-                    .call()
-                    .await
-                    .map_err(EthError::ContractCallError)
+                let contract = Contract::new_erc20(&contract_address, client)?;
+                contract.balance_of(address)
             } else {
-                let contract = Erc721Contract::new(contract_address, Arc::new(client));
-                contract
-                    .balance_of(address)
-                    .call()
-                    .await
-                    .map_err(EthError::ContractCallError)
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                contract.balance_of(address)
             }
         }
         ContractBalance::Erc1155 {
             contract_address,
             token_id,
         } => {
-            let contract_address = address_from_str(contract_address)?;
             let token_id = u256_from_str(token_id)?;
-            let contract = Erc1155Contract::new(contract_address, Arc::new(client));
-            contract
-                .balance_of(address, token_id)
-                .call()
-                .await
-                .map_err(EthError::ContractCallError)
+            let contract = Contract::new_erc1155(&contract_address, client)?;
+            contract.balance_of(address, token_id)
         }
-    }
+    };
+    ContractCall::new_call(call).call().await
 }
 
 /// given the contract information, it returns the owner address
@@ -189,21 +178,17 @@ pub async fn get_token_owner(
     web3api_url: &str,
 ) -> Result<Address, EthError> {
     let client = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
-    match &contract_owner {
+    let call = match &contract_owner {
         ContractOwner::Erc721 {
             contract_address,
             token_id,
         } => {
-            let contract_address = address_from_str(contract_address)?;
             let token_id = u256_from_str(token_id)?;
-            let contract = Erc721Contract::new(contract_address, Arc::new(client));
-            contract
-                .owner_of(token_id)
-                .call()
-                .await
-                .map_err(EthError::ContractCallError)
+            let contract = Contract::new_erc721(&contract_address, client)?;
+            contract.owner_of(token_id)
         }
-    }
+    };
+    ContractCall::new_call(call).call().await
 }
 
 /// given the contract approval details, it'll construct, sign and broadcast a
@@ -215,7 +200,7 @@ pub async fn broadcast_contract_approval_tx(
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
 ) -> Result<TransactionReceipt, EthError> {
-    let (chain_id, _legacy) = network.to_chain_params()?;
+    let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
@@ -226,78 +211,42 @@ pub async fn broadcast_contract_approval_tx(
             approved_address,
             amount_hex,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let approved_address = address_from_str(&approved_address)?;
             let amount = u256_from_str(&amount_hex)?;
-            let contract = Erc20Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .approve(approved_address, amount)
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+            let contract = Contract::new_erc20(&contract_address, client)?;
+            let call = contract.approve(approved_address, amount);
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
         ContractApproval::Erc721Approve {
             contract_address,
             approved_address,
             token_id,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let approved_address = address_from_str(&approved_address)?;
             let token_id = u256_from_str(&token_id)?;
-            let contract = Erc721Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .approve(approved_address, token_id)
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+            let contract = Contract::new_erc721(&contract_address, client)?;
+            let call = contract.approve(approved_address, token_id);
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
         ContractApproval::Erc721SetApprovalForAll {
             contract_address,
             approved_address,
             approved,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let approved_address = address_from_str(&approved_address)?;
-            let contract = Erc721Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .set_approval_for_all(approved_address, approved)
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+            let contract = Contract::new_erc721(&contract_address, client)?;
+            let call = contract.set_approval_for_all(approved_address, approved);
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
         ContractApproval::Erc1155 {
             contract_address,
             approved_address,
             approved,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let approved_address = address_from_str(&approved_address)?;
-            let contract = Erc1155Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .set_approval_for_all(approved_address, approved)
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+            let contract = Contract::new_erc1155(&contract_address, client)?;
+            let call = contract.set_approval_for_all(approved_address, approved);
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
     }
 }
@@ -311,7 +260,7 @@ pub async fn broadcast_contract_transfer_tx(
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
 ) -> Result<TransactionReceipt, EthError> {
-    let (chain_id, _legacy) = network.to_chain_params()?;
+    let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
@@ -322,20 +271,11 @@ pub async fn broadcast_contract_transfer_tx(
             to_address,
             amount_hex,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let to_address = address_from_str(&to_address)?;
             let amount = u256_from_str(&amount_hex)?;
-            let contract = Erc20Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .transfer(to_address, amount)
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+            let contract = Contract::new_erc20(&contract_address, client)?;
+            let call = contract.transfer(to_address, amount);
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
         ContractTransfer::Erc20TransferFrom {
             contract_address,
@@ -343,21 +283,12 @@ pub async fn broadcast_contract_transfer_tx(
             to_address,
             amount_hex,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let from_address = address_from_str(&from_address)?;
             let to_address = address_from_str(&to_address)?;
             let amount = u256_from_str(&amount_hex)?;
-            let contract = Erc20Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .transfer_from(from_address, to_address, amount)
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+            let contract = Contract::new_erc20(&contract_address, client)?;
+            let call = contract.transfer_from(from_address, to_address, amount);
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
         ContractTransfer::Erc721TransferFrom {
             contract_address,
@@ -365,21 +296,12 @@ pub async fn broadcast_contract_transfer_tx(
             to_address,
             token_id,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let token_id = u256_from_str(&token_id)?;
             let to_address = address_from_str(&to_address)?;
             let from_address = address_from_str(&from_address)?;
-            let contract = Erc721Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .transfer_from(from_address, to_address, token_id)
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+            let contract = Contract::new_erc721(&contract_address, client)?;
+            let call = contract.transfer_from(from_address, to_address, token_id);
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
         ContractTransfer::Erc721SafeTransferFrom {
             contract_address,
@@ -387,21 +309,12 @@ pub async fn broadcast_contract_transfer_tx(
             to_address,
             token_id,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let token_id = u256_from_str(&token_id)?;
             let to_address = address_from_str(&to_address)?;
             let from_address = address_from_str(&from_address)?;
-            let contract = Erc721Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .safe_transfer_from(from_address, to_address, token_id)
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+            let contract = Contract::new_erc721(&contract_address, client)?;
+            let call = contract.safe_transfer_from(from_address, to_address, token_id);
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
         ContractTransfer::Erc721SafeTransferFromWithAdditionalData {
             contract_address,
@@ -410,26 +323,17 @@ pub async fn broadcast_contract_transfer_tx(
             token_id,
             additional_data,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let token_id = u256_from_str(&token_id)?;
             let to_address = address_from_str(&to_address)?;
             let from_address = address_from_str(&from_address)?;
-            let contract = Erc721Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .safe_transfer_from_with_data(
-                    from_address,
-                    to_address,
-                    token_id,
-                    additional_data.into(),
-                )
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+            let contract = Contract::new_erc721(&contract_address, client)?;
+            let call = contract.safe_transfer_from_with_data(
+                from_address,
+                to_address,
+                token_id,
+                additional_data.into(),
+            );
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
         ContractTransfer::Erc1155SafeTransferFrom {
             contract_address,
@@ -439,29 +343,20 @@ pub async fn broadcast_contract_transfer_tx(
             amount_hex,
             additional_data,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let token_id = u256_from_str(&token_id)?;
             let amount = u256_from_str(&amount_hex)?;
 
             let to_address = address_from_str(&to_address)?;
             let from_address = address_from_str(&from_address)?;
-            let contract = Erc1155Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .safe_transfer_from(
-                    from_address,
-                    to_address,
-                    token_id,
-                    amount,
-                    additional_data.into(),
-                )
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+            let contract = Contract::new_erc1155(&contract_address, client)?;
+            let call = contract.safe_transfer_from(
+                from_address,
+                to_address,
+                token_id,
+                amount,
+                additional_data.into(),
+            );
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
     }
 }
@@ -475,7 +370,7 @@ pub async fn broadcast_contract_batch_transfer_tx(
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
 ) -> Result<TransactionReceipt, EthError> {
-    let (chain_id, _legacy) = network.to_chain_params()?;
+    let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
@@ -489,7 +384,6 @@ pub async fn broadcast_contract_batch_transfer_tx(
             hex_amounts,
             additional_data,
         } => {
-            let contract_address = address_from_str(&contract_address)?;
             let to_address = address_from_str(&to_address)?;
             let from_address = address_from_str(&from_address)?;
             let token_ids = token_ids
@@ -500,23 +394,17 @@ pub async fn broadcast_contract_batch_transfer_tx(
                 .iter()
                 .map(|val| u256_from_str(val))
                 .collect::<Result<Vec<U256>, _>>()?;
-            let contract = Erc1155Contract::new(contract_address, Arc::new(client));
-            let pending_tx = contract
-                .safe_batch_transfer_from(
-                    from_address,
-                    to_address,
-                    token_ids,
-                    amounts,
-                    additional_data.into(),
-                )
-                .send()
-                .await
-                .map_err(EthError::ContractSendError)?
-                .await;
-            let tx_receipt = pending_tx
-                .map_err(EthError::BroadcastTxFail)?
-                .ok_or(EthError::MempoolDrop)?;
-            Ok(tx_receipt)
+
+            let contract = Contract::new_erc1155(&contract_address, client)?;
+
+            let call = contract.safe_batch_transfer_from(
+                from_address,
+                to_address,
+                token_ids,
+                amounts,
+                additional_data.into(),
+            );
+            ContractCall::new_send(call).legacy(legacy).send().await
         }
     }
 }

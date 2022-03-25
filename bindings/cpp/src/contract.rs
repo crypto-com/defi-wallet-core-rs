@@ -98,7 +98,7 @@ impl ffi::Erc20 {
             },
             EthNetwork::Custom {
                 chain_id,
-                legacy: false,
+                legacy: true,
             },
             private_key.key.clone(),
             &self.web3api_url,
