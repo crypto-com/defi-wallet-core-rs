@@ -5,6 +5,7 @@ use ethers::prelude::{
 };
 use ethers::types::transaction::eip2718::TypedTransaction;
 use ethers::utils::{parse_units, ConversionError};
+use std::default::Default;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -48,11 +49,28 @@ impl From<abi::Error> for EthError {
     }
 }
 
+impl From<ParseChainError> for EthError {
+    fn from(parse_chain_error: ParseChainError) -> EthError {
+        EthError::ChainidError(parse_chain_error)
+    }
+}
+
 /// Ethereum networks
 /// the string conversion is from: https://github.com/gakonst/ethers-rs/blob/4fd9c7800ee9afd5395d8c7b8652d788b9e80f35/ethers-core/src/types/chain.rs#L130
 /// e.g. "mainnet" == Ethereum mainnet
+#[derive(Clone)]
 pub enum EthNetwork {
+    /// Ethereum mainnet
+    Mainnet,
+    /// Binance smart chain
+    BSC,
+    /// Cronos
+    Cronos,
+    /// Polygon
+    Polygon,
+    /// Known network with specified name
     Known { name: String },
+    /// Custom network with chain ID and legacy flag
     Custom { chain_id: u64, legacy: bool },
 }
 
@@ -61,12 +79,33 @@ impl EthNetwork {
     /// transaction request
     pub fn to_chain_params(self) -> Result<(u64, bool), EthError> {
         match self {
-            EthNetwork::Known { name } => {
-                let chain = Chain::from_str(&name).map_err(EthError::ChainidError)?;
-                Ok((chain as u64, chain.is_legacy()))
-            }
             EthNetwork::Custom { chain_id, legacy } => Ok((chain_id, legacy)),
+            _ => {
+                let chain = Chain::try_from(self)?;
+                Ok((chain.into(), chain.is_legacy()))
+            }
         }
+    }
+}
+
+impl Default for EthNetwork {
+    fn default() -> Self {
+        EthNetwork::Mainnet
+    }
+}
+
+impl TryFrom<EthNetwork> for Chain {
+    type Error = EthError;
+
+    fn try_from(network: EthNetwork) -> Result<Chain, Self::Error> {
+        Ok(match network {
+            EthNetwork::Mainnet => Chain::Mainnet,
+            EthNetwork::BSC => Chain::BinanceSmartChain,
+            EthNetwork::Cronos => Chain::Cronos,
+            EthNetwork::Polygon => Chain::Polygon,
+            EthNetwork::Known { name } => Chain::from_str(&name)?,
+            EthNetwork::Custom { chain_id, .. } => Chain::try_from(chain_id)?,
+        })
     }
 }
 
@@ -167,7 +206,9 @@ pub fn build_signed_eth_tx(
 ) -> Result<Vec<u8>, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
     let from_address = WalletCoinFunc {
-        coin: WalletCoin::Ethereum,
+        coin: WalletCoin::Ethereum {
+            network: EthNetwork::Mainnet,
+        },
     }
     .derive_address(secret_key.as_ref())
     .map_err(|_| EthError::HexConversion)?;
@@ -259,7 +300,9 @@ mod tests {
         println!(
             "{}",
             secret_key
-                .to_address(WalletCoin::Ethereum)
+                .to_address(WalletCoin::Ethereum {
+                    network: EthNetwork::Mainnet
+                })
                 .expect("address error")
         );
         let tx_info = EthTxInfo {
@@ -298,11 +341,18 @@ mod tests {
         let wallet = HDWallet::recover_wallet(words.to_owned(), Some("".to_owned()))
             .expect("Failed to recover wallet");
         let secret_key = wallet
-            .get_key_from_index(WalletCoin::Polygon, 1)
+            .get_key_from_index(
+                WalletCoin::Ethereum {
+                    network: EthNetwork::Polygon,
+                },
+                1,
+            )
             .expect("get_key_from_index error");
 
         let (_, legacy) = WalletCoinFunc {
-            coin: WalletCoin::Polygon,
+            coin: WalletCoin::Ethereum {
+                network: EthNetwork::Polygon,
+            },
         }
         .get_eth_network()
         .to_chain_params()
@@ -325,7 +375,9 @@ mod tests {
         let tx_raw = build_signed_eth_tx(
             tx_info,
             WalletCoinFunc {
-                coin: WalletCoin::Polygon,
+                coin: WalletCoin::Ethereum {
+                    network: EthNetwork::Polygon,
+                },
             }
             .get_eth_network(),
             secret_key,

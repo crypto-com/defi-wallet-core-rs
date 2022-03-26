@@ -10,10 +10,7 @@ interface Network {
 [Enum]
 interface WalletCoin {
     CosmosSDK(Network network);
-    Ethereum();
-    Cronos();
-    Polygon();
-    BSC();
+    Ethereum(EthNetwork network);
 };
 
 interface WalletCoinFunc {
@@ -299,6 +296,10 @@ interface EthAmount {
 
 [Enum]
  interface EthNetwork {
+     Mainnet();
+     BSC();
+     Cronos();
+     Polygon();
      Known(string name);
      Custom(u64 chain_id, boolean legacy);
  };

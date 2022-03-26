@@ -1,4 +1,4 @@
-use defi_wallet_core_common::{bytes_to_hex, HDWallet, Network, SecretKey, WalletCoin};
+use defi_wallet_core_common::{bytes_to_hex, EthNetwork, HDWallet, Network, SecretKey, WalletCoin};
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 
@@ -152,10 +152,18 @@ impl From<CoinType> for WalletCoin {
             CoinType::CosmosHub => WalletCoin::CosmosSDK {
                 network: Network::CosmosHub,
             },
-            CoinType::Ethereum => WalletCoin::Ethereum,
-            CoinType::Cronos => WalletCoin::Cronos,
-            CoinType::Polygon => WalletCoin::Polygon,
-            CoinType::BSC => WalletCoin::BSC,
+            CoinType::Ethereum => WalletCoin::Ethereum {
+                network: EthNetwork::Mainnet,
+            },
+            CoinType::BSC => WalletCoin::Ethereum {
+                network: EthNetwork::BSC,
+            },
+            CoinType::Cronos => WalletCoin::Ethereum {
+                network: EthNetwork::Cronos,
+            },
+            CoinType::Polygon => WalletCoin::Ethereum {
+                network: EthNetwork::Polygon,
+            },
         }
     }
 }
