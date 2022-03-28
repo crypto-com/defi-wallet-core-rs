@@ -22,7 +22,7 @@ cosmrs = "0.5"
 eyre = "0.6"
 # NOTE: add `features = ["legacy"]` if non-EIP-1559 network support is required
 ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "de275db56a1be948cf4a543e1837f5add6f4750c" }
-ibc = { version = "0.12", default-features = false }
+ibc = { version = "0.13", default-features = false }
 ibc-proto = { version = "0.16", default-features = false }
 prost = "0.9"
 # NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
