@@ -918,7 +918,7 @@ dependencies = [
  "eyre",
  "grpc-web-client",
  "ibc",
- "ibc-proto",
+ "ibc-proto 0.17.0",
  "prost",
  "rand 0.6.5",
  "rand_core 0.6.3",
@@ -1959,7 +1959,7 @@ dependencies = [
  "bytes",
  "derive_more",
  "flex-error",
- "ibc-proto",
+ "ibc-proto 0.16.0",
  "ics23",
  "num-traits",
  "prost",
@@ -1983,6 +1983,20 @@ version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b36f1d4cb572f74027104c9d49804d03c108d49b120263c9d551190ac20c3190"
 dependencies = [
+ "bytes",
+ "prost",
+ "prost-types",
+ "serde",
+ "tendermint-proto",
+]
+
+[[package]]
+name = "ibc-proto"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7c8ceb06337fcad351619eb05a045abf41a825c80014a88ce8834822fa8ccdb"
+dependencies = [
+ "base64 0.13.0",
  "bytes",
  "prost",
  "prost-types",
