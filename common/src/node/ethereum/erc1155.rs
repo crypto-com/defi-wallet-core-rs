@@ -8,7 +8,7 @@ pub async fn get_uri(
     web3api_url: &str,
 ) -> Result<String, EthError> {
     let client = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
-    let contract = Contract::new_erc1155(&contract_address, client)?;
+    let contract = Contract::new_erc1155(contract_address, client)?;
     let token_id = u256_from_str(token_id)?;
     let call = contract.uri(token_id);
     ContractCall::new_call(call).call().await

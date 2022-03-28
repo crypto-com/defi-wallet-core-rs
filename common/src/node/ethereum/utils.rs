@@ -153,10 +153,10 @@ pub async fn get_contract_balance(
         ContractBalance::Erc20 { contract_address }
         | ContractBalance::Erc721 { contract_address } => {
             if matches!(contract_details, ContractBalance::Erc20 { .. }) {
-                let contract = Contract::new_erc20(&contract_address, client)?;
+                let contract = Contract::new_erc20(contract_address, client)?;
                 contract.balance_of(address)
             } else {
-                let contract = Contract::new_erc721(&contract_address, client)?;
+                let contract = Contract::new_erc721(contract_address, client)?;
                 contract.balance_of(address)
             }
         }
@@ -165,7 +165,7 @@ pub async fn get_contract_balance(
             token_id,
         } => {
             let token_id = u256_from_str(token_id)?;
-            let contract = Contract::new_erc1155(&contract_address, client)?;
+            let contract = Contract::new_erc1155(contract_address, client)?;
             contract.balance_of(address, token_id)
         }
     };
@@ -184,7 +184,7 @@ pub async fn get_token_owner(
             token_id,
         } => {
             let token_id = u256_from_str(token_id)?;
-            let contract = Contract::new_erc721(&contract_address, client)?;
+            let contract = Contract::new_erc721(contract_address, client)?;
             contract.owner_of(token_id)
         }
     };
