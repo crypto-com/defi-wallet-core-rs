@@ -1,4 +1,4 @@
-use super::contract::{Contract, ContractCall};
+use crate::contract::{Contract, ContractCall};
 use crate::{u256_from_str, EthError};
 use ethers::prelude::{Http, Provider};
 pub async fn get_name(contract_address: &str, web3api_url: &str) -> Result<String, EthError> {

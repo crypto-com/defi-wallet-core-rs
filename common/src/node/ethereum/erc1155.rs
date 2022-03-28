@@ -1,4 +1,4 @@
-use super::contract::{Contract, ContractCall};
+use crate::contract::{Contract, ContractCall};
 use crate::{u256_from_str, EthError};
 use ethers::prelude::{Http, Provider};
 

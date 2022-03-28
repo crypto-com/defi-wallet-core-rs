@@ -11,7 +11,7 @@ use ethers::utils::format_units;
 #[cfg(not(target_arch = "wasm32"))]
 use ethers::utils::hex::ToHex;
 
-use super::contract::{Contract, ContractCall};
+use crate::contract::{Contract, ContractCall};
 
 /// Information needed for approving operator to withdraw from your account on
 /// different common contract types.
