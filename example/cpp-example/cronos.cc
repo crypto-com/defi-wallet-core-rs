@@ -1,6 +1,7 @@
 #include "defi-wallet-core-cpp/src/contract.rs.h"
 #include "defi-wallet-core-cpp/src/lib.rs.h"
 #include "rust/cxx.h"
+#include <cassert>
 #include <iostream>
 
 void cronos_process();
@@ -53,6 +54,7 @@ void cronos_process() {
   String erc721_balance =
       get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
   cout << "GameItem balance=" << erc721_balance.c_str() << endl;
+  assert(erc721_balance == "1");
 
   Box<ContractBalance> erc1155_details_0 =
       erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "0");
@@ -88,21 +90,25 @@ void cronos_process() {
       erc721_owner("0x2305f3980715c9D247455504080b41072De38aB9", "1");
   String erc721_owner = get_token_owner(*erc721_owner_detail, mycronosrpc);
   cout << "Owner of token=" << erc721_owner.c_str() << endl;
+  assert(erc721_owner == myaddress1);
 
-  Erc20 erc20 =
-      new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A", mycronosrpc);
+  Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
+                          mycronosrpc, chainid)
+                    .legacy();
   cout << "Name of ERC20=" << erc20.name() << endl;
   cout << "Symbol of ERC20=" << erc20.symbol() << endl;
   cout << "Decimals of ERC20=" << int(erc20.decimals()) << endl;
 
-  Erc721 erc721 =
-      new_erc721("0x2305f3980715c9D247455504080b41072De38aB9", mycronosrpc);
+  Erc721 erc721 = new_erc721("0x2305f3980715c9D247455504080b41072De38aB9",
+                             mycronosrpc, chainid)
+                      .legacy();
   cout << "Name of ERC721=" << erc721.name() << endl;
   cout << "Symbol of ERC721=" << erc721.symbol() << endl;
   cout << "Token URI of ERC721=" << erc721.token_uri("1") << endl;
 
-  Erc1155 erc1155 =
-      new_erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", mycronosrpc);
+  Erc1155 erc1155 = new_erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc",
+                                mycronosrpc, chainid)
+                        .legacy();
   cout << "URI of ERC1155, GOLD=" << erc1155.uri("0") << endl;
   cout << "URI of ERC1155, SILVER=" << erc1155.uri("1") << endl;
   cout << "URI of ERC1155, THORS_HAMMER=" << erc1155.uri("2") << endl;
@@ -112,13 +118,39 @@ void cronos_process() {
   String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
   Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
   String signer2_address = signer2_wallet->get_eth_address(0);
+  Box<PrivateKey> signer2_privatekey = signer2_wallet->get_key(hdpath);
 
   // transfer erc20 token from signer1 to signer2
-  String response = erc20.transfer("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A", signer2_address,
-                 "100", chainid, *privatekey);
+  String response = erc20.transfer(signer2_address, "0", *privatekey);
 
   erc20_balance = get_contract_balance(myaddress1, *erc20_details, mycronosrpc);
   cout << "GOLD balance after trasnfer=" << erc20_balance.c_str() << endl;
 
+  // transfer erc721 from signer1 to signer2
+  response =
+      erc721.transfer_from(myaddress1, signer2_address, "1", *privatekey);
 
+  erc721_balance =
+      get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
+  assert(erc721_balance == "0");
+  erc721_owner = get_token_owner(*erc721_owner_detail, mycronosrpc);
+  assert(erc721_owner == signer2_address);
+
+  // safe transfer erc721 from signer2 to signer1
+  response = erc721.safe_transfer_from(signer2_address, myaddress1, "1",
+                                       *signer2_privatekey);
+  erc721_balance =
+      get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
+  assert(erc721_balance == "1");
+  erc721_owner = get_token_owner(*erc721_owner_detail, mycronosrpc);
+  assert(erc721_owner == myaddress1);
+
+  // safe transfer erc1155 from signer1 to signer2
+  rust::Vec<uint8_t> erc1155_data;
+  response = erc1155.safe_transfer_from(myaddress1, signer2_address, "0", "100",
+                                        erc1155_data, *privatekey);
+
+  String erc1155_balance =
+      get_contract_balance(myaddress1, *erc1155_details_0, mycronosrpc);
+  cout << "GOLD balance after transfer=" << erc1155_balance.c_str() << endl;
 }
