@@ -11,7 +11,7 @@ pub async fn get_uri(
     let contract = Contract::new_erc1155(contract_address, client)?;
     let token_id = u256_from_str(token_id)?;
     let call = contract.uri(token_id);
-    ContractCall::new_call(call).call().await
+    ContractCall::from(call).call().await
 }
 
 #[cfg(not(target_arch = "wasm32"))]

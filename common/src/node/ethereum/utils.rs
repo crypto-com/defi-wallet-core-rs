@@ -169,7 +169,7 @@ pub async fn get_contract_balance(
             contract.balance_of(address, token_id)
         }
     };
-    ContractCall::new_call(call).call().await
+    ContractCall::from(call).call().await
 }
 
 /// given the contract information, it returns the owner address
@@ -188,7 +188,7 @@ pub async fn get_token_owner(
             contract.owner_of(token_id)
         }
     };
-    ContractCall::new_call(call).call().await
+    ContractCall::from(call).call().await
 }
 
 /// given the contract approval details, it'll construct, sign and broadcast a
@@ -215,7 +215,7 @@ pub async fn broadcast_contract_approval_tx(
             let amount = u256_from_str(&amount_hex)?;
             let contract = Contract::new_erc20(&contract_address, client)?;
             let call = contract.approve(approved_address, amount);
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
         ContractApproval::Erc721Approve {
             contract_address,
@@ -226,7 +226,7 @@ pub async fn broadcast_contract_approval_tx(
             let token_id = u256_from_str(&token_id)?;
             let contract = Contract::new_erc721(&contract_address, client)?;
             let call = contract.approve(approved_address, token_id);
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
         ContractApproval::Erc721SetApprovalForAll {
             contract_address,
@@ -236,7 +236,7 @@ pub async fn broadcast_contract_approval_tx(
             let approved_address = address_from_str(&approved_address)?;
             let contract = Contract::new_erc721(&contract_address, client)?;
             let call = contract.set_approval_for_all(approved_address, approved);
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
         ContractApproval::Erc1155 {
             contract_address,
@@ -246,7 +246,7 @@ pub async fn broadcast_contract_approval_tx(
             let approved_address = address_from_str(&approved_address)?;
             let contract = Contract::new_erc1155(&contract_address, client)?;
             let call = contract.set_approval_for_all(approved_address, approved);
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
     }
 }
@@ -275,7 +275,7 @@ pub async fn broadcast_contract_transfer_tx(
             let amount = u256_from_str(&amount_hex)?;
             let contract = Contract::new_erc20(&contract_address, client)?;
             let call = contract.transfer(to_address, amount);
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
         ContractTransfer::Erc20TransferFrom {
             contract_address,
@@ -288,7 +288,7 @@ pub async fn broadcast_contract_transfer_tx(
             let amount = u256_from_str(&amount_hex)?;
             let contract = Contract::new_erc20(&contract_address, client)?;
             let call = contract.transfer_from(from_address, to_address, amount);
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
         ContractTransfer::Erc721TransferFrom {
             contract_address,
@@ -301,7 +301,7 @@ pub async fn broadcast_contract_transfer_tx(
             let from_address = address_from_str(&from_address)?;
             let contract = Contract::new_erc721(&contract_address, client)?;
             let call = contract.transfer_from(from_address, to_address, token_id);
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
         ContractTransfer::Erc721SafeTransferFrom {
             contract_address,
@@ -314,7 +314,7 @@ pub async fn broadcast_contract_transfer_tx(
             let from_address = address_from_str(&from_address)?;
             let contract = Contract::new_erc721(&contract_address, client)?;
             let call = contract.safe_transfer_from(from_address, to_address, token_id);
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
         ContractTransfer::Erc721SafeTransferFromWithAdditionalData {
             contract_address,
@@ -333,7 +333,7 @@ pub async fn broadcast_contract_transfer_tx(
                 token_id,
                 additional_data.into(),
             );
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
         ContractTransfer::Erc1155SafeTransferFrom {
             contract_address,
@@ -356,7 +356,7 @@ pub async fn broadcast_contract_transfer_tx(
                 amount,
                 additional_data.into(),
             );
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
     }
 }
@@ -404,7 +404,7 @@ pub async fn broadcast_contract_batch_transfer_tx(
                 amounts,
                 additional_data.into(),
             );
-            ContractCall::new_send(call).legacy(legacy).send().await
+            ContractCall::from(call).legacy(legacy).send().await
         }
     }
 }

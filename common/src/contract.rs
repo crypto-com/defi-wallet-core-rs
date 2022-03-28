@@ -68,14 +68,6 @@ impl<D> ContractCall<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>, D>
 where
     D: Detokenize,
 {
-    pub fn new_send(
-        contract_call: builders::ContractCall<
-            SignerMiddleware<Provider<Http>, Wallet<SigningKey>>,
-            D,
-        >,
-    ) -> Self {
-        Self { contract_call }
-    }
     pub fn legacy(mut self, legacy: bool) -> Self {
         if legacy {
             self.contract_call = self.contract_call.legacy();
@@ -110,9 +102,6 @@ impl<D> ContractCall<Provider<Http>, D>
 where
     D: Detokenize,
 {
-    pub fn new_call(contract_call: builders::ContractCall<Provider<Http>, D>) -> Self {
-        Self { contract_call }
-    }
     pub async fn call(&self) -> Result<D, EthError> {
         self.contract_call
             .call()

@@ -5,14 +5,14 @@ pub async fn get_name(contract_address: &str, web3api_url: &str) -> Result<Strin
     let client = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let contract = Contract::new_erc721(contract_address, client)?;
     let call = contract.name();
-    ContractCall::new_call(call).call().await
+    ContractCall::from(call).call().await
 }
 
 pub async fn get_symbol(contract_address: &str, web3api_url: &str) -> Result<String, EthError> {
     let client = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let contract = Contract::new_erc721(contract_address, client)?;
     let call = contract.symbol();
-    ContractCall::new_call(call).call().await
+    ContractCall::from(call).call().await
 }
 
 pub async fn get_token_uri(
@@ -24,7 +24,7 @@ pub async fn get_token_uri(
     let contract = Contract::new_erc721(contract_address, client)?;
     let token_id = u256_from_str(token_id)?;
     let call = contract.token_uri(token_id);
-    ContractCall::new_call(call).call().await
+    ContractCall::from(call).call().await
 }
 
 #[cfg(not(target_arch = "wasm32"))]
