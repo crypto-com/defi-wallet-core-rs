@@ -1,3 +1,5 @@
+#![cfg(feature = "abi-contract")]
+
 use crate::node::ethereum::abi::{EthAbiParamType, EthAbiToken};
 use crate::{address_from_str, EthError};
 use ethers::prelude::abi::{ParamType, Token};
