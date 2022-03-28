@@ -231,10 +231,6 @@ impl SecretKey {
         Self(SigningKey::random(&mut OsRng))
     }
 
-    pub fn from_signing_key(signing_key: SigningKey) -> Self {
-        Self(signing_key)
-    }
-
     /// constructs secret key from bytes
     pub fn from_bytes(bytes: Vec<u8>) -> Result<Self, SecretKeyWrapError> {
         let signing_key =
@@ -294,6 +290,12 @@ impl SecretKey {
 impl Default for SecretKey {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl From<SigningKey> for SecretKey {
+    fn from(signing_key: SigningKey) -> Self {
+        Self(signing_key)
     }
 }
 

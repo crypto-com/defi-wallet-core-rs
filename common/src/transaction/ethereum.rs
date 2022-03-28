@@ -149,9 +149,7 @@ pub fn construct_simple_eth_transfer_tx(
     let to = Address::from_str(to_hex).map_err(|_| EthError::HexConversion)?;
     let amount: U256 = amount.try_into().map_err(EthError::ParseError)?;
     if legacy_tx {
-        Ok(TransactionRequest::new()
-            .to(to)
-            .value(amount)
+        Ok(TransactionRequest::pay(to, amount)
             .from(from)
             .chain_id(chain_id)
             .into())
