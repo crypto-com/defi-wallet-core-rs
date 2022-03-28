@@ -103,7 +103,7 @@ impl ffi::Erc20 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt.to_string())
+        Ok(receipt)
     }
 
     fn transfer_from(
@@ -129,7 +129,7 @@ impl ffi::Erc20 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt.to_string())
+        Ok(receipt)
     }
 }
 
@@ -183,7 +183,7 @@ impl ffi::Erc721 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt.to_string())
+        Ok(receipt)
     }
 
     fn safe_transfer_from(
@@ -209,8 +209,9 @@ impl ffi::Erc721 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt.to_string())
+        Ok(receipt)
     }
+    #[allow(clippy::too_many_arguments)]
     fn safe_transfer_from_with_data(
         &self,
         contract_address: String,
@@ -236,7 +237,7 @@ impl ffi::Erc721 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt.to_string())
+        Ok(receipt)
     }
 }
 /// Construct an Erc1155 struct
@@ -253,6 +254,7 @@ impl ffi::Erc1155 {
         Ok(uri)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn safe_transfer_from(
         &self,
         contract_address: String,
@@ -280,11 +282,12 @@ impl ffi::Erc1155 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt.to_string())
+        Ok(receipt)
     }
 }
 
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
+#[allow(clippy::too_many_arguments)]
 mod ffi {
 
     pub struct Erc20 {
