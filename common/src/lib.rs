@@ -23,7 +23,7 @@ pub use login::*;
 pub use node::*;
 pub use transaction::*;
 pub use wallet::*;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(feature = "uniffi-binding")]
 uniffi_macros::include_scaffolding!("common");
 
 #[macro_use]
