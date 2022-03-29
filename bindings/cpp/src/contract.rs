@@ -92,6 +92,7 @@ impl ffi::Erc20 {
         self.clone()
     }
 
+    /// Moves `amount_hex` tokens from the caller’s account to `to_address`.
     fn transfer(
         &self,
         to_address: String,
@@ -114,6 +115,7 @@ impl ffi::Erc20 {
         Ok(receipt)
     }
 
+    /// Moves `amount_hex` tokens from `from_address` to `to_address` using the allowance mechanism.
     fn transfer_from(
         &self,
         from_address: String,
@@ -178,6 +180,7 @@ impl ffi::Erc721 {
         self.clone()
     }
 
+    /// Transfers `token_id` token from `from_address` to `to_address`.
     fn transfer_from(
         &self,
         from_address: String,
@@ -202,6 +205,7 @@ impl ffi::Erc721 {
         Ok(receipt)
     }
 
+    /// Safely transfers `token_id` token from `from_address` to `to_address`.
     fn safe_transfer_from(
         &self,
         from_address: String,
@@ -225,6 +229,9 @@ impl ffi::Erc721 {
         )?;
         Ok(receipt)
     }
+
+    /// Safely transfers `token_id` token from `from_address` to `to_address` with
+    /// `additional_data`.
     fn safe_transfer_from_with_data(
         &self,
         from_address: String,
@@ -277,6 +284,8 @@ impl ffi::Erc1155 {
         self.clone()
     }
 
+    /// Transfers `amount_hex` tokens of `token_id` from `from_address` to `to_address` with
+    /// `additional_data`.
     fn safe_transfer_from(
         &self,
         from_address: String,
@@ -305,6 +314,7 @@ impl ffi::Erc1155 {
         Ok(receipt)
     }
 
+    /// Batched version of safeTransferFrom.
     fn safe_batch_transfer_from(
         &self,
         from_address: String,

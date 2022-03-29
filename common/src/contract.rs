@@ -68,12 +68,19 @@ impl<D> ContractCall<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>, D>
 where
     D: Detokenize,
 {
+    /// Uses a Legacy transaction instead of an EIP-1559 one to execute the call. If legacy is
+    /// true, it will use legacy transaction, else it will use EIP-1559 transaction
+    ///
+    /// !!! Please notice: This function can only be called once. If the ContractCall is
+    /// converted into the legacy one, you can not convert it back. !!!
+    ///
     pub fn legacy(mut self, legacy: bool) -> Self {
         if legacy {
             self.contract_call = self.contract_call.legacy();
         }
         self
     }
+    /// Signs and broadcasts the provided transaction
     pub async fn send(&self) -> Result<TransactionReceipt, EthError> {
         let pending_tx = self
             .contract_call
@@ -102,13 +109,14 @@ impl<D> ContractCall<Provider<Http>, D>
 where
     D: Detokenize,
 {
+    /// Queries the blockchain via an eth_call for the provided transaction.
     pub async fn call(&self) -> Result<D, EthError> {
         self.contract_call
             .call()
             .await
             .map_err(EthError::ContractCallError)
     }
-    // TODO estimate_gas
+    // TODO Returns the estimated gas cost for the underlying transaction to be executed
     pub async fn estimate_gas(&self) -> Result<U256, EthError> {
         self.contract_call
             .estimate_gas()
