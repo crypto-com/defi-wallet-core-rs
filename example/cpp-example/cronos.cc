@@ -124,7 +124,7 @@ void cronos_process() {
   String response = erc20.transfer(signer2_address, "0", *privatekey);
 
   erc20_balance = get_contract_balance(myaddress1, *erc20_details, mycronosrpc);
-  cout << "GOLD balance after trasnfer=" << erc20_balance.c_str() << endl;
+  cout << "ERC20 GOLD balance after trasnfer=" << erc20_balance.c_str() << endl;
 
   // transfer erc721 from signer1 to signer2
   response =
@@ -152,5 +152,34 @@ void cronos_process() {
 
   String erc1155_balance =
       get_contract_balance(myaddress1, *erc1155_details_0, mycronosrpc);
-  cout << "GOLD balance after transfer=" << erc1155_balance.c_str() << endl;
+  cout << "ERC1155 GOLD balance after transfer=" << erc1155_balance.c_str()
+       << endl;
+
+  // safe batch transfer erc1155 from signer1 to signer2
+  rust::Vec<String> token_ids, hex_amounts;
+  token_ids.push_back("1");
+  token_ids.push_back("2");
+  token_ids.push_back("3");
+  token_ids.push_back("4");
+
+  hex_amounts.push_back("200");
+  hex_amounts.push_back("1");
+  hex_amounts.push_back("300");
+  hex_amounts.push_back("400");
+  response =
+      erc1155.safe_batch_transfer_from(myaddress1, signer2_address, token_ids,
+                                       hex_amounts, erc1155_data, *privatekey);
+  erc1155_balance =
+      get_contract_balance(myaddress1, *erc1155_details_1, mycronosrpc);
+  cout << "SILVER balance after transfer=" << erc1155_balance.c_str() << endl;
+  erc1155_balance =
+      get_contract_balance(myaddress1, *erc1155_details_2, mycronosrpc);
+  cout << "THORS_HAMMER balance after transfer=" << erc1155_balance.c_str()
+       << endl;
+  erc1155_balance =
+      get_contract_balance(myaddress1, *erc1155_details_3, mycronosrpc);
+  cout << "SWORD balance after transfer=" << erc1155_balance.c_str() << endl;
+  erc1155_balance =
+      get_contract_balance(myaddress1, *erc1155_details_4, mycronosrpc);
+  cout << "SHIELD balance after transfer=" << erc1155_balance.c_str() << endl;
 }

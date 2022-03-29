@@ -304,6 +304,34 @@ impl ffi::Erc1155 {
         )?;
         Ok(receipt)
     }
+
+    fn safe_batch_transfer_from(
+        &self,
+        from_address: String,
+        to_address: String,
+        token_ids: Vec<String>,
+        hex_amounts: Vec<String>,
+        additional_data: Vec<u8>,
+        private_key: &PrivateKey,
+    ) -> Result<String> {
+        let receipt = common::broadcast_contract_batch_transfer_tx_blocking(
+            common::ContractBatchTransfer::Erc1155 {
+                contract_address: self.contract_address.clone(),
+                from_address,
+                to_address,
+                token_ids,
+                hex_amounts,
+                additional_data,
+            },
+            EthNetwork::Custom {
+                chain_id: self.chain_id,
+                legacy: self.inner_legacy,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt)
+    }
 }
 
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
@@ -415,6 +443,14 @@ mod ffi {
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
         ) -> Result<String>;
-
+        fn safe_batch_transfer_from(
+            self: &Erc1155,
+            from_address: String,
+            to_address: String,
+            token_ids: Vec<String>,
+            hex_amounts: Vec<String>,
+            additional_data: Vec<u8>,
+            private_key: &PrivateKey,
+        ) -> Result<String>;
     }
 }
