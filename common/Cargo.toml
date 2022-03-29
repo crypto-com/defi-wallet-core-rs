@@ -13,6 +13,7 @@ default = []
 # error-prone and less security for the end user.
 abi-contract = []
 login = ["siwe"]
+uniffi-binding = ["uniffi", "uniffi_build", "uniffi_macros"]
 
 [dependencies]
 anyhow = "1"
@@ -38,8 +39,8 @@ siwe = { version = "0.2", optional = true }
 tendermint = "0.23"
 tendermint-rpc = "0.23"
 thiserror = "1"
-uniffi = "^0.17"
-uniffi_macros = "^0.17"
+uniffi = { version = "^0.17", optional = true }
+uniffi_macros = { version = "^0.17", optional = true }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 # grpc-web-client would be replaced if tonic has native grpc-web support.
 # Check https://github.com/hyperium/tonic/issues/645
@@ -57,4 +58,4 @@ tokio = { version = "1", features = ["rt"] }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
 
 [build-dependencies]
-uniffi_build = { version = "^0.17", features=["builtin-bindgen"] }
+uniffi_build = { version = "^0.17", features=["builtin-bindgen"], optional = true }

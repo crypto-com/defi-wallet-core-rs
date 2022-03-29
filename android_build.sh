@@ -94,9 +94,9 @@ else
         echo "x86_64 ndk installed."
 fi
 
-PATH=$PATH:`pwd`/NDK/arm64/bin cargo build --target aarch64-linux-android -p defi-wallet-core-common --release || exit 1
-PATH=$PATH:`pwd`/NDK/arm/bin cargo build --target armv7-linux-androideabi -p defi-wallet-core-common --release || exit 1
-PATH=$PATH:`pwd`/NDK/x86_64/bin cargo build --target x86_64-linux-android -p defi-wallet-core-common --release || exit 1
+PATH=$PATH:`pwd`/NDK/arm64/bin cargo build --features uniffi-binding --target aarch64-linux-android -p defi-wallet-core-common --release || exit 1
+PATH=$PATH:`pwd`/NDK/arm/bin cargo build --features uniffi-binding --target armv7-linux-androideabi -p defi-wallet-core-common --release || exit 1
+PATH=$PATH:`pwd`/NDK/x86_64/bin cargo build --features uniffi-binding --target x86_64-linux-android -p defi-wallet-core-common --release || exit 1
 
 mkdir -p mobile_modules/android_module/dwclib/libs
 cp NDK/libs/jna.aar mobile_modules/android_module/dwclib/libs/
