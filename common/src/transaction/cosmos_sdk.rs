@@ -1,7 +1,5 @@
 use super::nft::*;
 use crate::SecretKey;
-#[cfg(not(target_arch = "wasm32"))]
-use crate::UniffiCustomTypeConverter;
 use cosmrs::bank::MsgSend;
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use cosmrs::bip32::{PrivateKey, PublicKey, PublicKeyBytes, KEY_SIZE};
@@ -20,6 +18,11 @@ use ibc::Height;
 use ibc_proto::cosmos::base::v1beta1::Coin as IbcCoin;
 use std::str::FromStr;
 use std::sync::Arc;
+
+mod uniffi_binding;
+
+#[cfg(feature = "uniffi-binding")]
+pub use uniffi_binding::*;
 
 /// human-readable bech32 prefix for Crypto.org Chain accounts
 pub const CRYPTO_ORG_BECH32_HRP: &str = "cro";
@@ -247,22 +250,6 @@ impl From<PublicKeyBytesWrapper> for PublicKeyBytes {
         let mut result = [0u8; COMPRESSED_SECP256K1_PUBKEY_SIZE];
         result.copy_from_slice(&wrapper.0);
         result
-    }
-}
-#[cfg(not(target_arch = "wasm32"))]
-impl UniffiCustomTypeConverter for PublicKeyBytesWrapper {
-    type Builtin = Vec<u8>;
-
-    fn into_custom(val: Self::Builtin) -> uniffi::Result<Self> {
-        if val.len() != COMPRESSED_SECP256K1_PUBKEY_SIZE {
-            Err(PublicKeyBytesError::InvalidLength.into())
-        } else {
-            Ok(PublicKeyBytesWrapper(val))
-        }
-    }
-
-    fn from_custom(obj: Self) -> Self::Builtin {
-        obj.0
     }
 }
 

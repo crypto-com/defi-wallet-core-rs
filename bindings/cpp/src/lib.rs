@@ -5,7 +5,7 @@ use defi_wallet_core_common::{
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
     BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, EthError, EthNetwork, EthTxInfo, HDWallet,
     Height, LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey,
-    SingleCoin, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    SingleCoin, TxBroadcastResult, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 use std::str::FromStr;
 use std::sync::Arc;
@@ -14,6 +14,8 @@ mod nft;
 
 mod contract;
 
+use ethers::prelude::TransactionReceipt;
+use ethers::utils::hex::ToHex;
 /// Wrapper of `CosmosSDKMsg`
 ///
 /// For now, types used as extern Rust types are required to be defined by the same crate that
@@ -346,6 +348,33 @@ pub mod ffi {
         pub account_number: u64,
         pub sequence_number: u64,
     }
+    #[derive(Debug, Default)]
+    pub struct CosmosTransactionReceiptRaw {
+        /// tendermint transaction hash in hexadecimal
+        pub tx_hash_hex: String,
+        /// error code (0 if success)
+        pub code: u32,
+        /// possible error log
+        pub log: String,
+    }
+
+    #[derive(Debug, Default)]
+    pub struct CronosTransactionReceiptRaw {
+        pub transaction_hash: String,
+        pub transaction_index: String,
+        pub block_hash: String,
+        pub block_number: String,
+        pub cumulative_gas_used: String,
+        pub gas_used: String,
+        pub contract_address: String,
+        pub logs: Vec<String>,
+        /// Status: either 1 (success) or 0 (failure)
+        pub status: String,
+        pub root: String,
+        pub logs_bloom: String,
+        pub transaction_type: String,
+        pub effective_gas_price: String,
+    }
 
     extern "Rust" {
         pub fn query_account_details(api_url: String, address: String) -> Result<String>;
@@ -353,7 +382,10 @@ pub mod ffi {
             api_url: String,
             address: String,
         ) -> Result<CosmosAccountInfoRaw>;
-        pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Result<String>;
+        pub fn broadcast_tx(
+            tendermint_rpc_url: String,
+            raw_signed_tx: Vec<u8>,
+        ) -> Result<CosmosTransactionReceiptRaw>;
         pub fn query_account_balance(
             api_url: String,
             address: String,
@@ -464,10 +496,72 @@ pub mod ffi {
 
         pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String>;
 
-        pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result<String>;
+        pub fn broadcast_eth_signed_raw_tx(
+            raw_tx: Vec<u8>,
+            web3api_url: &str,
+        ) -> Result<CronosTransactionReceiptRaw>;
 
     } // end of RUST block
 } // end of ffi block
+
+use ffi::CronosTransactionReceiptRaw;
+impl From<TransactionReceipt> for CronosTransactionReceiptRaw {
+    fn from(src: TransactionReceipt) -> Self {
+        ffi::CronosTransactionReceiptRaw {
+            transaction_hash: src.transaction_hash.encode_hex(),
+            transaction_index: src.transaction_index.to_string(),
+            block_hash: match src.block_hash {
+                Some(block_hash) => block_hash.encode_hex(),
+                None => "".into(),
+            },
+            block_number: match src.block_number {
+                Some(block_number) => block_number.to_string(),
+                None => "".into(),
+            },
+            cumulative_gas_used: src.cumulative_gas_used.to_string(),
+            gas_used: match src.gas_used {
+                Some(gas_used) => gas_used.to_string(),
+                None => "".into(),
+            },
+            contract_address: match src.contract_address {
+                Some(contract_address) => contract_address.encode_hex(),
+                None => "".into(),
+            },
+            status: match src.status {
+                Some(v) => v.to_string(),
+                None => "".into(),
+            },
+            root: match src.root {
+                Some(v) => v.encode_hex(),
+                None => "".into(),
+            },
+            logs_bloom: src.logs_bloom.encode_hex(),
+            transaction_type: match src.transaction_type {
+                Some(v) => v.to_string(),
+                None => "".into(),
+            },
+            effective_gas_price: match src.effective_gas_price {
+                Some(v) => v.to_string(),
+                None => "".into(),
+            },
+            logs: src
+                .logs
+                .iter()
+                .map(|log| serde_json::to_string(&log).unwrap())
+                .collect(),
+        }
+    }
+}
+
+impl From<TxBroadcastResult> for ffi::CosmosTransactionReceiptRaw {
+    fn from(src: TxBroadcastResult) -> Self {
+        ffi::CosmosTransactionReceiptRaw {
+            tx_hash_hex: src.tx_hash_hex,
+            code: src.code,
+            log: src.log,
+        }
+    }
+}
 
 use ffi::CoinType;
 impl From<CoinType> for WalletCoin {
@@ -867,9 +961,16 @@ pub fn query_account_balance(
     Ok(serde_json::to_string(&account_details)?)
 }
 
-pub fn broadcast_tx(tendermint_rpc_url: String, raw_signed_tx: Vec<u8>) -> Result<String> {
+pub fn broadcast_tx(
+    tendermint_rpc_url: String,
+    raw_signed_tx: Vec<u8>,
+) -> Result<ffi::CosmosTransactionReceiptRaw> {
     let resp = broadcast_tx_sync_blocking(&tendermint_rpc_url, raw_signed_tx)?;
-    Ok(serde_json::to_string(&resp)?)
+    if 0 == resp.code {
+        Ok(resp.into())
+    } else {
+        Err(anyhow!("{:?}", resp))
+    }
 }
 
 fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>> {
@@ -973,22 +1074,12 @@ pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
 }
 
 /// broadcast signed cronos tx
-pub fn broadcast_eth_signed_raw_tx(raw_tx: Vec<u8>, web3api_url: &str) -> Result<String> {
-    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(raw_tx, web3api_url);
-    match res {
-        Ok(txhash) => Ok(txhash),
-        Err(e) => match e {
-            EthError::BroadcastTxFail(message) => {
-                return Err(anyhow!(
-                    "broadcast_eth_signed_raw_tx_blocking error {}",
-                    message,
-                ));
-            }
-            _ => {
-                return Err(anyhow!("broadcast_eth_signed_raw_tx error {:?}", e));
-            }
-        },
-    }
+pub fn broadcast_eth_signed_raw_tx(
+    raw_tx: Vec<u8>,
+    web3api_url: &str,
+) -> Result<CronosTransactionReceiptRaw> {
+    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(raw_tx, web3api_url)?;
+    Ok(res.into())
 }
 
 /// create cronos tx info to sign
