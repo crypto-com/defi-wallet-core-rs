@@ -1,10 +1,8 @@
 #![cfg(feature = "abi-contract")]
 
+use crate::node::ethereum::abi::EthAbiToken;
 use crate::EthError;
 use ethers::prelude::abi::{Contract, Token};
-use ethers::prelude::{Address, H160, U256};
-use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 
 /// Ethereum ABI Contract
 pub struct EthAbiContract {
@@ -29,69 +27,8 @@ impl EthAbiContract {
         tokens: Vec<EthAbiToken>,
     ) -> Result<Vec<u8>, EthError> {
         let function = self.contract.function(function_name)?;
-        let tokens: Vec<Token> = tokens.into_iter().map(Into::into).collect();
+        let tokens: Vec<Token> = tokens.iter().map(Into::into).collect();
         function.encode_input(&tokens).map_err(Into::into)
-    }
-}
-
-/// Ethereum ABI token
-#[derive(Serialize, Deserialize)]
-pub enum EthAbiToken {
-    Address(H160),
-    FixedBytes(Vec<u8>),
-    Bytes(Vec<u8>),
-    Int(U256),
-    Uint(U256),
-    Bool(bool),
-    String(String),
-    FixedArray(Vec<EthAbiToken>),
-    Array(Vec<EthAbiToken>),
-    Tuple(Vec<EthAbiToken>),
-}
-
-impl EthAbiToken {
-    /// Create from a string of address.
-    pub fn from_address_str(address_str: &str) -> Result<Self, EthError> {
-        Ok(Self::Address(
-            Address::from_str(address_str).map_err(|_| EthError::HexConversion)?,
-        ))
-    }
-
-    /// Create from a string of signed integer.
-    pub fn from_int_str(int_str: &str) -> Result<Self, EthError> {
-        Ok(Self::Int(
-            U256::from_dec_str(int_str).map_err(|_| EthError::HexConversion)?,
-        ))
-    }
-
-    /// Create from a string of unsigned integer.
-    pub fn from_uint_str(uint_str: &str) -> Result<Self, EthError> {
-        Ok(Self::Uint(
-            U256::from_dec_str(uint_str).map_err(|_| EthError::HexConversion)?,
-        ))
-    }
-}
-
-impl From<EthAbiToken> for Token {
-    fn from(eth_abi_token: EthAbiToken) -> Self {
-        match eth_abi_token {
-            EthAbiToken::Address(value) => Token::Address(value),
-            EthAbiToken::FixedBytes(value) => Token::FixedBytes(value),
-            EthAbiToken::Bytes(value) => Token::Bytes(value),
-            EthAbiToken::Int(value) => Token::Int(value),
-            EthAbiToken::Uint(value) => Token::Uint(value),
-            EthAbiToken::Bool(value) => Token::Bool(value),
-            EthAbiToken::String(value) => Token::String(value),
-            EthAbiToken::FixedArray(values) => {
-                Token::FixedArray(values.into_iter().map(Into::into).collect())
-            }
-            EthAbiToken::Array(values) => {
-                Token::FixedArray(values.into_iter().map(Into::into).collect())
-            }
-            EthAbiToken::Tuple(values) => {
-                Token::Tuple(values.into_iter().map(Into::into).collect())
-            }
-        }
     }
 }
 
