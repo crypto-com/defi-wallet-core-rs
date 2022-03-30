@@ -307,6 +307,23 @@ interface EthAmount {
      Custom(u64 chain_id, boolean legacy);
  };
 
+
+dictionary TransactionReceipt {
+    string transaction_hash;
+    string transaction_index;
+    string block_hash;
+    string block_number;
+    string cumulative_gas_used;
+    string gas_used;
+    string contract_address;
+    sequence<string> logs;
+    string status;
+    string root;
+    string logs_bloom;
+    string transaction_type;
+    string effective_gas_price;
+};
+
 interface Client {
     [Throws=RestError,Name=new_blocking]
     constructor(string grpc_web_url);
@@ -369,12 +386,14 @@ namespace common {
   [Throws=EthError]
   string get_contract_balance_blocking([ByRef] string account_address, ContractBalance contract_details, [ByRef] string web3api_url);
   [Throws=EthError]
-  string broadcast_sign_eth_tx_blocking([ByRef] string to_hex, EthAmount amount, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
+  TransactionReceipt broadcast_eth_signed_raw_tx_blocking(sequence<u8> raw_tx, [ByRef] string web3api_url);
   [Throws=EthError]
-  string broadcast_contract_approval_tx_blocking(ContractApproval approval_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
+  TransactionReceipt broadcast_sign_eth_tx_blocking([ByRef] string to_hex, EthAmount amount, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
   [Throws=EthError]
-  string broadcast_contract_transfer_tx_blocking(ContractTransfer transfer_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
+  TransactionReceipt broadcast_contract_approval_tx_blocking(ContractApproval approval_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
   [Throws=EthError]
-  string broadcast_contract_batch_transfer_tx_blocking(ContractBatchTransfer batch_transfer_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
+  TransactionReceipt broadcast_contract_transfer_tx_blocking(ContractTransfer transfer_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
+  [Throws=EthError]
+  TransactionReceipt broadcast_contract_batch_transfer_tx_blocking(ContractBatchTransfer batch_transfer_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
   string bytes_to_hex(sequence<u8> data);
 };

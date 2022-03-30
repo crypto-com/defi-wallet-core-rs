@@ -5,8 +5,7 @@ use crate::{
     WalletCoinFunc,
 };
 use ethers::prelude::{
-    Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware, TransactionReceipt,
-    U256,
+    Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware, U256,
 };
 
 use ethers::utils::format_units;
@@ -14,6 +13,74 @@ use ethers::utils::format_units;
 use ethers::utils::hex::ToHex;
 
 use crate::contract::{Contract, ContractCall};
+
+use ethers::prelude::TransactionReceipt as EthersTransactionReceipt;
+
+/// a subset of `ethers::prelude::::TransactionReceipt` for non-wasm
+pub struct TransactionReceipt {
+    pub transaction_hash: String,
+    pub transaction_index: String,
+    pub block_hash: String,
+    pub block_number: String,
+    pub cumulative_gas_used: String,
+    pub gas_used: String,
+    pub contract_address: String,
+    pub logs: Vec<String>,
+    /// Status: either 1 (success) or 0 (failure)
+    pub status: String,
+    pub root: String,
+    pub logs_bloom: String,
+    pub transaction_type: String,
+    pub effective_gas_price: String,
+}
+
+impl From<EthersTransactionReceipt> for TransactionReceipt {
+    fn from(src: EthersTransactionReceipt) -> Self {
+        TransactionReceipt {
+            transaction_hash: src.transaction_hash.encode_hex(),
+            transaction_index: src.transaction_index.to_string(),
+            block_hash: match src.block_hash {
+                Some(block_hash) => block_hash.encode_hex(),
+                None => "".into(),
+            },
+            block_number: match src.block_number {
+                Some(block_number) => block_number.to_string(),
+                None => "".into(),
+            },
+            cumulative_gas_used: src.cumulative_gas_used.to_string(),
+            gas_used: match src.gas_used {
+                Some(gas_used) => gas_used.to_string(),
+                None => "".into(),
+            },
+            contract_address: match src.contract_address {
+                Some(contract_address) => contract_address.encode_hex(),
+                None => "".into(),
+            },
+            status: match src.status {
+                Some(v) => v.to_string(),
+                None => "".into(),
+            },
+            root: match src.root {
+                Some(v) => v.encode_hex(),
+                None => "".into(),
+            },
+            logs_bloom: src.logs_bloom.encode_hex(),
+            transaction_type: match src.transaction_type {
+                Some(v) => v.to_string(),
+                None => "".into(),
+            },
+            effective_gas_price: match src.effective_gas_price {
+                Some(v) => v.to_string(),
+                None => "".into(),
+            },
+            logs: src
+                .logs
+                .iter()
+                .map(|log| serde_json::to_string(&log).unwrap())
+                .collect(),
+        }
+    }
+}
 
 /// Information needed for approving operator to withdraw from your account on
 /// different common contract types.
@@ -201,7 +268,7 @@ pub async fn broadcast_contract_approval_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
-) -> Result<TransactionReceipt, EthError> {
+) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
@@ -261,7 +328,7 @@ pub async fn broadcast_contract_transfer_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
-) -> Result<TransactionReceipt, EthError> {
+) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
@@ -371,7 +438,7 @@ pub async fn broadcast_contract_batch_transfer_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
-) -> Result<TransactionReceipt, EthError> {
+) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
@@ -420,7 +487,7 @@ pub async fn broadcast_sign_eth_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
-) -> Result<TransactionReceipt, EthError> {
+) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
     let from_address = WalletCoinFunc {
@@ -451,7 +518,7 @@ pub async fn broadcast_sign_eth_tx(
 pub async fn broadcast_eth_signed_raw_tx(
     raw_tx: Vec<u8>,
     web3api_url: &str,
-) -> Result<TransactionReceipt, EthError> {
+) -> Result<EthersTransactionReceipt, EthError> {
     let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
     let pending_tx = provider
         .send_raw_transaction(raw_tx.into())
@@ -527,7 +594,7 @@ pub fn broadcast_sign_eth_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
-) -> Result<String, EthError> {
+) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_sign_eth_tx(
         to_hex,
@@ -536,7 +603,7 @@ pub fn broadcast_sign_eth_tx_blocking(
         secret_key,
         web3api_url,
     ))?;
-    Ok(result.transaction_hash.encode_hex())
+    Ok(result.into())
 }
 
 /// given the contract approval details, it'll construct, sign and broadcast a
@@ -549,7 +616,7 @@ pub fn broadcast_contract_approval_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
-) -> Result<String, EthError> {
+) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_contract_approval_tx(
         approval_details,
@@ -557,7 +624,7 @@ pub fn broadcast_contract_approval_tx_blocking(
         secret_key,
         web3api_url,
     ))?;
-    Ok(result.transaction_hash.encode_hex())
+    Ok(result.into())
 }
 
 /// given the contract transfer details, it'll construct, sign and broadcast
@@ -570,7 +637,7 @@ pub fn broadcast_contract_transfer_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
-) -> Result<String, EthError> {
+) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_contract_transfer_tx(
         transfer_details,
@@ -578,7 +645,7 @@ pub fn broadcast_contract_transfer_tx_blocking(
         secret_key,
         web3api_url,
     ))?;
-    Ok(result.transaction_hash.encode_hex())
+    Ok(result.into())
 }
 
 /// given the contract batch-transfer details, it'll construct, sign and
@@ -591,7 +658,7 @@ pub fn broadcast_contract_batch_transfer_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
-) -> Result<String, EthError> {
+) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_contract_batch_transfer_tx(
         batch_transfer_details,
@@ -599,7 +666,7 @@ pub fn broadcast_contract_batch_transfer_tx_blocking(
         secret_key,
         web3api_url,
     ))?;
-    Ok(result.transaction_hash.encode_hex())
+    Ok(result.into())
 }
 
 /// broadcast a previously signed ethereum tx.
@@ -612,7 +679,7 @@ pub fn broadcast_eth_signed_raw_tx_blocking(
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_eth_signed_raw_tx(raw_tx, web3api_url))?;
-    Ok(result)
+    Ok(result.into())
 }
 
 #[inline]
