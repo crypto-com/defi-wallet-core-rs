@@ -539,17 +539,29 @@ impl CosmosSDKMsg {
                 token,
                 timeout_height,
                 timeout_timestamp,
-            } => Ok(MsgTransfer {
-                sender: Signer::new(sender_address),
-                receiver: Signer::new(receiver),
-                source_port: PortId::from_str(source_port)?,
-                source_channel: ChannelId::from_str(source_channel)?,
-                token: Some(token.try_into()?),
-                // TODO: timeout_height and timeout_timestamp cannot both be 0.
-                timeout_height: *timeout_height,
-                timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
+            } => {
+                let any = MsgTransfer {
+                    sender: Signer::new(sender_address),
+                    receiver: Signer::new(receiver),
+                    source_port: PortId::from_str(source_port)?,
+                    source_channel: ChannelId::from_str(source_channel)?,
+                    token: Some(token.try_into()?),
+                    // TODO: timeout_height and timeout_timestamp cannot both be 0.
+                    timeout_height: *timeout_height,
+                    timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
+                }
+                .to_any();
+                // FIXME:
+                // ibc-proto used Google's Protobuf type definitions instead of
+                // prost_types in `0.17`. But cosmrs still used prost_types. So
+                // we need to convert manually.
+                // Associate cosmos-rust issue:
+                // https://github.com/cosmos/cosmos-rust/issues/185
+                Ok(cosmrs::Any {
+                    type_url: any.type_url,
+                    value: any.value,
+                })
             }
-            .to_any()),
         }
     }
 }
