@@ -17,6 +17,7 @@ use crate::contract::{Contract, ContractCall};
 use ethers::prelude::TransactionReceipt as EthersTransactionReceipt;
 
 /// a subset of `ethers::prelude::::TransactionReceipt` for non-wasm
+#[cfg(not(target_arch = "wasm32"))]
 pub struct TransactionReceipt {
     pub transaction_hash: String,
     pub transaction_index: String,
@@ -34,6 +35,7 @@ pub struct TransactionReceipt {
     pub effective_gas_price: String,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<EthersTransactionReceipt> for TransactionReceipt {
     fn from(src: EthersTransactionReceipt) -> Self {
         TransactionReceipt {
