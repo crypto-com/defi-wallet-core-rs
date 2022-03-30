@@ -579,7 +579,9 @@ impl From<CoinType> for WalletCoin {
             CoinType::CosmosHub => WalletCoin::CosmosSDK {
                 network: Network::CosmosHub,
             },
-            _ => WalletCoin::Ethereum,
+            _ => WalletCoin::Ethereum {
+                network: EthNetwork::Mainnet,
+            },
         }
     }
 }

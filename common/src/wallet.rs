@@ -1,4 +1,4 @@
-use crate::Network;
+use crate::{EthNetwork, Network};
 use bip39::{Language, Mnemonic};
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use cosmrs::bip32::{self, DerivationPath, PrivateKey, Seed, XPrv};
@@ -13,9 +13,10 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 /// describes what coin type to use (for HD derivation or address generation)
+#[derive(Clone)]
 pub enum WalletCoin {
     CosmosSDK { network: Network },
-    Ethereum,
+    Ethereum { network: EthNetwork },
 }
 
 /// describes the number of words in mnemonic
@@ -38,20 +39,47 @@ impl From<MnemonicWordCount> for usize {
     }
 }
 
-impl WalletCoin {
+pub struct WalletCoinFunc {
+    pub coin: WalletCoin,
+}
+
+impl WalletCoinFunc {
+    pub fn new(coin: WalletCoin) -> Self {
+        Self { coin }
+    }
+
     /// get address from a private key
-    pub fn derive_address(&self, private_key: &SigningKey) -> Result<String, eyre::Report> {
-        match self {
+    pub fn derive_address(&self, private_key: &SecretKey) -> Result<String, HdWrapError> {
+        match &self.coin {
             WalletCoin::CosmosSDK { network } => {
                 let bech32_hrp = network.get_bech32_hrp();
-                let pubkey = PublicKey::from(private_key.public_key());
-                pubkey.account_id(bech32_hrp).map(|x| x.to_string())
+                let pubkey = PublicKey::from(private_key.get_signing_key().public_key());
+                pubkey
+                    .account_id(bech32_hrp)
+                    .map(|x| x.to_string())
+                    .map_err(HdWrapError::AccountId)
             }
-            WalletCoin::Ethereum => {
-                let address = secret_key_to_address(private_key);
+            WalletCoin::Ethereum { .. } => {
+                let address = secret_key_to_address(&private_key.get_signing_key());
                 let address_hex: String = address.encode_hex();
                 Ok(format!("0x{}", address_hex))
             }
+        }
+    }
+
+    /// return the HD coin type
+    pub fn get_coin_type(&self) -> u32 {
+        match &self.coin {
+            WalletCoin::CosmosSDK { network } => network.get_coin_type(),
+            WalletCoin::Ethereum { .. } => 60,
+        }
+    }
+
+    /// return ethereum like chain network
+    pub fn get_eth_network(&self) -> EthNetwork {
+        match &self.coin {
+            WalletCoin::Ethereum { network } => network.clone(),
+            _ => Default::default(),
         }
     }
 }
@@ -150,18 +178,8 @@ impl HDWallet {
 
     /// returns the address from index in wallet
     pub fn get_address(&self, coin: WalletCoin, index: u32) -> Result<String, HdWrapError> {
-        let coin_type = match &coin {
-            WalletCoin::CosmosSDK { network } => network.get_coin_type(),
-            WalletCoin::Ethereum => 60,
-        };
-        let derivation_path: DerivationPath = format!("m/44'/{}'/0'/0/{}", coin_type, index)
-            .parse()
-            .map_err(|e: bip32::Error| HdWrapError::HDError(e.into()))?;
-
-        let child_xprv = XPrv::derive_from_path(&self.seed, &derivation_path)
-            .map_err(|e| HdWrapError::HDError(e.into()))?;
-        coin.derive_address(child_xprv.private_key())
-            .map_err(HdWrapError::AccountId)
+        let pkey = self.get_key_from_index(coin.clone(), index)?;
+        pkey.to_address(coin)
     }
 
     /// returns the default address of the wallet
@@ -172,6 +190,21 @@ impl HDWallet {
     /// return the secret key for a given derivation path
     pub fn get_key(&self, derivation_path: String) -> Result<Arc<SecretKey>, HdWrapError> {
         let derivation_path: DerivationPath = derivation_path
+            .parse()
+            .map_err(|e: bip32::Error| HdWrapError::HDError(e.into()))?;
+        let child_xprv = XPrv::derive_from_path(&self.seed, &derivation_path)
+            .map_err(|e| HdWrapError::HDError(e.into()))?;
+        Ok(Arc::new(SecretKey(child_xprv.private_key().clone())))
+    }
+
+    /// return the secret key for a given coin and index
+    pub fn get_key_from_index(
+        &self,
+        coin: WalletCoin,
+        index: u32,
+    ) -> Result<Arc<SecretKey>, HdWrapError> {
+        let coin_type = WalletCoinFunc { coin }.get_coin_type();
+        let derivation_path: DerivationPath = format!("m/44'/{}'/0'/0/{}", coin_type, index)
             .parse()
             .map_err(|e: bip32::Error| HdWrapError::HDError(e.into()))?;
         let child_xprv = XPrv::derive_from_path(&self.seed, &derivation_path)
@@ -247,14 +280,22 @@ impl SecretKey {
     }
 
     /// converts private to address with coin type
-    pub fn to_address(&self, coin: WalletCoin) -> Result<String, eyre::Report> {
-        coin.derive_address(&self.get_signing_key())
+    pub fn to_address(&self, coin: WalletCoin) -> Result<String, HdWrapError> {
+        WalletCoinFunc { coin }
+            .derive_address(self)
+            .map_err(|e| HdWrapError::AccountId(e.into()))
     }
 }
 
 impl Default for SecretKey {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl From<SigningKey> for SecretKey {
+    fn from(signing_key: SigningKey) -> Self {
+        Self(signing_key)
     }
 }
 
@@ -329,7 +370,9 @@ mod hd_wallet_tests {
         );
 
         let default_eth_address = wallet
-            .get_default_address(WalletCoin::Ethereum)
+            .get_default_address(WalletCoin::Ethereum {
+                network: EthNetwork::Mainnet,
+            })
             .expect("Failed to get default Eth address");
         assert_eq!(
             default_eth_address,
@@ -347,7 +390,12 @@ mod hd_wallet_tests {
         assert_eq!(cosmos_address, "cro1keycl6d55fnlzwgfdufl53vuf95uvxnry6uj2q");
 
         let eth_address = wallet
-            .get_address(WalletCoin::Ethereum, 1)
+            .get_address(
+                WalletCoin::Ethereum {
+                    network: EthNetwork::Mainnet,
+                },
+                1,
+            )
             .expect("Failed to get Eth address");
         assert_eq!(eth_address, "0x74aeb73c4f6c10750bcd8608b0347f3e4750151c");
 
@@ -382,7 +430,9 @@ mod hd_wallet_tests {
         );
 
         let default_eth_address = wallet
-            .get_default_address(WalletCoin::Ethereum)
+            .get_default_address(WalletCoin::Ethereum {
+                network: EthNetwork::Mainnet,
+            })
             .expect("Failed to get default Eth address");
         assert_eq!(
             default_eth_address,
@@ -400,7 +450,12 @@ mod hd_wallet_tests {
         assert_eq!(cosmos_address, "cro1nx9ctly98zzu98ucvxmgzf0km7aqll8mlx4636");
 
         let eth_address = wallet
-            .get_address(WalletCoin::Ethereum, 1)
+            .get_address(
+                WalletCoin::Ethereum {
+                    network: EthNetwork::Mainnet,
+                },
+                1,
+            )
             .expect("Failed to get Eth address");
         assert_eq!(eth_address, "0x2d78f7508a87167b7e3f4ef3d4eed57015ef7f9f");
 
@@ -435,7 +490,9 @@ mod hd_wallet_tests {
         );
 
         let default_eth_address = wallet
-            .get_default_address(WalletCoin::Ethereum)
+            .get_default_address(WalletCoin::Ethereum {
+                network: EthNetwork::Mainnet,
+            })
             .expect("Failed to get default Eth address");
         assert_eq!(
             default_eth_address,
@@ -453,7 +510,12 @@ mod hd_wallet_tests {
         assert_eq!(cosmos_address, "cro1g8w7w0kdx0hfv4eqhmv8avxnf7qruchg9pk3v2");
 
         let eth_address = wallet
-            .get_address(WalletCoin::Ethereum, 1)
+            .get_address(
+                WalletCoin::Ethereum {
+                    network: EthNetwork::Mainnet,
+                },
+                1,
+            )
             .expect("Failed to get Eth address");
         assert_eq!(eth_address, "0x5a64bef6db23fc854e79eea9e630ccb9301629cb");
 
@@ -467,6 +529,32 @@ mod hd_wallet_tests {
         ]
         .to_vec();
         assert_eq!(raw_key, expected_key);
+    }
+
+    #[test]
+    fn test_get_key_from_index() {
+        let words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
+
+        let wallet = HDWallet::recover_wallet(words.to_owned(), Some("".to_owned()))
+            .expect("Failed to recover wallet");
+        let key = wallet
+            .get_key_from_index(
+                WalletCoin::Ethereum {
+                    network: EthNetwork::BSC,
+                },
+                1,
+            )
+            .expect("get_key_from_index error");
+        assert_eq!(
+            key.to_hex(),
+            "6f53576748877b603718b1aa1e7106aec5e15c1a2f39ea8c4683ac0d5a435a13"
+        );
+        let address = key
+            .to_address(WalletCoin::Ethereum {
+                network: EthNetwork::BSC,
+            })
+            .expect("address error");
+        assert_eq!(address, "0x68418d0fdb846e8736aa613159035a9d9fde11f0");
     }
 }
 
@@ -563,7 +651,9 @@ mod secret_key_tests {
             "02059b1fc4b7834d77765a024b6c52f570f19ed5113d8cedea0b90fbae39edda1c"
         );
         let address = secret_key
-            .to_address(WalletCoin::Ethereum)
+            .to_address(WalletCoin::Ethereum {
+                network: EthNetwork::Mainnet,
+            })
             .expect("get key address error");
         assert_eq!(address, "0x714e0ed767d99f8be2b789f9dd1e2113de8eac53");
     }

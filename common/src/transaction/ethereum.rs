@@ -1,4 +1,4 @@
-use crate::{SecretKey, WalletCoin};
+use crate::{SecretKey, WalletCoin, WalletCoinFunc};
 use ethers::contract::ContractError;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::signer::SignerMiddlewareError;
@@ -9,6 +9,7 @@ use ethers::prelude::{
 use ethers::types::transaction::eip2718::TypedTransaction;
 use ethers::types::transaction::eip712::Eip712Error;
 use ethers::utils::{parse_units, ConversionError};
+use std::default::Default;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -64,11 +65,28 @@ impl From<Eip712Error> for EthError {
     }
 }
 
+impl From<ParseChainError> for EthError {
+    fn from(parse_chain_error: ParseChainError) -> EthError {
+        EthError::ChainidError(parse_chain_error)
+    }
+}
+
 /// Ethereum networks
 /// the string conversion is from: https://github.com/gakonst/ethers-rs/blob/4fd9c7800ee9afd5395d8c7b8652d788b9e80f35/ethers-core/src/types/chain.rs#L130
 /// e.g. "mainnet" == Ethereum mainnet
+#[derive(Clone)]
 pub enum EthNetwork {
+    /// Ethereum mainnet
+    Mainnet,
+    /// Binance smart chain
+    BSC,
+    /// Cronos
+    Cronos,
+    /// Polygon
+    Polygon,
+    /// Known network with specified name
     Known { name: String },
+    /// Custom network with chain ID and legacy flag
     Custom { chain_id: u64, legacy: bool },
 }
 
@@ -77,12 +95,33 @@ impl EthNetwork {
     /// transaction request
     pub fn to_chain_params(self) -> Result<(u64, bool), EthError> {
         match self {
-            EthNetwork::Known { name } => {
-                let chain = Chain::from_str(&name).map_err(EthError::ChainidError)?;
-                Ok((chain as u64, chain.is_legacy()))
-            }
             EthNetwork::Custom { chain_id, legacy } => Ok((chain_id, legacy)),
+            _ => {
+                let chain = Chain::try_from(self)?;
+                Ok((chain.into(), chain.is_legacy()))
+            }
         }
+    }
+}
+
+impl Default for EthNetwork {
+    fn default() -> Self {
+        EthNetwork::Mainnet
+    }
+}
+
+impl TryFrom<EthNetwork> for Chain {
+    type Error = EthError;
+
+    fn try_from(network: EthNetwork) -> Result<Chain, Self::Error> {
+        Ok(match network {
+            EthNetwork::Mainnet => Chain::Mainnet,
+            EthNetwork::BSC => Chain::BinanceSmartChain,
+            EthNetwork::Cronos => Chain::Cronos,
+            EthNetwork::Polygon => Chain::Polygon,
+            EthNetwork::Known { name } => Chain::from_str(&name)?,
+            EthNetwork::Custom { chain_id, .. } => Chain::try_from(chain_id)?,
+        })
     }
 }
 
@@ -180,10 +219,13 @@ pub fn build_signed_eth_tx(
     secret_key: Arc<SecretKey>,
 ) -> Result<Vec<u8>, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
-
-    let from_address = WalletCoin::Ethereum
-        .derive_address(&secret_key.get_signing_key())
-        .map_err(|_| EthError::HexConversion)?;
+    let from_address = WalletCoinFunc {
+        coin: WalletCoin::Ethereum {
+            network: EthNetwork::Mainnet,
+        },
+    }
+    .derive_address(secret_key.as_ref())
+    .map_err(|_| EthError::HexConversion)?;
     let mut tx: TypedTransaction = construct_simple_eth_transfer_tx(
         &from_address,
         &tx_info.to_address,
@@ -213,7 +255,8 @@ pub fn build_signed_eth_tx(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{SecretKey, WalletCoin};
+    use crate::HDWallet;
+    use crate::{SecretKey, WalletCoin, WalletCoinFunc};
     use ethers::utils::hex;
     use ethers::utils::rlp::Rlp;
     use std::sync::Arc;
@@ -271,7 +314,9 @@ mod tests {
         println!(
             "{}",
             secret_key
-                .to_address(WalletCoin::Ethereum)
+                .to_address(WalletCoin::Ethereum {
+                    network: EthNetwork::Mainnet
+                })
                 .expect("address error")
         );
         let tx_info = EthTxInfo {
@@ -301,5 +346,61 @@ mod tests {
             hex::encode(tx_raw),
             "f869808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a76400008026a0f65f41ceaadda3c64f68c4d65b202b89a8dc508bbd0957ba28c61eb65ba694f6a03d5c681c4a5c21f4ad1616aed9a0e0b72344dbcfdeddb60a11bfc19a11e60120",
         );
+    }
+
+    #[test]
+    fn polygon_tx_test() {
+        let words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
+
+        let wallet = HDWallet::recover_wallet(words.to_owned(), Some("".to_owned()))
+            .expect("Failed to recover wallet");
+        let secret_key = wallet
+            .get_key_from_index(
+                WalletCoin::Ethereum {
+                    network: EthNetwork::Polygon,
+                },
+                1,
+            )
+            .expect("get_key_from_index error");
+
+        let (_, legacy) = WalletCoinFunc {
+            coin: WalletCoin::Ethereum {
+                network: EthNetwork::Polygon,
+            },
+        }
+        .get_eth_network()
+        .to_chain_params()
+        .expect("");
+
+        let tx_info = EthTxInfo {
+            to_address: "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d".to_string(),
+            amount: EthAmount::EthDecimal {
+                amount: "1".to_string(),
+            },
+            nonce: "0".to_string(),
+            gas_limit: "21000".to_string(),
+            gas_price: EthAmount::WeiDecimal {
+                amount: "1000".to_string(),
+            },
+            data: Some(vec![]),
+            legacy_tx: legacy,
+        };
+
+        let tx_raw = build_signed_eth_tx(
+            tx_info,
+            WalletCoinFunc {
+                coin: WalletCoin::Ethereum {
+                    network: EthNetwork::Polygon,
+                },
+            }
+            .get_eth_network(),
+            secret_key,
+        )
+        .expect("ok signed tx");
+        println!("{}", hex::encode(tx_raw))
+        // assert_eq!(
+        //     hex::encode(tx_raw),
+        //     "f86b808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080820135a01c41699ee874ae206cc364c60ad699a840085ecd72a3c700cf9cae84cefc2373a056dacb5e4a89073ab83f93c6e4ed706019ec68f569d1930c6e29272bd9361525",
+        // );
     }
 }

@@ -1,4 +1,4 @@
-use defi_wallet_core_common::{bytes_to_hex, HDWallet, Network, SecretKey, WalletCoin};
+use defi_wallet_core_common::{bytes_to_hex, EthNetwork, HDWallet, Network, SecretKey, WalletCoin};
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 
@@ -129,6 +129,12 @@ pub enum CoinType {
     CosmosHub,
     /// Ethereum
     Ethereum,
+    /// Cronos
+    Cronos,
+    /// Polygon
+    Polygon,
+    /// BinanceSmartChain
+    BSC,
 }
 
 impl From<CoinType> for WalletCoin {
@@ -146,7 +152,18 @@ impl From<CoinType> for WalletCoin {
             CoinType::CosmosHub => WalletCoin::CosmosSDK {
                 network: Network::CosmosHub,
             },
-            CoinType::Ethereum => WalletCoin::Ethereum,
+            CoinType::Ethereum => WalletCoin::Ethereum {
+                network: EthNetwork::Mainnet,
+            },
+            CoinType::BSC => WalletCoin::Ethereum {
+                network: EthNetwork::BSC,
+            },
+            CoinType::Cronos => WalletCoin::Ethereum {
+                network: EthNetwork::Cronos,
+            },
+            CoinType::Polygon => WalletCoin::Ethereum {
+                network: EthNetwork::Polygon,
+            },
         }
     }
 }
@@ -223,6 +240,16 @@ impl Wallet {
         let key = self
             .wallet
             .get_key(derivation_path)
+            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        Ok(PrivateKey { key })
+    }
+
+    /// obtain a signing key for a given CoinType and index
+    #[wasm_bindgen]
+    pub fn get_key_from_index(&self, coin: CoinType, index: u32) -> Result<PrivateKey, JsValue> {
+        let key = self
+            .wallet
+            .get_key_from_index(coin.into(), index)
             .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
         Ok(PrivateKey { key })
     }

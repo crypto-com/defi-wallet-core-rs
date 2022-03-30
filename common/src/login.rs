@@ -1,6 +1,6 @@
 use crate::{EthError, SecretKey};
-use core::fmt::Display;
 use siwe::Message;
+use std::fmt::Display;
 
 /// The wrapper structure that contains
 /// all information from the EIP-4361 plaintext message:
@@ -49,9 +49,7 @@ impl Display for LoginInfo {
 
 #[cfg(test)]
 mod tests {
-    use crate::LoginInfo;
-    use crate::SecretKey;
-    use crate::WalletCoin;
+    use crate::{EthNetwork, LoginInfo, SecretKey, WalletCoin, WalletCoinFunc};
     use ethers::prelude::Address;
     use siwe::Message;
     use std::str::FromStr;
@@ -59,9 +57,13 @@ mod tests {
     fn get_logininfo(mwallet: Option<&SecretKey>) -> LoginInfo {
         let address = mwallet
             .map(|wallet| {
-                WalletCoin::Ethereum
-                    .derive_address(&wallet.get_signing_key())
-                    .expect("address string")
+                WalletCoinFunc {
+                    coin: WalletCoin::Ethereum {
+                        network: EthNetwork::Mainnet,
+                    },
+                }
+                .derive_address(wallet)
+                .expect("address string")
             })
             .unwrap_or("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".to_string());
         let msg = Message {
