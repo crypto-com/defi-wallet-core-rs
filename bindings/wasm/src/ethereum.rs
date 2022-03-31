@@ -1,4 +1,4 @@
-use crate::{CoinType, PrivateKey};
+use crate::{format_to_js_error, CoinType, PrivateKey};
 use defi_wallet_core_common::node::ethereum::abi::EthAbiToken;
 use defi_wallet_core_common::{
     broadcast_contract_approval_tx, broadcast_contract_batch_transfer_tx,
@@ -51,7 +51,7 @@ impl EthContractFunctionArg {
     #[wasm_bindgen]
     pub fn build_address(address_str: &str) -> Result<JsValue, JsValue> {
         let token = EthAbiToken::from_address_str(address_str)?;
-        JsValue::from_serde(&Self { token }).map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        JsValue::from_serde(&Self { token }).map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
@@ -59,7 +59,7 @@ impl EthContractFunctionArg {
         JsValue::from_serde(&Self {
             token: EthAbiToken::FixedBytes(bytes),
         })
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        .map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
@@ -67,19 +67,19 @@ impl EthContractFunctionArg {
         JsValue::from_serde(&Self {
             token: EthAbiToken::Bytes(bytes),
         })
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        .map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
     pub fn build_int(int_str: &str) -> Result<JsValue, JsValue> {
         let token = EthAbiToken::from_int_str(int_str)?;
-        JsValue::from_serde(&Self { token }).map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        JsValue::from_serde(&Self { token }).map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
     pub fn build_uint(uint_str: &str) -> Result<JsValue, JsValue> {
         let token = EthAbiToken::from_uint_str(uint_str)?;
-        JsValue::from_serde(&Self { token }).map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        JsValue::from_serde(&Self { token }).map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
@@ -87,7 +87,7 @@ impl EthContractFunctionArg {
         JsValue::from_serde(&Self {
             token: EthAbiToken::Bool(value),
         })
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        .map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
@@ -95,7 +95,7 @@ impl EthContractFunctionArg {
         JsValue::from_serde(&Self {
             token: EthAbiToken::String(value),
         })
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        .map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
@@ -107,7 +107,7 @@ impl EthContractFunctionArg {
         JsValue::from_serde(&Self {
             token: EthAbiToken::FixedArray(tokens),
         })
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        .map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
@@ -119,7 +119,7 @@ impl EthContractFunctionArg {
         JsValue::from_serde(&Self {
             token: EthAbiToken::Array(tokens),
         })
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        .map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
@@ -131,7 +131,7 @@ impl EthContractFunctionArg {
         JsValue::from_serde(&Self {
             token: EthAbiToken::Tuple(tokens),
         })
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        .map_err(format_to_js_error)
     }
 }
 
@@ -139,8 +139,7 @@ impl TryFrom<JsValue> for EthContractFunctionArg {
     type Error = JsValue;
 
     fn try_from(val: JsValue) -> Result<Self, Self::Error> {
-        val.into_serde()
-            .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        val.into_serde().map_err(format_to_js_error)
     }
 }
 
@@ -326,7 +325,7 @@ pub async fn broadcast_transfer_eth(
     )
     .await?;
 
-    Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+    Ok(JsValue::from_serde(&receipt).map_err(format_to_js_error)?)
 }
 
 /// details needed for contract approval transaction
@@ -759,7 +758,7 @@ impl TokenAmount {
             token_id,
             hex_amount,
         })
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        .map_err(format_to_js_error)
     }
 }
 
@@ -767,8 +766,7 @@ impl TryFrom<JsValue> for TokenAmount {
     type Error = JsValue;
 
     fn try_from(val: JsValue) -> Result<Self, Self::Error> {
-        val.into_serde()
-            .map_err(|e| JsValue::from_str(&format!("error: {e}")))
+        val.into_serde().map_err(format_to_js_error)
     }
 }
 
@@ -791,7 +789,7 @@ pub async fn broadcast_approval_contract(
     )
     .await?;
 
-    Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+    Ok(JsValue::from_serde(&receipt).map_err(format_to_js_error)?)
 }
 
 /// construct, sign and broadcast a transfer of an ERC20/ERC721/ERC1155 token
@@ -813,7 +811,7 @@ pub async fn broadcast_transfer_contract(
     )
     .await?;
 
-    Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+    Ok(JsValue::from_serde(&receipt).map_err(format_to_js_error)?)
 }
 
 /// construct, sign and broadcast batch-transfer of an ERC1155 token
@@ -835,5 +833,5 @@ pub async fn broadcast_batch_transfer_contract(
     )
     .await?;
 
-    Ok(JsValue::from_serde(&receipt).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+    Ok(JsValue::from_serde(&receipt).map_err(format_to_js_error)?)
 }

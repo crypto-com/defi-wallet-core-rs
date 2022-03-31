@@ -1,4 +1,4 @@
-use crate::PrivateKey;
+use crate::{format_to_js_error, PrivateKey};
 use defi_wallet_core_common::{
     broadcast_tx_sync, build_signed_msg_tx, build_signed_single_msg_tx, get_account_balance,
     get_account_details, get_single_msg_sign_payload, BalanceApiVersion, CosmosSDKMsg,
@@ -626,8 +626,7 @@ pub fn get_ibc_transfer_signed_tx(
 #[wasm_bindgen]
 pub async fn query_account_details(api_url: String, address: String) -> Result<JsValue, JsValue> {
     let account_details = get_account_details(&api_url, &address).await?;
-    Ok(JsValue::from_serde(&account_details)
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))?)
+    Ok(JsValue::from_serde(&account_details).map_err(format_to_js_error)?)
 }
 
 /// retrieves the account balance for a given address and a denom
@@ -649,8 +648,7 @@ pub async fn query_account_balance(
     };
     let account_details =
         get_account_balance(&api_url, &address, &denom, balance_api_version).await?;
-    Ok(JsValue::from_serde(&account_details)
-        .map_err(|e| JsValue::from_str(&format!("error: {e}")))?)
+    Ok(JsValue::from_serde(&account_details).map_err(format_to_js_error)?)
 }
 
 /// broadcasts a signed cosmos sdk tx
@@ -662,13 +660,11 @@ pub async fn broadcast_tx(
     let resp = broadcast_tx_sync(&tendermint_rpc_url, raw_signed_tx)
         .await?
         .into_result()
-        .map_err(|e| JsValue::from_str(&format!("missing_result: {e}")))?;
+        .map_err(format_to_js_error)?;
 
     if let tendermint::abci::Code::Err(_) = resp.code {
-        return Err(
-            JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {e}")))?
-        );
+        return Err(JsValue::from_serde(&resp).map_err(format_to_js_error)?);
     }
 
-    Ok(JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {e}")))?)
+    Ok(JsValue::from_serde(&resp).map_err(format_to_js_error)?)
 }
