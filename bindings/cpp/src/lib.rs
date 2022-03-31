@@ -5,8 +5,10 @@ use defi_wallet_core_common::{
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
     BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, EthError, EthNetwork, EthTxInfo, HDWallet,
     Height, LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey,
-    SingleCoin, TxBroadcastResult, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    SingleCoin, TransactionReceipt, TxBroadcastResult, WalletCoin,
+    COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
+
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -14,8 +16,6 @@ mod nft;
 
 mod contract;
 
-use ethers::prelude::TransactionReceipt;
-use ethers::utils::hex::ToHex;
 /// Wrapper of `CosmosSDKMsg`
 ///
 /// For now, types used as extern Rust types are required to be defined by the same crate that
@@ -360,9 +360,9 @@ pub mod ffi {
 
     #[derive(Debug, Default)]
     pub struct CronosTransactionReceiptRaw {
-        pub transaction_hash: String,
+        pub transaction_hash: Vec<u8>,
         pub transaction_index: String,
-        pub block_hash: String,
+        pub block_hash: Vec<u8>,
         pub block_number: String,
         pub cumulative_gas_used: String,
         pub gas_used: String,
@@ -370,8 +370,8 @@ pub mod ffi {
         pub logs: Vec<String>,
         /// Status: either 1 (success) or 0 (failure)
         pub status: String,
-        pub root: String,
-        pub logs_bloom: String,
+        pub root: Vec<u8>,
+        pub logs_bloom: Vec<u8>,
         pub transaction_type: String,
         pub effective_gas_price: String,
     }
@@ -508,47 +508,19 @@ use ffi::CronosTransactionReceiptRaw;
 impl From<TransactionReceipt> for CronosTransactionReceiptRaw {
     fn from(src: TransactionReceipt) -> Self {
         ffi::CronosTransactionReceiptRaw {
-            transaction_hash: src.transaction_hash.encode_hex(),
-            transaction_index: src.transaction_index.to_string(),
-            block_hash: match src.block_hash {
-                Some(block_hash) => block_hash.encode_hex(),
-                None => "".into(),
-            },
-            block_number: match src.block_number {
-                Some(block_number) => block_number.to_string(),
-                None => "".into(),
-            },
-            cumulative_gas_used: src.cumulative_gas_used.to_string(),
-            gas_used: match src.gas_used {
-                Some(gas_used) => gas_used.to_string(),
-                None => "".into(),
-            },
-            contract_address: match src.contract_address {
-                Some(contract_address) => contract_address.encode_hex(),
-                None => "".into(),
-            },
-            status: match src.status {
-                Some(v) => v.to_string(),
-                None => "".into(),
-            },
-            root: match src.root {
-                Some(v) => v.encode_hex(),
-                None => "".into(),
-            },
-            logs_bloom: src.logs_bloom.encode_hex(),
-            transaction_type: match src.transaction_type {
-                Some(v) => v.to_string(),
-                None => "".into(),
-            },
-            effective_gas_price: match src.effective_gas_price {
-                Some(v) => v.to_string(),
-                None => "".into(),
-            },
-            logs: src
-                .logs
-                .iter()
-                .map(|log| serde_json::to_string(&log).unwrap())
-                .collect(),
+            transaction_hash: src.transaction_hash,
+            transaction_index: src.transaction_index,
+            block_hash: src.block_hash,
+            block_number: src.block_number,
+            cumulative_gas_used: src.cumulative_gas_used,
+            gas_used: src.gas_used,
+            contract_address: src.contract_address,
+            status: src.status,
+            root: src.root,
+            logs_bloom: src.logs_bloom,
+            transaction_type: src.transaction_type,
+            effective_gas_price: src.effective_gas_price,
+            logs: src.logs,
         }
     }
 }
