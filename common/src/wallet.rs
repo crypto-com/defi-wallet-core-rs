@@ -229,6 +229,12 @@ pub enum SecretKeyWrapError {
     InvalidHex(FromHexError),
 }
 
+impl From<SecretKeyWrapError> for JsValue {
+    fn from(error: SecretKeyWrapError) -> Self {
+        JsValue::from_str(&format!("error: {error}"))
+    }
+}
+
 /// wrapper around secp256k1 signing key
 pub struct SecretKey(SigningKey);
 
