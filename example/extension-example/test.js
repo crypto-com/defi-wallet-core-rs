@@ -1,19 +1,19 @@
 import init, * as wasm from "./node_modules/@crypto-com/defi-wallet-core-wasm/defi_wallet_core_wasm.js";
 
 function logPrivateKeyInternal(privateKey) {
-    const publicKeyBytes = privateKey.get_public_key_bytes();
-    const publicKeyHex = privateKey.get_public_key_hex();
-    const privateKeyBytes = privateKey.to_bytes();
-    const privateKeyHex = privateKey.to_hex();
-  
-    console.log(
-      "Private Key Internal",
-      `\nPublic Key Bytes: ${publicKeyBytes}`,
-      `\nPublic Key Hex: ${publicKeyHex}`,
-      `\nPrivate Key Bytes: ${privateKeyBytes}`,
-      `\nPrivate Key Hex: ${privateKeyHex}`
-    );
-  }
+  const publicKeyBytes = privateKey.get_public_key_bytes();
+  const publicKeyHex = privateKey.get_public_key_hex();
+  const privateKeyBytes = privateKey.to_bytes();
+  const privateKeyHex = privateKey.to_hex();
+
+  console.log(
+    "Private Key Internal",
+    `\nPublic Key Bytes: ${publicKeyBytes}`,
+    `\nPublic Key Hex: ${publicKeyHex}`,
+    `\nPrivate Key Bytes: ${privateKeyBytes}`,
+    `\nPrivate Key Hex: ${privateKeyHex}`
+  );
+}
 
 async function wallet_demo() {
   await init();
@@ -23,35 +23,35 @@ async function wallet_demo() {
   console.log(address);
   wallet.free();
   // Mnemonic Word generate
-  wallet = new wasm.Wallet("",wasm.MnemonicWordCount.Twelve);
+  wallet = new wasm.Wallet("", wasm.MnemonicWordCount.Twelve);
   var mnemonic = wallet.get_backup_mnemonic_phrase();
-  console.log("mnemonic 12:",mnemonic);
+  console.log("mnemonic 12:", mnemonic);
   wallet.free();
 
-  wallet = new wasm.Wallet("",wasm.MnemonicWordCount.Eighteen);
+  wallet = new wasm.Wallet("", wasm.MnemonicWordCount.Eighteen);
   var mnemonic = wallet.get_backup_mnemonic_phrase();
-  console.log("mnemonic 18:",mnemonic);
+  console.log("mnemonic 18:", mnemonic);
   wallet.free();
 
-  wallet = new wasm.Wallet("",wasm.MnemonicWordCount.TwentyFour);
+  wallet = new wasm.Wallet("", wasm.MnemonicWordCount.TwentyFour);
   var mnemonic = wallet.get_backup_mnemonic_phrase();
-  console.log("mnemonic 24:",mnemonic);
+  console.log("mnemonic 24:", mnemonic);
   wallet.free();
 
   // Create wallet with words
   const words = "guard input oyster oyster slot doctor repair shed soon assist blame power";
-  wallet = wasm.Wallet.recover_wallet(words,"");
-  mnemonic = wallet.get_backup_mnemonic_phrase();
-  console.log("mnemonic:",mnemonic);
+  var wallet = wasm.Wallet.recover_wallet(words, "");
+  var mnemonic = wallet.get_backup_mnemonic_phrase();
+  console.log("mnemonic:", mnemonic);
   console.assert(words === mnemonic);
-  address = wallet.get_default_address(wasm.CoinType.CryptoOrgMainnet);
+  var address = wallet.get_default_address(wasm.CoinType.CryptoOrgMainnet);
   console.assert(address === "cro16edxe89pn8ly9c7cy702x9e62fdvf3k9tnzycj");
-  
+
   // get address with index
-  address = wallet.get_address(wasm.CoinType.CryptoOrgMainnet,1);
+  address = wallet.get_address(wasm.CoinType.CryptoOrgMainnet, 1);
   console.assert(address === "cro1keycl6d55fnlzwgfdufl53vuf95uvxnry6uj2q");
 
-  address = wallet.get_address(wasm.CoinType.Ethereum,1);
+  address = wallet.get_address(wasm.CoinType.Ethereum, 1);
   console.assert(address === "0x74aeb73c4f6c10750bcd8608b0347f3e4750151c");
 
   // get key with path
@@ -59,7 +59,7 @@ async function wallet_demo() {
   console.assert(priv.to_hex() === "2e9c6bc5d8df5177697e90e87bd098d2d6165f096195d78f76cca1cecbf37525");
   logPrivateKeyInternal(priv);
   priv.free();
-  
+
   // parse key from hex 
   priv = wasm.PrivateKey.from_hex("e7de4e2f72573cf3c6e1fa3845cec6a4e2aac582702cac14bb9da0bb05aa24ae");
   console.assert(priv.get_public_key_hex() === "03cefab3f89c62ecc54c09634516bb2819d20d83757956c7f4690dc3b806ecc7d2");
@@ -77,7 +77,7 @@ async function wallet_demo() {
 async function cosmos_demo() {
   await init();
   const WORDS = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
-  var wallet = wasm.Wallet.recover_wallet(WORDS,"");
+  var wallet = wasm.Wallet.recover_wallet(WORDS, "");
 
   const account_number = BigInt(1);
   const sequence_number = BigInt(0);
@@ -134,7 +134,7 @@ async function cosmos_demo() {
   console.assert(wasm.bytes2hex(txData) === "0aa0010a9a010a232f636f736d6f732e7374616b696e672e763162657461312e4d736744656c656761746512730a2d636f736d6f73316c357337746e6a323861377a786565636b6867776c686a797338646c7272656667717234706a1234636f736d6f7376616c6f706572313964796c3075797a6573346b32336c73636c6130326e30366663323268347571346536346b331a0c0a057561746f6d120331303018a94612680a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21028c3956de0011d6b9b2c735045647d14b38e63557e497fc025de9a17a5729c52012040a02080112160a100a057561746f6d12073130303030303010a08d061a404d71f59fb847a319b5cd4a831eed8c9baa4051a656392be6c981f95d5debf552011318ac433caf47e8df57d6fb133cf9f5d91db031dff59beb2d98b7e041a125");
   tx.free();
 
-    // stake undelegate transaction
+  // stake undelegate transaction
   priv = wallet.get_key("m/44'/118'/0'/0/0");
   tx_info = new wasm.CosmosSDKTxInfoRaw(account_number, sequence_number, gas_limit, fee_amount, fee_denom, timeout_height, memo_note, chain_id, bech32hrp, coin_type);
   tx = new wasm.CosmosTx();
@@ -276,8 +276,8 @@ async function ethereum_demo() {
 
   let priv = wasm.PrivateKey.from_hex("24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e");
   let message = new TextEncoder("utf-8").encode("hello");
-  let signature = priv.sign_eth(message,BigInt(1));
-  console.log("signature:",wasm.bytes2hex(signature));
+  let signature = priv.sign_eth(message, BigInt(1));
+  console.log("signature:", wasm.bytes2hex(signature));
 
   // build transaction data with abi and args
   const contractData = `[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"initialSupply\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]`;
@@ -291,10 +291,10 @@ async function ethereum_demo() {
   // build transaction with data
   var info1 = new wasm.EthTxInfo(
     "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d",
-    new wasm.EthTxAmount("1","eth"),
+    new wasm.EthTxAmount("1", "eth"),
     "0",
     "21000",
-    new wasm.EthTxAmount("1000","wei"),
+    new wasm.EthTxAmount("1000", "wei"),
     inputData,
     true,
   );
@@ -307,10 +307,10 @@ async function ethereum_demo() {
   var bufView = new Uint8Array();
   var info2 = new wasm.EthTxInfo(
     "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d",
-    new wasm.EthTxAmount("1","eth",),
+    new wasm.EthTxAmount("1", "eth",),
     "0",
     "21000",
-    new wasm.EthTxAmount("1000","wei",),
+    new wasm.EthTxAmount("1000", "wei",),
     bufView,
     true,
   );
@@ -323,8 +323,8 @@ async function polygon_demo() {
   await init();
 
   const words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
-  let wallet = wasm.Wallet.recover_wallet(words,"");
-  let priv = wallet.get_key_from_index(wasm.CoinType.Polygon,1);
+  let wallet = wasm.Wallet.recover_wallet(words, "");
+  let priv = wallet.get_key_from_index(wasm.CoinType.Polygon, 1);
   console.assert(priv.to_address(wasm.CoinType.Polygon) === "0x68418d0fdb846e8736aa613159035a9d9fde11f0");
 
   let chain_id = wasm.get_eth_chain_id(wasm.CoinType.Polygon);
@@ -334,10 +334,10 @@ async function polygon_demo() {
   var bufView = new Uint8Array();
   var info = new wasm.EthTxInfo(
     "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d",
-    new wasm.EthTxAmount("1","eth",),
+    new wasm.EthTxAmount("1", "eth",),
     "0",
     "21000",
-    new wasm.EthTxAmount("1000","wei",),
+    new wasm.EthTxAmount("1000", "wei",),
     bufView,
     is_legacy,
   );
