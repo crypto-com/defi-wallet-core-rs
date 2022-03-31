@@ -358,11 +358,11 @@ pub mod ffi {
         pub log: String,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Default)]
     pub struct CronosTransactionReceiptRaw {
-        pub transaction_hash: [u8; 32],
+        pub transaction_hash: Vec<u8>,
         pub transaction_index: String,
-        pub block_hash: [u8; 32],
+        pub block_hash: Vec<u8>,
         pub block_number: String,
         pub cumulative_gas_used: String,
         pub gas_used: String,
@@ -370,8 +370,8 @@ pub mod ffi {
         pub logs: Vec<String>,
         /// Status: either 1 (success) or 0 (failure)
         pub status: String,
-        pub root: [u8; 32],
-        pub logs_bloom: [u8; 256],
+        pub root: Vec<u8>,
+        pub logs_bloom: Vec<u8>,
         pub transaction_type: String,
         pub effective_gas_price: String,
     }

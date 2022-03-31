@@ -19,9 +19,9 @@ use ethers::prelude::TransactionReceipt as EthersTransactionReceipt;
 /// a subset of `ethers::prelude::::TransactionReceipt` for non-wasm
 #[cfg(not(target_arch = "wasm32"))]
 pub struct TransactionReceipt {
-    pub transaction_hash: [u8; 32],
+    pub transaction_hash: Vec<u8>,
     pub transaction_index: String,
-    pub block_hash: [u8; 32],
+    pub block_hash: Vec<u8>,
     pub block_number: String,
     pub cumulative_gas_used: String,
     pub gas_used: String,
@@ -29,8 +29,8 @@ pub struct TransactionReceipt {
     pub logs: Vec<String>,
     /// Status: either 1 (success) or 0 (failure)
     pub status: String,
-    pub root: [u8; 32],
-    pub logs_bloom: [u8; 256],
+    pub root: Vec<u8>,
+    pub logs_bloom: Vec<u8>,
     pub transaction_type: String,
     pub effective_gas_price: String,
 }
@@ -39,11 +39,11 @@ pub struct TransactionReceipt {
 impl From<EthersTransactionReceipt> for TransactionReceipt {
     fn from(src: EthersTransactionReceipt) -> Self {
         TransactionReceipt {
-            transaction_hash: src.transaction_hash.to_fixed_bytes(),
+            transaction_hash: src.transaction_hash.to_fixed_bytes().to_vec(),
             transaction_index: src.transaction_index.to_string(),
             block_hash: match src.block_hash {
-                Some(block_hash) => block_hash.to_fixed_bytes(),
-                None => [0; 32],
+                Some(block_hash) => block_hash.to_fixed_bytes().to_vec(),
+                None => vec![],
             },
             block_number: match src.block_number {
                 Some(block_number) => block_number.to_string(),
@@ -63,10 +63,10 @@ impl From<EthersTransactionReceipt> for TransactionReceipt {
                 None => "".into(),
             },
             root: match src.root {
-                Some(v) => v.to_fixed_bytes(),
-                None => [0; 32],
+                Some(v) => v.to_fixed_bytes().to_vec(),
+                None => vec![],
             },
-            logs_bloom: src.logs_bloom.to_fixed_bytes(),
+            logs_bloom: src.logs_bloom.to_fixed_bytes().to_vec(),
             transaction_type: match src.transaction_type {
                 Some(v) => v.to_string(),
                 None => "".into(),

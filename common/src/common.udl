@@ -15,7 +15,7 @@ interface WalletCoin {
 
 interface WalletCoinFunc {
     constructor(WalletCoin coin);
-    
+
     [Throws=HdWrapError]
     string derive_address([ByRef] SecretKey private_key);
 
@@ -309,17 +309,17 @@ interface EthAmount {
 
 
 dictionary TransactionReceipt {
-    string transaction_hash;
+    sequence<u8> transaction_hash;
     string transaction_index;
-    string block_hash;
+    sequence<u8> block_hash;
     string block_number;
     string cumulative_gas_used;
     string gas_used;
     string contract_address;
     sequence<string> logs;
     string status;
-    string root;
-    string logs_bloom;
+    sequence<u8> root;
+    sequence<u8> logs_bloom;
     string transaction_type;
     string effective_gas_price;
 };
