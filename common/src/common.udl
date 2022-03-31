@@ -144,7 +144,7 @@ interface CosmosSDKMsg {
 };
 
 [Error]
-enum ErrorWrapper {
+enum CosmosError {
   "EyreReport",
   "PubkeyError",
 };
@@ -334,23 +334,23 @@ interface Client {
 };
 
 namespace common {
-  [Throws=ErrorWrapper]
+  [Throws=CosmosError]
   sequence<u8> get_single_msg_sign_payload(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg, PublicKeyBytesWrapper sender_pubkey);
-  [Throws=ErrorWrapper]
+  [Throws=CosmosError]
   sequence<u8> build_signed_single_msg_tx(CosmosSDKTxInfo tx_info, CosmosSDKMsg msg, SecretKey secret_key);
-  [Throws=ErrorWrapper]
+  [Throws=CosmosError]
   sequence<u8> get_msg_sign_payload(CosmosSDKTxInfo tx_info, sequence<CosmosSDKMsg> msgs, PublicKeyBytesWrapper sender_pubkey);
-  [Throws=ErrorWrapper]
+  [Throws=CosmosError]
   sequence<u8> build_signed_msg_tx(CosmosSDKTxInfo tx_info, sequence<CosmosSDKMsg> msgs, SecretKey secret_key);
-  [Throws=ErrorWrapper]
+  [Throws=CosmosError]
   sequence<u8> get_nft_issue_denom_signed_tx(CosmosSDKTxInfo tx_info, SecretKey secret_key, string id, string name, string schema);
-  [Throws=ErrorWrapper]
+  [Throws=CosmosError]
   sequence<u8> get_nft_mint_signed_tx(CosmosSDKTxInfo tx_info, SecretKey secret_key, string id, string denom_id, string name, string uri, string data, string recipient);
-  [Throws=ErrorWrapper]
+  [Throws=CosmosError]
   sequence<u8> get_nft_edit_signed_tx(CosmosSDKTxInfo tx_info, SecretKey secret_key, string id, string denom_id, string name, string uri, string data);
-  [Throws=ErrorWrapper]
+  [Throws=CosmosError]
   sequence<u8> get_nft_transfer_signed_tx(CosmosSDKTxInfo tx_info, SecretKey secret_key, string id, string denom_id, string recipient);
-  [Throws=ErrorWrapper]
+  [Throws=CosmosError]
   sequence<u8> get_nft_burn_signed_tx(CosmosSDKTxInfo tx_info, SecretKey secret_key, string id, string denom_id);
   [Throws=RestError]
   RawRpcAccountResponse get_account_details_blocking([ByRef] string api_url, [ByRef] string address);

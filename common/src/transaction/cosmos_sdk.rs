@@ -19,6 +19,7 @@ use ibc_proto::cosmos::base::v1beta1::Coin as IbcCoin;
 use std::str::FromStr;
 use std::sync::Arc;
 
+mod signer;
 mod uniffi_binding;
 
 #[cfg(feature = "uniffi-binding")]
@@ -607,11 +608,17 @@ fn get_signed_msg_tx(
 
 /// UniFFI 0.15.2 doesn't support external types for Kotlin yet
 #[derive(Debug, thiserror::Error)]
-pub enum ErrorWrapper {
-    #[error("Error: {report}")]
-    EyreReport { report: eyre::Report },
+pub enum CosmosError {
+    #[error("Error: {0}")]
+    EyreReport(eyre::Report),
     #[error("Public key error: {0}")]
     PubkeyError(cosmrs::bip32::Error),
+}
+
+impl From<eyre::Report> for CosmosError {
+    fn from(report: eyre::Report) -> Self {
+        CosmosError::EyreReport(report)
+    }
 }
 
 /// creates the transaction signing payload (`SignDoc`)
@@ -620,7 +627,7 @@ pub fn get_single_msg_sign_payload(
     tx_info: CosmosSDKTxInfo,
     msg: CosmosSDKMsg,
     sender_pubkey: PublicKeyBytesWrapper,
-) -> Result<Vec<u8>, ErrorWrapper> {
+) -> Result<Vec<u8>, CosmosError> {
     get_msg_sign_payload(tx_info, vec![msg], sender_pubkey)
 }
 
@@ -630,12 +637,8 @@ pub fn build_signed_single_msg_tx(
     tx_info: CosmosSDKTxInfo,
     msg: CosmosSDKMsg,
     secret_key: Arc<SecretKey>,
-) -> Result<Vec<u8>, ErrorWrapper> {
-    let raw_signed_tx = get_signed_msg_tx(tx_info, vec![msg], secret_key.get_signing_key())
-        .map_err(|report| ErrorWrapper::EyreReport { report })?;
-    raw_signed_tx
-        .to_bytes()
-        .map_err(|report| ErrorWrapper::EyreReport { report })
+) -> Result<Vec<u8>, CosmosError> {
+    Ok(get_signed_msg_tx(tx_info, vec![msg], secret_key.get_signing_key())?.to_bytes()?)
 }
 
 /// creates the transaction signing payload (`SignDoc`)
@@ -644,13 +647,11 @@ pub fn get_msg_sign_payload(
     tx_info: CosmosSDKTxInfo,
     msgs: Vec<CosmosSDKMsg>,
     sender_pubkey: PublicKeyBytesWrapper,
-) -> Result<Vec<u8>, ErrorWrapper> {
+) -> Result<Vec<u8>, CosmosError> {
     let sender_public_key: crypto::PublicKey = crypto::PublicKey::from(
-        VerifyingKey::from_bytes(sender_pubkey.into()).map_err(ErrorWrapper::PubkeyError)?,
+        VerifyingKey::from_bytes(sender_pubkey.into()).map_err(CosmosError::PubkeyError)?,
     );
-    get_msg_signdoc(tx_info, msgs, sender_public_key)
-        .and_then(|doc| doc.into_bytes())
-        .map_err(|report| ErrorWrapper::EyreReport { report })
+    Ok(get_msg_signdoc(tx_info, msgs, sender_public_key).and_then(|doc| doc.into_bytes())?)
 }
 
 /// creates the signed transaction
@@ -659,12 +660,8 @@ pub fn build_signed_msg_tx(
     tx_info: CosmosSDKTxInfo,
     msgs: Vec<CosmosSDKMsg>,
     secret_key: Arc<SecretKey>,
-) -> Result<Vec<u8>, ErrorWrapper> {
-    let raw_signed_tx = get_signed_msg_tx(tx_info, msgs, secret_key.get_signing_key())
-        .map_err(|report| ErrorWrapper::EyreReport { report })?;
-    raw_signed_tx
-        .to_bytes()
-        .map_err(|report| ErrorWrapper::EyreReport { report })
+) -> Result<Vec<u8>, CosmosError> {
+    Ok(get_signed_msg_tx(tx_info, msgs, secret_key.get_signing_key())?.to_bytes()?)
 }
 
 #[cfg(test)]
