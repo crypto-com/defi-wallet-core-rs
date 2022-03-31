@@ -358,7 +358,7 @@ pub mod ffi {
         pub log: String,
     }
 
-    #[derive(Debug, Default)]
+    #[derive(Debug)]
     pub struct CronosTransactionReceiptRaw {
         pub transaction_hash: [u8; 32],
         pub transaction_index: String,
@@ -371,7 +371,7 @@ pub mod ffi {
         /// Status: either 1 (success) or 0 (failure)
         pub status: String,
         pub root: [u8; 32],
-        pub logs_bloom: String,
+        pub logs_bloom: [u8; 256],
         pub transaction_type: String,
         pub effective_gas_price: String,
     }
