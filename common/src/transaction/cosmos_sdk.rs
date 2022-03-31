@@ -22,6 +22,7 @@ use std::sync::Arc;
 mod signer;
 mod uniffi_binding;
 
+pub use signer::*;
 #[cfg(feature = "uniffi-binding")]
 pub use uniffi_binding::*;
 
