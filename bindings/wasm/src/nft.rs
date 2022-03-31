@@ -15,14 +15,13 @@ pub fn get_nft_issue_denom_signed_tx(
     name: String,
     schema: String,
 ) -> Result<Vec<u8>, JsValue> {
-    transaction::nft::get_nft_issue_denom_signed_tx(
+    Ok(transaction::nft::get_nft_issue_denom_signed_tx(
         tx_info.into(),
         private_key.key,
         id,
         name,
         schema,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -40,7 +39,7 @@ pub fn get_nft_mint_signed_tx(
     data: String,
     recipient: String,
 ) -> Result<Vec<u8>, JsValue> {
-    transaction::nft::get_nft_mint_signed_tx(
+    Ok(transaction::nft::get_nft_mint_signed_tx(
         tx_info.into(),
         private_key.key,
         id,
@@ -49,8 +48,7 @@ pub fn get_nft_mint_signed_tx(
         uri,
         data,
         recipient,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -67,7 +65,7 @@ pub fn get_nft_edit_signed_tx(
     uri: String,
     data: String,
 ) -> Result<Vec<u8>, JsValue> {
-    transaction::nft::get_nft_edit_signed_tx(
+    Ok(transaction::nft::get_nft_edit_signed_tx(
         tx_info.into(),
         private_key.key,
         id,
@@ -75,8 +73,7 @@ pub fn get_nft_edit_signed_tx(
         name,
         uri,
         data,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -91,14 +88,13 @@ pub fn get_nft_transfer_signed_tx(
     denom_id: String,
     recipient: String,
 ) -> Result<Vec<u8>, JsValue> {
-    transaction::nft::get_nft_transfer_signed_tx(
+    Ok(transaction::nft::get_nft_transfer_signed_tx(
         tx_info.into(),
         private_key.key,
         id,
         denom_id,
         recipient,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -112,8 +108,12 @@ pub fn get_nft_burn_signed_tx(
     id: String,
     denom_id: String,
 ) -> Result<Vec<u8>, JsValue> {
-    transaction::nft::get_nft_burn_signed_tx(tx_info.into(), private_key.key, id, denom_id)
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    Ok(transaction::nft::get_nft_burn_signed_tx(
+        tx_info.into(),
+        private_key.key,
+        id,
+        denom_id,
+    )?)
 }
 
 /// Grpc Web Client wrapper for Wasm

@@ -1,4 +1,3 @@
-use crate::utils::format_to_js_error;
 use crate::PrivateKey;
 use defi_wallet_core_common as common;
 use wasm_bindgen::prelude::*;
@@ -33,8 +32,6 @@ impl CosmosProtoSignDoc {
     /// moved out after calling this function.
     #[wasm_bindgen]
     pub fn sign_into(self, private_key: &PrivateKey) -> Result<Vec<u8>, JsValue> {
-        self.inner
-            .sign_into(private_key.key.as_ref())
-            .map_err(format_to_js_error)
+        Ok(self.inner.sign_into(private_key.key.as_ref())?)
     }
 }

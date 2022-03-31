@@ -12,6 +12,7 @@ use ethers::utils::{parse_units, ConversionError};
 use std::default::Default;
 use std::str::FromStr;
 use std::sync::Arc;
+use wasm_bindgen::JsValue;
 
 mod abi_contract;
 
@@ -68,6 +69,12 @@ impl From<Eip712Error> for EthError {
 impl From<ParseChainError> for EthError {
     fn from(parse_chain_error: ParseChainError) -> EthError {
         EthError::ChainidError(parse_chain_error)
+    }
+}
+
+impl From<EthError> for JsValue {
+    fn from(error: EthError) -> Self {
+        JsValue::from_str(&format!("error: {error}"))
     }
 }
 

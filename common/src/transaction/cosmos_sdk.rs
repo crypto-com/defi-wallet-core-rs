@@ -18,6 +18,7 @@ use ibc::Height;
 use ibc_proto::cosmos::base::v1beta1::Coin as IbcCoin;
 use std::str::FromStr;
 use std::sync::Arc;
+use wasm_bindgen::JsValue;
 
 mod signer;
 mod uniffi_binding;
@@ -619,6 +620,12 @@ pub enum CosmosError {
 impl From<eyre::Report> for CosmosError {
     fn from(report: eyre::Report) -> Self {
         CosmosError::EyreReport(report)
+    }
+}
+
+impl From<CosmosError> for JsValue {
+    fn from(error: CosmosError) -> Self {
+        JsValue::from_str(&format!("error: {error}"))
     }
 }
 

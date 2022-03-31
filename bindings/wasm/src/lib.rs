@@ -45,10 +45,7 @@ impl PrivateKey {
     #[wasm_bindgen]
     pub fn from_bytes(bytes: Vec<u8>) -> Result<PrivateKey, JsValue> {
         Ok(Self {
-            key: Arc::new(
-                SecretKey::from_bytes(bytes)
-                    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?,
-            ),
+            key: Arc::new(SecretKey::from_bytes(bytes)?),
         })
     }
 
@@ -56,20 +53,14 @@ impl PrivateKey {
     #[wasm_bindgen]
     pub fn from_hex(hex: String) -> Result<PrivateKey, JsValue> {
         Ok(Self {
-            key: Arc::new(
-                SecretKey::from_hex(hex)
-                    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?,
-            ),
+            key: Arc::new(SecretKey::from_hex(hex)?),
         })
     }
 
     // eth sign message data
     #[wasm_bindgen]
     pub fn sign_eth(&self, message: Vec<u8>, chain_id: u64) -> Result<Vec<u8>, JsValue> {
-        let signature = self
-            .key
-            .sign_eth(message.as_ref(), chain_id)
-            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        let signature = self.key.sign_eth(message.as_ref(), chain_id)?;
         Ok(signature.to_vec())
     }
 
@@ -100,10 +91,7 @@ impl PrivateKey {
     /// converts private to address with coin type
     #[wasm_bindgen]
     pub fn to_address(&self, coin: CoinType) -> Result<String, JsValue> {
-        let address = self
-            .key
-            .to_address(coin.into())
-            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        let address = self.key.to_address(coin.into())?;
         Ok(address)
     }
 }
@@ -201,8 +189,7 @@ impl Wallet {
         password: Option<String>,
         word_count: Option<MnemonicWordCount>,
     ) -> Result<Wallet, JsValue> {
-        let wallet = HDWallet::generate_wallet(password, word_count.map(|val| val.into()))
-            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        let wallet = HDWallet::generate_wallet(password, word_count.map(|val| val.into()))?;
         Ok(Self { wallet })
     }
 
@@ -212,45 +199,34 @@ impl Wallet {
         mnemonic_phase: String,
         password: Option<String>,
     ) -> Result<Wallet, JsValue> {
-        let wallet = HDWallet::recover_wallet(mnemonic_phase, password)
-            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        let wallet = HDWallet::recover_wallet(mnemonic_phase, password)?;
         Ok(Self { wallet })
     }
 
     /// return the default address for a given coin type
     #[wasm_bindgen]
     pub fn get_default_address(&self, coin: CoinType) -> Result<String, JsValue> {
-        self.wallet
-            .get_default_address(coin.into())
-            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+        Ok(self.wallet.get_default_address(coin.into())?)
     }
 
     /// return the address for a given coin type and index
     #[wasm_bindgen]
     pub fn get_address(&self, coin: CoinType, index: u32) -> Result<String, JsValue> {
-        self.wallet
-            .get_address(coin.into(), index)
-            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+        Ok(self.wallet.get_address(coin.into(), index)?)
     }
 
     /// obtain a signing key for a given derivation path
     /// derivation_path is bip44 key path
     #[wasm_bindgen]
     pub fn get_key(&self, derivation_path: String) -> Result<PrivateKey, JsValue> {
-        let key = self
-            .wallet
-            .get_key(derivation_path)
-            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        let key = self.wallet.get_key(derivation_path)?;
         Ok(PrivateKey { key })
     }
 
     /// obtain a signing key for a given CoinType and index
     #[wasm_bindgen]
     pub fn get_key_from_index(&self, coin: CoinType, index: u32) -> Result<PrivateKey, JsValue> {
-        let key = self
-            .wallet
-            .get_key_from_index(coin.into(), index)
-            .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
+        let key = self.wallet.get_key_from_index(coin.into(), index)?;
         Ok(PrivateKey { key })
     }
 

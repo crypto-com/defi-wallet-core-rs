@@ -11,6 +11,7 @@ use rand_core::OsRng;
 use secrecy::{ExposeSecret, SecretString, Zeroize};
 use std::str::FromStr;
 use std::sync::Arc;
+use wasm_bindgen::JsValue;
 
 /// describes what coin type to use (for HD derivation or address generation)
 #[derive(Clone)]
@@ -99,6 +100,12 @@ pub enum HdWrapError {
     HDError(anyhow::Error),
     #[error("AccountId error: {0}")]
     AccountId(eyre::Report),
+}
+
+impl From<HdWrapError> for JsValue {
+    fn from(error: HdWrapError) -> Self {
+        JsValue::from_str(&format!("error: {error}"))
+    }
 }
 
 impl HDWallet {

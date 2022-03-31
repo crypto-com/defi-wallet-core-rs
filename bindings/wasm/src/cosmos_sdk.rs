@@ -304,12 +304,11 @@ impl CosmosTx {
         private_key: PrivateKey,
         tx_info: CosmosSDKTxInfoRaw,
     ) -> Result<Vec<u8>, JsValue> {
-        build_signed_msg_tx(
+        Ok(build_signed_msg_tx(
             tx_info.into(),
             self.msgs.drain(..).map(|m| m.msg).collect(),
             private_key.key,
-        )
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+        )?)
     }
 }
 
@@ -408,7 +407,7 @@ pub fn get_single_bank_send_signdoc(
         return Err(JsValue::from_str("invalid public key length"));
     }
     let pubkey = PublicKeyBytesWrapper(sender_pubkey);
-    get_single_msg_sign_payload(
+    Ok(get_single_msg_sign_payload(
         tx_info.into(),
         CosmosSDKMsg::BankSend {
             recipient_address,
@@ -418,8 +417,7 @@ pub fn get_single_bank_send_signdoc(
             },
         },
         pubkey,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -434,7 +432,7 @@ pub fn get_single_bank_send_signed_tx(
     amount: u64,
     denom: String,
 ) -> Result<Vec<u8>, JsValue> {
-    build_signed_single_msg_tx(
+    Ok(build_signed_single_msg_tx(
         tx_info.into(),
         CosmosSDKMsg::BankSend {
             recipient_address,
@@ -444,8 +442,7 @@ pub fn get_single_bank_send_signed_tx(
             },
         },
         private_key.key,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -473,8 +470,11 @@ pub fn get_staking_delegate_signed_tx(
         messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address });
     }
 
-    build_signed_msg_tx(tx_info.into(), messages, private_key.key)
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    Ok(build_signed_msg_tx(
+        tx_info.into(),
+        messages,
+        private_key.key,
+    )?)
 }
 
 /// creates the signed transaction
@@ -509,8 +509,11 @@ pub fn get_staking_redelegate_signed_tx(
         });
     }
 
-    build_signed_msg_tx(tx_info.into(), messages, private_key.key)
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    Ok(build_signed_msg_tx(
+        tx_info.into(),
+        messages,
+        private_key.key,
+    )?)
 }
 
 /// creates the signed transaction
@@ -538,8 +541,11 @@ pub fn get_staking_unbond_signed_tx(
         messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address });
     }
 
-    build_signed_msg_tx(tx_info.into(), messages, private_key.key)
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    Ok(build_signed_msg_tx(
+        tx_info.into(),
+        messages,
+        private_key.key,
+    )?)
 }
 
 /// creates the signed transaction
@@ -552,12 +558,11 @@ pub fn get_distribution_set_withdraw_address_signed_tx(
     private_key: PrivateKey,
     withdraw_address: String,
 ) -> Result<Vec<u8>, JsValue> {
-    build_signed_single_msg_tx(
+    Ok(build_signed_single_msg_tx(
         tx_info.into(),
         CosmosSDKMsg::DistributionSetWithdrawAddress { withdraw_address },
         private_key.key,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -570,12 +575,11 @@ pub fn get_distribution_withdraw_reward_signed_tx(
     private_key: PrivateKey,
     validator_address: String,
 ) -> Result<Vec<u8>, JsValue> {
-    build_signed_single_msg_tx(
+    Ok(build_signed_single_msg_tx(
         tx_info.into(),
         CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address },
         private_key.key,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -597,7 +601,7 @@ pub fn get_ibc_transfer_signed_tx(
 ) -> Result<Vec<u8>, JsValue> {
     // TODO: Need to support converting receiver from hex address to bech32 here.
 
-    build_signed_single_msg_tx(
+    Ok(build_signed_single_msg_tx(
         tx_info.into(),
         CosmosSDKMsg::IbcTransfer {
             receiver,
@@ -614,20 +618,16 @@ pub fn get_ibc_transfer_signed_tx(
             timeout_timestamp,
         },
         private_key.key,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// retrieves the account details (e.g. sequence and account number) for a given address
 /// TODO: switch to grpc-web
 #[wasm_bindgen]
 pub async fn query_account_details(api_url: String, address: String) -> Result<JsValue, JsValue> {
-    let account_details = get_account_details(&api_url, &address)
-        .await
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
-
+    let account_details = get_account_details(&api_url, &address).await?;
     Ok(JsValue::from_serde(&account_details)
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+        .map_err(|e| JsValue::from_str(&format!("error: {e}")))?)
 }
 
 /// retrieves the account balance for a given address and a denom
@@ -647,12 +647,10 @@ pub async fn query_account_balance(
     } else {
         BalanceApiVersion::New
     };
-    let account_details = get_account_balance(&api_url, &address, &denom, balance_api_version)
-        .await
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
-
+    let account_details =
+        get_account_balance(&api_url, &address, &denom, balance_api_version).await?;
     Ok(JsValue::from_serde(&account_details)
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+        .map_err(|e| JsValue::from_str(&format!("error: {e}")))?)
 }
 
 /// broadcasts a signed cosmos sdk tx
@@ -662,16 +660,15 @@ pub async fn broadcast_tx(
     raw_signed_tx: Vec<u8>,
 ) -> Result<JsValue, JsValue> {
     let resp = broadcast_tx_sync(&tendermint_rpc_url, raw_signed_tx)
-        .await
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?
+        .await?
         .into_result()
-        .map_err(|e| JsValue::from_str(&format!("missing_result: {}", e)))?;
+        .map_err(|e| JsValue::from_str(&format!("missing_result: {e}")))?;
 
     if let tendermint::abci::Code::Err(_) = resp.code {
         return Err(
-            JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?
+            JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {e}")))?
         );
     }
 
-    Ok(JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {}", e)))?)
+    Ok(JsValue::from_serde(&resp).map_err(|e| JsValue::from_str(&format!("error: {e}")))?)
 }

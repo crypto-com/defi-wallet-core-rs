@@ -1,6 +1,3 @@
-use std::fmt::Display;
-use wasm_bindgen::prelude::JsValue;
-
 #[allow(dead_code)]
 pub fn set_panic_hook() {
     // When the `console_error_panic_hook` feature is enabled, we can call the
@@ -11,12 +8,4 @@ pub fn set_panic_hook() {
     // https://github.com/rustwasm/console_error_panic_hook#readme
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
-}
-
-#[inline]
-pub(crate) fn format_to_js_error<E>(error: E) -> JsValue
-where
-    E: Display,
-{
-    JsValue::from_str(&format!("error: {error}"))
 }
