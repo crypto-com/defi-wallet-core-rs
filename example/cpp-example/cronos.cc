@@ -37,9 +37,10 @@ void cronos_process() {
       build_eth_signed_tx(eth_tx_info, chainid, true, *privatekey);
   String balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
   cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
-  String txhash =
-      broadcast_eth_signed_raw_tx(signedtx, mycronosrpc).transaction_hash;
-  cout << "txhash=" << txhash << endl;
+  String status =
+      broadcast_eth_signed_raw_tx(signedtx, mycronosrpc).status;
+  assert(status == "1");
+
   balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
   cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
 
@@ -121,15 +122,16 @@ void cronos_process() {
   Box<PrivateKey> signer2_privatekey = signer2_wallet->get_key(hdpath);
 
   // transfer erc20 token from signer1 to signer2
-  String response = erc20.transfer(signer2_address, "0", *privatekey);
+  status = erc20.transfer(signer2_address, "0", *privatekey).status;
+  assert(status == "1");
 
   erc20_balance = get_contract_balance(myaddress1, *erc20_details, mycronosrpc);
   cout << "ERC20 GOLD balance after trasnfer=" << erc20_balance.c_str() << endl;
 
   // transfer erc721 from signer1 to signer2
-  response =
-      erc721.transfer_from(myaddress1, signer2_address, "1", *privatekey);
-
+  status =
+      erc721.transfer_from(myaddress1, signer2_address, "1", *privatekey).status;
+  assert(status == "1");
   erc721_balance =
       get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
   assert(erc721_balance == "0");
@@ -137,8 +139,9 @@ void cronos_process() {
   assert(erc721_owner == signer2_address);
 
   // safe transfer erc721 from signer2 to signer1
-  response = erc721.safe_transfer_from(signer2_address, myaddress1, "1",
-                                       *signer2_privatekey);
+  status = erc721.safe_transfer_from(signer2_address, myaddress1, "1",
+                                       *signer2_privatekey).status;
+  assert(status == "1");
   erc721_balance =
       get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
   assert(erc721_balance == "1");
@@ -147,8 +150,9 @@ void cronos_process() {
 
   // safe transfer erc1155 from signer1 to signer2
   rust::Vec<uint8_t> erc1155_data;
-  response = erc1155.safe_transfer_from(myaddress1, signer2_address, "0", "100",
-                                        erc1155_data, *privatekey);
+  status = erc1155.safe_transfer_from(myaddress1, signer2_address, "0", "100",
+                                        erc1155_data, *privatekey).status;
+  assert(status == "1");
 
   String erc1155_balance =
       get_contract_balance(myaddress1, *erc1155_details_0, mycronosrpc);
@@ -166,9 +170,11 @@ void cronos_process() {
   hex_amounts.push_back("1");
   hex_amounts.push_back("300");
   hex_amounts.push_back("400");
-  response =
+  status =
       erc1155.safe_batch_transfer_from(myaddress1, signer2_address, token_ids,
-                                       hex_amounts, erc1155_data, *privatekey);
+                                       hex_amounts, erc1155_data, *privatekey).status;
+  assert(status == "1");
+
   erc1155_balance =
       get_contract_balance(myaddress1, *erc1155_details_1, mycronosrpc);
   cout << "SILVER balance after transfer=" << erc1155_balance.c_str() << endl;

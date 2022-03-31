@@ -98,7 +98,7 @@ impl ffi::Erc20 {
         to_address: String,
         amount_hex: String,
         private_key: &PrivateKey,
-    ) -> Result<String> {
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
         let receipt = common::broadcast_contract_transfer_tx_blocking(
             common::ContractTransfer::Erc20Transfer {
                 contract_address: self.contract_address.clone(),
@@ -112,7 +112,7 @@ impl ffi::Erc20 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt)
+        Ok(receipt.into())
     }
 
     /// Moves `amount_hex` tokens from `from_address` to `to_address` using the allowance mechanism.
@@ -122,7 +122,7 @@ impl ffi::Erc20 {
         to_address: String,
         amount_hex: String,
         private_key: &PrivateKey,
-    ) -> Result<String> {
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
         let receipt = common::broadcast_contract_transfer_tx_blocking(
             common::ContractTransfer::Erc20TransferFrom {
                 contract_address: self.contract_address.clone(),
@@ -137,7 +137,7 @@ impl ffi::Erc20 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt)
+        Ok(receipt.into())
     }
 }
 
@@ -187,7 +187,7 @@ impl ffi::Erc721 {
         to_address: String,
         token_id: String,
         private_key: &PrivateKey,
-    ) -> Result<String> {
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
         let receipt = common::broadcast_contract_transfer_tx_blocking(
             common::ContractTransfer::Erc721TransferFrom {
                 contract_address: self.contract_address.clone(),
@@ -202,7 +202,7 @@ impl ffi::Erc721 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt)
+        Ok(receipt.into())
     }
 
     /// Safely transfers `token_id` token from `from_address` to `to_address`.
@@ -212,7 +212,7 @@ impl ffi::Erc721 {
         to_address: String,
         token_id: String,
         private_key: &PrivateKey,
-    ) -> Result<String> {
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
         let receipt = common::broadcast_contract_transfer_tx_blocking(
             common::ContractTransfer::Erc721SafeTransferFrom {
                 contract_address: self.contract_address.clone(),
@@ -227,7 +227,7 @@ impl ffi::Erc721 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt)
+        Ok(receipt.into())
     }
 
     /// Safely transfers `token_id` token from `from_address` to `to_address` with
@@ -239,7 +239,7 @@ impl ffi::Erc721 {
         token_id: String,
         additional_data: Vec<u8>,
         private_key: &PrivateKey,
-    ) -> Result<String> {
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
         let receipt = common::broadcast_contract_transfer_tx_blocking(
             common::ContractTransfer::Erc721SafeTransferFromWithAdditionalData {
                 contract_address: self.contract_address.clone(),
@@ -255,7 +255,7 @@ impl ffi::Erc721 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt)
+        Ok(receipt.into())
     }
 }
 /// Construct an Erc1155 struct
@@ -294,7 +294,7 @@ impl ffi::Erc1155 {
         amount_hex: String,
         additional_data: Vec<u8>,
         private_key: &PrivateKey,
-    ) -> Result<String> {
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
         let receipt = common::broadcast_contract_transfer_tx_blocking(
             common::ContractTransfer::Erc1155SafeTransferFrom {
                 contract_address: self.contract_address.clone(),
@@ -311,7 +311,7 @@ impl ffi::Erc1155 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt)
+        Ok(receipt.into())
     }
 
     /// Batched version of safeTransferFrom.
@@ -323,7 +323,7 @@ impl ffi::Erc1155 {
         hex_amounts: Vec<String>,
         additional_data: Vec<u8>,
         private_key: &PrivateKey,
-    ) -> Result<String> {
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
         let receipt = common::broadcast_contract_batch_transfer_tx_blocking(
             common::ContractBatchTransfer::Erc1155 {
                 contract_address: self.contract_address.clone(),
@@ -340,7 +340,7 @@ impl ffi::Erc1155 {
             private_key.key.clone(),
             &self.web3api_url,
         )?;
-        Ok(receipt)
+        Ok(receipt.into())
     }
 }
 
@@ -375,6 +375,7 @@ mod ffi {
     extern "C++" {
         include!("defi-wallet-core-cpp/src/lib.rs.h");
         type PrivateKey = crate::PrivateKey;
+        type CronosTransactionReceiptRaw = crate::ffi::CronosTransactionReceiptRaw;
     }
 
     extern "Rust" {
@@ -403,14 +404,14 @@ mod ffi {
             to_address: String,
             amount_hex: String,
             private_key: &PrivateKey,
-        ) -> Result<String>;
+        ) -> Result<CronosTransactionReceiptRaw>;
         fn transfer_from(
             self: &Erc20,
             from_address: String,
             to_address: String,
             amount_hex: String,
             private_key: &PrivateKey,
-        ) -> Result<String>;
+        ) -> Result<CronosTransactionReceiptRaw>;
 
         fn new_erc721(address: String, web3api_url: String, chian_id: u64) -> Erc721;
         fn name(self: &Erc721) -> Result<String>;
@@ -423,14 +424,14 @@ mod ffi {
             to_address: String,
             token_id: String,
             private_key: &PrivateKey,
-        ) -> Result<String>;
+        ) -> Result<CronosTransactionReceiptRaw>;
         fn safe_transfer_from(
             self: &Erc721,
             from_address: String,
             to_address: String,
             token_id: String,
             private_key: &PrivateKey,
-        ) -> Result<String>;
+        ) -> Result<CronosTransactionReceiptRaw>;
 
         fn safe_transfer_from_with_data(
             self: &Erc721,
@@ -439,7 +440,7 @@ mod ffi {
             token_id: String,
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
-        ) -> Result<String>;
+        ) -> Result<CronosTransactionReceiptRaw>;
 
         fn new_erc1155(address: String, web3api_url: String, chian_id: u64) -> Erc1155;
         fn uri(self: &Erc1155, token_id: String) -> Result<String>;
@@ -452,7 +453,7 @@ mod ffi {
             amount_hex: String,
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
-        ) -> Result<String>;
+        ) -> Result<CronosTransactionReceiptRaw>;
         fn safe_batch_transfer_from(
             self: &Erc1155,
             from_address: String,
@@ -461,6 +462,6 @@ mod ffi {
             hex_amounts: Vec<String>,
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
-        ) -> Result<String>;
+        ) -> Result<CronosTransactionReceiptRaw>;
     }
 }
