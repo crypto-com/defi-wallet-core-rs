@@ -38,7 +38,7 @@ tendermint-rpc = "0.23"
 thiserror = "1"
 uniffi = { version = "^0.17", optional = true }
 uniffi_macros = { version = "^0.17", optional = true }
-url = "2.2.2"
+url = "2"
 # grpc-web-client would be replaced if tonic has native grpc-web support.
 # Check https://github.com/hyperium/tonic/issues/645
 grpc-web-client = { git = "https://github.com/titanous/grpc-web-client"}
