@@ -12,6 +12,12 @@ use secrecy::{ExposeSecret, SecretString, Zeroize};
 use std::str::FromStr;
 use std::sync::Arc;
 
+/// wasm binding related functions
+mod wasm_binding;
+
+#[cfg(target_arch = "wasm32")]
+pub use wasm_binding::*;
+
 /// describes what coin type to use (for HD derivation or address generation)
 #[derive(Clone)]
 pub enum WalletCoin {

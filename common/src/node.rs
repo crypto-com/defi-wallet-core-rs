@@ -5,9 +5,13 @@ mod cosmos_sdk;
 pub mod ethereum;
 /// wrappers around chainmain NFT grpc/grpc-web API
 pub mod nft;
+/// wasm binding related functions
+mod wasm_binding;
 
 mod error;
 pub use cosmos_sdk::*;
 pub use error::*;
 pub use ethereum::*;
 pub use nft::*;
+#[cfg(target_arch = "wasm32")]
+pub use wasm_binding::*;

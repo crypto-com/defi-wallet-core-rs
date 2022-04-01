@@ -1,8 +1,8 @@
 // ! NFT module support
 
 use crate::{
-    build_signed_single_msg_tx, msg_wrapper, proto, AccountId, CosmosSDKMsg, CosmosSDKTxInfo,
-    ErrorReport, ErrorWrapper, Msg, Result, SecretKey,
+    build_signed_single_msg_tx, msg_wrapper, proto, AccountId, CosmosError, CosmosSDKMsg,
+    CosmosSDKTxInfo, ErrorReport, Msg, Result, SecretKey,
 };
 use eyre::WrapErr;
 use std::fmt::Display;
@@ -349,7 +349,7 @@ pub fn get_nft_issue_denom_signed_tx(
     id: String,
     name: String,
     schema: String,
-) -> Result<Vec<u8>, ErrorWrapper> {
+) -> Result<Vec<u8>, CosmosError> {
     build_signed_single_msg_tx(
         tx_info,
         CosmosSDKMsg::NftIssueDenom { id, name, schema },
@@ -371,7 +371,7 @@ pub fn get_nft_mint_signed_tx(
     uri: String,
     data: String,
     recipient: String,
-) -> Result<Vec<u8>, ErrorWrapper> {
+) -> Result<Vec<u8>, CosmosError> {
     build_signed_single_msg_tx(
         tx_info,
         CosmosSDKMsg::NftMint {
@@ -398,7 +398,7 @@ pub fn get_nft_edit_signed_tx(
     name: String,
     uri: String,
     data: String,
-) -> Result<Vec<u8>, ErrorWrapper> {
+) -> Result<Vec<u8>, CosmosError> {
     build_signed_single_msg_tx(
         tx_info,
         CosmosSDKMsg::NftEdit {
@@ -422,7 +422,7 @@ pub fn get_nft_transfer_signed_tx(
     id: String,
     denom_id: String,
     recipient: String,
-) -> Result<Vec<u8>, ErrorWrapper> {
+) -> Result<Vec<u8>, CosmosError> {
     build_signed_single_msg_tx(
         tx_info,
         CosmosSDKMsg::NftTransfer {
@@ -443,7 +443,7 @@ pub fn get_nft_burn_signed_tx(
     secret_key: Arc<SecretKey>,
     id: String,
     denom_id: String,
-) -> Result<Vec<u8>, ErrorWrapper> {
+) -> Result<Vec<u8>, CosmosError> {
     build_signed_single_msg_tx(tx_info, CosmosSDKMsg::NftBurn { id, denom_id }, secret_key)
 }
 

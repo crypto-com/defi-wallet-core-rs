@@ -26,9 +26,6 @@ ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "de275db56a1be948
 ibc = { version = "0.13", default-features = false }
 ibc-proto = { version = "0.17", default-features = false }
 prost = "0.9"
-# NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
-# FIXME: https://github.com/rust-bitcoin/rust-bip39/issues/14
-rand = { version = "0.6", default-features = false, features = ["wasm-bindgen"] }
 rand_core = { version = "0.6", features = ["std"] }
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 secrecy = "0.8"
@@ -41,8 +38,7 @@ tendermint-rpc = "0.23"
 thiserror = "1"
 uniffi = { version = "^0.17", optional = true }
 uniffi_macros = { version = "^0.17", optional = true }
-url = "2.2.2"
-wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
+url = "2"
 # grpc-web-client would be replaced if tonic has native grpc-web support.
 # Check https://github.com/hyperium/tonic/issues/645
 grpc-web-client = { git = "https://github.com/titanous/grpc-web-client"}
@@ -50,11 +46,18 @@ grpc-web-client = { git = "https://github.com/titanous/grpc-web-client"}
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 cosmos-sdk-proto = { version = "0.10", default-features = false, features = ["cosmwasm"] }
 defi-wallet-core-proto = { version = "0.1", path = "../proto" }
+# NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
+# FIXME: https://github.com/rust-bitcoin/rust-bip39/issues/14
+rand = { version = "0.6", default-features = false, features = ["wasm-bindgen"] }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost"] }
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 cosmos-sdk-proto = { version = "0.10", features = ["grpc"] }
 defi-wallet-core-proto = { version = "0.1", path = "../proto", features = ["transport"] }
+# NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
+# FIXME: https://github.com/rust-bitcoin/rust-bip39/issues/14
+rand = "0.6"
 tokio = { version = "1", features = ["rt"] }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
 

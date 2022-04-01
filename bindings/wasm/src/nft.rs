@@ -1,5 +1,5 @@
 use crate::cosmos_sdk::CosmosSDKTxInfoRaw;
-use crate::PrivateKey;
+use crate::{format_to_js_error, PrivateKey};
 use defi_wallet_core_common::{node, transaction};
 use wasm_bindgen::prelude::*;
 
@@ -15,14 +15,13 @@ pub fn get_nft_issue_denom_signed_tx(
     name: String,
     schema: String,
 ) -> Result<Vec<u8>, JsValue> {
-    transaction::nft::get_nft_issue_denom_signed_tx(
+    Ok(transaction::nft::get_nft_issue_denom_signed_tx(
         tx_info.into(),
         private_key.key,
         id,
         name,
         schema,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -40,7 +39,7 @@ pub fn get_nft_mint_signed_tx(
     data: String,
     recipient: String,
 ) -> Result<Vec<u8>, JsValue> {
-    transaction::nft::get_nft_mint_signed_tx(
+    Ok(transaction::nft::get_nft_mint_signed_tx(
         tx_info.into(),
         private_key.key,
         id,
@@ -49,8 +48,7 @@ pub fn get_nft_mint_signed_tx(
         uri,
         data,
         recipient,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -67,7 +65,7 @@ pub fn get_nft_edit_signed_tx(
     uri: String,
     data: String,
 ) -> Result<Vec<u8>, JsValue> {
-    transaction::nft::get_nft_edit_signed_tx(
+    Ok(transaction::nft::get_nft_edit_signed_tx(
         tx_info.into(),
         private_key.key,
         id,
@@ -75,8 +73,7 @@ pub fn get_nft_edit_signed_tx(
         name,
         uri,
         data,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -91,14 +88,13 @@ pub fn get_nft_transfer_signed_tx(
     denom_id: String,
     recipient: String,
 ) -> Result<Vec<u8>, JsValue> {
-    transaction::nft::get_nft_transfer_signed_tx(
+    Ok(transaction::nft::get_nft_transfer_signed_tx(
         tx_info.into(),
         private_key.key,
         id,
         denom_id,
         recipient,
-    )
-    .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    )?)
 }
 
 /// creates the signed transaction
@@ -112,8 +108,12 @@ pub fn get_nft_burn_signed_tx(
     id: String,
     denom_id: String,
 ) -> Result<Vec<u8>, JsValue> {
-    transaction::nft::get_nft_burn_signed_tx(tx_info.into(), private_key.key, id, denom_id)
-        .map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+    Ok(transaction::nft::get_nft_burn_signed_tx(
+        tx_info.into(),
+        private_key.key,
+        id,
+        denom_id,
+    )?)
 }
 
 /// Grpc Web Client wrapper for Wasm
@@ -126,36 +126,36 @@ impl GrpcWebClient {
     }
     pub async fn supply(&mut self, denom_id: String, owner: String) -> Result<JsValue, JsValue> {
         let supply = self.0.supply(denom_id, owner).await?;
-        JsValue::from_serde(&supply).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+        JsValue::from_serde(&supply).map_err(format_to_js_error)
     }
 
     pub async fn owner(&mut self, denom_id: String, owner: String) -> Result<JsValue, JsValue> {
         let owner = self.0.owner(denom_id, owner).await?;
-        JsValue::from_serde(&owner).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+        JsValue::from_serde(&owner).map_err(format_to_js_error)
     }
 
     pub async fn collection(&mut self, denom_id: String) -> Result<JsValue, JsValue> {
         let collection = self.0.collection(denom_id).await?;
-        JsValue::from_serde(&collection).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+        JsValue::from_serde(&collection).map_err(format_to_js_error)
     }
 
     pub async fn denom(&mut self, denom_id: String) -> Result<JsValue, JsValue> {
         let denom = self.0.denom(denom_id).await?;
-        JsValue::from_serde(&denom).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+        JsValue::from_serde(&denom).map_err(format_to_js_error)
     }
 
     pub async fn denom_by_name(&mut self, denom_name: String) -> Result<JsValue, JsValue> {
         let denom = self.0.denom_by_name(denom_name).await?;
-        JsValue::from_serde(&denom).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+        JsValue::from_serde(&denom).map_err(format_to_js_error)
     }
 
     pub async fn denoms(&mut self) -> Result<JsValue, JsValue> {
         let denoms = self.0.denoms().await?;
-        JsValue::from_serde(&denoms).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+        JsValue::from_serde(&denoms).map_err(format_to_js_error)
     }
 
     pub async fn nft(&mut self, denom_id: String, token_id: String) -> Result<JsValue, JsValue> {
         let nft = self.0.nft(denom_id, token_id).await?;
-        JsValue::from_serde(&nft).map_err(|e| JsValue::from_str(&format!("error: {}", e)))
+        JsValue::from_serde(&nft).map_err(format_to_js_error)
     }
 }

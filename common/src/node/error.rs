@@ -1,5 +1,3 @@
-use wasm_bindgen::JsValue;
-
 /// wrapper around API errors
 #[derive(Debug, thiserror::Error)]
 pub enum RestError {
@@ -16,10 +14,4 @@ pub enum RestError {
     GRPCError(tonic::Status),
     #[error("ErrorReport")]
     ErrorReport,
-}
-
-impl From<RestError> for JsValue {
-    fn from(e: RestError) -> Self {
-        JsValue::from_str(&format!("error: {}", e))
-    }
 }
