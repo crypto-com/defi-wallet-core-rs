@@ -11,7 +11,12 @@ use rand_core::OsRng;
 use secrecy::{ExposeSecret, SecretString, Zeroize};
 use std::str::FromStr;
 use std::sync::Arc;
-use wasm_bindgen::JsValue;
+
+/// wasm binding related functions
+mod wasm_binding;
+
+#[cfg(target_arch = "wasm32")]
+pub use wasm_binding::*;
 
 /// describes what coin type to use (for HD derivation or address generation)
 #[derive(Clone)]
@@ -100,12 +105,6 @@ pub enum HdWrapError {
     HDError(anyhow::Error),
     #[error("AccountId error: {0}")]
     AccountId(eyre::Report),
-}
-
-impl From<HdWrapError> for JsValue {
-    fn from(error: HdWrapError) -> Self {
-        JsValue::from_str(&format!("error: {error}"))
-    }
 }
 
 impl HDWallet {
@@ -227,12 +226,6 @@ pub enum SecretKeyWrapError {
     InvalidBytes(ecdsa::Error),
     #[error("Invalid hex: {0}")]
     InvalidHex(FromHexError),
-}
-
-impl From<SecretKeyWrapError> for JsValue {
-    fn from(error: SecretKeyWrapError) -> Self {
-        JsValue::from_str(&format!("error: {error}"))
-    }
 }
 
 /// wrapper around secp256k1 signing key
