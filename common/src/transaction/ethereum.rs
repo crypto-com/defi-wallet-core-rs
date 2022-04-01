@@ -25,8 +25,8 @@ pub enum EthError {
     HexConversion,
     #[error("Converting from decimal failed: {0}")]
     ParseError(ConversionError),
-    #[error("Invalid node Web3 connection URL")]
-    NodeUrl,
+    #[error("Invalid node Web3 connection URL: {0}")]
+    NodeUrl(url::ParseError),
     #[error("Transaction sending failed: {0}")]
     SendTxFail(SignerMiddlewareError<Provider<Http>, Wallet<SigningKey>>),
     #[error("Transaction sending failed: {0}")]

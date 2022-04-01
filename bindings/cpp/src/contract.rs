@@ -139,6 +139,41 @@ impl ffi::Erc20 {
         )?;
         Ok(receipt.into())
     }
+
+    /// Allows `approved_address` to withdraw from your account multiple times, up to the
+    /// `amount_hex` amount.
+    fn approve(
+        &self,
+        approved_address: String,
+        amount_hex: String,
+        private_key: &PrivateKey,
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
+        let receipt = common::broadcast_contract_approval_tx_blocking(
+            common::ContractApproval::Erc20 {
+                contract_address: self.contract_address.clone(),
+                approved_address,
+                amount_hex,
+            },
+            EthNetwork::Custom {
+                chain_id: self.chain_id,
+                legacy: self.inner_legacy,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt.into())
+    }
+
+    /// Returns the amount which `spender` is still allowed to withdraw from `owner`.
+    fn allowance(&self, owner: String, spender: String) -> Result<String> {
+        let allowance = ethereum::erc20::get_allowance_blocking(
+            &self.contract_address,
+            &owner,
+            &spender,
+            &self.web3api_url,
+        )?;
+        Ok(allowance.to_string())
+    }
 }
 
 /// Construct an Erc721 struct
@@ -257,6 +292,73 @@ impl ffi::Erc721 {
         )?;
         Ok(receipt.into())
     }
+
+    fn approve(
+        &self,
+        approved_address: String,
+        token_id: String,
+        private_key: &PrivateKey,
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
+        let receipt = common::broadcast_contract_approval_tx_blocking(
+            common::ContractApproval::Erc721Approve {
+                contract_address: self.contract_address.clone(),
+                approved_address,
+                token_id,
+            },
+            EthNetwork::Custom {
+                chain_id: self.chain_id,
+                legacy: self.inner_legacy,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt.into())
+    }
+
+    /// Enable or disable approval for a third party `approved_address` to manage all of
+    /// sender's assets
+    fn set_approval_for_all(
+        &self,
+        approved_address: String,
+        approved: bool,
+        private_key: &PrivateKey,
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
+        let receipt = common::broadcast_contract_approval_tx_blocking(
+            common::ContractApproval::Erc721SetApprovalForAll {
+                contract_address: self.contract_address.clone(),
+                approved_address,
+                approved,
+            },
+            EthNetwork::Custom {
+                chain_id: self.chain_id,
+                legacy: self.inner_legacy,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt.into())
+    }
+
+    /// Get the approved address for a single NFT by `token_id`
+    fn get_approved(&self, token_id: String) -> Result<String> {
+        let address = ethereum::erc721::get_approved_blocking(
+            &self.contract_address,
+            &token_id,
+            &self.web3api_url,
+        )?;
+        Ok(address.to_string())
+    }
+
+    /// Query if an address is an authorized `approved_address` for `owner`
+    fn is_approved_for_all(&self, owner: String, approved_address: String) -> Result<bool> {
+        let approved = ethereum::erc721::get_is_approved_for_all_blocking(
+            &self.contract_address,
+            &owner,
+            &approved_address,
+            &self.web3api_url,
+        )?;
+        Ok(approved)
+    }
 }
 /// Construct an Erc1155 struct
 fn new_erc1155(contract_address: String, web3api_url: String, chain_id: u64) -> ffi::Erc1155 {
@@ -342,6 +444,41 @@ impl ffi::Erc1155 {
         )?;
         Ok(receipt.into())
     }
+
+    /// Enable or disable approval for a third party `approved_address` to manage all of
+    /// sender's assets
+    fn set_approval_for_all(
+        &self,
+        approved_address: String,
+        approved: bool,
+        private_key: &PrivateKey,
+    ) -> Result<ffi::CronosTransactionReceiptRaw> {
+        let receipt = common::broadcast_contract_approval_tx_blocking(
+            common::ContractApproval::Erc1155 {
+                contract_address: self.contract_address.clone(),
+                approved_address,
+                approved,
+            },
+            EthNetwork::Custom {
+                chain_id: self.chain_id,
+                legacy: self.inner_legacy,
+            },
+            private_key.key.clone(),
+            &self.web3api_url,
+        )?;
+        Ok(receipt.into())
+    }
+
+    /// Query if an address is an authorized `approved_address` for `owner`
+    fn is_approved_for_all(&self, owner: String, approved_address: String) -> Result<bool> {
+        let approved = ethereum::erc1155::get_is_approved_for_all_blocking(
+            &self.contract_address,
+            &owner,
+            &approved_address,
+            &self.web3api_url,
+        )?;
+        Ok(approved)
+    }
 }
 
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
@@ -412,6 +549,13 @@ mod ffi {
             amount_hex: String,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        fn approve(
+            self: &Erc20,
+            approved_address: String,
+            amount_hex: String,
+            private_key: &PrivateKey,
+        ) -> Result<CronosTransactionReceiptRaw>;
+        fn allowance(self: &Erc20, owner: String, spender: String) -> Result<String>;
 
         fn new_erc721(address: String, web3api_url: String, chian_id: u64) -> Erc721;
         fn name(self: &Erc721) -> Result<String>;
@@ -432,6 +576,24 @@ mod ffi {
             token_id: String,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        fn approve(
+            self: &Erc721,
+            approved_address: String,
+            token_id: String,
+            private_key: &PrivateKey,
+        ) -> Result<CronosTransactionReceiptRaw>;
+        fn set_approval_for_all(
+            self: &Erc721,
+            approved_address: String,
+            approved: bool,
+            private_key: &PrivateKey,
+        ) -> Result<CronosTransactionReceiptRaw>;
+        fn get_approved(self: &Erc721, token_id: String) -> Result<String>;
+        fn is_approved_for_all(
+            self: &Erc721,
+            owner: String,
+            approved_address: String,
+        ) -> Result<bool>;
 
         fn safe_transfer_from_with_data(
             self: &Erc721,
@@ -463,5 +625,16 @@ mod ffi {
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        fn set_approval_for_all(
+            self: &Erc1155,
+            approved_address: String,
+            approved: bool,
+            private_key: &PrivateKey,
+        ) -> Result<CronosTransactionReceiptRaw>;
+        fn is_approved_for_all(
+            self: &Erc1155,
+            owner: String,
+            approved_address: String,
+        ) -> Result<bool>;
     }
 }
