@@ -201,7 +201,7 @@ impl Wallet {
         password: Option<String>,
         word_count: Option<MnemonicWordCount>,
     ) -> Result<Wallet, JsValue> {
-        let wallet = HDWallet::generate_wallet(password, word_count.map(|val| val.into()))
+        let wallet = HDWallet::new_wallet(password, word_count.map(|val| val.into()))
             .map_err(|e| JsValue::from_str(&format!("error: {}", e)))?;
         Ok(Self { wallet })
     }

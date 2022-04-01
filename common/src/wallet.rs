@@ -7,7 +7,7 @@ use ethers::core::k256::ecdsa;
 use ethers::prelude::{LocalWallet, Signature, Signer};
 use ethers::utils::hex::{self, FromHexError, ToHex};
 use ethers::utils::{hash_message, secret_key_to_address};
-use rand_core::OsRng;
+use rand_core::{OsRng, RngCore};
 use secrecy::{ExposeSecret, SecretString, Zeroize};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -127,6 +127,22 @@ impl HDWallet {
         let pass = SecretString::new(password.unwrap_or_default());
         let word_count = word_count.unwrap_or(MnemonicWordCount::TwentyFour);
         HDWallet::generate_english(pass, word_count)
+    }
+
+    /// build new HD wallet with a BIP39 backup phrase (English words)
+    /// used in extension
+    pub fn new_wallet(
+        password: Option<String>,
+        word_count: Option<MnemonicWordCount>,
+    ) -> Result<Self, HdWrapError> {
+        let pass = SecretString::new(password.unwrap_or_default());
+        let mut entropy = [0u8; 32];
+        OsRng.fill_bytes(&mut entropy);
+        let size: usize = word_count.unwrap_or(MnemonicWordCount::TwentyFour).into();
+        let entropy_bytes = (size / 3) * 4;
+        let phrase = Mnemonic::from_entropy_in(Language::English, &entropy[0..entropy_bytes])
+            .map_err(|e| HdWrapError::HDError(e.into()))?;
+        Self::recover_english(SecretString::new(phrase.to_string()), pass)
     }
 
     /// recovers/imports HD wallet from a BIP39 backup phrase (English words)
