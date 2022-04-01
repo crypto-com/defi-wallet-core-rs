@@ -192,7 +192,7 @@ pub enum ContractOwner {
 /// given the account address, it returns the amount of native token it owns
 pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<String, EthError> {
     let to = address_from_str(address)?;
-    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let result = provider
         .get_balance(to, None)
         .await
@@ -203,7 +203,7 @@ pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<String,
 /// given the account address, it returns the nonce / number of transactions sent from the account
 pub async fn get_eth_transaction_count(address: &str, web3api_url: &str) -> Result<U256, EthError> {
     let to = address_from_str(address)?;
-    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let result = provider
         .get_transaction_count(to, None)
         .await
@@ -218,7 +218,7 @@ pub async fn get_contract_balance(
     web3api_url: &str,
 ) -> Result<U256, EthError> {
     let address = address_from_str(account_address)?;
-    let client = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
 
     let call = match &contract_details {
         ContractBalance::Erc20 { contract_address }
@@ -248,7 +248,7 @@ pub async fn get_token_owner(
     contract_owner: ContractOwner,
     web3api_url: &str,
 ) -> Result<Address, EthError> {
-    let client = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let call = match &contract_owner {
         ContractOwner::Erc721 {
             contract_address,
@@ -273,7 +273,7 @@ pub async fn broadcast_contract_approval_tx(
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
-    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match approval_details {
@@ -333,7 +333,7 @@ pub async fn broadcast_contract_transfer_tx(
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
-    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match transfer_details {
@@ -443,7 +443,7 @@ pub async fn broadcast_contract_batch_transfer_tx(
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
-    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match details {
@@ -500,7 +500,7 @@ pub async fn broadcast_sign_eth_tx(
     .derive_address(secret_key.as_ref())
     .map_err(|_| EthError::HexConversion)?;
     let tx = construct_simple_eth_transfer_tx(&from_address, to_hex, amount, legacy, chain_id)?;
-    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
 
@@ -521,7 +521,7 @@ pub async fn broadcast_eth_signed_raw_tx(
     raw_tx: Vec<u8>,
     web3api_url: &str,
 ) -> Result<EthersTransactionReceipt, EthError> {
-    let provider = Provider::<Http>::try_from(web3api_url).map_err(|_| EthError::NodeUrl)?;
+    let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let pending_tx = provider
         .send_raw_transaction(raw_tx.into())
         .await
