@@ -93,6 +93,13 @@ where
             .ok_or(EthError::MempoolDrop)?;
         Ok(tx_receipt)
     }
+    // TODO Returns the estimated gas cost for the underlying transaction to be executed
+    pub async fn estimate_gas(&self) -> Result<U256, EthError> {
+        self.contract_call
+            .estimate_gas()
+            .await
+            .map_err(EthError::ContractSendError)
+    }
 }
 
 impl<M, D> From<builders::ContractCall<M, D>> for ContractCall<M, D>

@@ -1,7 +1,7 @@
 use super::address_from_str;
 use crate::contract::{Contract, ContractCall};
 use crate::{u256_from_str, EthError};
-use ethers::prelude::{Address, Http, Provider};
+use ethers::prelude::{Address, Http, Provider, U256};
 
 pub async fn get_name(contract_address: &str, web3api_url: &str) -> Result<String, EthError> {
     let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
@@ -55,6 +55,39 @@ pub async fn get_is_approved_for_all(
     ContractCall::from(call).call().await
 }
 
+pub async fn get_total_supply(contract_address: &str, web3api_url: &str) -> Result<U256, EthError> {
+    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let contract = Contract::new_erc721(contract_address, client)?;
+    let call = contract.total_supply();
+    ContractCall::from(call).call().await
+}
+
+pub async fn get_token_by_index(
+    contract_address: &str,
+    index: &str,
+    web3api_url: &str,
+) -> Result<U256, EthError> {
+    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let contract = Contract::new_erc721(contract_address, client)?;
+    let index = u256_from_str(index)?;
+    let call = contract.token_by_index(index);
+    ContractCall::from(call).call().await
+}
+
+pub async fn get_token_of_owner_by_index(
+    contract_address: &str,
+    owner: &str,
+    index: &str,
+    web3api_url: &str,
+) -> Result<U256, EthError> {
+    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let contract = Contract::new_erc721(contract_address, client)?;
+    let owner = address_from_str(owner)?;
+    let index = u256_from_str(index)?;
+    let call = contract.token_of_owner_by_index(owner, index);
+    ContractCall::from(call).call().await
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_name_blocking(contract_address: &str, web3api_url: &str) -> Result<String, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
@@ -99,6 +132,41 @@ pub fn get_is_approved_for_all_blocking(
         contract_address,
         owner,
         operator,
+        web3api_url,
+    ))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn get_total_supply_blocking(
+    contract_address: &str,
+    web3api_url: &str,
+) -> Result<U256, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    rt.block_on(get_total_supply(contract_address, web3api_url))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn get_token_by_index_blocking(
+    contract_address: &str,
+    index: &str,
+    web3api_url: &str,
+) -> Result<U256, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    rt.block_on(get_token_by_index(contract_address, index, web3api_url))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn get_token_of_owner_by_index_blocking(
+    contract_address: &str,
+    owner: &str,
+    index: &str,
+    web3api_url: &str,
+) -> Result<U256, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    rt.block_on(get_token_of_owner_by_index(
+        contract_address,
+        owner,
+        index,
         web3api_url,
     ))
 }

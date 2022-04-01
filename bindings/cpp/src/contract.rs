@@ -174,6 +174,13 @@ impl ffi::Erc20 {
         )?;
         Ok(allowance.to_string())
     }
+
+    /// Returns the amount of tokens in existence.
+    fn total_supply(&self) -> Result<String> {
+        let supply =
+            ethereum::erc20::get_total_supply_blocking(&self.contract_address, &self.web3api_url)?;
+        Ok(supply.to_string())
+    }
 }
 
 /// Construct an Erc721 struct
@@ -358,6 +365,42 @@ impl ffi::Erc721 {
             &self.web3api_url,
         )?;
         Ok(approved)
+    }
+
+    /// Returns the total amount of tokens stored by the contract.
+    ///
+    /// From IERC721Enumerable, an optional extension of the standard ERC721
+    fn total_supply(&self) -> Result<String> {
+        let supply =
+            ethereum::erc721::get_total_supply_blocking(&self.contract_address, &self.web3api_url)?;
+        Ok(supply.to_string())
+    }
+
+    /// Returns a token ID at a given index of all the tokens stored by the contract. Use along
+    /// with totalSupply to enumerate all tokens.
+    ///
+    /// From IERC721Enumerable, an optional extension of the standard ERC721
+    fn token_by_index(&self, index: String) -> Result<String> {
+        let token = ethereum::erc721::get_token_by_index_blocking(
+            &self.contract_address,
+            &index,
+            &self.web3api_url,
+        )?;
+        Ok(token.to_string())
+    }
+
+    /// Returns a token ID owned by owner at a given index of its token list. Use along with
+    /// balanceOf to enumerate all of owner's tokens.
+    ///
+    /// From IERC721Enumerable, an optional extension of the standard ERC721
+    fn token_of_owner_by_index(&self, owner: String, index: String) -> Result<String> {
+        let token = ethereum::erc721::get_token_of_owner_by_index_blocking(
+            &self.contract_address,
+            &owner,
+            &index,
+            &self.web3api_url,
+        )?;
+        Ok(token.to_string())
     }
 }
 /// Construct an Erc1155 struct
@@ -556,6 +599,7 @@ mod ffi {
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
         fn allowance(self: &Erc20, owner: String, spender: String) -> Result<String>;
+        fn total_supply(self: &Erc20) -> Result<String>;
 
         fn new_erc721(address: String, web3api_url: String, chian_id: u64) -> Erc721;
         fn name(self: &Erc721) -> Result<String>;
@@ -603,6 +647,9 @@ mod ffi {
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        fn total_supply(self: &Erc721) -> Result<String>;
+        fn token_by_index(self: &Erc721, index: String) -> Result<String>;
+        fn token_of_owner_by_index(self: &Erc721, owner: String, index: String) -> Result<String>;
 
         fn new_erc1155(address: String, web3api_url: String, chian_id: u64) -> Erc1155;
         fn uri(self: &Erc1155, token_id: String) -> Result<String>;
