@@ -5,6 +5,7 @@
 #include <iostream>
 
 void cronos_process();
+void test_approval();
 using namespace std;
 using namespace org::defi_wallet_core;
 using namespace rust::cxxbridge1;
@@ -37,8 +38,7 @@ void cronos_process() {
       build_eth_signed_tx(eth_tx_info, chainid, true, *privatekey);
   String balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
   cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
-  String status =
-      broadcast_eth_signed_raw_tx(signedtx, mycronosrpc).status;
+  String status = broadcast_eth_signed_raw_tx(signedtx, mycronosrpc).status;
   assert(status == "1");
 
   balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
@@ -99,6 +99,7 @@ void cronos_process() {
   cout << "Name of ERC20=" << erc20.name() << endl;
   cout << "Symbol of ERC20=" << erc20.symbol() << endl;
   cout << "Decimals of ERC20=" << int(erc20.decimals()) << endl;
+  cout << "Total Supply of ERC20=" << erc20.total_supply() << endl;
 
   Erc721 erc721 = new_erc721("0x2305f3980715c9D247455504080b41072De38aB9",
                              mycronosrpc, chainid)
@@ -106,6 +107,8 @@ void cronos_process() {
   cout << "Name of ERC721=" << erc721.name() << endl;
   cout << "Symbol of ERC721=" << erc721.symbol() << endl;
   cout << "Token URI of ERC721=" << erc721.token_uri("1") << endl;
+  // cout << "Total Supply of ERC721=" << erc721.total_supply() << endl; // the
+  // contract must support IERC721Enumerable
 
   Erc1155 erc1155 = new_erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc",
                                 mycronosrpc, chainid)
@@ -122,15 +125,15 @@ void cronos_process() {
   Box<PrivateKey> signer2_privatekey = signer2_wallet->get_key(hdpath);
 
   // transfer erc20 token from signer1 to signer2
-  status = erc20.transfer(signer2_address, "0", *privatekey).status;
+  status = erc20.transfer(signer2_address, "100", *privatekey).status;
   assert(status == "1");
 
   erc20_balance = get_contract_balance(myaddress1, *erc20_details, mycronosrpc);
   cout << "ERC20 GOLD balance after trasnfer=" << erc20_balance.c_str() << endl;
 
   // transfer erc721 from signer1 to signer2
-  status =
-      erc721.transfer_from(myaddress1, signer2_address, "1", *privatekey).status;
+  status = erc721.transfer_from(myaddress1, signer2_address, "1", *privatekey)
+               .status;
   assert(status == "1");
   erc721_balance =
       get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
@@ -139,8 +142,10 @@ void cronos_process() {
   assert(erc721_owner == signer2_address);
 
   // safe transfer erc721 from signer2 to signer1
-  status = erc721.safe_transfer_from(signer2_address, myaddress1, "1",
-                                       *signer2_privatekey).status;
+  status = erc721
+               .safe_transfer_from(signer2_address, myaddress1, "1",
+                                   *signer2_privatekey)
+               .status;
   assert(status == "1");
   erc721_balance =
       get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
@@ -150,8 +155,10 @@ void cronos_process() {
 
   // safe transfer erc1155 from signer1 to signer2
   rust::Vec<uint8_t> erc1155_data;
-  status = erc1155.safe_transfer_from(myaddress1, signer2_address, "0", "100",
-                                        erc1155_data, *privatekey).status;
+  status = erc1155
+               .safe_transfer_from(myaddress1, signer2_address, "0", "100",
+                                   erc1155_data, *privatekey)
+               .status;
   assert(status == "1");
 
   String erc1155_balance =
@@ -170,9 +177,10 @@ void cronos_process() {
   hex_amounts.push_back("1");
   hex_amounts.push_back("300");
   hex_amounts.push_back("400");
-  status =
-      erc1155.safe_batch_transfer_from(myaddress1, signer2_address, token_ids,
-                                       hex_amounts, erc1155_data, *privatekey).status;
+  status = erc1155
+               .safe_batch_transfer_from(myaddress1, signer2_address, token_ids,
+                                         hex_amounts, erc1155_data, *privatekey)
+               .status;
   assert(status == "1");
 
   erc1155_balance =
@@ -188,4 +196,46 @@ void cronos_process() {
   erc1155_balance =
       get_contract_balance(myaddress1, *erc1155_details_4, mycronosrpc);
   cout << "SHIELD balance after transfer=" << erc1155_balance.c_str() << endl;
+
+  test_approval();
+}
+
+void test_approval() {
+  String mycronosrpc = getEnv("MYCRONOSRPC");
+  char hdpath[100];
+  int cointype = 60;
+  int chainid = 777; // defined in cronos-devnet.yaml
+  snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+
+  String signer1_mnemonics = getEnv("SIGNER1_MNEMONIC");
+  Box<Wallet> signer1_wallet = createWallet(signer1_mnemonics);
+  String signer1_address = signer1_wallet->get_eth_address(0);
+  Box<PrivateKey> signer1_privatekey = signer1_wallet->get_key(hdpath);
+
+  String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
+  Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
+  String signer2_address = signer2_wallet->get_eth_address(0);
+  Box<PrivateKey> signer2_privatekey = signer2_wallet->get_key(hdpath);
+
+  String validator1_mnemonics = getEnv("VALIDATOR1_MNEMONIC");
+  Box<Wallet> validator1_wallet = createWallet(validator1_mnemonics);
+  String validator1_address = validator1_wallet->get_eth_address(0);
+  Box<PrivateKey> validator1_privatekey = signer1_wallet->get_key(hdpath);
+
+  Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
+                          mycronosrpc, chainid)
+                    .legacy();
+
+  // signer1 approve singer2 allowance
+  erc20.approve(signer2_address, "1000", *signer1_privatekey);
+  String allowance = erc20.allowance(signer1_address, signer2_address);
+  cout << "Signer2 Allowance=" << allowance.c_str() << endl;
+  assert(allowance == "4096"); // TODO bug: original hex, but output is decimal
+
+  // transfer from signer1 to validator1 using the allowance mechanism
+  erc20.transfer_from(signer1_address, validator1_address, "100",
+                      *signer2_privatekey);
+  allowance = erc20.allowance(signer1_address, signer2_address);
+  cout << "Signer2 Allowance=" << allowance.c_str() << endl;
+  assert(allowance == "3840"); // TODO bug: original hex, but output is decimal
 }
