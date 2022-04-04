@@ -6,7 +6,7 @@ publish = false
 rust-version = "1.57"
 
 [dependencies]
-prost = "0.9"
+prost = "0.10"
 prost-build = "0.9"
 regex = "1"
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "transport"] }
