@@ -43,6 +43,7 @@ cpp: build_cpp
 	. ./scripts/.env && cd $(cpp_example) && make run
 
 cppx86_64:
+	rustup target add x86_64-apple-darwin
 	cargo build --package defi-wallet-core-cpp --release --target x86_64-apple-darwin
 	cd $(cpp_example) && make x86_64_build
 

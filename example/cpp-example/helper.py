@@ -83,6 +83,17 @@ def collect_files(pattern, search_path, recursive=True):
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Generate bindings for the C++ example."
+    )
+    parser.add_argument(
+        "--target_dir", metavar="path", required=True, help="path to target dir"
+    )
+    args = parser.parse_args()
+    TARGET_DIR = args.target_dir
+    print("TARGET_DIR= ", TARGET_DIR)
     copy_to(CPP_EXAMPLE_PATH)
     copy_to(VS_EXAMPLE_PATH)
     copy_example_files(VS_EXAMPLE_PATH)
