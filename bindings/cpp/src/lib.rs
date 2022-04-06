@@ -433,6 +433,7 @@ pub mod ffi {
         fn get_default_address(self: &Wallet, coin: CoinType) -> Result<String>;
         /// returns the address from index in wallet
         fn get_address(self: &Wallet, coin: CoinType, index: u32) -> Result<String>;
+        /// returns the ethereum address from index in wallet
         fn get_eth_address(self: &Wallet, index: u32) -> Result<String>;
         /// return the secret key for a given derivation path
         fn get_key(self: &Wallet, derivation_path: String) -> Result<Box<PrivateKey>>;
@@ -685,6 +686,7 @@ impl Wallet {
         Ok(self.wallet.get_address(coin.into(), index)?)
     }
 
+    /// returns the ethereum address from index in wallet
     pub fn get_eth_address(&self, index: u32) -> Result<String> {
         self.get_address(CoinType::Ethereum, index)
     }
