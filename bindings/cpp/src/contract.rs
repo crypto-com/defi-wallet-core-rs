@@ -300,6 +300,9 @@ impl ffi::Erc721 {
         Ok(receipt.into())
     }
 
+    /// Gives permission to `approved_address` to transfer `token_id` token to another account.
+    /// The approval is cleared when the token is transferred. Only a single account can be
+    /// approved at a time, so approving the zero address clears previous approvals.
     fn approve(
         &self,
         approved_address: String,
@@ -574,17 +577,24 @@ mod ffi {
         fn erc721_owner(contract_address: String, token_id: String) -> Box<ContractOwner>;
         fn get_token_owner(contract_owner: &ContractOwner, api_url: &str) -> Result<String>;
 
+        /// Construct an Erc20 struct
         fn new_erc20(address: String, web3api_url: String, chian_id: u64) -> Erc20;
+        /// Returns the name of the token
         fn name(self: &Erc20) -> Result<String>;
+        /// Returns the symbol of the token
         fn symbol(self: &Erc20) -> Result<String>;
+        /// Returns the number of decimals the token uses
         fn decimals(self: &Erc20) -> Result<u8>;
+        /// Makes a legacy transaction instead of an EIP-1559 one
         fn legacy(self: &mut Erc20) -> Erc20;
+        /// Moves `amount_hex` tokens from the caller’s account to `to_address`.
         fn transfer(
             self: &Erc20,
             to_address: String,
             amount_hex: String,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        /// Moves `amount_hex` tokens from `from_address` to `to_address` using the allowance mechanism.
         fn transfer_from(
             self: &Erc20,
             from_address: String,
@@ -592,20 +602,30 @@ mod ffi {
             amount_hex: String,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        /// Allows `approved_address` to withdraw from your account multiple times, up to the
+        /// `amount_hex` amount.
         fn approve(
             self: &Erc20,
             approved_address: String,
             amount_hex: String,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        /// Returns the amount which `spender` is still allowed to withdraw from `owner`.
         fn allowance(self: &Erc20, owner: String, spender: String) -> Result<String>;
+        /// Returns the amount of tokens in existence.
         fn total_supply(self: &Erc20) -> Result<String>;
 
+        /// Construct an Erc721 struct
         fn new_erc721(address: String, web3api_url: String, chian_id: u64) -> Erc721;
+        /// Get the descriptive name for a collection of NFTs in this contract
         fn name(self: &Erc721) -> Result<String>;
+        /// Get the abbreviated name for NFTs in this contract
         fn symbol(self: &Erc721) -> Result<String>;
+        /// Get the distinct Uniform Resource Identifier (URI) for a given asset
         fn token_uri(self: &Erc721, token_id: String) -> Result<String>;
+        /// Makes a legacy transaction instead of an EIP-1559 one
         fn legacy(self: &mut Erc721) -> Erc721;
+        /// Transfers `token_id` token from `from_address` to `to_address`.
         fn transfer_from(
             self: &Erc721,
             from_address: String,
@@ -613,6 +633,7 @@ mod ffi {
             token_id: String,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        /// Safely transfers `token_id` token from `from_address` to `to_address`.
         fn safe_transfer_from(
             self: &Erc721,
             from_address: String,
@@ -620,25 +641,8 @@ mod ffi {
             token_id: String,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
-        fn approve(
-            self: &Erc721,
-            approved_address: String,
-            token_id: String,
-            private_key: &PrivateKey,
-        ) -> Result<CronosTransactionReceiptRaw>;
-        fn set_approval_for_all(
-            self: &Erc721,
-            approved_address: String,
-            approved: bool,
-            private_key: &PrivateKey,
-        ) -> Result<CronosTransactionReceiptRaw>;
-        fn get_approved(self: &Erc721, token_id: String) -> Result<String>;
-        fn is_approved_for_all(
-            self: &Erc721,
-            owner: String,
-            approved_address: String,
-        ) -> Result<bool>;
-
+        /// Safely transfers `token_id` token from `from_address` to `to_address` with
+        /// `additional_data`.
         fn safe_transfer_from_with_data(
             self: &Erc721,
             from_address: String,
@@ -647,13 +651,54 @@ mod ffi {
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        /// Gives permission to `approved_address` to transfer `token_id` token to another account.
+        /// The approval is cleared when the token is transferred. Only a single account can be
+        /// approved at a time, so approving the zero address clears previous approvals.
+        fn approve(
+            self: &Erc721,
+            approved_address: String,
+            token_id: String,
+            private_key: &PrivateKey,
+        ) -> Result<CronosTransactionReceiptRaw>;
+        /// Enable or disable approval for a third party `approved_address` to manage all of
+        /// sender's assets
+        fn set_approval_for_all(
+            self: &Erc721,
+            approved_address: String,
+            approved: bool,
+            private_key: &PrivateKey,
+        ) -> Result<CronosTransactionReceiptRaw>;
+        /// Get the approved address for a single NFT by `token_id`
+        fn get_approved(self: &Erc721, token_id: String) -> Result<String>;
+        /// Query if an address is an authorized `approved_address` for `owner`
+        fn is_approved_for_all(
+            self: &Erc721,
+            owner: String,
+            approved_address: String,
+        ) -> Result<bool>;
+        /// Returns the total amount of tokens stored by the contract.
+        ///
+        /// From IERC721Enumerable, an optional extension of the standard ERC721
         fn total_supply(self: &Erc721) -> Result<String>;
+        /// Returns a token ID at a given index of all the tokens stored by the contract. Use along
+        /// with totalSupply to enumerate all tokens.
+        ///
+        /// From IERC721Enumerable, an optional extension of the standard ERC721
         fn token_by_index(self: &Erc721, index: String) -> Result<String>;
+        /// Returns a token ID owned by owner at a given index of its token list. Use along with
+        /// balanceOf to enumerate all of owner's tokens.
+        ///
+        /// From IERC721Enumerable, an optional extension of the standard ERC721
         fn token_of_owner_by_index(self: &Erc721, owner: String, index: String) -> Result<String>;
 
+        /// Construct an Erc1155 struct
         fn new_erc1155(address: String, web3api_url: String, chian_id: u64) -> Erc1155;
+        /// Get distinct Uniform Resource Identifier (URI) for a given token
         fn uri(self: &Erc1155, token_id: String) -> Result<String>;
+        /// Makes a legacy transaction instead of an EIP-1559 one
         fn legacy(self: &mut Erc1155) -> Erc1155;
+        /// Transfers `amount_hex` tokens of `token_id` from `from_address` to `to_address` with
+        /// `additional_data`.
         fn safe_transfer_from(
             self: &Erc1155,
             from_address: String,
@@ -663,6 +708,7 @@ mod ffi {
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        /// Batched version of safeTransferFrom.
         fn safe_batch_transfer_from(
             self: &Erc1155,
             from_address: String,
@@ -672,12 +718,15 @@ mod ffi {
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        /// Enable or disable approval for a third party `approved_address` to manage all of
+        /// sender's assets
         fn set_approval_for_all(
             self: &Erc1155,
             approved_address: String,
             approved: bool,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
+        /// Query if an address is an authorized `approved_address` for `owner`
         fn is_approved_for_all(
             self: &Erc1155,
             owner: String,
