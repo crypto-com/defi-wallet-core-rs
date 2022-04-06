@@ -2,4 +2,5 @@
 # or run in msys2 shell
 cargo build --package defi-wallet-core-cpp --release
 cd ../cpp-example
-python3 helper.py
+python3 helper.py  --target_dir ../../target/release
+
