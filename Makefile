@@ -77,6 +77,21 @@ cpp-ci-tests: build_cpp
 
 cpp-tests: python-tests
 
+# TODO or use other docs engine
+cpp-docs: build_cpp
+	grep -h -R -E "//" -A 1 -R --include "$(cpp_example)/defi-wallet-core-cpp/src/*.h" > cpp_docs.md
+# add break line
+	sed -i '' 's/--/---\n/g' cpp_docs.md
+# add more spaces in beginning of line
+	sed -i '' 's/  /    /g' cpp_docs.md
+	sed -i '' "s/^\/\//    \/\//g" cpp_docs.md
+	sed -i '' "s/^::/    ::/g" cpp_docs.md
+# remove #endif lines
+	sed -i '' 's/^#endif.*//g' cpp_docs.md
+# remove } // lines
+	sed -i '' 's/^} \/\/.*//g' cpp_docs.md
+
+
 lint-py:
 	flake8 --show-source --count --statistics \
           --format="::error file=%(path)s,line=%(row)d,col=%(col)d::%(path)s:%(row)d:%(col)d: %(code)s %(text)s" \
