@@ -53,18 +53,18 @@ impl ffi::Erc20 {
         self.clone()
     }
 
-    /// Moves `amount_hex` tokens from the caller’s account to `to_address`.
+    /// Moves `amount` tokens from the caller’s account to `to_address`.
     fn transfer(
         &self,
         to_address: String,
-        amount_hex: String,
+        amount: String,
         private_key: &PrivateKey,
     ) -> Result<ffi::CronosTransactionReceiptRaw> {
         let receipt = common::broadcast_contract_transfer_tx_blocking(
             common::ContractTransfer::Erc20Transfer {
                 contract_address: self.contract_address.clone(),
                 to_address,
-                amount_hex,
+                amount,
             },
             EthNetwork::Custom {
                 chain_id: self.chain_id,
@@ -76,12 +76,12 @@ impl ffi::Erc20 {
         Ok(receipt.into())
     }
 
-    /// Moves `amount_hex` tokens from `from_address` to `to_address` using the allowance mechanism.
+    /// Moves `amount` tokens from `from_address` to `to_address` using the allowance mechanism.
     fn transfer_from(
         &self,
         from_address: String,
         to_address: String,
-        amount_hex: String,
+        amount: String,
         private_key: &PrivateKey,
     ) -> Result<ffi::CronosTransactionReceiptRaw> {
         let receipt = common::broadcast_contract_transfer_tx_blocking(
@@ -89,7 +89,7 @@ impl ffi::Erc20 {
                 contract_address: self.contract_address.clone(),
                 from_address,
                 to_address,
-                amount_hex,
+                amount,
             },
             EthNetwork::Custom {
                 chain_id: self.chain_id,
@@ -102,18 +102,18 @@ impl ffi::Erc20 {
     }
 
     /// Allows `approved_address` to withdraw from your account multiple times, up to the
-    /// `amount_hex` amount.
+    /// `amount` amount.
     fn approve(
         &self,
         approved_address: String,
-        amount_hex: String,
+        amount: String,
         private_key: &PrivateKey,
     ) -> Result<ffi::CronosTransactionReceiptRaw> {
         let receipt = common::broadcast_contract_approval_tx_blocking(
             common::ContractApproval::Erc20 {
                 contract_address: self.contract_address.clone(),
                 approved_address,
-                amount_hex,
+                amount,
             },
             EthNetwork::Custom {
                 chain_id: self.chain_id,
@@ -449,14 +449,14 @@ impl ffi::Erc1155 {
         self.clone()
     }
 
-    /// Transfers `amount_hex` tokens of `token_id` from `from_address` to `to_address` with
+    /// Transfers `amount` tokens of `token_id` from `from_address` to `to_address` with
     /// `additional_data`.
     fn safe_transfer_from(
         &self,
         from_address: String,
         to_address: String,
         token_id: String,
-        amount_hex: String,
+        amount: String,
         additional_data: Vec<u8>,
         private_key: &PrivateKey,
     ) -> Result<ffi::CronosTransactionReceiptRaw> {
@@ -466,7 +466,7 @@ impl ffi::Erc1155 {
                 from_address,
                 to_address,
                 token_id,
-                amount_hex,
+                amount,
                 additional_data,
             },
             EthNetwork::Custom {
@@ -485,7 +485,7 @@ impl ffi::Erc1155 {
         from_address: String,
         to_address: String,
         token_ids: Vec<String>,
-        hex_amounts: Vec<String>,
+        amounts: Vec<String>,
         additional_data: Vec<u8>,
         private_key: &PrivateKey,
     ) -> Result<ffi::CronosTransactionReceiptRaw> {
@@ -495,7 +495,7 @@ impl ffi::Erc1155 {
                 from_address,
                 to_address,
                 token_ids,
-                hex_amounts,
+                amounts,
                 additional_data,
             },
             EthNetwork::Custom {
@@ -591,27 +591,27 @@ mod ffi {
         fn decimals(self: &Erc20) -> Result<u8>;
         /// Makes a legacy transaction instead of an EIP-1559 one
         fn legacy(self: &mut Erc20) -> Erc20;
-        /// Moves `amount_hex` tokens from the caller’s account to `to_address`.
+        /// Moves `amount` tokens from the caller’s account to `to_address`.
         fn transfer(
             self: &Erc20,
             to_address: String,
-            amount_hex: String,
+            amount: String,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
-        /// Moves `amount_hex` tokens from `from_address` to `to_address` using the allowance mechanism.
+        /// Moves `amount` tokens from `from_address` to `to_address` using the allowance mechanism.
         fn transfer_from(
             self: &Erc20,
             from_address: String,
             to_address: String,
-            amount_hex: String,
+            amount: String,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
         /// Allows `approved_address` to withdraw from your account multiple times, up to the
-        /// `amount_hex` amount.
+        /// `amount` amount.
         fn approve(
             self: &Erc20,
             approved_address: String,
-            amount_hex: String,
+            amount: String,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
         /// Returns the amount which `spender` is still allowed to withdraw from `owner`.
@@ -714,14 +714,14 @@ mod ffi {
         fn uri(self: &Erc1155, token_id: String) -> Result<String>;
         /// Makes a legacy transaction instead of an EIP-1559 one
         fn legacy(self: &mut Erc1155) -> Erc1155;
-        /// Transfers `amount_hex` tokens of `token_id` from `from_address` to `to_address` with
+        /// Transfers `amount` tokens of `token_id` from `from_address` to `to_address` with
         /// `additional_data`.
         fn safe_transfer_from(
             self: &Erc1155,
             from_address: String,
             to_address: String,
             token_id: String,
-            amount_hex: String,
+            amount: String,
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
@@ -731,7 +731,7 @@ mod ffi {
             from_address: String,
             to_address: String,
             token_ids: Vec<String>,
-            hex_amounts: Vec<String>,
+            amounts: Vec<String>,
             additional_data: Vec<u8>,
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;

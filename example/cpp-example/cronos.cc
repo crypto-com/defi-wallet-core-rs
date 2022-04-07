@@ -87,7 +87,7 @@ void cronos_process() {
   // transfer erc20 token from signer1 to signer2
   status = erc20.transfer(signer2_address, "100", *privatekey).status;
   assert(status == "1");
-  assert(erc20.balance_of(myaddress1) == "99999999999999999999999744");
+  assert(erc20.balance_of(myaddress1) == "99999999999999999999999900");
 
   // transfer erc721 from signer1 to signer2
   status = erc721.transfer_from(myaddress1, signer2_address, "1", *privatekey)
@@ -112,28 +112,28 @@ void cronos_process() {
                                    erc1155_data, *privatekey)
                .status;
   assert(status == "1");
-  assert(erc1155.balance_of(myaddress1, "0") == "999999999999999664");
+  assert(erc1155.balance_of(myaddress1, "0") == "999999999999999850");
 
   // safe batch transfer erc1155 from signer1 to signer2
-  rust::Vec<String> token_ids, hex_amounts;
+  rust::Vec<String> token_ids, amounts;
   token_ids.push_back("1");
   token_ids.push_back("2");
   token_ids.push_back("3");
   token_ids.push_back("4");
 
-  hex_amounts.push_back("200");
-  hex_amounts.push_back("1");
-  hex_amounts.push_back("300");
-  hex_amounts.push_back("400");
+  amounts.push_back("200");
+  amounts.push_back("1");
+  amounts.push_back("300");
+  amounts.push_back("400");
   status = erc1155
                .safe_batch_transfer_from(myaddress1, signer2_address, token_ids,
-                                         hex_amounts, erc1155_data, *privatekey)
+                                         amounts, erc1155_data, *privatekey)
                .status;
   assert(status == "1");
-  assert(erc1155.balance_of(myaddress1, "1") == "999999999999999999999999488");
+  assert(erc1155.balance_of(myaddress1, "1") == "999999999999999999999999800");
   assert(erc1155.balance_of(myaddress1, "2") == "0");
-  assert(erc1155.balance_of(myaddress1, "3") == "999999232");
-  assert(erc1155.balance_of(myaddress1, "4") == "999998976");
+  assert(erc1155.balance_of(myaddress1, "3") == "999999700");
+  assert(erc1155.balance_of(myaddress1, "4") == "999999600");
 
   test_approval();
 }
@@ -167,11 +167,11 @@ void test_approval() {
   // signer1 approve singer2 allowance
   erc20.approve(signer2_address, "1000", *signer1_privatekey);
   String allowance = erc20.allowance(signer1_address, signer2_address);
-  assert(allowance == "4096"); // TODO bug: original hex, but output is decimal
+  assert(allowance == "1000");
 
   // transfer from signer1 to validator1 using the allowance mechanism
   erc20.transfer_from(signer1_address, validator1_address, "100",
                       *signer2_privatekey);
   allowance = erc20.allowance(signer1_address, signer2_address);
-  assert(allowance == "3840"); // TODO bug: original hex, but output is decimal
+  assert(allowance == "900");
 }
