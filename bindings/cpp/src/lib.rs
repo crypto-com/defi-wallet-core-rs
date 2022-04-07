@@ -504,11 +504,23 @@ pub mod ffi {
         ) -> Result<Vec<u8>>;
 
         type CppLoginInfo;
-        // Create Login Info by `msg`
+        /// Create Login Info by `msg`
+        /// all information from the EIP-4361 plaintext message:
+        /// https://eips.ethereum.org/EIPS/eip-4361
         fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>>;
         /// Sign Login Info
+        /// constructs the plaintext message and signs it according to EIP-191
+        /// (as per EIP-4361). The returned vector is a serialized recoverable signature
+        /// (as used in Ethereum).
         fn sign_logininfo(self: &CppLoginInfo, private_key: &PrivateKey) -> Result<Vec<u8>>;
         /// Verify Login Info
+        /// It verified the signature matches + also verifies the content of the message:
+        /// - address in the message matches the address recovered from the signature
+        /// - the time is valid
+        /// ...
+        /// NOTE: the server may still need to do extra verifications according to its needs
+        /// (e.g. verify chain-id, nonce, uri + possibly fetch additional data associated
+        /// with the given Ethereum address, such as ERC-20/ERC-721/ERC-1155 asset ownership)
         fn verify_logininfo(self: &CppLoginInfo, signature: &[u8]) -> Result<Vec<u8>>;
 
         /// create cronos tx info to sign
@@ -528,10 +540,13 @@ pub mod ffi {
             secret_key: &PrivateKey,
         ) -> Result<Vec<u8>>;
 
-        /// get balance from cronos node
+        /// given the account address, it returns the amount of native token it owns
+        /// Returns the corresponding account's native token balance
+        /// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
         pub fn get_eth_balance(address: &str, api_url: &str) -> Result<String>;
 
-        /// get nonce from cronos node , which transsaction count of the address
+        /// Returns the corresponding account's nonce / number of transactions
+        /// sent from it.
         pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String>;
 
         /// broadcast signed cronos tx
@@ -996,6 +1011,8 @@ pub fn broadcast_tx(
 }
 
 // create Login Info by `msg`
+/// all information from the EIP-4361 plaintext message:
+/// https://eips.ethereum.org/EIPS/eip-4361
 fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>> {
     let msg = siwe::Message::from_str(&msg)?;
     let logininfo = LoginInfo { msg };
@@ -1004,6 +1021,9 @@ fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>> {
 
 impl CppLoginInfo {
     /// Sign Login Info
+    /// constructs the plaintext message and signs it according to EIP-191
+    /// (as per EIP-4361). The returned vector is a serialized recoverable signature
+    /// (as used in Ethereum).
     pub fn sign_logininfo(&self, private_key: &PrivateKey) -> anyhow::Result<Vec<u8>> {
         let message = self.logininfo.msg.to_string();
         let secretkey = private_key.key.clone();
@@ -1014,6 +1034,13 @@ impl CppLoginInfo {
     }
 
     /// Verify Login Info
+    /// It verified the signature matches + also verifies the content of the message:
+    /// - address in the message matches the address recovered from the signature
+    /// - the time is valid
+    /// ...
+    /// NOTE: the server may still need to do extra verifications according to its needs
+    /// (e.g. verify chain-id, nonce, uri + possibly fetch additional data associated
+    /// with the given Ethereum address, such as ERC-20/ERC-721/ERC-1155 asset ownership)
     pub fn verify_logininfo(&self, signature: &[u8]) -> anyhow::Result<Vec<u8>> {
         let sig: [u8; 65] = signature
             .try_into()
@@ -1085,13 +1112,15 @@ pub fn build_custom_eth_signed_tx(
     Ok(signedtx)
 }
 
-/// get balance from cronos node
+/// Returns the corresponding account's native token balance
+/// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
 pub fn get_eth_balance(address: &str, api_url: &str) -> Result<String> {
     let res = defi_wallet_core_common::get_eth_balance_blocking(address, api_url)?;
     Ok(res)
 }
 
-/// get nonce from cronos node , which transsaction count of the address
+/// Returns the corresponding account's nonce / number of transactions
+/// sent from it.
 pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
     let res = defi_wallet_core_common::get_eth_transaction_count_blocking(address, api_url)?;
     // convert res to string
