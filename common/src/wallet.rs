@@ -135,7 +135,7 @@ impl HDWallet {
         HDWallet::generate_english(pass, word_count)
     }
 
-    /// build new HD wallet with a BIP39 backup phrase (English words)
+    /// build new HD wallet with a BIP39 backup phrase (English words) and password
     /// used in extension
     pub fn new_wallet(
         password: Option<String>,
@@ -151,7 +151,7 @@ impl HDWallet {
         Self::recover_english(SecretString::new(phrase.to_string()), pass)
     }
 
-    /// recovers/imports HD wallet from a BIP39 backup phrase (English words)
+    /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
     pub fn recover_wallet(
         mnemonic_phrase: String,
         password: Option<String>,

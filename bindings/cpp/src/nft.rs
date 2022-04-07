@@ -52,6 +52,8 @@ mod ffi {
     }
 
     extern "Rust" {
+        /// creates the signed transaction
+        /// for `MsgIssueDenom` from the Chainmain nft module
         fn get_nft_issue_denom_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -59,6 +61,8 @@ mod ffi {
             name: String,
             schema: String,
         ) -> Result<Vec<u8>>;
+        /// creates the signed transaction
+        /// for `MsgMintNft` from the Chainmain nft module
         fn get_nft_mint_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -69,6 +73,8 @@ mod ffi {
             data: String,
             recipient: String,
         ) -> Result<Vec<u8>>;
+        /// creates the signed transaction
+        /// for `MsgEditNft` from the Chainmain nft module
         fn get_nft_edit_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -78,6 +84,8 @@ mod ffi {
             uri: String,
             data: String,
         ) -> Result<Vec<u8>>;
+        /// creates the signed transaction
+        /// for `MsgTransferNft` from the Chainmain nft module
         fn get_nft_transfer_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -85,6 +93,8 @@ mod ffi {
             denom_id: String,
             recipient: String,
         ) -> Result<Vec<u8>>;
+        /// creates the signed transaction
+        /// for `MsgBurnNft` from the Chainmain nft module
         fn get_nft_burn_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -95,13 +105,21 @@ mod ffi {
 
     extern "Rust" {
         type GrpcClient;
+        /// Create a new grpc client
         fn new_grpc_client(grpc_url: String) -> Result<Box<GrpcClient>>;
+        /// Supply queries the total supply of a given denom or owner
         fn supply(self: &GrpcClient, denom_id: String, owner: String) -> Result<u64>;
+        /// Owner queries the NFTs of the specified owner
         fn owner(self: &GrpcClient, denom_id: String, owner: String) -> Result<Owner>;
+        /// Collection queries the NFTs of the specified denom
         fn collection(self: &GrpcClient, denom_id: String) -> Result<Collection>;
+        /// Denom queries the definition of a given denom
         fn denom(self: &GrpcClient, denom_id: String) -> Result<Denom>;
+        /// DenomByName queries the definition of a given denom by name
         fn denom_by_name(self: &GrpcClient, denom_name: String) -> Result<Denom>;
+        /// Denoms queries all the denoms
         fn denoms(self: &GrpcClient) -> Result<Vec<Denom>>;
+        /// NFT queries the NFT for the given denom and token ID
         fn nft(self: &GrpcClient, denom_id: String, token_id: String) -> Result<BaseNft>;
 
         pub fn to_string(self: &Owner) -> String;

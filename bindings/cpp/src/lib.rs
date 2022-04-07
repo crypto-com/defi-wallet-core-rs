@@ -377,15 +377,19 @@ pub mod ffi {
     }
 
     extern "Rust" {
+        /// query account details from cosmos address
         pub fn query_account_details(api_url: String, address: String) -> Result<String>;
+        /// query account details info from cosmos address
         pub fn query_account_details_info(
             api_url: String,
             address: String,
         ) -> Result<CosmosAccountInfoRaw>;
+        /// broadcast the cosmos transaction
         pub fn broadcast_tx(
             tendermint_rpc_url: String,
             raw_signed_tx: Vec<u8>,
         ) -> Result<CosmosTransactionReceiptRaw>;
+        /// query account balance from cosmos address and denom name
         pub fn query_account_balance(
             api_url: String,
             address: String,
@@ -394,11 +398,14 @@ pub mod ffi {
         ) -> Result<String>;
         type PrivateKey;
         type CosmosSDKMsgRaw;
+        /// creates the signed transaction for cosmos
         pub fn get_msg_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
             msg: &CosmosSDKMsgRaw,
         ) -> Result<Vec<u8>>;
+        /// creates the transaction signing payload (`SignDoc`)
+        /// for `MsgSend` from the Cosmos SDK bank module
         pub fn get_single_bank_send_signdoc(
             tx_info: CosmosSDKTxInfoRaw,
             sender_pubkey: Vec<u8>,
@@ -407,6 +414,8 @@ pub mod ffi {
             denom: String,
         ) -> Result<Vec<u8>>;
 
+        /// creates the signed transaction
+        /// for `MsgSend` from the Cosmos SDK bank module
         fn get_single_bank_send_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -415,16 +424,27 @@ pub mod ffi {
             denom: String,
         ) -> Result<Vec<u8>>;
         type Wallet;
+        /// generates the HD wallet with a BIP39 backup phrase (English words) and password
         fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wallet>>;
 
+        /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
         fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>>;
+        /// returns the default address of the wallet
         fn get_default_address(self: &Wallet, coin: CoinType) -> Result<String>;
+        /// returns the address from index in wallet
         fn get_address(self: &Wallet, coin: CoinType, index: u32) -> Result<String>;
+        /// returns the ethereum address from index in wallet
         fn get_eth_address(self: &Wallet, index: u32) -> Result<String>;
+        /// return the secret key for a given derivation path
         fn get_key(self: &Wallet, derivation_path: String) -> Result<Box<PrivateKey>>;
+        /// generates a random private key
         fn new_privatekey() -> Box<PrivateKey>;
+        /// constructs private key from bytes
         fn new_privatekey_from_bytes(bytes: Vec<u8>) -> Result<Box<PrivateKey>>;
+        /// constructs private key from hex string
         fn new_privatekey_from_hex(hex: String) -> Result<Box<PrivateKey>>;
+        /// creates the signed transaction
+        /// for `MsgDelegate` from the Cosmos SDK staking module
         fn get_staking_delegate_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -433,6 +453,8 @@ pub mod ffi {
             denom: String,
             with_reward_withdrawal: bool,
         ) -> Result<Vec<u8>>;
+        /// creates the signed transaction
+        /// for `MsgBeginRedelegate` from the Cosmos SDK staking module
         fn get_staking_redelegate_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -442,6 +464,8 @@ pub mod ffi {
             denom: String,
             with_reward_withdrawal: bool,
         ) -> Result<Vec<u8>>;
+        /// creates the signed transaction
+        /// for `MsgUndelegate` from the Cosmos SDK staking module
         fn get_staking_unbond_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -450,16 +474,22 @@ pub mod ffi {
             denom: String,
             with_reward_withdrawal: bool,
         ) -> Result<Vec<u8>>;
+        /// creates the signed transaction
+        /// for `MsgSetWithdrawAddress` from the Cosmos SDK distributon module
         fn get_distribution_set_withdraw_address_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
             withdraw_address: String,
         ) -> Result<Vec<u8>>;
+        /// creates the signed transaction
+        /// for `MsgWithdrawDelegatorReward` from the Cosmos SDK distributon module
         fn get_distribution_withdraw_reward_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
             validator_address: String,
         ) -> Result<Vec<u8>>;
+        /// creates the signed transaction
+        /// for `MsgTransfer` from the Cosmos SDK ibc module
         fn get_ibc_transfer_signed_tx(
             tx_info: CosmosSDKTxInfoRaw,
             private_key: &PrivateKey,
@@ -474,17 +504,35 @@ pub mod ffi {
         ) -> Result<Vec<u8>>;
 
         type CppLoginInfo;
+        /// Create Login Info by `msg`
+        /// all information from the EIP-4361 plaintext message:
+        /// https://eips.ethereum.org/EIPS/eip-4361
         fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>>;
+        /// Sign Login Info
+        /// constructs the plaintext message and signs it according to EIP-191
+        /// (as per EIP-4361). The returned vector is a serialized recoverable signature
+        /// (as used in Ethereum).
         fn sign_logininfo(self: &CppLoginInfo, private_key: &PrivateKey) -> Result<Vec<u8>>;
+        /// Verify Login Info
+        /// It verified the signature matches + also verifies the content of the message:
+        /// - address in the message matches the address recovered from the signature
+        /// - the time is valid
+        /// ...
+        /// NOTE: the server may still need to do extra verifications according to its needs
+        /// (e.g. verify chain-id, nonce, uri + possibly fetch additional data associated
+        /// with the given Ethereum address, such as ERC-20/ERC-721/ERC-1155 asset ownership)
         fn verify_logininfo(self: &CppLoginInfo, signature: &[u8]) -> Result<Vec<u8>>;
 
+        /// create cronos tx info to sign
         pub fn new_eth_tx_info() -> EthTxInfoRaw;
+        /// sign cronos tx with private key
         pub fn build_eth_signed_tx(
             tx_info: EthTxInfoRaw,
             network: &str,
             secret_key: &PrivateKey,
         ) -> Result<Vec<u8>>;
         #[cxx_name = "build_eth_signed_tx"]
+        /// sign cronos tx with private key in custom network
         pub fn build_custom_eth_signed_tx(
             tx_info: EthTxInfoRaw,
             chain_id: u64,
@@ -492,10 +540,16 @@ pub mod ffi {
             secret_key: &PrivateKey,
         ) -> Result<Vec<u8>>;
 
+        /// given the account address, it returns the amount of native token it owns
+        /// Returns the corresponding account's native token balance
+        /// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
         pub fn get_eth_balance(address: &str, api_url: &str) -> Result<String>;
 
+        /// Returns the corresponding account's nonce / number of transactions
+        /// sent from it.
         pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String>;
 
+        /// broadcast signed cronos tx
         pub fn broadcast_eth_signed_raw_tx(
             raw_tx: Vec<u8>,
             web3api_url: &str,
@@ -591,7 +645,7 @@ fn new_privatekey_from_bytes(bytes: Vec<u8>) -> Result<Box<PrivateKey>> {
     }))
 }
 
-/// constructs private key from hex
+/// constructs private key from hex string
 fn new_privatekey_from_hex(hex: String) -> Result<Box<PrivateKey>> {
     Ok(Box::new(PrivateKey {
         key: Arc::new(SecretKey::from_hex(hex)?),
@@ -624,29 +678,35 @@ pub struct Wallet {
     wallet: HDWallet,
 }
 
+/// generates the HD wallet with a BIP39 backup phrase (English words) and password
 fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wallet>> {
     let wallet = HDWallet::generate_wallet(Some(password), Some(word_count.into()))?;
     Ok(Box::new(Wallet { wallet }))
 }
 
+/// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
 fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>> {
     let wallet = HDWallet::recover_wallet(mnemonic, Some(password))?;
     Ok(Box::new(Wallet { wallet }))
 }
 
 impl Wallet {
+    /// returns the default address of the wallet
     pub fn get_default_address(&self, coin: CoinType) -> Result<String> {
         self.get_address(coin, 0)
     }
 
+    /// returns the address from index in wallet
     pub fn get_address(&self, coin: CoinType, index: u32) -> Result<String> {
         Ok(self.wallet.get_address(coin.into(), index)?)
     }
 
+    /// returns the ethereum address from index in wallet
     pub fn get_eth_address(&self, index: u32) -> Result<String> {
         self.get_address(CoinType::Ethereum, index)
     }
 
+    /// return the secret key for a given derivation path
     pub fn get_key(&self, derivation_path: String) -> Result<Box<PrivateKey>> {
         let key = self.wallet.get_key(derivation_path)?;
         Ok(Box::new(PrivateKey { key }))
@@ -881,7 +941,7 @@ pub fn get_ibc_transfer_signed_tx(
     Ok(ret)
 }
 
-/// creates the signed transaction
+/// creates the signed transaction for cosmos
 pub fn get_msg_signed_tx(
     tx_info: ffi::CosmosSDKTxInfoRaw,
     private_key: &PrivateKey,
@@ -890,11 +950,14 @@ pub fn get_msg_signed_tx(
     let ret = build_signed_single_msg_tx(tx_info.into(), msg.into(), private_key.key.clone())?;
     Ok(ret)
 }
+
+/// query account details from cosmos address
 pub fn query_account_details(api_url: String, address: String) -> Result<String> {
     let account_details: RawRpcAccountResponse = get_account_details_blocking(&api_url, &address)?;
     Ok(serde_json::to_string(&account_details)?)
 }
 
+/// query account details info from cosmos address
 pub fn query_account_details_info(
     api_url: String,
     address: String,
@@ -919,6 +982,7 @@ pub fn query_account_details_info(
     }
 }
 
+/// query account balance from cosmos address and denom name
 pub fn query_account_balance(
     api_url: String,
     address: String,
@@ -933,6 +997,7 @@ pub fn query_account_balance(
     Ok(serde_json::to_string(&account_details)?)
 }
 
+/// broadcast the cosmos transaction
 pub fn broadcast_tx(
     tendermint_rpc_url: String,
     raw_signed_tx: Vec<u8>,
@@ -945,6 +1010,9 @@ pub fn broadcast_tx(
     }
 }
 
+// create Login Info by `msg`
+/// all information from the EIP-4361 plaintext message:
+/// https://eips.ethereum.org/EIPS/eip-4361
 fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>> {
     let msg = siwe::Message::from_str(&msg)?;
     let logininfo = LoginInfo { msg };
@@ -952,6 +1020,10 @@ fn new_logininfo(msg: String) -> Result<Box<CppLoginInfo>> {
 }
 
 impl CppLoginInfo {
+    /// Sign Login Info
+    /// constructs the plaintext message and signs it according to EIP-191
+    /// (as per EIP-4361). The returned vector is a serialized recoverable signature
+    /// (as used in Ethereum).
     pub fn sign_logininfo(&self, private_key: &PrivateKey) -> anyhow::Result<Vec<u8>> {
         let message = self.logininfo.msg.to_string();
         let secretkey = private_key.key.clone();
@@ -961,6 +1033,14 @@ impl CppLoginInfo {
         Ok(ret)
     }
 
+    /// Verify Login Info
+    /// It verified the signature matches + also verifies the content of the message:
+    /// - address in the message matches the address recovered from the signature
+    /// - the time is valid
+    /// ...
+    /// NOTE: the server may still need to do extra verifications according to its needs
+    /// (e.g. verify chain-id, nonce, uri + possibly fetch additional data associated
+    /// with the given Ethereum address, such as ERC-20/ERC-721/ERC-1155 asset ownership)
     pub fn verify_logininfo(&self, signature: &[u8]) -> anyhow::Result<Vec<u8>> {
         let sig: [u8; 65] = signature
             .try_into()
@@ -1032,13 +1112,15 @@ pub fn build_custom_eth_signed_tx(
     Ok(signedtx)
 }
 
-/// get balance from cronos node
+/// Returns the corresponding account's native token balance
+/// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
 pub fn get_eth_balance(address: &str, api_url: &str) -> Result<String> {
     let res = defi_wallet_core_common::get_eth_balance_blocking(address, api_url)?;
     Ok(res)
 }
 
-/// get nonce from cronos node , which transsaction count of the address
+/// Returns the corresponding account's nonce / number of transactions
+/// sent from it.
 pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
     let res = defi_wallet_core_common::get_eth_transaction_count_blocking(address, api_url)?;
     // convert res to string
