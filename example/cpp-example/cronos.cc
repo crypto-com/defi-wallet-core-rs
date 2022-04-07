@@ -44,80 +44,40 @@ void cronos_process() {
   balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
   cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
 
-  Box<ContractBalance> erc20_details =
-      erc20_balance("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A");
-  String erc20_balance =
-      get_contract_balance(myaddress1, *erc20_details, mycronosrpc);
-  cout << "GOLD balance=" << erc20_balance.c_str() << endl;
-
-  Box<ContractBalance> erc721_details =
-      erc721_balance("0x2305f3980715c9D247455504080b41072De38aB9");
-  String erc721_balance =
-      get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
-  cout << "GameItem balance=" << erc721_balance.c_str() << endl;
-  assert(erc721_balance == "1");
-
-  Box<ContractBalance> erc1155_details_0 =
-      erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "0");
-  String erc1155_balance_0 =
-      get_contract_balance(myaddress1, *erc1155_details_0, mycronosrpc);
-  cout << "Balance of GOLD=" << erc1155_balance_0.c_str() << endl;
-
-  Box<ContractBalance> erc1155_details_1 =
-      erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "1");
-  String erc1155_balance_1 =
-      get_contract_balance(myaddress1, *erc1155_details_1, mycronosrpc);
-  cout << "Balance of SILVER=" << erc1155_balance_1.c_str() << endl;
-
-  Box<ContractBalance> erc1155_details_2 =
-      erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "2");
-  String erc1155_balance_2 =
-      get_contract_balance(myaddress1, *erc1155_details_2, mycronosrpc);
-  cout << "Balance of THORS_HAMMER=" << erc1155_balance_2.c_str() << endl;
-
-  Box<ContractBalance> erc1155_details_3 =
-      erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "3");
-  String erc1155_balance_3 =
-      get_contract_balance(myaddress1, *erc1155_details_3, mycronosrpc);
-  cout << "Balance of SWORD=" << erc1155_balance_3.c_str() << endl;
-
-  Box<ContractBalance> erc1155_details_4 =
-      erc1155_balance("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc", "4");
-  String erc1155_balance_4 =
-      get_contract_balance(myaddress1, *erc1155_details_4, mycronosrpc);
-  cout << "Balance of SHIELD=" << erc1155_balance_4.c_str() << endl;
-
-  Box<ContractOwner> erc721_owner_detail =
-      erc721_owner("0x2305f3980715c9D247455504080b41072De38aB9", "1");
-  String erc721_owner = get_token_owner(*erc721_owner_detail, mycronosrpc);
-  cout << "Owner of token=" << erc721_owner.c_str() << endl;
-  assert(erc721_owner == myaddress1);
-
   Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
                           mycronosrpc, chainid)
                     .legacy();
-  cout << "Name of ERC20=" << erc20.name() << endl;
-  cout << "Symbol of ERC20=" << erc20.symbol() << endl;
-  cout << "Decimals of ERC20=" << int(erc20.decimals()) << endl;
-  cout << "Total Supply of ERC20=" << erc20.total_supply() << endl;
+  assert(erc20.name() == "Gold");
+  assert(erc20.symbol() == "GLD");
+  assert(erc20.decimals() == 18);
+  assert(erc20.total_supply() == "100000000000000000000000000");
+  assert(erc20.balance_of(myaddress1) == "100000000000000000000000000");
 
   Erc721 erc721 = new_erc721("0x2305f3980715c9D247455504080b41072De38aB9",
                              mycronosrpc, chainid)
                       .legacy();
-  cout << "Name of ERC721=" << erc721.name() << endl;
-  cout << "Symbol of ERC721=" << erc721.symbol() << endl;
-  cout << "Token URI of ERC721=" << erc721.token_uri("1") << endl;
+  assert(erc721.name() == "GameItem");
+  assert(erc721.symbol() == "ITM");
+  assert(erc721.token_uri("1") == "https://game.example/item-id-8u5h2m.json");
   // cout << "Total Supply of ERC721=" << erc721.total_supply() << endl; // the
   // contract must support IERC721Enumerable
+  assert(erc721.owner_of("1") == myaddress1);
+  assert(erc721.balance_of(myaddress1) == "1");
 
   Erc1155 erc1155 = new_erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc",
                                 mycronosrpc, chainid)
                         .legacy();
-  cout << "URI of ERC1155, GOLD=" << erc1155.uri("0") << endl;
-  cout << "URI of ERC1155, SILVER=" << erc1155.uri("1") << endl;
-  cout << "URI of ERC1155, THORS_HAMMER=" << erc1155.uri("2") << endl;
-  cout << "URI of ERC1155, SWORD=" << erc1155.uri("3") << endl;
-  cout << "URI of ERC1155, SHIELD=" << erc1155.uri("4") << endl;
+  // To be improved in the contract, now all uri are the same
+  assert(erc1155.uri("0") == "https://game.example/api/item/{id}.json");
+  assert(erc1155.uri("1") == "https://game.example/api/item/{id}.json");
+  assert(erc1155.uri("2") == "https://game.example/api/item/{id}.json");
+  assert(erc1155.uri("3") == "https://game.example/api/item/{id}.json");
+  assert(erc1155.uri("4") == "https://game.example/api/item/{id}.json");
+  assert(erc1155.balance_of(myaddress1, "0") == "1000000000000000000");
+  assert(erc1155.balance_of(myaddress1, "1") == "1000000000000000000000000000");
+  assert(erc1155.balance_of(myaddress1, "2") == "1");
+  assert(erc1155.balance_of(myaddress1, "3") == "1000000000");
+  assert(erc1155.balance_of(myaddress1, "4") == "1000000000");
 
   String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
   Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
@@ -127,19 +87,14 @@ void cronos_process() {
   // transfer erc20 token from signer1 to signer2
   status = erc20.transfer(signer2_address, "100", *privatekey).status;
   assert(status == "1");
-
-  erc20_balance = get_contract_balance(myaddress1, *erc20_details, mycronosrpc);
-  cout << "ERC20 GOLD balance after trasnfer=" << erc20_balance.c_str() << endl;
+  assert(erc20.balance_of(myaddress1) == "99999999999999999999999744");
 
   // transfer erc721 from signer1 to signer2
   status = erc721.transfer_from(myaddress1, signer2_address, "1", *privatekey)
                .status;
   assert(status == "1");
-  erc721_balance =
-      get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
-  assert(erc721_balance == "0");
-  erc721_owner = get_token_owner(*erc721_owner_detail, mycronosrpc);
-  assert(erc721_owner == signer2_address);
+  assert(erc721.balance_of(myaddress1) == "0");
+  assert(erc721.owner_of("1") == signer2_address);
 
   // safe transfer erc721 from signer2 to signer1
   status = erc721
@@ -147,24 +102,17 @@ void cronos_process() {
                                    *signer2_privatekey)
                .status;
   assert(status == "1");
-  erc721_balance =
-      get_contract_balance(myaddress1, *erc721_details, mycronosrpc);
-  assert(erc721_balance == "1");
-  erc721_owner = get_token_owner(*erc721_owner_detail, mycronosrpc);
-  assert(erc721_owner == myaddress1);
+  assert(erc721.balance_of(myaddress1) == "1");
+  assert(erc721.owner_of("1") == myaddress1);
 
   // safe transfer erc1155 from signer1 to signer2
   rust::Vec<uint8_t> erc1155_data;
   status = erc1155
-               .safe_transfer_from(myaddress1, signer2_address, "0", "100",
+               .safe_transfer_from(myaddress1, signer2_address, "0", "150",
                                    erc1155_data, *privatekey)
                .status;
   assert(status == "1");
-
-  String erc1155_balance =
-      get_contract_balance(myaddress1, *erc1155_details_0, mycronosrpc);
-  cout << "ERC1155 GOLD balance after transfer=" << erc1155_balance.c_str()
-       << endl;
+  assert(erc1155.balance_of(myaddress1, "0") == "999999999999999664");
 
   // safe batch transfer erc1155 from signer1 to signer2
   rust::Vec<String> token_ids, hex_amounts;
@@ -182,20 +130,10 @@ void cronos_process() {
                                          hex_amounts, erc1155_data, *privatekey)
                .status;
   assert(status == "1");
-
-  erc1155_balance =
-      get_contract_balance(myaddress1, *erc1155_details_1, mycronosrpc);
-  cout << "SILVER balance after transfer=" << erc1155_balance.c_str() << endl;
-  erc1155_balance =
-      get_contract_balance(myaddress1, *erc1155_details_2, mycronosrpc);
-  cout << "THORS_HAMMER balance after transfer=" << erc1155_balance.c_str()
-       << endl;
-  erc1155_balance =
-      get_contract_balance(myaddress1, *erc1155_details_3, mycronosrpc);
-  cout << "SWORD balance after transfer=" << erc1155_balance.c_str() << endl;
-  erc1155_balance =
-      get_contract_balance(myaddress1, *erc1155_details_4, mycronosrpc);
-  cout << "SHIELD balance after transfer=" << erc1155_balance.c_str() << endl;
+  assert(erc1155.balance_of(myaddress1, "1") == "999999999999999999999999488");
+  assert(erc1155.balance_of(myaddress1, "2") == "0");
+  assert(erc1155.balance_of(myaddress1, "3") == "999999232");
+  assert(erc1155.balance_of(myaddress1, "4") == "999998976");
 
   test_approval();
 }
@@ -229,13 +167,11 @@ void test_approval() {
   // signer1 approve singer2 allowance
   erc20.approve(signer2_address, "1000", *signer1_privatekey);
   String allowance = erc20.allowance(signer1_address, signer2_address);
-  cout << "Signer2 Allowance=" << allowance.c_str() << endl;
   assert(allowance == "4096"); // TODO bug: original hex, but output is decimal
 
   // transfer from signer1 to validator1 using the allowance mechanism
   erc20.transfer_from(signer1_address, validator1_address, "100",
                       *signer2_privatekey);
   allowance = erc20.allowance(signer1_address, signer2_address);
-  cout << "Signer2 Allowance=" << allowance.c_str() << endl;
   assert(allowance == "3840"); // TODO bug: original hex, but output is decimal
 }
