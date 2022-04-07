@@ -99,9 +99,9 @@ function testCosmosProtoSigning() {
       160, 141, 6,
   ];
 
-  const signDoc = new wasm.CosmosProtoSignDoc(bodyBytes, authInfoBytes, "chaintest", BigInt(1));
   const privateKey = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
-  const signedData = signDoc.sign_into(privateKey);
+  const signer = new wasm.CosmosSigner(privateKey);
+  const signedData = signer.sign_direct(bodyBytes, authInfoBytes, "chaintest", BigInt(1));
   console.log(`Cosmos signDirect data: ${signedData}`);
 }
 

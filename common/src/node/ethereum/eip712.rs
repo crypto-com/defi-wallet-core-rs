@@ -13,8 +13,47 @@ type Eip712FieldType = EthAbiParamType;
 type Eip712FieldValue = EthAbiToken;
 type Eip712StructName = String;
 
+/// EIP-712 typed data
+pub struct Eip712TypedData {}
+
+impl Eip712TypedData {
+    /// Contruct an EIP-712 typed data from a JSON string of specified schema as below. The field
+    /// `domain`, `message`, `primaryType` and `types` are all mandatory as described in
+    /// [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
+    ///
+    /// {
+    ///   "domain": {
+    ///     "name": "Ether Mail",
+    ///     "version": "1",
+    ///     "chainId": 1,
+    ///     "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+    ///   },
+    ///   "message": {
+    ///     "name": "Bob",
+    ///     "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+    ///   }
+    ///   "primaryType": "Person",
+    ///   "types": {
+    ///     "Person": [
+    ///       {
+    ///         "name": "name",
+    ///         "type": "string"
+    ///       },
+    ///       {
+    ///         "name": "wallet",
+    ///         "type": "address"
+    ///       }
+    ///     ]
+    ///   }
+    /// }
+    pub fn new(json_typed_data: &str) -> Result<Self, Eip712Error> {}
+
+    /// Encode the typed data.
+    pub fn encode(&self) -> Result<Vec<u8>, Eip712Error> {}
+}
+
 /// EIP-712 typed struct
-pub struct Eip712Struct {
+struct Eip712Struct {
     type_hash: U256,
     domain: Eip712Domain,
     fields: Vec<Eip712Field>,
@@ -22,7 +61,7 @@ pub struct Eip712Struct {
 
 impl Eip712Struct {
     /// Contruct an EIP-712 typed struct.
-    pub fn new(
+    fn new(
         struct_name: Eip712StructName,
         domain: Eip712Domain,
         fields: Vec<Eip712Field>,
@@ -36,7 +75,7 @@ impl Eip712Struct {
     }
 
     /// Encode the typed values.
-    pub fn encode(
+    fn encode(
         &self,
         values: HashMap<Eip712FieldName, Eip712FieldValue>,
     ) -> Result<Vec<u8>, EthError> {
@@ -85,13 +124,13 @@ impl Eip712Struct {
 }
 
 /// EIP-712 domain
-pub struct Eip712Domain {
+struct Eip712Domain {
     internal: EIP712Domain,
 }
 
 impl Eip712Domain {
     /// Contruct an EIP-712 domain.
-    pub fn new(
+    fn new(
         chain_id: u64,
         name: String,
         version: String,
@@ -111,14 +150,14 @@ impl Eip712Domain {
 }
 
 /// EIP-712 field
-pub struct Eip712Field {
+struct Eip712Field {
     name: String,
     r#type: Eip712FieldType,
 }
 
 impl Eip712Field {
     /// Contruct an EIP-712 struct field.
-    pub fn new(name: String, r#type: Eip712FieldType) -> Self {
+    fn new(name: String, r#type: Eip712FieldType) -> Self {
         Self { name, r#type }
     }
 }

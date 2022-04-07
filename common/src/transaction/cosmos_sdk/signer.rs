@@ -3,14 +3,38 @@ use crate::wallet::SecretKey;
 use cosmrs::crypto::secp256k1::SigningKey;
 use cosmrs::tx::SignDoc;
 
+/// Cosmos Signer
+pub struct CosmosSigner {
+    secret_key: SecretKey,
+}
+
+impl CosmosSigner {
+    /// Create an instance via a secret key.
+    pub fn new(secret_key: SecretKey) -> Self {
+        Self { secret_key }
+    }
+
+    /// Sign the protobuf bytes directly.
+    pub fn sign_direct(
+        &self,
+        body_bytes: Vec<u8>,
+        auth_info_bytes: Vec<u8>,
+        chain_id: String,
+        account_number: u64,
+    ) -> Result<Vec<u8>, CosmosError> {
+        CosmosProtoSignDoc::new(body_bytes, auth_info_bytes, chain_id, account_number)
+            .sign_into(&self.secret_key)
+    }
+}
+
 /// SignDoc for generating sign bytes from protobuf
-pub struct CosmosProtoSignDoc {
+struct CosmosProtoSignDoc {
     inner: SignDoc,
 }
 
 impl CosmosProtoSignDoc {
     /// Create an instance. User needs to assure protobuf bytes are correct.
-    pub fn new(
+    fn new(
         body_bytes: Vec<u8>,
         auth_info_bytes: Vec<u8>,
         chain_id: String,
@@ -28,7 +52,7 @@ impl CosmosProtoSignDoc {
 
     /// Sign this SignDoc and produce a Raw transaction. The protobuf bytes are
     /// moved out after calling this function.
-    pub fn sign_into(self, secret_key: &SecretKey) -> Result<Vec<u8>, CosmosError> {
+    fn sign_into(self, secret_key: &SecretKey) -> Result<Vec<u8>, CosmosError> {
         let signing_key = SigningKey::new(Box::new(secret_key.get_signing_key()));
         Ok(self.inner.sign(&signing_key)?.to_bytes()?)
     }
@@ -43,9 +67,6 @@ mod cosmos_signer_tests {
 
     #[test]
     fn test_protobuf_signing() {
-        let wallet = HDWallet::recover_wallet(MNEMONIC.to_string(), None).unwrap();
-        let secret_key = wallet.get_key("m/44'/118'/0'/0/0".to_string()).unwrap();
-
         let body_bytes = vec![
             10, 156, 1, 10, 37, 47, 99, 111, 115, 109, 111, 115, 46, 115, 116, 97, 107, 105, 110,
             103, 46, 118, 49, 98, 101, 116, 97, 49, 46, 77, 115, 103, 85, 110, 100, 101, 108, 101,
@@ -65,9 +86,13 @@ mod cosmos_signer_tests {
             18, 22, 10, 16, 10, 5, 117, 97, 116, 111, 109, 18, 7, 49, 48, 48, 48, 48, 48, 48, 16,
             160, 141, 6,
         ];
-        let sign_doc =
-            CosmosProtoSignDoc::new(body_bytes, auth_info_bytes, "chaintest".to_string(), 1);
-        let signed_data = sign_doc.sign_into(secret_key.as_ref()).unwrap();
+
+        let wallet = HDWallet::recover_wallet(MNEMONIC.to_string(), None).unwrap();
+        let secret_key = wallet.get_key("m/44'/118'/0'/0/0".to_string()).unwrap();
+        let signer = CosmosSigner::new(secret_key);
+        let signed_data = signer
+            .sign_direct(body_bytes, auth_info_bytes, "chaintest".to_string(), 1)
+            .unwrap();
 
         assert_eq!(
             signed_data,
