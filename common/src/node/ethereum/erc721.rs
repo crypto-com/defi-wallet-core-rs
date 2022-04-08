@@ -3,6 +3,19 @@ use crate::contract::{Contract, ContractCall};
 use crate::{u256_from_str, EthError};
 use ethers::prelude::{Address, Http, Provider, U256};
 
+/// given the contract information, it returns the owner address
+pub async fn get_token_owner(
+    contract_address: &str,
+    token_id: &str,
+    web3api_url: &str,
+) -> Result<Address, EthError> {
+    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let token_id = u256_from_str(token_id)?;
+    let contract = Contract::new_erc721(contract_address, client)?;
+    let call = contract.owner_of(token_id);
+    ContractCall::from(call).call().await
+}
+
 pub async fn get_name(contract_address: &str, web3api_url: &str) -> Result<String, EthError> {
     let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let contract = Contract::new_erc721(contract_address, client)?;
@@ -86,6 +99,21 @@ pub async fn get_token_of_owner_by_index(
     let index = u256_from_str(index)?;
     let call = contract.token_of_owner_by_index(owner, index);
     ContractCall::from(call).call().await
+}
+
+/// Returns the owner address of an NFT in a Fixed-size uninterpreted hash type
+/// with 20 bytes (160 bits) size.
+/// i.e. in its base units unformatted
+/// (blocking; not compiled to wasm).
+#[cfg(not(target_arch = "wasm32"))]
+pub fn get_token_owner_blocking(
+    contract_address: &str,
+    token_id: &str,
+    web3api_url: &str,
+) -> Result<Address, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    let result = rt.block_on(get_token_owner(contract_address, token_id, web3api_url))?;
+    Ok(result)
 }
 
 #[cfg(not(target_arch = "wasm32"))]

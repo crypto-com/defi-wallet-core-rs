@@ -1,10 +1,11 @@
 use crate::{format_to_js_error, CoinType, PrivateKey};
+use defi_wallet_core_common::node::erc721::get_token_owner;
 use defi_wallet_core_common::node::ethereum::abi::EthAbiToken;
 use defi_wallet_core_common::{
     broadcast_contract_approval_tx, broadcast_contract_batch_transfer_tx,
     broadcast_contract_transfer_tx, broadcast_sign_eth_tx, get_contract_balance, get_eth_balance,
-    get_token_owner, ContractApproval, ContractBalance, ContractBatchTransfer, ContractOwner,
-    ContractTransfer, EthAbiContract, EthAmount, EthNetwork, WalletCoinFunc,
+    ContractApproval, ContractBalance, ContractBatchTransfer, ContractTransfer, EthAbiContract,
+    EthAmount, EthNetwork, WalletCoinFunc,
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -272,11 +273,7 @@ pub async fn query_token_owner(
     contract_address: String,
     token_id: String,
 ) -> Result<JsValue, JsValue> {
-    let contract_owner = ContractOwner::Erc721 {
-        contract_address,
-        token_id,
-    };
-    let owner = get_token_owner(contract_owner, &web3_api_url).await?;
+    let owner = get_token_owner(&contract_address, &token_id, &web3_api_url).await?;
     Ok(JsValue::from_str(&format!("{:?}", owner.to_string())))
 }
 

@@ -5,57 +5,6 @@ use common::node::ethereum;
 use common::EthNetwork;
 use defi_wallet_core_common as common;
 
-/// Wrapper of `ContractBalance`
-pub struct ContractBalance(common::ContractBalance);
-
-/// Contruct a boxed erc20 ContractBalance struct
-pub fn erc20_balance(contract_address: String) -> Box<ContractBalance> {
-    Box::new(ContractBalance(common::ContractBalance::Erc20 {
-        contract_address,
-    }))
-}
-
-/// Contruct a boxed erc721 ContractBalance struct
-pub fn erc721_balance(contract_address: String) -> Box<ContractBalance> {
-    Box::new(ContractBalance(common::ContractBalance::Erc721 {
-        contract_address,
-    }))
-}
-
-/// Contruct a boxed erc1155 ContractBalance struct
-pub fn erc1155_balance(contract_address: String, token_id: String) -> Box<ContractBalance> {
-    Box::new(ContractBalance(common::ContractBalance::Erc1155 {
-        contract_address,
-        token_id,
-    }))
-}
-
-/// get contract balance from cronos node
-pub fn get_contract_balance(
-    address: &str,
-    contract_details: &ContractBalance,
-    api_url: &str,
-) -> Result<String> {
-    let res = get_contract_balance_blocking(address, contract_details.0.clone(), api_url)?;
-    Ok(res)
-}
-
-pub struct ContractOwner(common::ContractOwner);
-
-/// Contruct a boxed erc721 ContractOwner struct
-pub fn erc721_owner(contract_address: String, token_id: String) -> Box<ContractOwner> {
-    Box::new(ContractOwner(common::ContractOwner::Erc721 {
-        contract_address,
-        token_id,
-    }))
-}
-
-/// get contract owner from cronos node
-pub fn get_token_owner(contract_owner: &ContractOwner, api_url: &str) -> Result<String> {
-    let res = common::get_token_owner_blocking(contract_owner.0.clone(), api_url)?;
-    Ok(format!("{:?}", res)) // we need the debug version of the address
-}
-
 /// Construct an Erc20 struct
 fn new_erc20(contract_address: String, web3api_url: String, chain_id: u64) -> ffi::Erc20 {
     ffi::Erc20 {
@@ -66,6 +15,18 @@ fn new_erc20(contract_address: String, web3api_url: String, chain_id: u64) -> ff
     }
 }
 impl ffi::Erc20 {
+    /// Returns the decimal amount of tokens owned by `account_address`.
+    fn balance_of(&self, account_address: String) -> Result<String> {
+        let balance = get_contract_balance_blocking(
+            &account_address,
+            common::ContractBalance::Erc20 {
+                contract_address: self.contract_address.clone(),
+            },
+            &self.web3api_url,
+        )?;
+        Ok(balance)
+    }
+
     /// Returns the name of the token
     fn name(&self) -> Result<String> {
         let name = ethereum::erc20::get_name_blocking(&self.contract_address, &self.web3api_url)?;
@@ -193,6 +154,27 @@ fn new_erc721(contract_address: String, web3api_url: String, chain_id: u64) -> f
     }
 }
 impl ffi::Erc721 {
+    /// Returns the number of tokens in owner's `account_address`.
+    fn balance_of(&self, account_address: String) -> Result<String> {
+        let balance = get_contract_balance_blocking(
+            &account_address,
+            common::ContractBalance::Erc721 {
+                contract_address: self.contract_address.clone(),
+            },
+            &self.web3api_url,
+        )?;
+        Ok(balance)
+    }
+    /// Returns the owner of the `token_id` token.
+    fn owner_of(&self, token_id: String) -> Result<String> {
+        let address = ethereum::erc721::get_token_owner_blocking(
+            &self.contract_address,
+            &token_id,
+            &self.web3api_url,
+        )?;
+        Ok(format!("{:?}", address)) // we need the debug version of the address
+    }
+
     /// Get the descriptive name for a collection of NFTs in this contract
     fn name(&self) -> Result<String> {
         let name = ethereum::erc721::get_name_blocking(&self.contract_address, &self.web3api_url)?;
@@ -416,6 +398,41 @@ fn new_erc1155(contract_address: String, web3api_url: String, chain_id: u64) -> 
     }
 }
 impl ffi::Erc1155 {
+    /// Returns the amount of tokens of `token_id` owned by `account_address`.
+    fn balance_of(&self, account_address: String, token_id: String) -> Result<String> {
+        let balance = get_contract_balance_blocking(
+            &account_address,
+            common::ContractBalance::Erc1155 {
+                contract_address: self.contract_address.clone(),
+                token_id,
+            },
+            &self.web3api_url,
+        )?;
+        Ok(balance)
+    }
+
+    /// Batched version of balance_of.
+    /// Get the balance of multiple account/token pairs
+    fn balance_of_batch(
+        &self,
+        account_addresses: Vec<String>,
+        token_ids: Vec<String>,
+    ) -> Result<Vec<String>> {
+        let balance = ethereum::erc1155::get_balance_of_batch_blocking(
+            &self.contract_address,
+            account_addresses
+                .iter()
+                .map(|v| v.as_ref())
+                .collect::<Vec<&str>>(),
+            token_ids.iter().map(|v| v.as_ref()).collect::<Vec<&str>>(),
+            &self.web3api_url,
+        )?;
+        Ok(balance
+            .into_iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>())
+    }
+
     /// Get distinct Uniform Resource Identifier (URI) for a given token
     fn uri(&self, token_id: String) -> Result<String> {
         let uri = ethereum::erc1155::get_uri_blocking(
@@ -562,23 +579,10 @@ mod ffi {
     }
 
     extern "Rust" {
-
-        type ContractBalance;
-        fn erc20_balance(contract_address: String) -> Box<ContractBalance>;
-        fn erc721_balance(contract_address: String) -> Box<ContractBalance>;
-        fn erc1155_balance(contract_address: String, token_id: String) -> Box<ContractBalance>;
-        fn get_contract_balance(
-            address: &str,
-            contract_details: &ContractBalance,
-            api_url: &str,
-        ) -> Result<String>;
-
-        type ContractOwner;
-        fn erc721_owner(contract_address: String, token_id: String) -> Box<ContractOwner>;
-        fn get_token_owner(contract_owner: &ContractOwner, api_url: &str) -> Result<String>;
-
         /// Construct an Erc20 struct
         fn new_erc20(address: String, web3api_url: String, chian_id: u64) -> Erc20;
+        /// Returns the decimal amount of tokens owned by `account_address`.
+        fn balance_of(self: &Erc20, account_address: String) -> Result<String>;
         /// Returns the name of the token
         fn name(self: &Erc20) -> Result<String>;
         /// Returns the symbol of the token
@@ -617,6 +621,10 @@ mod ffi {
 
         /// Construct an Erc721 struct
         fn new_erc721(address: String, web3api_url: String, chian_id: u64) -> Erc721;
+        /// Returns the number of tokens in owner's `account_address`.
+        fn balance_of(self: &Erc721, account_address: String) -> Result<String>;
+        /// Returns the owner of the `token_id` token.
+        fn owner_of(self: &Erc721, token_id: String) -> Result<String>;
         /// Get the descriptive name for a collection of NFTs in this contract
         fn name(self: &Erc721) -> Result<String>;
         /// Get the abbreviated name for NFTs in this contract
@@ -693,6 +701,15 @@ mod ffi {
 
         /// Construct an Erc1155 struct
         fn new_erc1155(address: String, web3api_url: String, chian_id: u64) -> Erc1155;
+        /// Returns the amount of tokens of `token_id` owned by `account_address`.
+        fn balance_of(self: &Erc1155, account_address: String, token_id: String) -> Result<String>;
+        /// Batched version of balance_of.
+        /// Get the balance of multiple account/token pairs
+        fn balance_of_batch(
+            self: &Erc1155,
+            account_addresses: Vec<String>,
+            token_ids: Vec<String>,
+        ) -> Result<Vec<String>>;
         /// Get distinct Uniform Resource Identifier (URI) for a given token
         fn uri(self: &Erc1155, token_id: String) -> Result<String>;
         /// Makes a legacy transaction instead of an EIP-1559 one
