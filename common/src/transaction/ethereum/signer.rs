@@ -54,15 +54,39 @@ mod ethereum_signer_tests {
 
     const MNEMONIC: &str = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
 
+    const JSON_TYPED_DATA = r#"
+        {
+            "types": {
+                "EIP712Domain": [
+                    { "name": "name", "type": "string" },
+                    { "name": "version", "type": "string" },
+                    { "name": "chainId", "type": "uint256" },
+                    { "name": "verifyingContract", "type": "address" },
+                ],
+                "Person": [
+                    { "name": "name", "type": "string" },
+                    { "name": "wallet", "type": "address" },
+                ]
+            },
+            "primaryType": "Person",
+            "domain": {
+                "name": "Ether Person",
+                "version": "1",
+                "chainId": 1,
+                "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+            },
+            message: {
+                "name": "Bob",
+                "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+            }
+        }"#;
+
     #[test]
     fn test_eip712_typed_data_signing() {
-
-        todo!()
-
         let wallet = HDWallet::recover_wallet(MNEMONIC.to_string(), None).unwrap();
         let secret_key = wallet.get_key("m/44'/118'/0'/0/0".to_string()).unwrap();
         let signer = EthSigner::new(secret_key);
-        let signed_data = signer.sign_typed_data().unwrap();
+        let signed_data = signer.sign_typed_data(JSON_TYPED_DATA).unwrap();
 
         assert_eq!(
             signed_data,
