@@ -180,15 +180,6 @@ pub enum ContractBatchTransfer {
     },
 }
 
-/// Information needed for querying owner on nft token for Erc721
-#[derive(Clone)]
-pub enum ContractOwner {
-    Erc721 {
-        contract_address: String,
-        token_id: String,
-    },
-}
-
 /// given the account address, it returns the amount of native token it owns
 pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<String, EthError> {
     let to = address_from_str(address)?;
@@ -238,25 +229,6 @@ pub async fn get_contract_balance(
             let token_id = u256_from_str(token_id)?;
             let contract = Contract::new_erc1155(contract_address, client)?;
             contract.balance_of(address, token_id)
-        }
-    };
-    ContractCall::from(call).call().await
-}
-
-/// given the contract information, it returns the owner address
-pub async fn get_token_owner(
-    contract_owner: ContractOwner,
-    web3api_url: &str,
-) -> Result<Address, EthError> {
-    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
-    let call = match &contract_owner {
-        ContractOwner::Erc721 {
-            contract_address,
-            token_id,
-        } => {
-            let token_id = u256_from_str(token_id)?;
-            let contract = Contract::new_erc721(contract_address, client)?;
-            contract.owner_of(token_id)
         }
     };
     ContractCall::from(call).call().await
@@ -572,19 +544,6 @@ pub fn get_contract_balance_blocking(
     Ok(result.to_string())
 }
 
-/// Returns the owner address of an NFT in a Fixed-size uninterpreted hash type
-/// with 20 bytes (160 bits) size.
-/// i.e. in its base units unformatted
-/// (blocking; not compiled to wasm).
-#[cfg(not(target_arch = "wasm32"))]
-pub fn get_token_owner_blocking(
-    contract_owner: ContractOwner,
-    web3api_url: &str,
-) -> Result<Address, EthError> {
-    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    let result = rt.block_on(get_token_owner(contract_owner, web3api_url))?;
-    Ok(result)
-}
 /// given the plain transfer details, it'll construct, sign and broadcast
 /// a corresponding transaction.
 /// If successful, itt returns the transaction hash/id.
