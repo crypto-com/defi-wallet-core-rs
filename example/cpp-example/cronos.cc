@@ -130,6 +130,7 @@ void cronos_process() {
                                          amounts, erc1155_data, *privatekey)
                .status;
   assert(status == "1");
+  // TODO Can not do calculation on balance
   assert(erc1155.balance_of(myaddress1, "1") == "999999999999999999999999800");
   assert(erc1155.balance_of(myaddress1, "2") == "0");
   assert(erc1155.balance_of(myaddress1, "3") == "999999700");
@@ -158,7 +159,7 @@ void test_approval() {
   String validator1_mnemonics = getEnv("VALIDATOR1_MNEMONIC");
   Box<Wallet> validator1_wallet = createWallet(validator1_mnemonics);
   String validator1_address = validator1_wallet->get_eth_address(0);
-  Box<PrivateKey> validator1_privatekey = signer1_wallet->get_key(hdpath);
+  Box<PrivateKey> validator1_privatekey = validator1_wallet->get_key(hdpath);
 
   Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
                           mycronosrpc, chainid)
@@ -168,10 +169,93 @@ void test_approval() {
   erc20.approve(signer2_address, "1000", *signer1_privatekey);
   String allowance = erc20.allowance(signer1_address, signer2_address);
   assert(allowance == "1000");
-
   // transfer from signer1 to validator1 using the allowance mechanism
   erc20.transfer_from(signer1_address, validator1_address, "100",
                       *signer2_privatekey);
   allowance = erc20.allowance(signer1_address, signer2_address);
   assert(allowance == "900");
+
+  Erc721 erc721 = new_erc721("0x2305f3980715c9D247455504080b41072De38aB9",
+                             mycronosrpc, chainid)
+                      .legacy();
+  assert(erc721.balance_of(signer1_address) == "1");
+  assert(erc721.get_approved("1") ==
+         "0x0000000000000000000000000000000000000000");
+  // toggle set_approval_for_all
+  assert(erc721.is_approved_for_all(signer1_address, signer2_address) == 0);
+  erc721.set_approval_for_all(signer2_address, true, *signer1_privatekey);
+  assert(erc721.is_approved_for_all(signer1_address, signer2_address) == 1);
+  erc721.set_approval_for_all(signer2_address, false, *signer1_privatekey);
+  assert(erc721.is_approved_for_all(signer1_address, signer2_address) == 0);
+
+  // signer1 approve singer2 to transfer erc721
+  erc721.approve(signer2_address, "1", *signer1_privatekey);
+  assert(erc721.get_approved("1") == signer2_address);
+
+  // safe transfer erc721 from signer1 to validator1
+  String status = erc721
+                      .safe_transfer_from(signer1_address, validator1_address,
+                                          "1", *signer2_privatekey)
+                      .status;
+  assert(status == "1");
+  assert(erc721.balance_of(validator1_address) == "1");
+  assert(erc721.owner_of("1") == validator1_address);
+
+  // validator1 set_approval_for_all for singer2 to transfer all assets
+  assert(erc721.is_approved_for_all(validator1_address, signer2_address) == 0);
+  erc721.set_approval_for_all(signer2_address, true, *validator1_privatekey);
+  assert(erc721.is_approved_for_all(validator1_address, signer2_address) == 1);
+  // safe transfer erc721 from validator1 to signer1
+  status = erc721
+               .safe_transfer_from(validator1_address, signer1_address, "1",
+                                   *signer2_privatekey)
+               .status;
+  assert(status == "1");
+  assert(erc721.balance_of(signer1_address) == "1");
+  assert(erc721.owner_of("1") == signer1_address);
+
+  Erc1155 erc1155 = new_erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc",
+                                mycronosrpc, chainid)
+                        .legacy();
+  // toggle set_approval_for_all
+  assert(erc1155.is_approved_for_all(signer1_address, signer2_address) == 0);
+  erc1155.set_approval_for_all(signer2_address, true, *signer1_privatekey);
+  assert(erc1155.is_approved_for_all(signer1_address, signer2_address) == 1);
+  erc1155.set_approval_for_all(signer2_address, false, *signer1_privatekey);
+  assert(erc1155.is_approved_for_all(signer1_address, signer2_address) == 0);
+  // set approval for signer2
+  erc1155.set_approval_for_all(signer2_address, true, *signer1_privatekey);
+  assert(erc1155.is_approved_for_all(signer1_address, signer2_address) == 1);
+  rust::Vec<String> token_ids, amounts;
+  rust::Vec<uint8_t> erc1155_data;
+  token_ids.push_back("1");
+  token_ids.push_back("3");
+  token_ids.push_back("4");
+
+  amounts.push_back("500");
+  amounts.push_back("600");
+  amounts.push_back("700");
+  // and safe batch transfer from signer1 to validator1
+  status = erc1155
+               .safe_batch_transfer_from(signer1_address, validator1_address,
+                                         token_ids, amounts, erc1155_data,
+                                         *signer2_privatekey)
+               .status;
+  assert(status == "1");
+  // TODO Can not do calculation on balance
+  assert(erc1155.balance_of(signer1_address, "1") ==
+         "999999999999999999999999300");
+  assert(erc1155.balance_of(signer1_address, "2") == "0");
+  assert(erc1155.balance_of(signer1_address, "3") == "999999100");
+  assert(erc1155.balance_of(signer1_address, "4") == "999998900");
+
+  assert(erc1155.balance_of(signer2_address, "1") == "200");
+  assert(erc1155.balance_of(signer2_address, "2") == "1");
+  assert(erc1155.balance_of(signer2_address, "3") == "300");
+  assert(erc1155.balance_of(signer2_address, "4") == "400");
+
+  assert(erc1155.balance_of(validator1_address, "1") == "500");
+  assert(erc1155.balance_of(validator1_address, "2") == "0");
+  assert(erc1155.balance_of(validator1_address, "3") == "600");
+  assert(erc1155.balance_of(validator1_address, "4") == "700");
 }

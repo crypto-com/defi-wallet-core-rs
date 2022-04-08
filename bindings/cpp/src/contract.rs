@@ -338,7 +338,7 @@ impl ffi::Erc721 {
             &token_id,
             &self.web3api_url,
         )?;
-        Ok(address.to_string())
+        Ok(format!("{:?}", address)) // we need the debug version of the address
     }
 
     /// Query if an address is an authorized `approved_address` for `owner`
