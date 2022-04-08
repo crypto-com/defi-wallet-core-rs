@@ -14,9 +14,11 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 mod abi_contract;
+mod signer;
 
 #[cfg(feature = "abi-contract")]
 pub use abi_contract::*;
+pub use signer::*;
 
 /// Possible errors from Ethereum transaction construction and broadcasting
 #[derive(Debug, thiserror::Error)]

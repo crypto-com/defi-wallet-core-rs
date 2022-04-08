@@ -46,10 +46,14 @@ impl Eip712TypedData {
     ///     ]
     ///   }
     /// }
-    pub fn new(json_typed_data: &str) -> Result<Self, Eip712Error> {}
+    pub fn new(json_typed_data: &str) -> Result<Self, Eip712Error> {
+        todo!()
+    }
 
     /// Encode the typed data.
-    pub fn encode(&self) -> Result<Vec<u8>, Eip712Error> {}
+    pub fn encode(&self) -> Result<Vec<u8>, Eip712Error> {
+        todo!()
+    }
 }
 
 /// EIP-712 typed struct

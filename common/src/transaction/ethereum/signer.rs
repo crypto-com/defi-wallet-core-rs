@@ -1,15 +1,21 @@
 use crate::transaction::ethereum::EthError;
 use crate::wallet::SecretKey;
+use ethers::prelude::{LocalWallet, H256};
+
+#[cfg(feature = "abi-contract")]
+use crate::node::ethereum::eip712::Eip712TypedData;
 
 /// Ethereum Signer
 pub struct EthSigner {
-    secret_key: SecretKey,
+    wallet: LocalWallet,
 }
 
 impl EthSigner {
     /// Create an instance via a secret key.
     pub fn new(secret_key: SecretKey) -> Self {
-        Self { secret_key }
+        Self {
+            wallet: secret_key.get_signing_key().into(),
+        }
     }
 
     /// Sign an EIP-712 typed data from a JSON string of specified schema as below. The field
@@ -42,8 +48,12 @@ impl EthSigner {
     ///   }
     /// }
     #[cfg(feature = "abi-contract")]
-    pub fn sign_typed_data(json_typed_data: &str) -> Result<Vec<u8>, EthError> {
-        todo!()
+    pub fn sign_typed_data(&self, json_typed_data: &str) -> Result<Vec<u8>, EthError> {
+        let encoded_data = Eip712TypedData::new(json_typed_data)?.encode()?;
+        Ok(self
+            .wallet
+            .sign_hash(H256::from_slice(&encoded_data), false)
+            .to_vec())
     }
 }
 
@@ -54,7 +64,7 @@ mod ethereum_signer_tests {
 
     const MNEMONIC: &str = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
 
-    const JSON_TYPED_DATA = r#"
+    const JSON_TYPED_DATA: &str = r#"
         {
             "types": {
                 "EIP712Domain": [
@@ -88,10 +98,6 @@ mod ethereum_signer_tests {
         let signer = EthSigner::new(secret_key);
         let signed_data = signer.sign_typed_data(JSON_TYPED_DATA).unwrap();
 
-        assert_eq!(
-            signed_data,
-            [
-            ]
-        );
+        assert_eq!(signed_data, []);
     }
 }
