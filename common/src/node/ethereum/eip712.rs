@@ -1,24 +1,34 @@
 #![cfg(feature = "abi-contract")]
 
 use crate::node::ethereum::abi::{EthAbiParamType, EthAbiToken};
-use crate::{address_from_str, EthError};
+use crate::transaction::{Eip712Error, EthError};
 use ethers::prelude::abi::{ParamType, Token};
 use ethers::prelude::U256;
-use ethers::types::transaction::eip712::{self, encode_eip712_type, EIP712Domain, Eip712Error};
+use ethers::types::transaction::eip712;
 use ethers::utils::keccak256;
 use std::collections::HashMap;
+
+mod deserializer;
+use deserializer::Eip712TypedDataSerde;
 
 type Eip712FieldName = String;
 type Eip712FieldType = EthAbiParamType;
 type Eip712FieldValue = EthAbiToken;
 type Eip712StructName = String;
+type Result<T> = std::result::Result<T, EthError>;
 
 /// EIP-712 typed data
-pub struct Eip712TypedData {}
+#[derive(Debug)]
+pub struct Eip712TypedData {
+    domain: eip712::EIP712Domain,
+    primary_type: Eip712StructName,
+    types: HashMap<Eip712StructName, Eip712Struct>,
+    values: HashMap<Eip712FieldName, Eip712FieldValue>,
+}
 
 impl Eip712TypedData {
     /// Contruct an EIP-712 typed data from a JSON string of specified schema as below. The field
-    /// `domain`, `message`, `primaryType` and `types` are all mandatory as described in
+    /// `domain`, `message` (values), `primaryType` and `types` are all mandatory as described in
     /// [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
     ///
     /// {
@@ -46,79 +56,55 @@ impl Eip712TypedData {
     ///     ]
     ///   }
     /// }
-    pub fn new(json_typed_data: &str) -> Result<Self, Eip712Error> {
-        todo!()
+    pub fn new(json_typed_data: &str) -> Result<Self> {
+        let serde_typed_data: Eip712TypedDataSerde =
+            serde_json::from_str(json_typed_data).map_err(Eip712Error::SerdeJsonError)?;
+        serde_typed_data.try_into()
     }
 
     /// Encode the typed data.
-    pub fn encode(&self) -> Result<Vec<u8>, Eip712Error> {
-        todo!()
-    }
-}
+    pub fn encode(&self) -> Result<Vec<u8>> {
+        let domain_separator = self.domain.separator();
+        let struct_hash = self.build_struct_hash()?;
+        let digest_input = [&[0x19, 0x01], &domain_separator[..], &struct_hash[..]].concat();
 
-/// EIP-712 typed struct
-struct Eip712Struct {
-    type_hash: U256,
-    domain: Eip712Domain,
-    fields: Vec<Eip712Field>,
-}
-
-impl Eip712Struct {
-    /// Contruct an EIP-712 typed struct.
-    fn new(
-        struct_name: Eip712StructName,
-        domain: Eip712Domain,
-        fields: Vec<Eip712Field>,
-    ) -> Result<Self, EthError> {
-        let type_hash = build_struct_type_hash(&struct_name, &fields);
-        Ok(Self {
-            type_hash,
-            domain,
-            fields,
-        })
-    }
-
-    /// Encode the typed values.
-    fn encode(
-        &self,
-        values: HashMap<Eip712FieldName, Eip712FieldValue>,
-    ) -> Result<Vec<u8>, EthError> {
-        let domain_separator = self.domain.internal.separator();
-        let hash = self.build_hash(values)?;
-        let digest_input = [&[0x19, 0x01], &domain_separator[..], &hash[..]].concat();
         Ok(keccak256(digest_input).to_vec())
     }
 
-    fn build_hash(
-        &self,
-        values: HashMap<Eip712FieldName, Eip712FieldValue>,
-    ) -> Result<[u8; 32], EthError> {
-        let mut items = vec![Token::Uint(self.type_hash)];
+    fn build_struct_hash(&self) -> Result<[u8; 32]> {
+        let primary_struct = self
+            .types
+            .get(&self.primary_type)
+            .ok_or_else(|| Eip712Error::MissingTypeError(self.primary_type.clone()))?;
 
-        let tokens = self
+        let mut items = vec![Token::Uint(primary_struct.build_type_hash())];
+
+        let tokens = primary_struct
             .fields
             .iter()
-            .map(|f| {
-                let field_name = &f.name;
-                values
-                    .get(field_name)
+            .map(|field| {
+                let field_name = &field.name;
+                self.values
+                    .get(&field.name)
                     .map(Into::into)
-                    .ok_or_else(|| EthError::CommonError(format!("Missing field {field_name}")))
+                    .ok_or_else(|| Eip712Error::MissingFieldError(field_name.clone()).into())
             })
-            .collect::<Result<Vec<Token>, EthError>>()?;
+            .collect::<Result<Vec<Token>>>()?;
 
         for token in tokens {
             match &token {
                 Token::Tuple(_) => {
                     // TODO:
-                    // Crate `ether-rs` uses `Token::Tuple` to save values of
-                    // nested struct. Since we have already fixed to use
-                    // `Eip712Struct`. Field of nested struct could be
+                    // Crate `ether-rs` uses `Token::Tuple` to save values of nested struct. Since
+                    // we have already fixed to use `Eip712Struct`. Field of nested struct could be
                     // implemented in `Eip712Field`.
-                    return Err(Eip712Error::NestedEip712StructNotImplemented.into());
+                    return Err(Eip712Error::EthersError(
+                        eip712::Eip712Error::NestedEip712StructNotImplemented,
+                    )
+                    .into());
                 }
                 _ => {
-                    items.push(encode_eip712_type(token));
+                    items.push(eip712::encode_eip712_type(token));
                 }
             }
         }
@@ -127,133 +113,81 @@ impl Eip712Struct {
     }
 }
 
-/// EIP-712 domain
-struct Eip712Domain {
-    internal: EIP712Domain,
+/// EIP-712 struct type
+#[derive(Debug, Eq, PartialEq)]
+struct Eip712Struct {
+    name: Eip712StructName,
+    fields: Vec<Eip712Field>,
 }
 
-impl Eip712Domain {
-    /// Contruct an EIP-712 domain.
-    fn new(
-        chain_id: u64,
-        name: String,
-        version: String,
-        verifying_contract: String,
-        salt: Option<String>,
-    ) -> Result<Self, EthError> {
-        Ok(Self {
-            internal: EIP712Domain {
-                name,
-                version,
-                chain_id: chain_id.into(),
-                verifying_contract: address_from_str(&verifying_contract)?,
-                salt: salt.map(keccak256),
-            },
-        })
+impl Eip712Struct {
+    /// Contruct an EIP-712 struct type.
+    fn new(name: Eip712StructName, fields: Vec<Eip712Field>) -> Self {
+        Self { name, fields }
+    }
+
+    /// Build hash of this struct type.
+    fn build_type_hash(&self) -> U256 {
+        let fields: Vec<(String, ParamType)> = self
+            .fields
+            .iter()
+            .map(|f| (f.name.to_owned(), ParamType::from(&f.r#type)))
+            .collect();
+
+        let type_hash = eip712::make_type_hash(self.name.to_owned(), &fields);
+        U256::from(&type_hash[..])
     }
 }
 
 /// EIP-712 field
+#[derive(Debug, Eq, PartialEq)]
 struct Eip712Field {
     name: String,
     r#type: Eip712FieldType,
 }
 
-impl Eip712Field {
-    /// Contruct an EIP-712 struct field.
-    fn new(name: String, r#type: Eip712FieldType) -> Self {
-        Self { name, r#type }
-    }
-}
-
-fn build_struct_type_hash(struct_name: &str, fields: &[Eip712Field]) -> U256 {
-    let fields: Vec<(String, ParamType)> = fields
-        .iter()
-        .map(|f| (f.name.to_owned(), ParamType::from(&f.r#type)))
-        .collect();
-    let type_hash = eip712::make_type_hash(struct_name.to_owned(), &fields);
-    U256::from(&type_hash[..])
-}
-
 #[cfg(test)]
-mod tests {
+mod eip712_encoding_tests {
     use super::*;
-    use crate::SecretKey;
-    use ethers::prelude::{Address, LocalWallet, Signer, H256};
+
+    const JSON_TYPED_DATA: &str = r#"
+        {
+            "domain": {
+                "name": "Ether Person",
+                "version": "1",
+                "chainId": 1,
+                "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+            },
+            "message": {
+                "name": "Bob",
+                "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+            },
+            "primaryType": "Person",
+            "types": {
+                "EIP712Domain": [
+                    { "name": "name", "type": "string" },
+                    { "name": "version", "type": "string" },
+                    { "name": "chainId", "type": "uint256" },
+                    { "name": "verifyingContract", "type": "address" }
+                ],
+                "Person": [
+                    { "name": "name", "type": "string" },
+                    { "name": "wallet", "type": "address" }
+                ]
+            }
+        }"#;
 
     #[test]
-    fn test_eip712_sign_typed_data() {
-        let structure = test_eip712_struct();
-        let encoded_data = structure.encode(test_eip712_values()).unwrap();
-        let hash = H256::from_slice(&encoded_data);
-        let wallet = test_eip712_wallet();
+    fn test_eip712_typed_data_encoding() {
+        let typed_data = Eip712TypedData::new(JSON_TYPED_DATA).unwrap();
+        let encoded_data = typed_data.encode().unwrap();
 
         assert_eq!(
-            wallet.sign_hash(hash, false).to_vec(),
+            encoded_data,
             [
-                127, 151, 100, 76, 156, 92, 86, 250, 18, 47, 151, 225, 144, 86, 127, 25, 7, 53, 66,
-                110, 73, 22, 156, 2, 7, 183, 201, 61, 141, 27, 198, 212, 65, 82, 185, 72, 193, 77,
-                41, 27, 44, 158, 145, 19, 51, 16, 182, 123, 46, 120, 139, 33, 129, 84, 21, 180,
-                227, 90, 91, 150, 92, 198, 205, 235, 28
-            ],
+                182, 232, 94, 47, 97, 186, 229, 123, 119, 62, 140, 229, 52, 142, 10, 122, 161, 104,
+                105, 146, 232, 140, 235, 153, 192, 138, 40, 7, 179, 114, 125, 174
+            ]
         );
-    }
-
-    fn test_eip712_domain() -> Eip712Domain {
-        Eip712Domain::new(
-            1,
-            "Eip712Test".to_string(),
-            "1".to_string(),
-            "0x0000000000000000000000000000000000000001".to_string(),
-            Some("eip712-test-75F0CCte".to_string()),
-        )
-        .unwrap()
-    }
-
-    fn test_eip712_struct() -> Eip712Struct {
-        Eip712Struct::new(
-            "FooBar".to_string(),
-            test_eip712_domain(),
-            vec![
-                Eip712Field::new("foo".to_string(), Eip712FieldType::Int(256)),
-                Eip712Field::new("bar".to_string(), Eip712FieldType::Uint(256)),
-                Eip712Field::new("fizz".to_string(), Eip712FieldType::Bytes),
-                Eip712Field::new("buzz".to_string(), Eip712FieldType::FixedBytes(32)),
-                Eip712Field::new("far".to_string(), Eip712FieldType::String),
-                Eip712Field::new("out".to_string(), Eip712FieldType::Address),
-            ],
-        )
-        .unwrap()
-    }
-
-    fn test_eip712_values() -> HashMap<Eip712FieldName, Eip712FieldValue> {
-        let mut values = HashMap::new();
-        values.insert("foo".to_string(), Eip712FieldValue::Int(U256::from(10)));
-        values.insert("bar".to_string(), Eip712FieldValue::Uint(U256::from(20)));
-        values.insert(
-            "fizz".to_string(),
-            Eip712FieldValue::Bytes(b"fizz".to_vec()),
-        );
-        values.insert(
-            "buzz".to_string(),
-            Eip712FieldValue::FixedBytes(keccak256("buzz").to_vec()),
-        );
-        values.insert(
-            "far".to_string(),
-            Eip712FieldValue::String("space".to_string()),
-        );
-        values.insert(
-            "out".to_string(),
-            Eip712FieldValue::Address(Address::from([0; 20])),
-        );
-
-        values
-    }
-
-    fn test_eip712_wallet() -> LocalWallet {
-        let hex = "24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e";
-        let secret_key = SecretKey::from_hex(hex.to_owned()).unwrap();
-
-        LocalWallet::from(secret_key.get_signing_key()).with_chain_id(1_u64)
     }
 }

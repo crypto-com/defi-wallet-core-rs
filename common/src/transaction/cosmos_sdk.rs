@@ -608,15 +608,9 @@ fn get_signed_msg_tx(
 #[derive(Debug, thiserror::Error)]
 pub enum CosmosError {
     #[error("Error: {0}")]
-    EyreReport(eyre::Report),
+    EyreReport(#[from] eyre::Report),
     #[error("Public key error: {0}")]
     PubkeyError(cosmrs::bip32::Error),
-}
-
-impl From<eyre::Report> for CosmosError {
-    fn from(report: eyre::Report) -> Self {
-        CosmosError::EyreReport(report)
-    }
 }
 
 /// creates the transaction signing payload (`SignDoc`)

@@ -47,8 +47,8 @@ impl EthSigner {
     ///     ]
     ///   }
     /// }
-    #[wasm_bindgen(constructor)]
-    pub fn sign_typed_data(json_typed_data: &str) -> Result<Vec<u8>, JsValue> {
+    #[wasm_bindgen]
+    pub fn sign_typed_data(&self, json_typed_data: &str) -> Result<Vec<u8>, JsValue> {
         Ok(self.inner.sign_typed_data(json_typed_data)?)
     }
 }

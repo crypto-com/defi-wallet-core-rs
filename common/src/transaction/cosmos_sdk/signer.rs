@@ -2,15 +2,16 @@ use crate::transaction::cosmos_sdk::CosmosError;
 use crate::wallet::SecretKey;
 use cosmrs::crypto::secp256k1::SigningKey;
 use cosmrs::tx::SignDoc;
+use std::sync::Arc;
 
 /// Cosmos Signer
 pub struct CosmosSigner {
-    secret_key: SecretKey,
+    secret_key: Arc<SecretKey>,
 }
 
 impl CosmosSigner {
     /// Create an instance via a secret key.
-    pub fn new(secret_key: SecretKey) -> Self {
+    pub fn new(secret_key: Arc<SecretKey>) -> Self {
         Self { secret_key }
     }
 
@@ -59,7 +60,7 @@ impl CosmosProtoSignDoc {
 }
 
 #[cfg(test)]
-mod cosmos_signer_tests {
+mod cosmos_signing_tests {
     use super::*;
     use crate::wallet::HDWallet;
 
