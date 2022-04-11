@@ -204,7 +204,7 @@ pub async fn broadcast_tx_sync(
         tx: raw_signed_tx.into(),
     });
 
-    Ok(reqwest::Client::new()
+    reqwest::Client::new()
         .post(tendermint_rpc_url)
         .json(&request)
         .send()
@@ -212,7 +212,7 @@ pub async fn broadcast_tx_sync(
         .map_err(RestError::RequestError)?
         .json::<response::Wrapper<tx_sync::Response>>()
         .await
-        .map_err(RestError::RequestError)?)
+        .map_err(RestError::RequestError)
 }
 
 /// a subset of `tx_sync::Response` for UniFFI
