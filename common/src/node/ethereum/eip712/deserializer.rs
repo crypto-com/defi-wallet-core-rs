@@ -52,6 +52,13 @@ impl TryFrom<&Eip712FieldSerde> for Eip712Field {
 }
 
 /// EIP-712 typed data for deserializing
+/// The item types of `message` is `serde_json::Value` and specified in `types`, and cannot be
+/// figured out and parsed to `EthAbiToken` during deserializing.
+/// Both struct types and values need to be parsed to EthAbiParamType and EthAbiToken when
+/// converting Eip712TypedDataSerde to Eip712TypedData.
+/// `Eip712TypedDataSerde` is used for JSON deserializing automatically. And `Eip712TypedData`
+/// organizes Struct types as `EthAbiParamType` and values as `EthAbiToken` for further data
+/// encoding.
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct Eip712TypedDataSerde {
