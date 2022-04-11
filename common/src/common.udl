@@ -212,7 +212,7 @@ interface CosmosSDKClient {
 
 [Enum]
 interface ContractApproval {
-  Erc20(string contract_address, string approved_address, string amount_hex);
+  Erc20(string contract_address, string approved_address, string amount);
   Erc721Approve(string contract_address, string approved_address, string token_id);
   Erc721SetApprovalForAll(string contract_address, string approved_address, boolean approved);
   Erc1155(string contract_address, string approved_address, boolean approved);
@@ -227,17 +227,17 @@ interface ContractBalance {
 
 [Enum]
 interface ContractTransfer {
-  Erc20Transfer(string contract_address, string to_address, string amount_hex);
-  Erc20TransferFrom(string contract_address, string from_address, string to_address, string amount_hex);
+  Erc20Transfer(string contract_address, string to_address, string amount);
+  Erc20TransferFrom(string contract_address, string from_address, string to_address, string amount);
   Erc721TransferFrom(string contract_address, string from_address, string to_address, string token_id);
   Erc721SafeTransferFrom(string contract_address, string from_address, string to_address, string token_id);
   Erc721SafeTransferFromWithAdditionalData(string contract_address, string from_address, string to_address, string token_id, sequence<u8> additional_data);
-  Erc1155SafeTransferFrom(string contract_address, string from_address, string to_address, string token_id, string amount_hex, sequence<u8> additional_data);
+  Erc1155SafeTransferFrom(string contract_address, string from_address, string to_address, string token_id, string amount, sequence<u8> additional_data);
 };
 
 [Enum]
 interface ContractBatchTransfer {
-  Erc1155(string contract_address, string from_address, string to_address, sequence<string> token_ids, sequence<string> hex_amounts, sequence<u8> additional_data);
+  Erc1155(string contract_address, string from_address, string to_address, sequence<string> token_ids, sequence<string> amounts, sequence<u8> additional_data);
 };
 
 dictionary Denom {
@@ -273,6 +273,7 @@ dictionary Collection {
 
 [Error]
 enum EthError {
+  "DecConversion",
   "HexConversion",
   "ParseError",
   "NodeUrl",

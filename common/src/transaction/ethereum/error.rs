@@ -10,6 +10,8 @@ use ethers::utils::ConversionError;
 /// Possible errors from Ethereum transaction construction and broadcasting
 #[derive(Debug, thiserror::Error)]
 pub enum EthError {
+    #[error("Converting from decimal failed")]
+    DecConversion,
     #[error("Converting from hexadecimal failed")]
     HexConversion,
     #[error("Converting from decimal failed: {0}")]

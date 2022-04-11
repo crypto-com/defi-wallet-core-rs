@@ -335,7 +335,7 @@ pub struct ContractApprovalDetails {
     approved_address: String,
     contract_address: String,
     contract_type: ContractType,
-    amount_hex: Option<String>,
+    amount: Option<String>,
     token_id: Option<String>,
     approved: Option<bool>,
 }
@@ -347,13 +347,13 @@ impl ContractApprovalDetails {
     pub fn build_erc20_approve(
         contract_address: String,
         spender_address: String,
-        amount_hex: String,
+        amount: String,
     ) -> Self {
         Self {
             approved_address: spender_address,
             contract_address,
             contract_type: ContractType::Erc20,
-            amount_hex: Some(amount_hex),
+            amount: Some(amount),
             token_id: None,
             approved: None,
         }
@@ -370,7 +370,7 @@ impl ContractApprovalDetails {
             approved_address,
             contract_address,
             contract_type: ContractType::Erc721,
-            amount_hex: None,
+            amount: None,
             token_id: Some(token_id),
             approved: None,
         }
@@ -387,7 +387,7 @@ impl ContractApprovalDetails {
             approved_address: operator_address,
             contract_address,
             contract_type: ContractType::Erc721,
-            amount_hex: None,
+            amount: None,
             token_id: None,
             approved: Some(approved),
         }
@@ -404,7 +404,7 @@ impl ContractApprovalDetails {
             approved_address: operator_address,
             contract_address,
             contract_type: ContractType::Erc1155,
-            amount_hex: None,
+            amount: None,
             token_id: None,
             approved: Some(approved),
         }
@@ -417,14 +417,14 @@ impl TryFrom<ContractApprovalDetails> for ContractApproval {
     fn try_from(details: ContractApprovalDetails) -> Result<Self, Self::Error> {
         match (
             details.contract_type,
-            details.amount_hex,
+            details.amount,
             details.token_id,
             details.approved,
         ) {
-            (ContractType::Erc20, Some(amount_hex), _, _) => Ok(Self::Erc20 {
+            (ContractType::Erc20, Some(amount), _, _) => Ok(Self::Erc20 {
                 contract_address: details.contract_address,
                 approved_address: details.approved_address,
-                amount_hex,
+                amount,
             }),
             (ContractType::Erc721, _, Some(token_id), _) => Ok(Self::Erc721Approve {
                 contract_address: details.contract_address,
@@ -459,7 +459,7 @@ pub struct ContractTransferDetails {
     contract_type: ContractType,
     from_address: Option<String>,
     token_id: Option<String>,
-    amount_hex: Option<String>,
+    amount: Option<String>,
     additional_data: Option<Vec<u8>>,
 }
 
@@ -470,7 +470,7 @@ impl ContractTransferDetails {
     pub fn build_erc20_transfer(
         contract_address: String,
         to_address: String,
-        amount_hex: String,
+        amount: String,
     ) -> Self {
         Self {
             is_safe: false,
@@ -479,7 +479,7 @@ impl ContractTransferDetails {
             contract_type: ContractType::Erc20,
             from_address: None,
             token_id: None,
-            amount_hex: Some(amount_hex),
+            amount: Some(amount),
             additional_data: None,
         }
     }
@@ -490,7 +490,7 @@ impl ContractTransferDetails {
         contract_address: String,
         from_address: String,
         to_address: String,
-        amount_hex: String,
+        amount: String,
     ) -> Self {
         Self {
             is_safe: false,
@@ -499,7 +499,7 @@ impl ContractTransferDetails {
             contract_type: ContractType::Erc20,
             from_address: Some(from_address),
             token_id: None,
-            amount_hex: Some(amount_hex),
+            amount: Some(amount),
             additional_data: None,
         }
     }
@@ -519,7 +519,7 @@ impl ContractTransferDetails {
             contract_type: ContractType::Erc721,
             from_address: Some(from_address),
             token_id: Some(token_id),
-            amount_hex: None,
+            amount: None,
             additional_data: None,
         }
     }
@@ -539,7 +539,7 @@ impl ContractTransferDetails {
             contract_type: ContractType::Erc721,
             from_address: Some(from_address),
             token_id: Some(token_id),
-            amount_hex: None,
+            amount: None,
             additional_data: None,
         }
     }
@@ -560,7 +560,7 @@ impl ContractTransferDetails {
             contract_type: ContractType::Erc721,
             from_address: Some(from_address),
             token_id: Some(token_id),
-            amount_hex: None,
+            amount: None,
             additional_data: Some(additional_data),
         }
     }
@@ -572,7 +572,7 @@ impl ContractTransferDetails {
         from_address: String,
         to_address: String,
         token_id: String,
-        amount_hex: String,
+        amount: String,
         additional_data: Vec<u8>,
     ) -> Self {
         Self {
@@ -582,7 +582,7 @@ impl ContractTransferDetails {
             contract_type: ContractType::Erc1155,
             from_address: Some(from_address),
             token_id: Some(token_id),
-            amount_hex: Some(amount_hex),
+            amount: Some(amount),
             additional_data: Some(additional_data),
         }
     }
@@ -597,22 +597,22 @@ impl TryFrom<ContractTransferDetails> for ContractTransfer {
             details.is_safe,
             details.from_address,
             details.token_id,
-            details.amount_hex,
+            details.amount,
             details.additional_data,
         ) {
-            (ContractType::Erc20, _, None, _, Some(amount_hex), _) => {
+            (ContractType::Erc20, _, None, _, Some(amount), _) => {
                 Ok(ContractTransfer::Erc20Transfer {
                     contract_address: details.contract_address,
                     to_address: details.to_address,
-                    amount_hex,
+                    amount,
                 })
             }
-            (ContractType::Erc20, _, Some(from_address), _, Some(amount_hex), _) => {
+            (ContractType::Erc20, _, Some(from_address), _, Some(amount), _) => {
                 Ok(ContractTransfer::Erc20TransferFrom {
                     contract_address: details.contract_address,
                     from_address,
                     to_address: details.to_address,
-                    amount_hex,
+                    amount,
                 })
             }
             (ContractType::Erc721, false, Some(from_address), Some(token_id), _, _) => {
@@ -650,14 +650,14 @@ impl TryFrom<ContractTransferDetails> for ContractTransfer {
                 _,
                 Some(from_address),
                 Some(token_id),
-                Some(amount_hex),
+                Some(amount),
                 additional_data,
             ) => Ok(ContractTransfer::Erc1155SafeTransferFrom {
                 contract_address: details.contract_address,
                 from_address,
                 to_address: details.to_address,
                 token_id,
-                amount_hex,
+                amount,
                 additional_data: additional_data.unwrap_or_else(|| vec![]),
             }),
             (ContractType::Erc1155, _, None, _, _, _)
@@ -684,7 +684,7 @@ pub struct ContractBatchTransferDetails {
     to_address: String,
     contract_address: String,
     contract_type: ContractType,
-    hex_amounts: Vec<String>,
+    amounts: Vec<String>,
     token_ids: Vec<String>,
     additional_data: Vec<u8>,
 }
@@ -703,18 +703,18 @@ impl ContractBatchTransferDetails {
     ) -> Result<ContractBatchTransferDetails, JsValue> {
         let len = token_amounts.len();
         let mut token_ids = Vec::with_capacity(len);
-        let mut hex_amounts = Vec::with_capacity(len);
+        let mut amounts = Vec::with_capacity(len);
         for item in token_amounts {
             let token_amount: TokenAmount = item.try_into()?;
             token_ids.push(token_amount.token_id);
-            hex_amounts.push(token_amount.hex_amount);
+            amounts.push(token_amount.amount);
         }
         Ok(Self {
             from_address,
             to_address,
             contract_address,
             contract_type: ContractType::Erc1155,
-            hex_amounts,
+            amounts,
             token_ids,
             additional_data,
         })
@@ -731,7 +731,7 @@ impl TryFrom<ContractBatchTransferDetails> for ContractBatchTransfer {
                 from_address: details.from_address,
                 to_address: details.to_address,
                 token_ids: details.token_ids,
-                hex_amounts: details.hex_amounts,
+                amounts: details.amounts,
                 additional_data: details.additional_data,
             }),
 
@@ -747,19 +747,15 @@ impl TryFrom<ContractBatchTransferDetails> for ContractBatchTransfer {
 /// amount arrays.
 pub struct TokenAmount {
     token_id: String,
-    hex_amount: String,
+    amount: String,
 }
 
 #[wasm_bindgen]
 impl TokenAmount {
     /// Create an instance and serialize it to JsValue.
     #[wasm_bindgen(constructor)]
-    pub fn new(token_id: String, hex_amount: String) -> Result<JsValue, JsValue> {
-        JsValue::from_serde(&Self {
-            token_id,
-            hex_amount,
-        })
-        .map_err(format_to_js_error)
+    pub fn new(token_id: String, amount: String) -> Result<JsValue, JsValue> {
+        JsValue::from_serde(&Self { token_id, amount }).map_err(format_to_js_error)
     }
 }
 
