@@ -90,7 +90,7 @@ pub enum ContractApproval {
     Erc20 {
         contract_address: String,
         approved_address: String,
-        amount_hex: String,
+        amount: String,
     },
     Erc721Approve {
         contract_address: String,
@@ -131,13 +131,13 @@ pub enum ContractTransfer {
     Erc20Transfer {
         contract_address: String,
         to_address: String,
-        amount_hex: String,
+        amount: String,
     },
     Erc20TransferFrom {
         contract_address: String,
         from_address: String,
         to_address: String,
-        amount_hex: String,
+        amount: String,
     },
     Erc721TransferFrom {
         contract_address: String,
@@ -163,7 +163,7 @@ pub enum ContractTransfer {
         from_address: String,
         to_address: String,
         token_id: String,
-        amount_hex: String,
+        amount: String,
         additional_data: Vec<u8>,
     },
 }
@@ -175,7 +175,7 @@ pub enum ContractBatchTransfer {
         from_address: String,
         to_address: String,
         token_ids: Vec<String>,
-        hex_amounts: Vec<String>,
+        amounts: Vec<String>,
         additional_data: Vec<u8>,
     },
 }
@@ -252,10 +252,10 @@ pub async fn broadcast_contract_approval_tx(
         ContractApproval::Erc20 {
             contract_address,
             approved_address,
-            amount_hex,
+            amount,
         } => {
             let approved_address = address_from_str(&approved_address)?;
-            let amount = u256_from_str(&amount_hex)?;
+            let amount = u256_from_dec_str(&amount)?;
             let contract = Contract::new_erc20(&contract_address, client)?;
             let call = contract.approve(approved_address, amount);
             ContractCall::from(call).legacy(legacy).send().await
@@ -312,10 +312,10 @@ pub async fn broadcast_contract_transfer_tx(
         ContractTransfer::Erc20Transfer {
             contract_address,
             to_address,
-            amount_hex,
+            amount,
         } => {
             let to_address = address_from_str(&to_address)?;
-            let amount = u256_from_str(&amount_hex)?;
+            let amount = u256_from_dec_str(&amount)?;
             let contract = Contract::new_erc20(&contract_address, client)?;
             let call = contract.transfer(to_address, amount);
             ContractCall::from(call).legacy(legacy).send().await
@@ -324,11 +324,11 @@ pub async fn broadcast_contract_transfer_tx(
             contract_address,
             from_address,
             to_address,
-            amount_hex,
+            amount,
         } => {
             let from_address = address_from_str(&from_address)?;
             let to_address = address_from_str(&to_address)?;
-            let amount = u256_from_str(&amount_hex)?;
+            let amount = u256_from_dec_str(&amount)?;
             let contract = Contract::new_erc20(&contract_address, client)?;
             let call = contract.transfer_from(from_address, to_address, amount);
             ContractCall::from(call).legacy(legacy).send().await
@@ -383,11 +383,11 @@ pub async fn broadcast_contract_transfer_tx(
             from_address,
             to_address,
             token_id,
-            amount_hex,
+            amount,
             additional_data,
         } => {
             let token_id = u256_from_str(&token_id)?;
-            let amount = u256_from_str(&amount_hex)?;
+            let amount = u256_from_dec_str(&amount)?;
 
             let to_address = address_from_str(&to_address)?;
             let from_address = address_from_str(&from_address)?;
@@ -424,7 +424,7 @@ pub async fn broadcast_contract_batch_transfer_tx(
             from_address,
             to_address,
             token_ids,
-            hex_amounts,
+            amounts,
             additional_data,
         } => {
             let to_address = address_from_str(&to_address)?;
@@ -433,9 +433,9 @@ pub async fn broadcast_contract_batch_transfer_tx(
                 .iter()
                 .map(|val| u256_from_str(val))
                 .collect::<Result<Vec<U256>, _>>()?;
-            let amounts = hex_amounts
+            let amounts = amounts
                 .iter()
-                .map(|val| u256_from_str(val))
+                .map(|val| u256_from_dec_str(val))
                 .collect::<Result<Vec<U256>, _>>()?;
 
             let contract = Contract::new_erc1155(&contract_address, client)?;
@@ -651,4 +651,9 @@ pub fn address_from_str(address_str: &str) -> Result<Address, EthError> {
 #[inline]
 pub fn u256_from_str(u256_str: &str) -> Result<U256, EthError> {
     U256::from_str(u256_str).map_err(|_| EthError::HexConversion)
+}
+
+#[inline]
+pub fn u256_from_dec_str(u256_str: &str) -> Result<U256, EthError> {
+    U256::from_dec_str(u256_str).map_err(|_| EthError::DecConversion)
 }
