@@ -1,77 +1,22 @@
 use crate::{SecretKey, WalletCoin, WalletCoinFunc};
-use ethers::contract::ContractError;
-use ethers::core::k256::ecdsa::SigningKey;
-use ethers::middleware::signer::SignerMiddlewareError;
 use ethers::prelude::{
-    abi, Address, Chain, Eip1559TransactionRequest, Http, LocalWallet, ParseChainError, Provider,
-    ProviderError, Signer, SignerMiddleware, TransactionRequest, Wallet, U256,
+    Address, Chain, Eip1559TransactionRequest, LocalWallet, Signer, TransactionRequest, U256,
 };
 use ethers::types::transaction::eip2718::TypedTransaction;
-use ethers::types::transaction::eip712::Eip712Error;
 use ethers::utils::{parse_units, ConversionError};
 use std::default::Default;
 use std::str::FromStr;
 use std::sync::Arc;
 
 mod abi_contract;
+mod error;
+mod signer;
 
 #[cfg(feature = "abi-contract")]
 pub use abi_contract::*;
-
-/// Possible errors from Ethereum transaction construction and broadcasting
-#[derive(Debug, thiserror::Error)]
-pub enum EthError {
-    #[error("Converting from decimal failed")]
-    DecConversion,
-    #[error("Converting from hexadecimal failed")]
-    HexConversion,
-    #[error("Converting from decimal failed: {0}")]
-    ParseError(ConversionError),
-    #[error("Invalid node Web3 connection URL: {0}")]
-    NodeUrl(url::ParseError),
-    #[error("Transaction sending failed: {0}")]
-    SendTxFail(SignerMiddlewareError<Provider<Http>, Wallet<SigningKey>>),
-    #[error("Transaction sending failed: {0}")]
-    BroadcastTxFail(ProviderError),
-    #[error("Transaction dropped from the mempool")]
-    MempoolDrop,
-    #[error("Failed to obtain an account balance")]
-    BalanceFail,
-    #[error("Async Runtime error")]
-    AsyncRuntimeError,
-    #[error("Contract Send Error: {0}")]
-    ContractSendError(ContractError<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>),
-    #[error("Contract Call Error: {0}")]
-    ContractCallError(ContractError<Provider<Http>>),
-    #[error("Signature error")]
-    SignatureError,
-    #[error("Chainid error: {0}")]
-    ChainidError(ParseChainError),
-    #[error("ABI error: {0}")]
-    AbiError(abi::Error),
-    #[error("EIP-712 error: {0}")]
-    Eip712Error(Eip712Error),
-    #[error("Common error: {0}")]
-    CommonError(String),
-}
-
-impl From<abi::Error> for EthError {
-    fn from(abi_error: abi::Error) -> EthError {
-        EthError::AbiError(abi_error)
-    }
-}
-
-impl From<Eip712Error> for EthError {
-    fn from(eip712_error: Eip712Error) -> EthError {
-        EthError::Eip712Error(eip712_error)
-    }
-}
-
-impl From<ParseChainError> for EthError {
-    fn from(parse_chain_error: ParseChainError) -> EthError {
-        EthError::ChainidError(parse_chain_error)
-    }
-}
+pub use error::*;
+#[cfg(feature = "abi-contract")]
+pub use signer::*;
 
 /// Ethereum networks
 /// the string conversion is from: https://github.com/gakonst/ethers-rs/blob/4fd9c7800ee9afd5395d8c7b8652d788b9e80f35/ethers-core/src/types/chain.rs#L130
