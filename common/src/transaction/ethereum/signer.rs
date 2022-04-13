@@ -49,12 +49,12 @@ impl EthSigner {
     ///     ]
     ///   }
     /// }
-    pub fn sign_typed_data(&self, json_typed_data: &str) -> Result<Vec<u8>, EthError> {
+    pub fn sign_typed_data(&self, json_typed_data: &str) -> Result<String, EthError> {
         let encoded_data = Eip712TypedData::new(json_typed_data)?.encode()?;
         Ok(self
             .wallet
             .sign_hash(H256::from_slice(&encoded_data), false)
-            .to_vec())
+            .to_string())
     }
 }
 
@@ -99,14 +99,6 @@ mod ethereum_signing_tests {
         let signer = EthSigner::new(secret_key);
         let signed_data = signer.sign_typed_data(JSON_TYPED_DATA).unwrap();
 
-        assert_eq!(
-            signed_data,
-            [
-                171, 100, 126, 24, 5, 172, 205, 214, 162, 240, 48, 149, 76, 252, 0, 114, 209, 34,
-                150, 208, 251, 83, 211, 194, 160, 7, 59, 155, 87, 60, 240, 245, 51, 80, 62, 207,
-                10, 200, 242, 54, 215, 47, 46, 80, 12, 141, 0, 27, 235, 185, 249, 215, 224, 199,
-                64, 181, 10, 106, 102, 193, 238, 148, 120, 194, 28
-            ]
-        );
+        assert_eq!(signed_data, "ab647e1805accdd6a2f030954cfc0072d12296d0fb53d3c2a0073b9b573cf0f533503ecf0ac8f236d72f2e500c8d001bebb9f9d7e0c740b50a6a66c1ee9478c21c");
     }
 }
