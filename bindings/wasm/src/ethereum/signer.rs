@@ -2,6 +2,13 @@ use crate::PrivateKey;
 use defi_wallet_core_common::EthSigner;
 use wasm_bindgen::prelude::*;
 
+/// Sign a hash value directly.
+/// Argument `hash` must be a hex value of 32 bytes (H256).
+#[wasm_bindgen]
+pub fn eth_sign(private_key: PrivateKey, hash: &str) -> Result<String, JsValue> {
+    Ok(EthSigner::new(private_key.key).eth_sign(hash)?)
+}
+
 /// Sign an arbitrary message as per EIP-191.
 #[wasm_bindgen]
 pub fn personal_sign(private_key: PrivateKey, message: &str) -> String {

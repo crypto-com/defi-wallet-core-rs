@@ -6,6 +6,7 @@ use crate::transaction::ethereum::EthError;
 use crate::wallet::SecretKey;
 use ethers::prelude::{LocalWallet, H256};
 use ethers::utils::hash_message;
+use std::str::FromStr;
 use std::sync::Arc;
 
 /// Ethereum Signer
@@ -19,6 +20,14 @@ impl EthSigner {
         Self {
             wallet: secret_key.get_signing_key().into(),
         }
+    }
+
+    /// Sign a hash value directly.
+    /// Argument `hash` must be a hex value of 32 bytes (H256).
+    pub fn eth_sign(&self, hash: &str) -> Result<String, EthError> {
+        let hash = hash.strip_prefix("0x").unwrap_or(hash);
+        let hash = H256::from_str(hash).map_err(|_| EthError::HexConversion)?;
+        Ok(self.wallet.sign_hash(hash, false).to_string())
     }
 
     /// Sign an arbitrary message as per EIP-191.
@@ -106,13 +115,21 @@ mod ethereum_signing_tests {
     }
 
     #[test]
-    fn test_eip191_personal_signing() {
-        let signature = get_signer().personal_sign("0xdeadbeaf");
-        assert_eq!(signature, "0d9851845464c72fc39829788368cb83e35b659511080ae189f763c9f6fb0e7411020b0f49aee68f2e57158ea1fe4d69b98b381b41480a92fe8095c0ebab6aaf1c");
+    fn test_eth_sign() {
+        let signature = get_signer()
+            .eth_sign("0x01020304050607085152535455565758a1a2a3a4a5a6a7a8f1f2f3f4f5f6f7f8")
+            .unwrap();
+        assert_eq!(signature, "379a17ae4fe51a4a40dab0a8736f9ebd11f0b5465f38192519e7b0e0bdd440137f7c7db0dfa1c78294d6dbf4c0797dcb161ca8f2dea0cd79267833269e1396261c");
     }
 
     #[test]
-    fn test_eip712_typed_data_signing() {
+    fn test_eip191_personal_sign() {
+        let signature = get_signer().personal_sign("Hello World!");
+        assert_eq!(signature, "b2aba6568054aff557402a3a9369309687019a29bb6180146d7a44043d6f8b19797e9a27c8c2b416a98cab29822927e76602924062725940e4bad56a9971faca1b");
+    }
+
+    #[test]
+    fn test_eip712_typed_data_sign() {
         let signature = get_signer().sign_typed_data(JSON_TYPED_DATA).unwrap();
         assert_eq!(signature, "ab647e1805accdd6a2f030954cfc0072d12296d0fb53d3c2a0073b9b573cf0f533503ecf0ac8f236d72f2e500c8d001bebb9f9d7e0c740b50a6a66c1ee9478c21c");
     }
