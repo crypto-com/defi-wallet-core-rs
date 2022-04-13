@@ -2,6 +2,12 @@ use crate::PrivateKey;
 use defi_wallet_core_common::EthSigner;
 use wasm_bindgen::prelude::*;
 
+/// Sign an arbitrary message as per EIP-191.
+#[wasm_bindgen]
+pub fn personal_sign(private_key: PrivateKey, message: &str) -> String {
+    EthSigner::new(private_key.key).personal_sign(message)
+}
+
 /// Sign an EIP-712 typed data from a JSON string of specified schema as below. The field
 /// `domain`, `message`, `primaryType` and `types` are all mandatory as described in
 /// [EIP-712](https://eips.ethereum.org/EIPS/eip-712).

@@ -5,6 +5,7 @@ use crate::node::ethereum::eip712::Eip712TypedData;
 use crate::transaction::ethereum::EthError;
 use crate::wallet::SecretKey;
 use ethers::prelude::{LocalWallet, H256};
+use ethers::utils::hash_message;
 use std::sync::Arc;
 
 /// Ethereum Signer
@@ -18,6 +19,12 @@ impl EthSigner {
         Self {
             wallet: secret_key.get_signing_key().into(),
         }
+    }
+
+    /// Sign an arbitrary message as per EIP-191.
+    pub fn personal_sign(&self, message: &str) -> String {
+        let hash = hash_message(message);
+        self.wallet.sign_hash(hash, false).to_string()
     }
 
     /// Sign an EIP-712 typed data from a JSON string of specified schema as below. The field
@@ -92,13 +99,21 @@ mod ethereum_signing_tests {
             }
         }"#;
 
-    #[test]
-    fn test_eip712_typed_data_signing() {
+    fn get_signer() -> EthSigner {
         let wallet = HDWallet::recover_wallet(MNEMONIC.to_string(), None).unwrap();
         let secret_key = wallet.get_key("m/44'/118'/0'/0/0".to_string()).unwrap();
-        let signer = EthSigner::new(secret_key);
-        let signed_data = signer.sign_typed_data(JSON_TYPED_DATA).unwrap();
+        EthSigner::new(secret_key)
+    }
 
-        assert_eq!(signed_data, "ab647e1805accdd6a2f030954cfc0072d12296d0fb53d3c2a0073b9b573cf0f533503ecf0ac8f236d72f2e500c8d001bebb9f9d7e0c740b50a6a66c1ee9478c21c");
+    #[test]
+    fn test_eip191_personal_signing() {
+        let signature = get_signer().personal_sign("0xdeadbeaf");
+        assert_eq!(signature, "0d9851845464c72fc39829788368cb83e35b659511080ae189f763c9f6fb0e7411020b0f49aee68f2e57158ea1fe4d69b98b381b41480a92fe8095c0ebab6aaf1c");
+    }
+
+    #[test]
+    fn test_eip712_typed_data_signing() {
+        let signature = get_signer().sign_typed_data(JSON_TYPED_DATA).unwrap();
+        assert_eq!(signature, "ab647e1805accdd6a2f030954cfc0072d12296d0fb53d3c2a0073b9b573cf0f533503ecf0ac8f236d72f2e500c8d001bebb9f9d7e0c740b50a6a66c1ee9478c21c");
     }
 }

@@ -17,6 +17,7 @@ const STAKING_DELEGATE_AMOUNT = BigInt(100_000_000_000);
 
 testPrivateKey();
 testCosmosProtoSigning();
+testEip199PersonalSigning();
 testEip712TypedDataSigning();
 testBuildEthereumContractBatchTransfer();
 const txData = testBuildAndSignCosmosTx();
@@ -83,8 +84,14 @@ function testCosmosProtoSigning() {
   const bodyBytes = "0a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d120731323334353637";
 
   const privateKey = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
-  const signature = cosmos_signDirect(privateKey, "chaintest", "1", authInfoBytes, bodyBytes);
+  const signature = wasm.cosmos_signDirect(privateKey, "chaintest", "1", authInfoBytes, bodyBytes);
   console.log(`Cosmos signDirect signature: ${signature}`);
+}
+
+function testEip199PersonalSigning() {
+  const privateKey = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
+  const signature = wasm.personal_sign(privateKey, "0xdeadbeaf");
+  console.log(`EIP-199 personal_sign signature: ${signature}`);
 }
 
 function testEip712TypedDataSigning() {
@@ -115,7 +122,7 @@ function testEip712TypedDataSigning() {
   };
 
   const privateKey = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
-  const signature = eth_signTypedData(JSON.stringify(params));
+  const signature = wasm.eth_signTypedData(privateKey, JSON.stringify(params));
   console.log(`EIP-712 signTypedData signature: ${signature}`);
 }
 

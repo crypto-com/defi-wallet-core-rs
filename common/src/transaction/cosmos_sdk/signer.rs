@@ -1,4 +1,5 @@
 use crate::transaction::cosmos_sdk::CosmosError;
+use crate::utils::hex_decode;
 use crate::wallet::SecretKey;
 use cosmrs::crypto::secp256k1::SigningKey;
 use cosmrs::tx::SignDoc;
@@ -28,9 +29,9 @@ impl CosmosSigner {
         let account_number = account_number
             .parse::<u64>()
             .context("Argument account_number must be an u64: {account_number}")?;
-        let auth_info_bytes = hex::decode(auth_info_bytes)
+        let auth_info_bytes = hex_decode(auth_info_bytes)
             .context("Argument auth_info_bytes must be a HEX string: {auth_info_bytes}")?;
-        let body_bytes = hex::decode(body_bytes)
+        let body_bytes = hex_decode(body_bytes)
             .context("Argument body_bytes must be a HEX string: {body_bytes}")?;
 
         let signed_bytes = CosmosProtoSignDoc::new(

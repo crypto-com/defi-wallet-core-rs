@@ -24,7 +24,7 @@ abigen!(
 ///  TODO Put utils.rs contract related functions under it
 pub struct Contract;
 
-use super::utils::address_from_str;
+use crate::node::ethereum::utils::address_from_str;
 
 impl Contract {
     /// Construct an ERC20 contract
