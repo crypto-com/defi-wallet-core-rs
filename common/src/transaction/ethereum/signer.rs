@@ -32,20 +32,26 @@ impl EthSigner {
     ///     "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
     ///   },
     ///   "message": {
-    ///     "name": "Bob",
-    ///     "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
-    ///   }
-    ///   "primaryType": "Person",
+    ///     "from": {
+    ///       "name": "Cow",
+    ///       "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+    ///     },
+    ///     "to": {
+    ///       "name": "Bob",
+    ///       "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+    ///     },
+    ///     "contents": "Hello, Bob!"
+    ///   },
+    ///   "primaryType": "Mail",
     ///   "types": {
+    ///     "Mail": [
+    ///       { "name": "from", "type": "Person" },
+    ///       { "name": "to", "type": "Person" },
+    ///       { "name": "contents", "type": "string" }
+    ///     ],
     ///     "Person": [
-    ///       {
-    ///         "name": "name",
-    ///         "type": "string"
-    ///       },
-    ///       {
-    ///         "name": "wallet",
-    ///         "type": "address"
-    ///       }
+    ///       { "name": "name", "type": "string" },
+    ///       { "name": "wallet", "type": "address" }
     ///     ]
     ///   }
     /// }
@@ -65,7 +71,7 @@ mod ethereum_signing_tests {
 
     const MNEMONIC: &str = "apple elegant knife hawk there screen vehicle lounge tube sun engage bus custom market pioneer casual wink present cat metal ride shallow fork brief";
 
-    const JSON_TYPED_DATA: &str = r#"
+    const SIMPLE_JSON_TYPED_DATA: &str = r#"
         {
             "domain": {
                 "name": "Ether Person",
@@ -92,12 +98,50 @@ mod ethereum_signing_tests {
             }
         }"#;
 
-    #[test]
-    fn test_eip712_typed_data_signing() {
+    const RECURSIVELY_NESTED_JSON_TYPED_DATA: &str = r#"
+        {
+            "domain": {
+                "name": "Ether Mail",
+                "version": "1",
+                "chainId": 1,
+                "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+            },
+            "message": {
+                "from": {
+                    "name": "Cow",
+                    "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+                },
+                "to": {
+                    "name": "Bob",
+                    "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+                },
+                "contents": "Hello, Bob!"
+            },
+            "primaryType": "Mail",
+            "types": {
+                "Mail": [
+                    { "name": "from", "type": "Person" },
+                    { "name": "to", "type": "Person" },
+                    { "name": "contents", "type": "string" }
+                ],
+                "Person": [
+                    { "name": "name", "type": "string" },
+                    { "name": "wallet", "type": "address" }
+                ]
+            }
+        }"#;
+
+    fn get_signer() -> EthSigner {
         let wallet = HDWallet::recover_wallet(MNEMONIC.to_string(), None).unwrap();
         let secret_key = wallet.get_key("m/44'/118'/0'/0/0".to_string()).unwrap();
-        let signer = EthSigner::new(secret_key);
-        let signed_data = signer.sign_typed_data(JSON_TYPED_DATA).unwrap();
+        EthSigner::new(secret_key)
+    }
+
+    #[test]
+    fn test_eip712_typed_data_simple_signing() {
+        let signed_data = get_signer()
+            .sign_typed_data(SIMPLE_JSON_TYPED_DATA)
+            .unwrap();
 
         assert_eq!(
             signed_data,
@@ -108,5 +152,14 @@ mod ethereum_signing_tests {
                 64, 181, 10, 106, 102, 193, 238, 148, 120, 194, 28
             ]
         );
+    }
+
+    #[test]
+    fn test_eip712_typed_data_recursively_nested_signing() {
+        let signed_data = get_signer()
+            .sign_typed_data(RECURSIVELY_NESTED_JSON_TYPED_DATA)
+            .unwrap();
+
+        assert_eq!(signed_data, [1, 2, 3]);
     }
 }

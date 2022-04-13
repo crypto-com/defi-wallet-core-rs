@@ -39,20 +39,26 @@ impl Eip712TypedData {
     ///     "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
     ///   },
     ///   "message": {
-    ///     "name": "Bob",
-    ///     "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
-    ///   }
-    ///   "primaryType": "Person",
+    ///     "from": {
+    ///       "name": "Cow",
+    ///       "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+    ///     },
+    ///     "to": {
+    ///       "name": "Bob",
+    ///       "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+    ///     },
+    ///     "contents": "Hello, Bob!"
+    ///   },
+    ///   "primaryType": "Mail",
     ///   "types": {
+    ///     "Mail": [
+    ///       { "name": "from", "type": "Person" },
+    ///       { "name": "to", "type": "Person" },
+    ///       { "name": "contents", "type": "string" }
+    ///     ],
     ///     "Person": [
-    ///       {
-    ///         "name": "name",
-    ///         "type": "string"
-    ///       },
-    ///       {
-    ///         "name": "wallet",
-    ///         "type": "address"
-    ///       }
+    ///       { "name": "name", "type": "string" },
+    ///       { "name": "wallet", "type": "address" }
     ///     ]
     ///   }
     /// }
@@ -71,15 +77,12 @@ impl Eip712TypedData {
         Ok(keccak256(digest_input).to_vec())
     }
 
+    /// TODO
     fn build_struct_hash(&self) -> Result<[u8; 32]> {
-        let primary_struct = self
-            .types
-            .get(&self.primary_type)
-            .ok_or_else(|| Eip712Error::MissingTypeError(self.primary_type.clone()))?;
+        let mut items = vec![Token::Uint(self.build_type_hash())];
 
-        let mut items = vec![Token::Uint(primary_struct.build_type_hash())];
-
-        let tokens = primary_struct
+        let tokens = self
+            .get_primary_struct()?
             .fields
             .iter()
             .map(|field| {
@@ -94,6 +97,7 @@ impl Eip712TypedData {
         for token in tokens {
             match &token {
                 Token::Tuple(_) => {
+                    // TODO
                     // TODO:
                     // Crate `ether-rs` uses `Token::Tuple` to save values of nested struct. Since
                     // we have already fixed to use `Eip712Struct`. Field of nested struct could be
@@ -111,6 +115,20 @@ impl Eip712TypedData {
 
         Ok(keccak256(ethers::abi::encode(&items)))
     }
+
+    /// TODO
+    fn build_type_hash(&self) -> U256 {
+        todo!()
+        // let hash = keccak256(formatted_struct);
+        // U256::from(&hash[..])
+    }
+
+    /// TODO
+    fn get_primary_struct(&self) -> Result<&Eip712Struct> {
+        self.types
+            .get(&self.primary_type)
+            .ok_or_else(|| Eip712Error::MissingTypeError(self.primary_type.clone()).into())
+    }
 }
 
 /// EIP-712 struct type
@@ -127,15 +145,29 @@ impl Eip712Struct {
     }
 
     /// Build hash of this struct type.
-    fn build_type_hash(&self) -> U256 {
-        let fields: Vec<(String, ParamType)> = self
+    /// TODO
+    fn encode_type(&self) -> String {
+        let formatted_fields = self
             .fields
             .iter()
-            .map(|f| (f.name.to_owned(), ParamType::from(&f.r#type)))
-            .collect();
+            .map(|f| format!("{} {}", f.r#type, f.name))
+            .collect::<Vec<String>>()
+            .join(",");
 
-        let type_hash = eip712::make_type_hash(self.name.to_owned(), &fields);
-        U256::from(&type_hash[..])
+        format!("{}({})", self.name, formatted_fields)
+    }
+
+    /// Get the referenced struct names by fields of this struct.
+    /// TODO
+    fn get_referenced_struct_names(&self) -> Vec<Eip712StructName> {
+        let mut struct_names = vec![];
+        for f in self.fields {
+            match f.r#type {
+                Eip712FieldType::Struct(name) => struct_names.push(name),
+                _ => (),
+            }
+        }
+        struct_names
     }
 }
 
@@ -150,7 +182,7 @@ struct Eip712Field {
 mod eip712_encoding_tests {
     use super::*;
 
-    const JSON_TYPED_DATA: &str = r#"
+    const SIMPLE_JSON_TYPED_DATA: &str = r#"
         {
             "domain": {
                 "name": "Ether Person",
@@ -177,9 +209,48 @@ mod eip712_encoding_tests {
             }
         }"#;
 
+    const RECURSIVELY_NESTED_JSON_TYPED_DATA: &str = r#"
+        {
+            "domain": {
+                "name": "Ether Mail",
+                "version": "1",
+                "chainId": 1,
+                "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+            },
+            "message": {
+                "from": {
+                    "name": "Cow",
+                    "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+                },
+                "to": {
+                    "name": "Bob",
+                    "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+                },
+                "contents": "Hello, Bob!"
+            },
+            "primaryType": "Mail",
+            "types": {
+                "EIP712Domain": [
+                    { "name": "name", "type": "string" },
+                    { "name": "version", "type": "string" },
+                    { "name": "chainId", "type": "uint256" },
+                    { "name": "verifyingContract", "type": "address" }
+                ],
+                "Mail": [
+                    { "name": "from", "type": "Person" },
+                    { "name": "to", "type": "Person" },
+                    { "name": "contents", "type": "string" }
+                ],
+                "Person": [
+                    { "name": "name", "type": "string" },
+                    { "name": "wallet", "type": "address" }
+                ]
+            }
+        }"#;
+
     #[test]
-    fn test_eip712_typed_data_encoding() {
-        let typed_data = Eip712TypedData::new(JSON_TYPED_DATA).unwrap();
+    fn test_eip712_typed_data_simple_encoding() {
+        let typed_data = Eip712TypedData::new(SIMPLE_JSON_TYPED_DATA).unwrap();
         let encoded_data = typed_data.encode().unwrap();
 
         assert_eq!(
@@ -189,5 +260,13 @@ mod eip712_encoding_tests {
                 105, 146, 232, 140, 235, 153, 192, 138, 40, 7, 179, 114, 125, 174
             ]
         );
+    }
+
+    #[test]
+    fn test_eip712_typed_data_recursively_nested_encoding() {
+        let typed_data = Eip712TypedData::new(RECURSIVELY_NESTED_JSON_TYPED_DATA).unwrap();
+        let encoded_data = typed_data.encode().unwrap();
+
+        assert_eq!(encoded_data, [1, 2, 3],);
     }
 }

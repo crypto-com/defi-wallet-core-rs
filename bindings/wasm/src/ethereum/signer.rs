@@ -30,20 +30,26 @@ impl EthSigner {
     ///     "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
     ///   },
     ///   "message": {
-    ///     "name": "Bob",
-    ///     "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
-    ///   }
-    ///   "primaryType": "Person",
+    ///     "from": {
+    ///       "name": "Cow",
+    ///       "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+    ///     },
+    ///     "to": {
+    ///       "name": "Bob",
+    ///       "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+    ///     },
+    ///     "contents": "Hello, Bob!"
+    ///   },
+    ///   "primaryType": "Mail",
     ///   "types": {
+    ///     "Mail": [
+    ///       { "name": "from", "type": "Person" },
+    ///       { "name": "to", "type": "Person" },
+    ///       { "name": "contents", "type": "string" }
+    ///     ],
     ///     "Person": [
-    ///       {
-    ///         "name": "name",
-    ///         "type": "string"
-    ///       },
-    ///       {
-    ///         "name": "wallet",
-    ///         "type": "address"
-    ///       }
+    ///       { "name": "name", "type": "string" },
+    ///       { "name": "wallet", "type": "address" }
     ///     ]
     ///   }
     /// }

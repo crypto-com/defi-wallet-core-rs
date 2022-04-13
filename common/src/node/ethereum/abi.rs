@@ -6,7 +6,12 @@ use ethers::prelude::{Address, H160, U256};
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt;
 use std::str::FromStr;
+
+type EthAbiFieldName = String;
+type EthAbiStructName = String;
 
 /// Ethereum ABI parameter type
 #[derive(Debug, Eq, PartialEq)]
@@ -21,47 +26,36 @@ pub enum EthAbiParamType {
     FixedBytes(usize),
     FixedArray(Box<EthAbiParamType>, usize),
     Tuple(Vec<EthAbiParamType>),
+    /// Above are standard Solidity types. This struct type is used to extend for recursively
+    /// nested structs.
+    Struct(EthAbiStructName),
 }
 
-impl From<&EthAbiParamType> for ParamType {
-    fn from(param_type: &EthAbiParamType) -> Self {
-        match param_type {
-            EthAbiParamType::Address => ParamType::Address,
-            EthAbiParamType::Bytes => ParamType::Bytes,
-            EthAbiParamType::Int(size) => ParamType::Int(*size),
-            EthAbiParamType::Uint(size) => ParamType::Uint(*size),
-            EthAbiParamType::Bool => ParamType::Bool,
-            EthAbiParamType::String => ParamType::String,
-            EthAbiParamType::Array(boxed_param_type) => {
-                ParamType::Array(Box::new(ParamType::from(boxed_param_type.as_ref())))
-            }
-            EthAbiParamType::FixedBytes(size) => ParamType::FixedBytes(*size),
-            EthAbiParamType::FixedArray(boxed_param_type, size) => {
-                ParamType::FixedArray(Box::new(ParamType::from(boxed_param_type.as_ref())), *size)
-            }
-            EthAbiParamType::Tuple(params) => {
-                ParamType::Tuple(params.iter().map(Into::into).collect())
+impl fmt::Display for EthAbiParamType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Struct(struct_name) => write!(f, "{}", struct_name),
+            _ => {
+                let param_type = ParamType::try_from(self).map_err(|_| fmt::Error)?;
+                write!(f, "{}", param_type)
             }
         }
     }
 }
-
 /// Parse a string to Ethereum ABI parameter type.
 /// This function references code of
 /// [find_parameter_type](https://docs.rs/ethers/latest/ethers/?search=find_parameter_type)
 /// in ethers-rs.
-impl TryFrom<&str> for EthAbiParamType {
-    type Error = EthError;
-
-    fn try_from(iden: &str) -> Result<Self, Self::Error> {
+impl From<&str> for EthAbiParamType {
+    fn from(iden: &str) -> Self {
         if let Some(param_type) = parse_param_type_array(iden) {
-            return Ok(param_type);
+            return param_type;
         }
         if let Some(param_type) = parse_param_type_fixed_array(iden) {
-            return Ok(param_type);
+            return param_type;
         }
 
-        Ok(match iden.trim() {
+        match iden.trim() {
             "address" => EthAbiParamType::Address,
             "bool" => EthAbiParamType::Bool,
             "bytes" => EthAbiParamType::Bytes,
@@ -71,7 +65,42 @@ impl TryFrom<&str> for EthAbiParamType {
             "int256" | "int" | "uint" | "uint256" => EthAbiParamType::Uint(256),
             "string" => EthAbiParamType::String,
             typ => parse_param_type_integer(typ)
-                .ok_or_else(|| Error::Other(format!("Invalid parameter type {typ}").into()))?,
+                .unwrap_or_else(|| EthAbiParamType::Struct(typ.to_owned())),
+        }
+    }
+}
+
+impl TryFrom<&EthAbiParamType> for ParamType {
+    type Error = EthError;
+
+    fn try_from(param_type: &EthAbiParamType) -> Result<Self, Self::Error> {
+        Ok(match param_type {
+            EthAbiParamType::Address => ParamType::Address,
+            EthAbiParamType::Bytes => ParamType::Bytes,
+            EthAbiParamType::Int(size) => ParamType::Int(*size),
+            EthAbiParamType::Uint(size) => ParamType::Uint(*size),
+            EthAbiParamType::Bool => ParamType::Bool,
+            EthAbiParamType::String => ParamType::String,
+            EthAbiParamType::Array(boxed_param_type) => {
+                ParamType::Array(Box::new(ParamType::try_from(boxed_param_type.as_ref())?))
+            }
+            EthAbiParamType::FixedBytes(size) => ParamType::FixedBytes(*size),
+            EthAbiParamType::FixedArray(boxed_param_type, size) => ParamType::FixedArray(
+                Box::new(ParamType::try_from(boxed_param_type.as_ref())?),
+                *size,
+            ),
+            EthAbiParamType::Tuple(params) => ParamType::Tuple(
+                params
+                    .iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_, _>>()?,
+            ),
+            EthAbiParamType::Struct(struct_name) => {
+                return Err(Error::Other(
+                    format!("Unsupported nested struct conversion: {struct_name}").into(),
+                )
+                .into());
+            }
         })
     }
 }
@@ -89,6 +118,9 @@ pub enum EthAbiToken {
     FixedArray(Vec<EthAbiToken>),
     Array(Vec<EthAbiToken>),
     Tuple(Vec<EthAbiToken>),
+    /// Above are standard Solidity values. This struct value is used to extend for recursively
+    /// nested structs.
+    Struct(EthAbiStructName, HashMap<EthAbiFieldName, EthAbiToken>),
 }
 
 impl EthAbiToken {
@@ -114,9 +146,11 @@ impl EthAbiToken {
     }
 }
 
-impl From<&EthAbiToken> for Token {
-    fn from(token: &EthAbiToken) -> Self {
-        match token {
+impl TryFrom<&EthAbiToken> for Token {
+    type Error = EthError;
+
+    fn try_from(token: &EthAbiToken) -> Result<Self, Self::Error> {
+        Ok(match token {
             EthAbiToken::Address(value) => Token::Address(*value),
             EthAbiToken::FixedBytes(value) => Token::FixedBytes(value.clone()),
             EthAbiToken::Bytes(value) => Token::Bytes(value.clone()),
@@ -124,14 +158,31 @@ impl From<&EthAbiToken> for Token {
             EthAbiToken::Uint(value) => Token::Uint(*value),
             EthAbiToken::Bool(value) => Token::Bool(*value),
             EthAbiToken::String(value) => Token::String(value.clone()),
-            EthAbiToken::FixedArray(values) => {
-                Token::FixedArray(values.iter().map(Into::into).collect())
+            EthAbiToken::FixedArray(values) => Token::FixedArray(
+                values
+                    .iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_, _>>()?,
+            ),
+            EthAbiToken::Array(values) => Token::FixedArray(
+                values
+                    .iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_, _>>()?,
+            ),
+            EthAbiToken::Tuple(values) => Token::Tuple(
+                values
+                    .iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_, _>>()?,
+            ),
+            EthAbiToken::Struct(struct_name, _struct_fields) => {
+                return Err(Error::Other(
+                    format!("Unsupported nested struct conversion: {struct_name}").into(),
+                )
+                .into());
             }
-            EthAbiToken::Array(values) => {
-                Token::FixedArray(values.iter().map(Into::into).collect())
-            }
-            EthAbiToken::Tuple(values) => Token::Tuple(values.iter().map(Into::into).collect()),
-        }
+        })
     }
 }
 
@@ -143,7 +194,7 @@ fn parse_param_type_array(iden: &str) -> Option<EthAbiParamType> {
     }
 
     let captures = ARRAY_REGEX.captures(iden.trim())?;
-    let array_type: EthAbiParamType = captures.get(1)?.as_str().try_into().ok()?;
+    let array_type = captures.get(1)?.as_str().into();
 
     Some(EthAbiParamType::Array(Box::new(array_type)))
 }
@@ -156,7 +207,7 @@ fn parse_param_type_fixed_array(iden: &str) -> Option<EthAbiParamType> {
     }
 
     let captures = FIXED_ARRAY_REGEX.captures(iden.trim())?;
-    let array_type: EthAbiParamType = captures.get(1)?.as_str().try_into().ok()?;
+    let array_type = captures.get(1)?.as_str().into();
     let array_size = captures.get(2)?.as_str().parse::<usize>().ok()?;
 
     Some(EthAbiParamType::FixedArray(

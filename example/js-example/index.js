@@ -17,7 +17,8 @@ const STAKING_DELEGATE_AMOUNT = BigInt(100_000_000_000);
 
 testPrivateKey();
 testCosmosProtoSigning();
-testEip712TypedDataSigning();
+testEip712TypedDataSimpleSigning();
+testEip712TypedDataRecursivelyNestedSigning();
 testBuildEthereumContractBatchTransfer();
 const txData = testBuildAndSignCosmosTx();
 testCosmosClient(txData);
@@ -106,7 +107,52 @@ function testCosmosProtoSigning() {
   console.log(`Cosmos signDirect data: ${signedData}`);
 }
 
-function testEip712TypedDataSigning() {
+function testEip712TypedDataRecursivelyNestedSigning() {
+  const params = {
+    types: {
+      EIP712Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'version', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' },
+      ],
+      Mail: [
+        { name: 'from', type: 'Person' },
+        { name: 'to', type: 'Person' },
+        { name: 'contents', type: 'string' },
+      ],
+      Person: [
+        { name: 'name', type: 'string' },
+        { name: 'wallet', type: 'address' },
+      ],
+    },
+    primaryType: 'Mail',
+    domain: {
+      name: 'Ether Mail',
+      version: '1',
+      chainId: 1,
+      verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+    },
+    message: {
+      from: {
+        name: 'Cow',
+        wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+      },
+      to: {
+        name: 'Bob',
+        wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+      },
+      contents: 'Hello, Bob!',
+    },
+  };
+
+  const privateKey = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
+  const signer = new wasm.EthSigner(privateKey);
+  const signedData = signer.sign_typed_data(JSON.stringify(params));
+  console.log(`EIP-712 recursively nested signTypedData: ${signedData}`);
+}
+
+function testEip712TypedDataSimpleSigning() {
   const params = {
     types: {
       EIP712Domain: [
@@ -136,7 +182,7 @@ function testEip712TypedDataSigning() {
   const privateKey = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
   const signer = new wasm.EthSigner(privateKey);
   const signedData = signer.sign_typed_data(JSON.stringify(params));
-  console.log(`EIP-712 signTypedData: ${signedData}`);
+  console.log(`EIP-712 simple signTypedData: ${signedData}`);
 }
 
 function testPrivateKey() {
