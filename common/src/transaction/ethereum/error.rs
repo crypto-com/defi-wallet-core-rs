@@ -40,6 +40,8 @@ pub enum EthError {
     AbiError(#[from] abi::Error),
     #[error("EIP-712 error: {0}")]
     Eip712Error(#[from] Eip712Error),
+    #[error("Json parse error{0}")]
+    JsonError(serde_json::Error),
 }
 
 /// EIP-712 related errors

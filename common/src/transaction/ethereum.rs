@@ -1,9 +1,13 @@
 use crate::{SecretKey, WalletCoin, WalletCoinFunc};
 use ethers::prelude::{
-    Address, Chain, Eip1559TransactionRequest, LocalWallet, Signer, TransactionRequest, U256,
+    Address, Chain, Eip1559TransactionRequest, Eip2930TransactionRequest, LocalWallet, Signer,
+    TransactionRequest, U256,
 };
 use ethers::types::transaction::eip2718::TypedTransaction;
+use ethers::types::transaction::eip2930::AccessList;
+use ethers::types::{Bytes, NameOrAddress, Signature, U64};
 use ethers::utils::{parse_units, ConversionError};
+use serde::{Deserialize, Serialize};
 use std::default::Default;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -199,6 +203,158 @@ pub fn build_signed_eth_tx(
     Ok(signed_tx.to_vec())
 }
 
+/// Parameters for sending a transaction
+#[derive(Clone, Default, Serialize, Deserialize, PartialEq, Eq, Debug)]
+pub struct DynamicTransactionRequest {
+    /// Sender address or ENS name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from: Option<Address>,
+
+    /// Recipient address (None for contract creation)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to: Option<NameOrAddress>,
+
+    /// Supplied gas (None for sensible default)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gas: Option<U256>,
+
+    /// Gas price (None for sensible default)
+    #[serde(rename = "gasPrice")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gas_price: Option<U256>,
+
+    /// Transfered value (None for no transfer)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<U256>,
+
+    /// The compiled code of a contract OR the first 4 bytes of the hash of the
+    /// invoked method signature and encoded parameters. For details see Ethereum Contract ABI
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub data: Option<Bytes>,
+
+    /// Transaction nonce (None for next available nonce)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nonce: Option<U256>,
+
+    /// Accessed List (contains address and storageKeys)
+    #[serde(rename = "accessList", default)]
+    pub access_list: AccessList,
+
+    /// Represents the maximum tx fee that will go to the miner as part of the user's
+    /// fee payment. It serves 3 purposes:
+    /// 1. Compensates miners for the uncle/ommer risk + fixed costs of including transaction in a
+    /// block; 2. Allows users with high opportunity costs to pay a premium to miners;
+    /// 3. In times where demand exceeds the available block space (i.e. 100% full, 30mm gas),
+    /// this component allows first price auctions (i.e. the pre-1559 fee model) to happen on the
+    /// priority fee.
+    ///
+    /// More context [here](https://hackmd.io/@q8X_WM2nTfu6nuvAzqXiTQ/1559-wallets)
+    #[serde(
+        rename = "maxPriorityFeePerGas",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub max_priority_fee_per_gas: Option<U256>,
+
+    /// Represents the maximum amount that a user is willing to pay for their tx (inclusive of
+    /// baseFeePerGas and maxPriorityFeePerGas). The difference between maxFeePerGas and
+    /// baseFeePerGas + maxPriorityFeePerGas is “refunded” to the user.
+    #[serde(
+        rename = "maxFeePerGas",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub max_fee_per_gas: Option<U256>,
+
+    #[serde(skip_serializing)]
+    #[serde(default, rename = "chainId")]
+    /// Chain ID (None for mainnet)
+    pub chain_id: Option<U64>,
+}
+
+/// Dynamic structure for multiple transactions
+impl DynamicTransactionRequest {
+    /// Convert to Eip 1559 Transaction Request
+    pub fn to_eip1559_tx(self) -> Eip1559TransactionRequest {
+        let mut tx = Eip1559TransactionRequest::new().access_list(self.access_list);
+        tx.chain_id = self.chain_id;
+        tx.data = self.data;
+        tx.from = self.from;
+        tx.to = self.to;
+        tx.gas = self.gas;
+        tx.max_fee_per_gas = self.max_fee_per_gas;
+        tx.max_priority_fee_per_gas = self.max_priority_fee_per_gas;
+        tx.nonce = self.nonce;
+        tx.value = self.value;
+        tx
+    }
+
+    /// Convert to legacy Transaction Request
+    pub fn to_legacy_tx(self) -> TransactionRequest {
+        let mut tx = TransactionRequest::new();
+        tx.chain_id = self.chain_id;
+        tx.data = self.data;
+        tx.from = self.from;
+        tx.to = self.to;
+        tx.gas = self.gas;
+        tx.gas_price = self.gas_price;
+        tx.nonce = self.nonce;
+        tx.value = self.value;
+        tx
+    }
+
+    /// Convert to Eip 2930 Transaction Request
+    pub fn to_eip2930_tx(self) -> Eip2930TransactionRequest {
+        Eip2930TransactionRequest::new(self.clone().to_legacy_tx(), self.access_list)
+    }
+
+    /// Convert to TypedTransaction
+    pub fn to_type_tx(self) -> TypedTransaction {
+        if self.max_fee_per_gas != None {
+            TypedTransaction::Eip1559(self.to_eip1559_tx())
+        } else if self.access_list.0.len() != 0 {
+            TypedTransaction::Eip2930(self.to_eip2930_tx())
+        } else {
+            TypedTransaction::Legacy(self.to_legacy_tx())
+        }
+    }
+}
+
+/// Parse and sign the json data that meets the walletconnect standard
+pub fn eth_sign_transaction(
+    json_str: &str,
+    secret_key: Arc<SecretKey>,
+) -> Result<Signature, EthError> {
+    let mut default_chain_id: u64 = 1;
+    let tx: DynamicTransactionRequest =
+        serde_json::from_str(&json_str).map_err(|e| EthError::JsonError(e))?;
+    let type_tx: TypedTransaction = tx.to_type_tx();
+    if type_tx.chain_id() != None {
+        default_chain_id = type_tx.chain_id().unwrap().as_u64();
+    }
+    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(default_chain_id);
+    let sig = wallet.sign_transaction_sync(&type_tx);
+    Ok(sig)
+}
+
+/// Parse the json data that meets the walletconnect standard and build raw  transaction
+pub fn eth_build_sign_raw_transaction(
+    json_str: &str,
+    secret_key: Arc<SecretKey>,
+) -> Result<Vec<u8>, EthError> {
+    let mut default_chain_id: u64 = 1;
+    let tx: DynamicTransactionRequest =
+        serde_json::from_str(&json_str).map_err(|e| EthError::JsonError(e))?;
+    let type_tx: TypedTransaction = tx.to_type_tx();
+    if type_tx.chain_id() != None {
+        default_chain_id = type_tx.chain_id().unwrap().as_u64();
+    }
+    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(default_chain_id);
+    let sig = wallet.sign_transaction_sync(&type_tx);
+    let signed_tx = &type_tx.rlp_signed(&sig);
+    Ok(signed_tx.to_vec())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -207,6 +363,26 @@ mod tests {
     use ethers::utils::hex;
     use ethers::utils::rlp::Rlp;
     use std::sync::Arc;
+
+    #[test]
+    fn eip1559_tx_test() {
+        let words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
+
+        let wallet = HDWallet::recover_wallet(words.to_owned(), Some("".to_owned()))
+            .expect("Failed to recover wallet");
+        let secret_key = wallet
+            .get_key_from_index(
+                WalletCoin::Ethereum {
+                    network: EthNetwork::Mainnet,
+                },
+                1,
+            )
+            .expect("get_key_from_index error");
+
+        let json_str = r#"{"from":"0x68418d0fdb846e8736aa613159035a9d9fde11f0","to":"0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d","gas":"0x5208","value":"0xde0b6b3a7640000","data":"0x","nonce":"0x0","accessList":[{"address":"0x0000000000000000000000000000000000000000","storageKeys":["0x0000000000000000000000000000000000000000000000000000000000000000"]}],"maxPriorityFeePerGas":"0x1","maxFeePerGas":"0x77359401","chainId":"0x1"}"#;
+        let tx_raw = eth_build_sign_raw_transaction(json_str, secret_key).unwrap();
+        println!("{}", hex::encode(tx_raw));
+    }
 
     #[test]
     fn eth_tx_works() {
