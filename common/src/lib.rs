@@ -11,6 +11,9 @@ mod wallet;
 #[cfg(feature = "login")]
 mod login;
 
+/// Utility functions
+mod utils;
+
 pub use defi_wallet_core_proto as proto;
 // expose all proto related types (e.g. for uniffi)
 pub use cosmrs::{tx::Msg, AccountId};

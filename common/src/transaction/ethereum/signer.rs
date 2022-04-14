@@ -5,6 +5,8 @@ use crate::node::ethereum::eip712::Eip712TypedData;
 use crate::transaction::ethereum::EthError;
 use crate::wallet::SecretKey;
 use ethers::prelude::{LocalWallet, H256};
+use ethers::utils::hash_message;
+use std::str::FromStr;
 use std::sync::Arc;
 
 /// Ethereum Signer
@@ -20,9 +22,31 @@ impl EthSigner {
         }
     }
 
+    /// Sign a hash value directly.
+    /// Argument `hash` must be a hex value of 32 bytes (H256).
+    /// Return a signature of hex string without prefix `0x`.
+    /// The security concern around `eth_sign` is not that the signature could be forged or the key
+    /// be stolen, but rather a malicious website could trick a user into signing a message that is
+    /// actually a valid transaction, and use it to steal ether or tokens.
+    /// `personal_sign` prefixes the message, preventing it from being a valid transaction. Because
+    /// of this, it is safer for users.
+    pub fn eth_sign_insecure(&self, hash: &str) -> Result<String, EthError> {
+        let hash = hash.strip_prefix("0x").unwrap_or(hash);
+        let hash = H256::from_str(hash).map_err(|_| EthError::HexConversion)?;
+        Ok(self.wallet.sign_hash(hash, false).to_string())
+    }
+
+    /// Sign an arbitrary message as per EIP-191.
+    /// Return a signature of hex string without prefix `0x`.
+    pub fn personal_sign(&self, message: &str) -> String {
+        let hash = hash_message(message);
+        self.wallet.sign_hash(hash, false).to_string()
+    }
+
     /// Sign an EIP-712 typed data from a JSON string of specified schema as below. The field
     /// `domain`, `message`, `primaryType` and `types` are all mandatory as described in
     /// [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
+    /// Return a signature of hex string without prefix `0x`.
     ///
     /// {
     ///   "domain": {
@@ -55,12 +79,12 @@ impl EthSigner {
     ///     ]
     ///   }
     /// }
-    pub fn sign_typed_data(&self, json_typed_data: &str) -> Result<Vec<u8>, EthError> {
+    pub fn sign_typed_data(&self, json_typed_data: &str) -> Result<String, EthError> {
         let encoded_data = Eip712TypedData::new(json_typed_data)?.encode()?;
         Ok(self
             .wallet
             .sign_hash(H256::from_slice(&encoded_data), false)
-            .to_vec())
+            .to_string())
     }
 }
 
@@ -138,28 +162,28 @@ mod ethereum_signing_tests {
     }
 
     #[test]
-    fn test_eip712_typed_data_simple_signing() {
-        let signed_data = get_signer()
-            .sign_typed_data(SIMPLE_JSON_TYPED_DATA)
+    fn test_eth_sign_insecure() {
+        let signature = get_signer()
+            .eth_sign_insecure("0x01020304050607085152535455565758a1a2a3a4a5a6a7a8f1f2f3f4f5f6f7f8")
             .unwrap();
-
-        assert_eq!(
-            signed_data,
-            [
-                171, 100, 126, 24, 5, 172, 205, 214, 162, 240, 48, 149, 76, 252, 0, 114, 209, 34,
-                150, 208, 251, 83, 211, 194, 160, 7, 59, 155, 87, 60, 240, 245, 51, 80, 62, 207,
-                10, 200, 242, 54, 215, 47, 46, 80, 12, 141, 0, 27, 235, 185, 249, 215, 224, 199,
-                64, 181, 10, 106, 102, 193, 238, 148, 120, 194, 28
-            ]
-        );
+        assert_eq!(signature, "379a17ae4fe51a4a40dab0a8736f9ebd11f0b5465f38192519e7b0e0bdd440137f7c7db0dfa1c78294d6dbf4c0797dcb161ca8f2dea0cd79267833269e1396261c");
     }
 
     #[test]
-    fn test_eip712_typed_data_recursively_nested_signing() {
-        let signed_data = get_signer()
-            .sign_typed_data(RECURSIVELY_NESTED_JSON_TYPED_DATA)
-            .unwrap();
+    fn test_eip191_personal_sign() {
+        let signature = get_signer().personal_sign("Hello World!");
+        assert_eq!(signature, "b2aba6568054aff557402a3a9369309687019a29bb6180146d7a44043d6f8b19797e9a27c8c2b416a98cab29822927e76602924062725940e4bad56a9971faca1b");
+    }
 
-        assert_eq!(signed_data, [1, 2, 3]);
+    #[test]
+    fn test_eip712_simple_typed_data_sign() {
+        let signature = get_signer().sign_typed_data(SIMPLE_JSON_TYPED_DATA).unwrap();
+        assert_eq!(signature, "ab647e1805accdd6a2f030954cfc0072d12296d0fb53d3c2a0073b9b573cf0f533503ecf0ac8f236d72f2e500c8d001bebb9f9d7e0c740b50a6a66c1ee9478c21c");
+    }
+
+    #[test]
+    fn test_eip712_recursively_nested_typed_data_sign() {
+        let signature = get_signer().sign_typed_data(RECURSIVELY_NESTED_JSON_TYPED_DATA).unwrap();
+        assert_eq!(signature, "");
     }
 }
