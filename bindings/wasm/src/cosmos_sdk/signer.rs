@@ -1,34 +1,27 @@
 use crate::PrivateKey;
-use defi_wallet_core_common as common;
+use defi_wallet_core_common::CosmosSigner;
 use wasm_bindgen::prelude::*;
 
-/// Cosmos Signer
-#[wasm_bindgen]
-pub struct CosmosSigner {
-    inner: common::CosmosSigner,
-}
-
-#[wasm_bindgen]
-impl CosmosSigner {
-    /// Create an instance via a private key.
-    #[wasm_bindgen(constructor)]
-    pub fn new(private_key: PrivateKey) -> Self {
-        Self {
-            inner: common::CosmosSigner::new(private_key.key),
-        }
-    }
-
-    /// Sign the protobuf bytes directly.
-    #[wasm_bindgen]
-    pub fn sign_direct(
-        &self,
-        body_bytes: Vec<u8>,
-        auth_info_bytes: Vec<u8>,
-        chain_id: String,
-        account_number: u64,
-    ) -> Result<Vec<u8>, JsValue> {
-        Ok(self
-            .inner
-            .sign_direct(body_bytes, auth_info_bytes, chain_id, account_number)?)
-    }
+/// Sign the protobuf bytes directly.
+/// As an example, arguments should like:
+/// {
+///     "chainId": "cosmoshub-4",
+///     "accountNumber": "1"
+///     "authInfoBytes": "0a0a0a00 ...",
+///     "bodyBytes": "0a90010a ...",
+/// }
+#[wasm_bindgen(js_name = cosmos_signDirect)]
+pub fn cosmos_sign_direct(
+    private_key: PrivateKey,
+    chain_id: &str,
+    account_number: &str,
+    auth_info_bytes: &str,
+    body_bytes: &str,
+) -> Result<String, JsValue> {
+    Ok(CosmosSigner::new(private_key.key).sign_direct(
+        chain_id,
+        account_number,
+        auth_info_bytes,
+        body_bytes,
+    )?)
 }
