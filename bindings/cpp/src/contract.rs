@@ -16,7 +16,7 @@ fn new_erc20(contract_address: String, web3api_url: String, chain_id: u64) -> ff
 }
 impl ffi::Erc20 {
     /// Returns the decimal amount of tokens owned by `account_address`.
-    fn balance_of(&self, account_address: String) -> Result<String> {
+    fn balance_of(&self, account_address: String) -> Result<ffi::U256> {
         let balance = get_contract_balance_blocking(
             &account_address,
             common::ContractBalance::Erc20 {
@@ -24,7 +24,7 @@ impl ffi::Erc20 {
             },
             &self.web3api_url,
         )?;
-        Ok(balance)
+        Ok(balance.into())
     }
 
     /// Returns the name of the token
@@ -137,10 +137,10 @@ impl ffi::Erc20 {
     }
 
     /// Returns the amount of tokens in existence.
-    fn total_supply(&self) -> Result<String> {
+    fn total_supply(&self) -> Result<ffi::U256> {
         let supply =
             ethereum::erc20::get_total_supply_blocking(&self.contract_address, &self.web3api_url)?;
-        Ok(supply.to_string())
+        Ok(supply.into())
     }
 }
 
@@ -155,7 +155,7 @@ fn new_erc721(contract_address: String, web3api_url: String, chain_id: u64) -> f
 }
 impl ffi::Erc721 {
     /// Returns the number of tokens in owner's `account_address`.
-    fn balance_of(&self, account_address: String) -> Result<String> {
+    fn balance_of(&self, account_address: String) -> Result<ffi::U256> {
         let balance = get_contract_balance_blocking(
             &account_address,
             common::ContractBalance::Erc721 {
@@ -163,7 +163,7 @@ impl ffi::Erc721 {
             },
             &self.web3api_url,
         )?;
-        Ok(balance)
+        Ok(balance.into())
     }
     /// Returns the owner of the `token_id` token.
     fn owner_of(&self, token_id: String) -> Result<String> {
@@ -355,10 +355,10 @@ impl ffi::Erc721 {
     /// Returns the total amount of tokens stored by the contract.
     ///
     /// From IERC721Enumerable, an optional extension of the standard ERC721
-    fn total_supply(&self) -> Result<String> {
+    fn total_supply(&self) -> Result<ffi::U256> {
         let supply =
             ethereum::erc721::get_total_supply_blocking(&self.contract_address, &self.web3api_url)?;
-        Ok(supply.to_string())
+        Ok(supply.into())
     }
 
     /// Returns a token ID at a given index of all the tokens stored by the contract. Use along
@@ -399,7 +399,7 @@ fn new_erc1155(contract_address: String, web3api_url: String, chain_id: u64) -> 
 }
 impl ffi::Erc1155 {
     /// Returns the amount of tokens of `token_id` owned by `account_address`.
-    fn balance_of(&self, account_address: String, token_id: String) -> Result<String> {
+    fn balance_of(&self, account_address: String, token_id: String) -> Result<ffi::U256> {
         let balance = get_contract_balance_blocking(
             &account_address,
             common::ContractBalance::Erc1155 {
@@ -408,7 +408,7 @@ impl ffi::Erc1155 {
             },
             &self.web3api_url,
         )?;
-        Ok(balance)
+        Ok(balance.into())
     }
 
     /// Batched version of balance_of.
@@ -576,13 +576,15 @@ mod ffi {
         include!("defi-wallet-core-cpp/src/lib.rs.h");
         type PrivateKey = crate::PrivateKey;
         type CronosTransactionReceiptRaw = crate::ffi::CronosTransactionReceiptRaw;
+        include!("defi-wallet-core-cpp/src/uint.rs.h");
+        type U256 = crate::uint::ffi::U256;
     }
 
     extern "Rust" {
         /// Construct an Erc20 struct
         fn new_erc20(address: String, web3api_url: String, chian_id: u64) -> Erc20;
         /// Returns the decimal amount of tokens owned by `account_address`.
-        fn balance_of(self: &Erc20, account_address: String) -> Result<String>;
+        fn balance_of(self: &Erc20, account_address: String) -> Result<U256>;
         /// Returns the name of the token
         fn name(self: &Erc20) -> Result<String>;
         /// Returns the symbol of the token
@@ -617,12 +619,12 @@ mod ffi {
         /// Returns the amount which `spender` is still allowed to withdraw from `owner`.
         fn allowance(self: &Erc20, owner: String, spender: String) -> Result<String>;
         /// Returns the amount of tokens in existence.
-        fn total_supply(self: &Erc20) -> Result<String>;
+        fn total_supply(self: &Erc20) -> Result<U256>;
 
         /// Construct an Erc721 struct
         fn new_erc721(address: String, web3api_url: String, chian_id: u64) -> Erc721;
         /// Returns the number of tokens in owner's `account_address`.
-        fn balance_of(self: &Erc721, account_address: String) -> Result<String>;
+        fn balance_of(self: &Erc721, account_address: String) -> Result<U256>;
         /// Returns the owner of the `token_id` token.
         fn owner_of(self: &Erc721, token_id: String) -> Result<String>;
         /// Get the descriptive name for a collection of NFTs in this contract
@@ -687,7 +689,7 @@ mod ffi {
         /// Returns the total amount of tokens stored by the contract.
         ///
         /// From IERC721Enumerable, an optional extension of the standard ERC721
-        fn total_supply(self: &Erc721) -> Result<String>;
+        fn total_supply(self: &Erc721) -> Result<U256>;
         /// Returns a token ID at a given index of all the tokens stored by the contract. Use along
         /// with totalSupply to enumerate all tokens.
         ///
@@ -702,7 +704,7 @@ mod ffi {
         /// Construct an Erc1155 struct
         fn new_erc1155(address: String, web3api_url: String, chian_id: u64) -> Erc1155;
         /// Returns the amount of tokens of `token_id` owned by `account_address`.
-        fn balance_of(self: &Erc1155, account_address: String, token_id: String) -> Result<String>;
+        fn balance_of(self: &Erc1155, account_address: String, token_id: String) -> Result<U256>;
         /// Batched version of balance_of.
         /// Get the balance of multiple account/token pairs
         fn balance_of_batch(

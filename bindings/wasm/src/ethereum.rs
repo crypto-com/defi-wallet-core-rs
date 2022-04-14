@@ -12,6 +12,7 @@ use wasm_bindgen::prelude::*;
 
 mod signer;
 
+use js_sys::BigInt;
 pub use signer::*;
 
 /// Ethereum contract
@@ -283,9 +284,11 @@ pub fn eth_sign_transaction_with_chainid(
 pub async fn query_account_eth_balance(
     web3_api_url: String,
     address: String,
-) -> Result<JsValue, JsValue> {
+) -> Result<BigInt, JsValue> {
     let balance = get_eth_balance(&address, &web3_api_url).await?;
-    Ok(JsValue::from_str(&balance))
+    Ok(BigInt::new(
+        &JsValue::from_serde(&balance).map_err(format_to_js_error)?,
+    )?)
 }
 
 /// the token contract type
@@ -315,7 +318,7 @@ pub async fn query_account_contract_token_balance(
     contract_address: String,
     contract_type: ContractType,
     token_id: Option<String>,
-) -> Result<JsValue, JsValue> {
+) -> Result<BigInt, JsValue> {
     let details = match (contract_type, token_id) {
         (ContractType::Erc20, _) => Ok(ContractBalance::Erc20 { contract_address }),
         (ContractType::Erc721, _) => Ok(ContractBalance::Erc721 { contract_address }),
@@ -326,7 +329,7 @@ pub async fn query_account_contract_token_balance(
         (ContractType::Erc1155, None) => Err(JsValue::from_str("missing token id")),
     }?;
     let balance = get_contract_balance(&address, details, &web3_api_url).await?;
-    Ok(JsValue::from_str(&balance.to_string()))
+    Ok(BigInt::new(&JsValue::from_str(&balance.to_string()))?)
 }
 
 /// construct, sign and broadcast a plain transfer of eth/native token

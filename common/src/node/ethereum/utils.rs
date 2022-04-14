@@ -4,17 +4,16 @@ use crate::{
     construct_simple_eth_transfer_tx, EthAmount, EthError, EthNetwork, SecretKey, WalletCoin,
     WalletCoinFunc,
 };
-use ethers::prelude::{
-    Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware, U256,
-};
+use ethers::prelude::{Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware};
 
-use ethers::utils::format_units;
 #[cfg(not(target_arch = "wasm32"))]
 use ethers::utils::hex::ToHex;
 
 use crate::contract::{Contract, ContractCall};
 
 use ethers::prelude::TransactionReceipt as EthersTransactionReceipt;
+
+use ethers::types::U256;
 
 /// a subset of `ethers::prelude::::TransactionReceipt` for non-wasm
 #[cfg(not(target_arch = "wasm32"))]
@@ -181,14 +180,14 @@ pub enum ContractBatchTransfer {
 }
 
 /// given the account address, it returns the amount of native token it owns
-pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<String, EthError> {
+pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<U256, EthError> {
     let to = address_from_str(address)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let result = provider
         .get_balance(to, None)
         .await
         .map_err(|_| EthError::BalanceFail)?;
-    format_units(result, "ether").map_err(EthError::ParseError)
+    Ok(result)
 }
 
 /// given the account address, it returns the nonce / number of transactions sent from the account
@@ -231,7 +230,7 @@ pub async fn get_contract_balance(
             contract.balance_of(address, token_id)
         }
     };
-    ContractCall::from(call).call().await
+    Ok(ContractCall::from(call).call().await?)
 }
 
 /// given the contract approval details, it'll construct, sign and broadcast a
@@ -470,7 +469,7 @@ pub async fn broadcast_sign_eth_tx(
         },
     }
     .derive_address(secret_key.as_ref())
-    .map_err(|_| EthError::HexConversion)?;
+    .map_err(EthError::HdWrapError)?;
     let tx = construct_simple_eth_transfer_tx(&from_address, to_hex, amount, legacy, chain_id)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
@@ -506,12 +505,18 @@ pub async fn broadcast_eth_signed_raw_tx(
 }
 
 /// Returns the corresponding account's native token balance
-/// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
-/// (blocking; not compiled to wasm).
-#[cfg(not(target_arch = "wasm32"))]
-pub fn get_eth_balance_blocking(address: &str, web3api_url: &str) -> Result<String, EthError> {
+#[cfg(all(not(feature = "uniffi-binding"), not(target_arch = "wasm32")))]
+pub fn get_eth_balance_blocking(address: &str, web3api_url: &str) -> Result<U256, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     rt.block_on(get_eth_balance(address, web3api_url))
+}
+
+#[cfg(all(feature = "uniffi-binding", not(target_arch = "wasm32")))]
+pub fn get_eth_balance_blocking(address: &str, web3api_url: &str) -> Result<String, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    Ok(rt
+        .block_on(get_eth_balance(address, web3api_url))?
+        .to_string())
 }
 
 /// Returns the corresponding account's nonce / number of transactions
@@ -529,7 +534,22 @@ pub fn get_eth_transaction_count_blocking(
 /// Returns the corresponding account's contract token balance in a hexadecimal string,
 /// i.e. in its base units unformatted
 /// (blocking; not compiled to wasm).
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(feature = "uniffi-binding"), not(target_arch = "wasm32")))]
+pub fn get_contract_balance_blocking(
+    account_address: &str,
+    contract_details: ContractBalance,
+    web3api_url: &str,
+) -> Result<U256, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    let result = rt.block_on(get_contract_balance(
+        account_address,
+        contract_details,
+        web3api_url,
+    ))?;
+    Ok(result)
+}
+
+#[cfg(all(feature = "uniffi-binding", not(target_arch = "wasm32")))]
 pub fn get_contract_balance_blocking(
     account_address: &str,
     contract_details: ContractBalance,
@@ -655,5 +675,5 @@ pub fn u256_from_str(u256_str: &str) -> Result<U256, EthError> {
 
 #[inline]
 pub fn u256_from_dec_str(u256_str: &str) -> Result<U256, EthError> {
-    U256::from_dec_str(u256_str).map_err(|_| EthError::DecConversion)
+    U256::from_dec_str(u256_str).map_err(EthError::DecConversion)
 }
