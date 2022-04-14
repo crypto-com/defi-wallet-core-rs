@@ -24,13 +24,20 @@ impl EthSigner {
 
     /// Sign a hash value directly.
     /// Argument `hash` must be a hex value of 32 bytes (H256).
-    pub fn eth_sign(&self, hash: &str) -> Result<String, EthError> {
+    /// Return a signature of hex string without prefix `0x`.
+    /// The security concern around `eth_sign` is not that the signature could be forged or the key
+    /// be stolen, but rather a malicious website could trick a user into signing a message that is
+    /// actually a valid transaction, and use it to steal ether or tokens.
+    /// `personal_sign` prefixes the message, preventing it from being a valid transaction. Because
+    /// of this, it is safer for users.
+    pub fn eth_sign_insecure(&self, hash: &str) -> Result<String, EthError> {
         let hash = hash.strip_prefix("0x").unwrap_or(hash);
         let hash = H256::from_str(hash).map_err(|_| EthError::HexConversion)?;
         Ok(self.wallet.sign_hash(hash, false).to_string())
     }
 
     /// Sign an arbitrary message as per EIP-191.
+    /// Return a signature of hex string without prefix `0x`.
     pub fn personal_sign(&self, message: &str) -> String {
         let hash = hash_message(message);
         self.wallet.sign_hash(hash, false).to_string()
@@ -39,6 +46,7 @@ impl EthSigner {
     /// Sign an EIP-712 typed data from a JSON string of specified schema as below. The field
     /// `domain`, `message`, `primaryType` and `types` are all mandatory as described in
     /// [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
+    /// Return a signature of hex string without prefix `0x`.
     ///
     /// {
     ///   "domain": {
@@ -115,9 +123,9 @@ mod ethereum_signing_tests {
     }
 
     #[test]
-    fn test_eth_sign() {
+    fn test_eth_sign_insecure() {
         let signature = get_signer()
-            .eth_sign("0x01020304050607085152535455565758a1a2a3a4a5a6a7a8f1f2f3f4f5f6f7f8")
+            .eth_sign_insecure("0x01020304050607085152535455565758a1a2a3a4a5a6a7a8f1f2f3f4f5f6f7f8")
             .unwrap();
         assert_eq!(signature, "379a17ae4fe51a4a40dab0a8736f9ebd11f0b5465f38192519e7b0e0bdd440137f7c7db0dfa1c78294d6dbf4c0797dcb161ca8f2dea0cd79267833269e1396261c");
     }

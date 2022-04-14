@@ -4,8 +4,9 @@ use crate::wallet::SecretKey;
 use cosmrs::crypto::secp256k1::SigningKey;
 use cosmrs::tx::SignDoc;
 use ethers::utils::hex;
-use eyre::Context;
+use eyre::WrapErr;
 use std::sync::Arc;
+use tendermint::chain;
 
 /// Cosmos Signer
 pub struct CosmosSigner {
@@ -26,21 +27,22 @@ impl CosmosSigner {
         auth_info_bytes: &str,
         body_bytes: &str,
     ) -> Result<String, CosmosError> {
-        let account_number = account_number
-            .parse::<u64>()
-            .context("Argument account_number must be an u64: {account_number}")?;
+        let account_number = account_number.parse::<u64>().wrap_err_with(|| {
+            format!("Argument account_number must be an u64: {account_number}")
+        })?;
+        let chain_id = chain_id
+            .parse::<chain::id::Id>()
+            .wrap_err_with(|| format!("Argument chain_id must be valid: {chain_id}"))?
+            .as_str()
+            .to_owned();
         let auth_info_bytes = hex_decode(auth_info_bytes)
-            .context("Argument auth_info_bytes must be a HEX string: {auth_info_bytes}")?;
-        let body_bytes = hex_decode(body_bytes)
-            .context("Argument body_bytes must be a HEX string: {body_bytes}")?;
+            .wrap_err("Argument auth_info_bytes must be a HEX string")?;
+        let body_bytes =
+            hex_decode(body_bytes).wrap_err("Argument body_bytes must be a HEX string")?;
 
-        let signed_bytes = CosmosProtoSignDoc::new(
-            body_bytes,
-            auth_info_bytes,
-            chain_id.to_owned(),
-            account_number,
-        )
-        .sign_into(&self.secret_key)?;
+        let signed_bytes =
+            CosmosProtoSignDoc::new(body_bytes, auth_info_bytes, chain_id, account_number)
+                .sign_into(&self.secret_key)?;
 
         Ok(hex::encode(signed_bytes))
     }
