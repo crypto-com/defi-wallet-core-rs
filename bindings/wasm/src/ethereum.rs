@@ -252,6 +252,32 @@ pub fn build_signed_eth_tx(
     )?)
 }
 
+/// Parse the json data that meets the walletconnect standard and build raw transaction
+/// Use the chainid specified in json, if not set, use the default chainid, its value is 1
+/// return bytes of signed raw transaction
+#[wasm_bindgen]
+pub fn eth_sign_transaction(json_str: &str, private_key: PrivateKey) -> Result<Vec<u8>, JsValue> {
+    let tx_raw = defi_wallet_core_common::eth_sign_transaction(json_str, private_key.key)?;
+    Ok(tx_raw)
+}
+
+/// Parse the json data that meets the walletconnect standard and build raw transaction
+/// Sign with the specified chainid
+/// return bytes of signed raw transaction
+#[wasm_bindgen]
+pub fn eth_sign_transaction_with_chainid(
+    json_str: &str,
+    private_key: PrivateKey,
+    chain_id: u64,
+) -> Result<Vec<u8>, JsValue> {
+    let tx_raw = defi_wallet_core_common::eth_sign_transaction_with_chainid(
+        json_str,
+        private_key.key,
+        chain_id,
+    )?;
+    Ok(tx_raw)
+}
+
 /// return the account's balance formatted as ether decimals
 #[wasm_bindgen]
 pub async fn query_account_eth_balance(
