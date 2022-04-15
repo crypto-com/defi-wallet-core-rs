@@ -69,7 +69,8 @@ impl Eip712TypedData {
             serde_json::from_str(json_typed_data).map_err(Eip712Error::SerdeJsonError)?;
         let mut this = Self::try_from(serde_typed_data)?;
 
-        // Build hashes of all struct types. Since these type hashes could be reused when encoding.
+        // Build hashes of the all associating struct types when constructing. Since these type
+        // hashes could be reused when encoding primary struct and other referenced sub-structs.
         this.build_all_type_hashes()?;
 
         Ok(this)
@@ -84,7 +85,8 @@ impl Eip712TypedData {
         Ok(keccak256(digest_input).to_vec())
     }
 
-    /// Build the type hashes of all structs when constructing.
+    /// Build hashes of the all associating struct types when constructing. Since these type hashes
+    /// could be reused when encoding primary struct and other referenced sub-structs.
     fn build_all_type_hashes(&mut self) -> Result<()> {
         let encoded_types = self
             .types
@@ -133,7 +135,8 @@ impl Eip712TypedData {
         Ok(())
     }
 
-    /// TODO
+    /// Build hash of specified struct name and field values. This function could be reused to
+    /// construct hash of any associating structs in this typed data.
     fn build_struct_hash(
         &self,
         struct_name: &str,

@@ -64,8 +64,8 @@ impl From<&str> for EthAbiParamType {
             "h512" | "public" => EthAbiParamType::FixedBytes(64),
             "int256" | "int" | "uint" | "uint256" => EthAbiParamType::Uint(256),
             "string" => EthAbiParamType::String,
-            typ => parse_param_type_integer(typ)
-                .unwrap_or_else(|| EthAbiParamType::Struct(typ.to_owned())),
+            iden => parse_param_type_integer(iden)
+                .unwrap_or_else(|| EthAbiParamType::Struct(iden.to_owned())),
         }
     }
 }
