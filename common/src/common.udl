@@ -288,6 +288,7 @@ enum EthError {
   "ChainidError",
   "AbiError",
   "Eip712Error",
+  "JsonError",
 };
 
 [Enum]
