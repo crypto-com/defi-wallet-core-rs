@@ -312,7 +312,7 @@ impl DynamicTransactionRequest {
     pub fn to_type_tx(self) -> TypedTransaction {
         if self.max_fee_per_gas != None {
             TypedTransaction::Eip1559(self.to_eip1559_tx())
-        } else if self.access_list.0.len() != 0 {
+        } else if !self.access_list.0.is_empty() {
             TypedTransaction::Eip2930(self.to_eip2930_tx())
         } else {
             TypedTransaction::Legacy(self.to_legacy_tx())
@@ -328,7 +328,7 @@ pub fn eth_sign_transaction(
 ) -> Result<Vec<u8>, EthError> {
     let mut default_chain_id: u64 = 1;
     let tx: DynamicTransactionRequest =
-        serde_json::from_str(&json_str).map_err(|e| EthError::JsonError(e))?;
+        serde_json::from_str(json_str).map_err(EthError::JsonError)?;
     let type_tx: TypedTransaction = tx.to_type_tx();
     if type_tx.chain_id() != None {
         default_chain_id = type_tx.chain_id().unwrap().as_u64();
@@ -347,7 +347,7 @@ pub fn eth_sign_transaction_with_chainid(
     chain_id: u64,
 ) -> Result<Vec<u8>, EthError> {
     let mut tx: DynamicTransactionRequest =
-        serde_json::from_str(&json_str).map_err(|e| EthError::JsonError(e))?;
+        serde_json::from_str(json_str).map_err(EthError::JsonError)?;
     tx.chain_id = Some(chain_id.into());
     let type_tx: TypedTransaction = tx.to_type_tx();
 
