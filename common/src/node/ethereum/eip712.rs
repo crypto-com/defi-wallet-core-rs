@@ -2,11 +2,11 @@
 
 use crate::node::ethereum::abi::{EthAbiParamType, EthAbiToken};
 use crate::transaction::{Eip712Error, EthError};
-use ethers::prelude::abi::{ParamType, Token};
+use ethers::prelude::abi::Token;
 use ethers::prelude::U256;
 use ethers::types::transaction::eip712;
 use ethers::utils::keccak256;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 mod deserializer;
 use deserializer::Eip712TypedDataSerde;
@@ -18,10 +18,11 @@ type Eip712StructName = String;
 type Result<T> = std::result::Result<T, EthError>;
 
 /// EIP-712 typed data
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Eip712TypedData {
     domain: eip712::EIP712Domain,
     primary_type: Eip712StructName,
+    type_hashes: HashMap<Eip712StructName, U256>,
     types: HashMap<Eip712StructName, Eip712Struct>,
     values: HashMap<Eip712FieldName, Eip712FieldValue>,
 }
@@ -63,71 +64,135 @@ impl Eip712TypedData {
     ///   }
     /// }
     pub fn new(json_typed_data: &str) -> Result<Self> {
+        // Deserialize from JSON typed data.
         let serde_typed_data: Eip712TypedDataSerde =
             serde_json::from_str(json_typed_data).map_err(Eip712Error::SerdeJsonError)?;
-        serde_typed_data.try_into()
+        let mut this = Self::try_from(serde_typed_data)?;
+
+        // Build hashes of all struct types. Since these type hashes could be reused when encoding.
+        this.build_all_type_hashes()?;
+
+        Ok(this)
     }
 
     /// Encode the typed data.
     pub fn encode(&self) -> Result<Vec<u8>> {
         let domain_separator = self.domain.separator();
-        let struct_hash = self.build_struct_hash()?;
+        let struct_hash = self.build_struct_hash(&self.primary_type, &self.values)?;
         let digest_input = [&[0x19, 0x01], &domain_separator[..], &struct_hash[..]].concat();
 
         Ok(keccak256(digest_input).to_vec())
     }
 
-    /// TODO
-    fn build_struct_hash(&self) -> Result<[u8; 32]> {
-        let mut items = vec![Token::Uint(self.build_type_hash())];
-
-        let tokens = self
-            .get_primary_struct()?
-            .fields
+    /// Build the type hashes of all structs when constructing.
+    fn build_all_type_hashes(&mut self) -> Result<()> {
+        let encoded_types = self
+            .types
             .iter()
-            .map(|field| {
-                let field_name = &field.name;
-                self.values
-                    .get(&field.name)
-                    .map(Into::into)
-                    .ok_or_else(|| Eip712Error::MissingFieldError(field_name.clone()).into())
-            })
-            .collect::<Result<Vec<Token>>>()?;
+            .map(|(struct_name, struct_type)| (struct_name.clone(), struct_type.encode_type()))
+            .collect::<HashMap<_, _>>();
 
-        for token in tokens {
-            match &token {
-                Token::Tuple(_) => {
-                    // TODO
-                    // TODO:
-                    // Crate `ether-rs` uses `Token::Tuple` to save values of nested struct. Since
-                    // we have already fixed to use `Eip712Struct`. Field of nested struct could be
-                    // implemented in `Eip712Field`.
-                    return Err(Eip712Error::EthersError(
-                        eip712::Eip712Error::NestedEip712StructNotImplemented,
+        for struct_name in self.types.keys() {
+            // If the struct type references other struct types
+            // (and these in turn reference even more struct types), then the set of referenced
+            // struct types is collected, sorted by name and appended to the encoding. An example
+            // encoding is
+            // `Transaction(Person from,Person to,Asset tx)Asset(address token,uint256 amount)Person(address wallet,string name)`.
+
+            // Get referenced sub-struct names.
+            let mut ref_struct_names = HashSet::new();
+            self.get_referenced_struct_names(struct_name, &mut ref_struct_names)?;
+
+            // Sort referenced sub-struct names.
+            let mut ref_struct_names = ref_struct_names.into_iter().collect::<Vec<_>>();
+            ref_struct_names.sort();
+
+            // Initialize encoded data of this struct.
+            let mut encoded_data = encoded_types
+                .get(struct_name)
+                .ok_or_else(|| Eip712Error::MissingTypeError(struct_name.clone()))?
+                .clone();
+
+            // Append encoded data of sub-structs in sequence.
+            for name in ref_struct_names {
+                encoded_data.push_str(
+                    encoded_types
+                        .get(&name)
+                        .ok_or_else(|| Eip712Error::MissingTypeError(name.clone()))?,
+                );
+            }
+
+            // Hash encoded data.
+            let hash = keccak256(encoded_data);
+
+            // Save typed hash of this struct.
+            self.type_hashes
+                .insert(struct_name.clone(), U256::from(&hash[..]));
+        }
+
+        Ok(())
+    }
+
+    /// TODO
+    fn build_struct_hash(
+        &self,
+        struct_name: &str,
+        values: &HashMap<Eip712FieldName, Eip712FieldValue>,
+    ) -> Result<[u8; 32]> {
+        let type_hash = self
+            .type_hashes
+            .get(struct_name)
+            .ok_or_else(|| Eip712Error::MissingTypeError(struct_name.to_owned()))?;
+        let mut items = vec![Token::Uint(*type_hash)];
+        for field in &self.get_struct(struct_name)?.fields {
+            let field_name = &field.name;
+
+            let field_value = values
+                .get(field_name)
+                .ok_or_else(|| Eip712Error::MissingFieldError(field_name.clone()))?;
+
+            match field_value {
+                Eip712FieldValue::Struct(sub_name, sub_values) => {
+                    let hash = self.build_struct_hash(sub_name, sub_values)?;
+                    items.push(Token::Uint(U256::from(hash)));
+                }
+                Eip712FieldValue::Tuple(_) => {
+                    return Err(Eip712Error::UnsupportedError(
+                        "Tuple is unsupported by EIP-712".to_owned(),
                     )
-                    .into());
+                    .into())
                 }
-                _ => {
-                    items.push(eip712::encode_eip712_type(token));
-                }
+                _ => items.push(eip712::encode_eip712_type(field_value.try_into()?)),
             }
         }
 
         Ok(keccak256(ethers::abi::encode(&items)))
     }
 
-    /// TODO
-    fn build_type_hash(&self) -> U256 {
-        todo!()
-        // let hash = keccak256(formatted_struct);
-        // U256::from(&hash[..])
+    /// Recursively get referenced struct names by a parent struct name.
+    /// Argument `parent_struct_name` is the struct name to get sub-structs.
+    /// Argument `current_struct_names` is mutable. It is used to return the all referenced struct
+    /// names recursively.
+    fn get_referenced_struct_names(
+        &self,
+        parent_struct_name: &str,
+        current_struct_names: &mut HashSet<Eip712StructName>,
+    ) -> Result<()> {
+        let sub_struct_names = self.get_struct(parent_struct_name)?.get_sub_struct_names();
+        for name in sub_struct_names {
+            if !current_struct_names.contains(&name) {
+                self.get_referenced_struct_names(&name, current_struct_names)?;
+            }
+        }
+
+        Ok(())
     }
 
-    /// TODO
-    fn get_primary_struct(&self) -> Result<&Eip712Struct> {
+    /// Get struct type by name.
+    fn get_struct(&self, struct_name: &str) -> Result<&Eip712Struct> {
         self.types
-            .get(&self.primary_type)
-            .ok_or_else(|| Eip712Error::MissingTypeError(self.primary_type.clone()).into())
+            .get(struct_name)
+            .ok_or_else(|| Eip712Error::MissingTypeError(struct_name.to_owned()).into())
     }
 }
 
@@ -144,8 +209,8 @@ impl Eip712Struct {
         Self { name, fields }
     }
 
-    /// Build hash of this struct type.
-    /// TODO
+    /// Encode this struct type (without referenced sub-structs).
+    /// e.g. struct Transaction could be encoded to `Transaction(Person from,Person to,Asset tx)`.
     fn encode_type(&self) -> String {
         let formatted_fields = self
             .fields
@@ -157,14 +222,14 @@ impl Eip712Struct {
         format!("{}({})", self.name, formatted_fields)
     }
 
-    /// Get the referenced struct names by fields of this struct.
-    /// TODO
-    fn get_referenced_struct_names(&self) -> Vec<Eip712StructName> {
-        let mut struct_names = vec![];
-        for f in self.fields {
-            match f.r#type {
-                Eip712FieldType::Struct(name) => struct_names.push(name),
-                _ => (),
+    /// Get unique sub-struct names by fields of this struct.
+    /// e.g. encoding `Transaction(Person from,Person to,Asset tx)` has referenced sub-struct
+    /// `Asset` and `Person`.
+    fn get_sub_struct_names(&self) -> HashSet<Eip712StructName> {
+        let mut struct_names = HashSet::new();
+        for f in &self.fields {
+            if let Eip712FieldType::Struct(name) = &f.r#type {
+                struct_names.insert(name.clone());
             }
         }
         struct_names
@@ -267,6 +332,12 @@ mod eip712_encoding_tests {
         let typed_data = Eip712TypedData::new(RECURSIVELY_NESTED_JSON_TYPED_DATA).unwrap();
         let encoded_data = typed_data.encode().unwrap();
 
-        assert_eq!(encoded_data, [1, 2, 3],);
+        assert_eq!(
+            encoded_data,
+            [
+                187, 37, 204, 25, 4, 87, 40, 67, 2, 128, 149, 138, 235, 206, 18, 177, 36, 205, 201,
+                31, 129, 127, 207, 185, 49, 63, 192, 93, 120, 76, 65, 192
+            ],
+        );
     }
 }

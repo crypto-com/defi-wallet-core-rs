@@ -84,6 +84,7 @@ impl TryFrom<Eip712TypedDataSerde> for Eip712TypedData {
             primary_type: serde_typed_data.primary_type,
             types,
             values,
+            ..Default::default()
         })
     }
 }
@@ -113,7 +114,7 @@ fn convert_json_by_type(
             json_value.as_object().and_then(|json_field_values| {
                 let json_field_values = json_field_values.clone().into_iter().collect();
                 convert_values(struct_name, struct_types, &json_field_values)
-                    .map(|values| Eip712FieldValue::Struct(*struct_name, values))
+                    .map(|values| Eip712FieldValue::Struct(struct_name.clone(), values))
                     .ok()
             })
         }
@@ -424,11 +425,11 @@ mod eip712_deserializing_tests {
                 vec![
                     Eip712Field {
                         name: "from".to_owned(),
-                        r#type: Eip712FieldType::Struct("Person"),
+                        r#type: Eip712FieldType::Struct("Person".to_owned()),
                     },
                     Eip712Field {
                         name: "to".to_owned(),
-                        r#type: Eip712FieldType::Struct("Person"),
+                        r#type: Eip712FieldType::Struct("Person".to_owned()),
                     },
                     Eip712Field {
                         name: "contents".to_owned(),
@@ -459,8 +460,10 @@ mod eip712_deserializing_tests {
 
         // Validate values.
         let mut from_person_values = HashMap::new();
-        let inserted_result =
-            from_person_values.insert("name".to_owned(), Eip712FieldValue::String("Cow"));
+        let inserted_result = from_person_values.insert(
+            "name".to_owned(),
+            Eip712FieldValue::String("Cow".to_owned()),
+        );
         assert!(inserted_result.is_none());
         let inserted_result = from_person_values.insert(
             "wallet".to_owned(),
@@ -470,8 +473,10 @@ mod eip712_deserializing_tests {
         );
         assert!(inserted_result.is_none());
         let mut to_person_values = HashMap::new();
-        let inserted_result =
-            to_person_values.insert("name".to_owned(), Eip712FieldValue::String("Bob"));
+        let inserted_result = to_person_values.insert(
+            "name".to_owned(),
+            Eip712FieldValue::String("Bob".to_owned()),
+        );
         assert!(inserted_result.is_none());
         let inserted_result = to_person_values.insert(
             "wallet".to_owned(),
@@ -483,17 +488,17 @@ mod eip712_deserializing_tests {
         let mut values = HashMap::new();
         let inserted_result = values.insert(
             "from".to_owned(),
-            Eip712FieldValue::Struct("Person", from_person_values),
+            Eip712FieldValue::Struct("Person".to_owned(), from_person_values),
         );
         assert!(inserted_result.is_none());
         let inserted_result = values.insert(
             "to".to_owned(),
-            Eip712FieldValue::Struct("Person", to_person_values),
+            Eip712FieldValue::Struct("Person".to_owned(), to_person_values),
         );
         assert!(inserted_result.is_none());
         let inserted_result = values.insert(
             "contents".to_owned(),
-            Eip712FieldValue::String("Hello, Bob!"),
+            Eip712FieldValue::String("Hello, Bob!".to_owned()),
         );
         assert!(inserted_result.is_none());
         assert_eq!(typed_data.values, values);

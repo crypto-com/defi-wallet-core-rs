@@ -177,13 +177,17 @@ mod ethereum_signing_tests {
 
     #[test]
     fn test_eip712_simple_typed_data_sign() {
-        let signature = get_signer().sign_typed_data(SIMPLE_JSON_TYPED_DATA).unwrap();
+        let signature = get_signer()
+            .sign_typed_data(SIMPLE_JSON_TYPED_DATA)
+            .unwrap();
         assert_eq!(signature, "ab647e1805accdd6a2f030954cfc0072d12296d0fb53d3c2a0073b9b573cf0f533503ecf0ac8f236d72f2e500c8d001bebb9f9d7e0c740b50a6a66c1ee9478c21c");
     }
 
     #[test]
     fn test_eip712_recursively_nested_typed_data_sign() {
-        let signature = get_signer().sign_typed_data(RECURSIVELY_NESTED_JSON_TYPED_DATA).unwrap();
-        assert_eq!(signature, "");
+        let signature = get_signer()
+            .sign_typed_data(RECURSIVELY_NESTED_JSON_TYPED_DATA)
+            .unwrap();
+        assert_eq!(signature, "7b26b85e4806529d2013146a98282a8bca97712720def119ac5396845b90433c270d07de560dd61c8ad4d53dc94118678ad11b08c9bf52ceac33e2c86d1967601b");
     }
 }

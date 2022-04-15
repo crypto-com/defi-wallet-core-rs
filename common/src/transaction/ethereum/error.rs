@@ -55,4 +55,6 @@ pub enum Eip712Error {
     MissingTypeError(String),
     #[error("SerdeJson error: {0}")]
     SerdeJsonError(#[from] serde_json::Error),
+    #[error("Unsupported error: {0}")]
+    UnsupportedError(String),
 }
