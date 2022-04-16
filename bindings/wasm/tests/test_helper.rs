@@ -40,8 +40,23 @@ pub(crate) const DEFAULT_WAITING_DURATION: Duration = Duration::from_secs(3);
 
 // Helper functions
 
-pub(crate) async fn query_account(address: &str) -> RawRpcAccountStatus {
-    let account_details = query_account_details(CHAINMAIN_API_URL.to_owned(), address.to_owned())
+pub(crate) fn wait_for_timeout() {
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+}
+
+pub(crate) fn chainmain_client() -> CosmosClient {
+    let config = CosmosClientConfig::new(CHAINMAIN_API_URL, TENDERMINT_RPC_URL);
+    CosmosClient::new(config)
+}
+
+pub(crate) fn cronos_client() -> CosmosClient {
+    let config = CosmosClientConfig::new(CRONOS_API_URL, TENDERMINT_RPC_URL);
+    CosmosClient::new(config)
+}
+
+pub(crate) async fn query_chainmain_account(address: &str) -> RawRpcAccountStatus {
+    let account_details = chainmain_client()
+        .query_account_details(address.to_owned())
         .await
         .unwrap()
         .into_serde::<RawRpcAccountResponse>()
@@ -54,48 +69,28 @@ pub(crate) async fn query_account(address: &str) -> RawRpcAccountStatus {
 }
 
 pub(crate) async fn query_chainmain_balance(address: &str) -> RawRpcBalance {
-    query_account_balance(
-        CHAINMAIN_API_URL.to_owned(),
-        address.to_owned(),
-        CHAINMAIN_DENOM.to_owned(),
-        1,
-    )
-    .await
-    .unwrap()
-    .into_serde::<RawRpcBalance>()
-    .unwrap()
+    chainmain_client()
+        .query_account_balance(address.to_owned(), CHAINMAIN_DENOM.to_owned(), 1)
+        .await
+        .unwrap()
+        .into_serde::<RawRpcBalance>()
+        .unwrap()
 }
 
 pub(crate) async fn query_cronos_balance(address: &str) -> RawRpcBalance {
-    query_account_balance(
-        CRONOS_API_URL.to_owned(),
-        address.to_owned(),
-        CRONOS_DENOM.to_owned(),
-        0,
-    )
-    .await
-    .unwrap()
-    .into_serde::<RawRpcBalance>()
-    .unwrap()
-}
-
-pub(crate) async fn get_tx_info(address: String) -> CosmosSDKTxInfoRaw {
-    // Delay to wait the tx is included in the block, could be improved by waiting block
-    let _ = Delay::new(DEFAULT_WAITING_DURATION).await;
-    let account_details = query_account_details(CHAINMAIN_API_URL.to_owned(), address)
+    cronos_client()
+        .query_account_balance(address.to_owned(), CRONOS_DENOM.to_owned(), 0)
         .await
         .unwrap()
-        .into_serde::<RawRpcAccountResponse>()
-        .unwrap();
+        .into_serde::<RawRpcBalance>()
+        .unwrap()
+}
 
-    let account = match account_details {
-        RawRpcAccountResponse::OkResponse { account } => account,
-        _ => panic!("Failed to query account details"),
-    };
-
+pub(crate) async fn chainmain_tx_info(address: &str) -> CosmosSDKTxInfoRaw {
+    let account = query_chainmain_account(address).await;
     CosmosSDKTxInfoRaw::new(
         account.account_number,
-        account.sequence, // the sequence returned by server is what we need for next tx
+        account.sequence,
         DEFAULT_GAS_LIMIT,
         DEFAULT_FEE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),

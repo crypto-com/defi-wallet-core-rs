@@ -14,7 +14,7 @@ wasm_bindgen_test_configure!(run_in_browser);
 #[wasm_bindgen_test]
 async fn test_query_account_details() {
     // Query account details from devnet
-    let account = query_account(COMMUNITY).await;
+    let account = query_chainmain_account(COMMUNITY).await;
 
     assert_eq!(
         account,
@@ -37,7 +37,7 @@ async fn test_query_account_balance() {
         balance,
         RawRpcBalance {
             denom: CHAINMAIN_DENOM.to_owned(),
-            amount: "1000000000000000000000".to_owned()
+            amount: "1_000_000_000_000_000_000_000".to_owned()
         }
     );
 }

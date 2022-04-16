@@ -86,9 +86,10 @@ impl NftWallet {
     }
 
     async fn issue(&self, denom: Denom) -> Response {
+        wait_for_timeout();
         self.broadcast(
             get_nft_issue_denom_signed_tx(
-                get_tx_info(self.address.to_string()).await,
+                chainmain_tx_info(self.address).await,
                 self.key.clone(),
                 denom.id,
                 denom.name,
@@ -108,9 +109,10 @@ impl NftWallet {
         data: &str,
         recipient: &str,
     ) -> Response {
+        wait_for_timeout();
         self.broadcast(
             get_nft_mint_signed_tx(
-                get_tx_info(self.address.to_string()).await,
+                chainmain_tx_info(self.address).await,
                 self.key.clone(),
                 id.to_owned(),
                 denom_id.to_owned(),
@@ -125,9 +127,10 @@ impl NftWallet {
     }
 
     async fn edit(&self, id: &str, denom_id: &str, name: &str, uri: &str, data: &str) -> Response {
+        wait_for_timeout();
         self.broadcast(
             get_nft_edit_signed_tx(
-                get_tx_info(self.address.to_string()).await,
+                chainmain_tx_info(self.address).await,
                 self.key.clone(),
                 id.to_owned(),
                 denom_id.to_owned(),
@@ -141,9 +144,10 @@ impl NftWallet {
     }
 
     async fn transfer(&self, id: &str, denom_id: &str, recipient: &str) -> Response {
+        wait_for_timeout();
         self.broadcast(
             get_nft_transfer_signed_tx(
-                get_tx_info(self.address.to_string()).await,
+                chainmain_tx_info(self.address).await,
                 self.key.clone(),
                 id.to_owned(),
                 denom_id.to_owned(),
@@ -155,9 +159,10 @@ impl NftWallet {
     }
 
     async fn burn(&self, id: &str, denom_id: &str) -> Response {
+        wait_for_timeout();
         self.broadcast(
             get_nft_burn_signed_tx(
-                get_tx_info(self.address.to_string()).await,
+                chainmain_tx_info(self.address).await,
                 self.key.clone(),
                 id.to_owned(),
                 denom_id.to_owned(),

@@ -391,60 +391,6 @@ impl From<CosmosSDKTxInfoRaw> for CosmosSDKTxInfo {
     }
 }
 
-/// creates the transaction signing payload (`SignDoc`)
-/// for `MsgSend` from the Cosmos SDK bank module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
-#[wasm_bindgen]
-pub fn get_single_bank_send_signdoc(
-    tx_info: CosmosSDKTxInfoRaw,
-    sender_pubkey: Vec<u8>,
-    recipient_address: String,
-    amount: u64,
-    denom: String,
-) -> Result<Vec<u8>, JsValue> {
-    if sender_pubkey.len() != COMPRESSED_SECP256K1_PUBKEY_SIZE {
-        return Err(JsValue::from_str("invalid public key length"));
-    }
-    let pubkey = PublicKeyBytesWrapper(sender_pubkey);
-    Ok(get_single_msg_sign_payload(
-        tx_info.into(),
-        CosmosSDKMsg::BankSend {
-            recipient_address,
-            amount: SingleCoin::Other {
-                amount: format!("{}", amount),
-                denom,
-            },
-        },
-        pubkey,
-    )?)
-}
-
-/// creates the signed transaction
-/// for MsgSend from the Cosmos SDK bank module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
-#[wasm_bindgen]
-pub fn get_single_bank_send_signed_tx(
-    tx_info: CosmosSDKTxInfoRaw,
-    private_key: PrivateKey,
-    recipient_address: String,
-    amount: u64,
-    denom: String,
-) -> Result<Vec<u8>, JsValue> {
-    Ok(build_signed_single_msg_tx(
-        tx_info.into(),
-        CosmosSDKMsg::BankSend {
-            recipient_address,
-            amount: SingleCoin::Other {
-                amount: format!("{}", amount),
-                denom,
-            },
-        },
-        private_key.key,
-    )?)
-}
-
 /// creates the signed transaction
 /// for `StakingDelegate` from the Chainmain staking module
 /// wasm-bindgen only supports the C-style enums,
