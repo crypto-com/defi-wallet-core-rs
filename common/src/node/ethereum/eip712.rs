@@ -2,8 +2,7 @@
 
 use crate::node::ethereum::abi::{EthAbiParamType, EthAbiToken};
 use crate::transaction::{Eip712Error, EthError};
-use ethers::prelude::abi::Token;
-use ethers::prelude::U256;
+use ethers::prelude::{abi, U256};
 use ethers::types::transaction::eip712;
 use ethers::utils::keccak256;
 use std::collections::{HashMap, HashSet};
@@ -146,7 +145,7 @@ impl Eip712TypedData {
             .type_hashes
             .get(struct_name)
             .ok_or_else(|| Eip712Error::MissingTypeError(struct_name.to_owned()))?;
-        let mut items = vec![Token::Uint(*type_hash)];
+        let mut items = vec![abi::Token::Uint(*type_hash)];
         for field in &self.get_struct(struct_name)?.fields {
             let field_name = &field.name;
 
@@ -154,22 +153,35 @@ impl Eip712TypedData {
                 .get(field_name)
                 .ok_or_else(|| Eip712Error::MissingFieldError(field_name.clone()))?;
 
-            match field_value {
-                Eip712FieldValue::Struct(sub_name, sub_values) => {
-                    let hash = self.build_struct_hash(sub_name, sub_values)?;
-                    items.push(Token::Uint(U256::from(hash)));
-                }
-                Eip712FieldValue::Tuple(_) => {
-                    return Err(Eip712Error::UnsupportedError(
-                        "Tuple is unsupported by EIP-712".to_owned(),
-                    )
-                    .into())
-                }
-                _ => items.push(eip712::encode_eip712_type(field_value.try_into()?)),
-            }
+            items.push(self.encode_field_value(field_value)?);
         }
 
         Ok(keccak256(ethers::abi::encode(&items)))
+    }
+
+    /// Encode a field value to an ABI token for further struct encoding. This function supports
+    /// recursively invocation, since the type `Array` or `FixedArray` could has item type of a
+    /// `Struct`.
+    fn encode_field_value(&self, field_value: &Eip712FieldValue) -> Result<abi::Token> {
+        match field_value {
+            Eip712FieldValue::Array(items) | Eip712FieldValue::FixedArray(items) => {
+                let tokens = &items
+                    .iter()
+                    .map(|i| self.encode_field_value(i))
+                    .collect::<Result<Vec<_>>>()?;
+                let hash = keccak256(abi::encode(tokens));
+                Ok(abi::Token::Uint(U256::from(hash)))
+            }
+            Eip712FieldValue::Struct(sub_name, sub_values) => {
+                let hash = self.build_struct_hash(sub_name, sub_values)?;
+                Ok(abi::Token::Uint(U256::from(hash)))
+            }
+            Eip712FieldValue::Tuple(_) => Err(Eip712Error::UnsupportedError(
+                "Tuple is unsupported by EIP-712".to_owned(),
+            )
+            .into()),
+            _ => Ok(eip712::encode_eip712_type(field_value.try_into()?)),
+        }
     }
 
     /// Recursively get referenced struct names by a parent struct name.

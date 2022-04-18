@@ -31,13 +31,28 @@ pub enum EthAbiParamType {
     Struct(EthAbiStructName),
 }
 
+/// Implementing Display trait is used to encode the parameter type. It is implemented for `Array`,
+/// `FixedArray`, `Struct` and `Tuple`, since Struct is a custom type, and other parameter types
+/// could has item type of a Struct.
 impl fmt::Display for EthAbiParamType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Struct(struct_name) => write!(f, "{}", struct_name),
+            Self::Array(item_param_type) => write!(f, "{item_param_type}[]"),
+            Self::FixedArray(item_param_type, array_size) => {
+                write!(f, "{item_param_type}[{array_size}]")
+            }
+            Self::Struct(struct_name) => write!(f, "{struct_name}"),
+            Self::Tuple(item_param_types) => {
+                let formatted_types = item_param_types
+                    .iter()
+                    .map(|t| format!("{t}"))
+                    .collect::<Vec<_>>()
+                    .join(",");
+                write!(f, "({formatted_types})")
+            }
             _ => {
                 let param_type = ParamType::try_from(self).map_err(|_| fmt::Error)?;
-                write!(f, "{}", param_type)
+                write!(f, "{param_type}")
             }
         }
     }
