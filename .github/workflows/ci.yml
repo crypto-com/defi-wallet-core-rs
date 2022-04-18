@@ -122,7 +122,7 @@ jobs:
         run: cargo install cargo-tarpaulin
       - name: Run coverage
         run: |
-          cargo tarpaulin --all-features --ignore-tests --out Xml
+          cargo tarpaulin --avoid-cfg-tarpaulin --all-features --ignore-tests --out Xml
       - name: Report coverage
         continue-on-error: true
         run: bash <(curl -s https://codecov.io/bash)
