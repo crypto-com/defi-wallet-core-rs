@@ -923,6 +923,7 @@ dependencies = [
  "cosmos-sdk-proto",
  "cosmrs",
  "defi-wallet-core-proto",
+ "ethabi",
  "ethers",
  "eyre",
  "grpc-web-client",

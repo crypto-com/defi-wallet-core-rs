@@ -23,6 +23,7 @@ cosmrs = "0.5"
 eyre = "0.6"
 # NOTE: add `features = ["legacy"]` if non-EIP-1559 network support is required
 ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "de275db56a1be948cf4a543e1837f5add6f4750c" }
+ethabi = { version = "17.0.0", default-features = false, features = ["full-serde", "rlp"] }
 ibc = { version = "0.13", default-features = false }
 ibc-proto = { version = "0.17", default-features = false }
 lazy_static = "1"

@@ -1,4 +1,6 @@
-use defi_wallet_core_common::{bytes_to_hex, EthNetwork, HDWallet, Network, SecretKey, WalletCoin};
+use defi_wallet_core_common::{
+    bytes_to_hex, hex_to_bytes, EthNetwork, HDWallet, Network, SecretKey, WalletCoin,
+};
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 
@@ -59,8 +61,15 @@ impl PrivateKey {
 
     // eth sign message data
     #[wasm_bindgen]
-    pub fn sign_eth(&self, message: Vec<u8>, chain_id: u64) -> Result<Vec<u8>, JsValue> {
-        let signature = self.key.sign_eth(message.as_ref(), chain_id)?;
+    pub fn eth_sign(&self, message: Vec<u8>, chain_id: u64) -> Result<Vec<u8>, JsValue> {
+        let signature = self.key.eth_sign(message.as_ref(), chain_id)?;
+        Ok(signature.to_vec())
+    }
+
+    // eth sign hash hex string without the 0x prefix
+    #[wasm_bindgen]
+    pub fn eth_sign_by_hash(&self, hash: String, chain_id: u64) -> Result<Vec<u8>, JsValue> {
+        let signature = self.key.eth_sign_by_hash(hash, chain_id)?;
         Ok(signature.to_vec())
     }
 
@@ -176,9 +185,16 @@ impl From<MnemonicWordCount> for defi_wallet_core_common::MnemonicWordCount {
     }
 }
 
+/// Convert byte array to a hex string without the 0x prefix
 #[wasm_bindgen]
 pub fn bytes2hex(data: Vec<u8>) -> String {
     bytes_to_hex(data)
+}
+
+/// Convert hex string to byte array, hex string without the 0x prefix
+#[wasm_bindgen]
+pub fn hex2bytes(data: String) -> Vec<u8> {
+    hex_to_bytes(data)
 }
 
 #[wasm_bindgen]

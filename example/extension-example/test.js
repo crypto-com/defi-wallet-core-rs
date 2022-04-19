@@ -276,7 +276,7 @@ async function ethereum_demo() {
 
   let priv = wasm.PrivateKey.from_hex("24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e");
   let message = new TextEncoder("utf-8").encode("hello");
-  let signature = priv.sign_eth(message, BigInt(1));
+  let signature = priv.eth_sign(message, BigInt(1));
   console.log("signature:", wasm.bytes2hex(signature));
 
   // build transaction data with abi and args
@@ -386,9 +386,57 @@ async function polygon_demo() {
 
 }
 
+async function eth_sign_demo() {
+  await init();
+  const words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
+  let wallet = wasm.Wallet.recover_wallet(words, "");
+  let priv = wallet.get_key_from_index(wasm.CoinType.Ethereum, 0);
+  let address = wallet.get_address(wasm.CoinType.Ethereum, 0);
+  console.assert(address === "0x45f508caf79cb329a46f1757f3526faf8c6b2ea5");
+
+  let signature = priv.eth_sign_by_hash("879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0", BigInt(0));
+  console.assert(wasm.bytes2hex(signature) === "59e8f544fdee652ae4475a53921ad8030794df66aedf77b218349ba1f476712739caf09dfee2c8ac60e17cc5f2102c09d4ad04de6223a38e9705b28276d71f471b");
+
+  // personal sign
+  let message = new TextEncoder("utf-8").encode("Example `personal_sign` message");
+  signature = priv.eth_sign(message, BigInt(0));
+  console.assert(wasm.bytes2hex(signature) === "1490cd65cdfd5145a2b4e4e562b8c78008cb374ac36b2bbcd6b65dbcc14d31c453c705c4399e745fbf22ccd3939754ff2e4bbbe13a7dacae8a44aeb95f6e68c81b");
+
+}
+
+async function eth_signTypedData_demo() {
+  await init();
+  const words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
+  let wallet = wasm.Wallet.recover_wallet(words, "");
+  let priv = wallet.get_key_from_index(wasm.CoinType.Ethereum, 0);
+  let address = wallet.get_address(wasm.CoinType.Ethereum, 0);
+  console.assert(address === "0x45f508caf79cb329a46f1757f3526faf8c6b2ea5");
+
+  // const signature = wasm.eth_signTypedData(priv, '{types:{EIP712Domain:[{name:"name",type:"string",},{name:"version",type:"string",},{name:"chainId",type:"uint256",},{name:"verifyingContract",type:"address",},],Person:[{name:"name",type:"string",},{name:"wallet",type:"address",},],Mail:[{name:"from",type:"Person",},{name:"to",type:"Person",},{name:"contents",type:"string",},],},primaryType:"Mail",domain:{name:"Ether Mail",version:"1",chainId:1,verifyingContract:"0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",},message:{from:{name:"Cow",wallet:"0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",},to:{name:"Bob",wallet:"0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",},contents:"Hello, Bob!",},}');
+  const signature = wasm.eth_signTypedData(priv, '{"types":{"EIP712Domain":[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint256"},{"name":"verifyingContract","type":"address"}],"Person":[{"name":"name","type":"string"},{"name":"wallet","type":"address"}]},"primaryType":"Person","domain":{"name":"Ether Person","version":"1","chainId":1,"verifyingContract":"0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"},"message":{"name":"Bob","wallet":"0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"}}');
+  console.log(`EIP-712 eth_signTypedData signature of simple typed data: ${signature}`);
+}
+
+async function cosmos_signDirect_demo() {
+  await init();
+
+  const words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
+  let wallet = wasm.Wallet.recover_wallet(words, "");
+  let priv = wallet.get_key_from_index(wasm.CoinType.CosmosHub, 0);
+
+  let auth_info_bytes = "0a0a0a0012040a020801180112130a0d0a0575636f736d12043230303010c09a0c";
+  let body_bytes = "0a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d120731323334353637";
+
+  const signature = wasm.cosmos_signDirect(priv,"cosmoshub-4","1",auth_info_bytes,body_bytes);
+  console.log(`cosmos_signDirect signature: ${signature}`);
+}
+
 wallet_demo();
 cosmos_demo();
+cosmos_signDirect_demo();
 ethereum_demo();
+eth_sign_demo();
+eth_signTypedData_demo();
 eth_signTransaction_eip1559_demo();
 eth_signTransaction_eip2930_demo();
 eth_signTransaction_legacy_demo();
