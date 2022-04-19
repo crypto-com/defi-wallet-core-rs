@@ -394,13 +394,20 @@ async function eth_sign_demo() {
   let address = wallet.get_address(wasm.CoinType.Ethereum, 0);
   console.assert(address === "0x45f508caf79cb329a46f1757f3526faf8c6b2ea5");
 
+  // eth_sign
   let signature = priv.eth_sign_by_hash("879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0", BigInt(0));
   console.assert(wasm.bytes2hex(signature) === "59e8f544fdee652ae4475a53921ad8030794df66aedf77b218349ba1f476712739caf09dfee2c8ac60e17cc5f2102c09d4ad04de6223a38e9705b28276d71f471b");
+  signature = wasm.eth_sign(priv,"879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0");
+  console.assert(signature === "0x59e8f544fdee652ae4475a53921ad8030794df66aedf77b218349ba1f476712739caf09dfee2c8ac60e17cc5f2102c09d4ad04de6223a38e9705b28276d71f471b");
 
+  priv = wallet.get_key_from_index(wasm.CoinType.Ethereum, 0);
   // personal sign
   let message = new TextEncoder("utf-8").encode("Example `personal_sign` message");
   signature = priv.eth_sign(message, BigInt(0));
   console.assert(wasm.bytes2hex(signature) === "1490cd65cdfd5145a2b4e4e562b8c78008cb374ac36b2bbcd6b65dbcc14d31c453c705c4399e745fbf22ccd3939754ff2e4bbbe13a7dacae8a44aeb95f6e68c81b");
+
+  signature = wasm.personal_sign(priv,"Example `personal_sign` message");
+  console.assert(signature === "0x1490cd65cdfd5145a2b4e4e562b8c78008cb374ac36b2bbcd6b65dbcc14d31c453c705c4399e745fbf22ccd3939754ff2e4bbbe13a7dacae8a44aeb95f6e68c81b");
 
 }
 
@@ -412,7 +419,6 @@ async function eth_signTypedData_demo() {
   let address = wallet.get_address(wasm.CoinType.Ethereum, 0);
   console.assert(address === "0x45f508caf79cb329a46f1757f3526faf8c6b2ea5");
 
-  // const signature = wasm.eth_signTypedData(priv, '{types:{EIP712Domain:[{name:"name",type:"string",},{name:"version",type:"string",},{name:"chainId",type:"uint256",},{name:"verifyingContract",type:"address",},],Person:[{name:"name",type:"string",},{name:"wallet",type:"address",},],Mail:[{name:"from",type:"Person",},{name:"to",type:"Person",},{name:"contents",type:"string",},],},primaryType:"Mail",domain:{name:"Ether Mail",version:"1",chainId:1,verifyingContract:"0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",},message:{from:{name:"Cow",wallet:"0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",},to:{name:"Bob",wallet:"0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",},contents:"Hello, Bob!",},}');
   const signature = wasm.eth_signTypedData(priv, '{"types":{"EIP712Domain":[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint256"},{"name":"verifyingContract","type":"address"}],"Person":[{"name":"name","type":"string"},{"name":"wallet","type":"address"}]},"primaryType":"Person","domain":{"name":"Ether Person","version":"1","chainId":1,"verifyingContract":"0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"},"message":{"name":"Bob","wallet":"0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"}}');
   console.log(`EIP-712 eth_signTypedData signature of simple typed data: ${signature}`);
 }
