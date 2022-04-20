@@ -79,7 +79,8 @@ impl From<&str> for EthAbiParamType {
             "h512" | "public" => EthAbiParamType::FixedBytes(64),
             "int256" | "int" | "uint" | "uint256" => EthAbiParamType::Uint(256),
             "string" => EthAbiParamType::String,
-            iden => parse_param_type_integer(iden)
+            iden => parse_param_type_fixed_bytes(iden)
+                .or(parse_param_type_integer(iden))
                 .unwrap_or_else(|| EthAbiParamType::Struct(iden.to_owned())),
         }
     }
@@ -229,6 +230,20 @@ fn parse_param_type_fixed_array(iden: &str) -> Option<EthAbiParamType> {
         Box::new(array_type),
         array_size,
     ))
+}
+
+/// Parse a string to parameter type FixedBytes with specified size, return None otherwise.
+fn parse_param_type_fixed_bytes(iden: &str) -> Option<EthAbiParamType> {
+    if !iden.starts_with("bytes") {
+        return None;
+    }
+    let size = iden
+        .chars()
+        .skip(5)
+        .collect::<String>()
+        .parse::<usize>()
+        .ok()?;
+    Some(EthAbiParamType::FixedBytes(size))
 }
 
 /// Parse a string to parameter type Int or Uint with specified size, return None otherwise.

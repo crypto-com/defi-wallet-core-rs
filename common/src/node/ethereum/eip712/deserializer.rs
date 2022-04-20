@@ -1,10 +1,10 @@
 use crate::node::ethereum::eip712::{
-    Eip712Field, Eip712FieldName, Eip712FieldType, Eip712FieldValue, Eip712Struct,
+    Eip712Domain, Eip712Field, Eip712FieldName, Eip712FieldType, Eip712FieldValue, Eip712Struct,
     Eip712StructName, Eip712TypedData, Result,
 };
 use crate::transaction::{Eip712Error, EthError};
+use crate::utils::{deserialize_option_u64_from_any, hex_decode};
 use ethers::prelude::{H160, U256};
-use ethers::types::transaction::eip712::EIP712Domain;
 use ethers::utils::keccak256;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -14,19 +14,20 @@ use std::str::FromStr;
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Eip712DomainSerde {
-    name: String,
-    version: String,
-    chain_id: u64,
-    verifying_contract: H160,
+    name: Option<String>,
+    version: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_option_u64_from_any")]
+    chain_id: Option<u64>,
+    verifying_contract: Option<H160>,
     salt: Option<String>,
 }
 
-impl From<Eip712DomainSerde> for EIP712Domain {
+impl From<Eip712DomainSerde> for Eip712Domain {
     fn from(domain: Eip712DomainSerde) -> Self {
         Self {
             name: domain.name,
             version: domain.version,
-            chain_id: domain.chain_id.into(),
+            chain_id: domain.chain_id.map(Into::into),
             verifying_contract: domain.verifying_contract,
             salt: domain.salt.map(keccak256),
         }
@@ -254,6 +255,10 @@ fn json_to_fixed_bytes(
             .collect::<Option<Vec<u8>>>()
             .and_then(|a| if a.len() == fixed_len { Some(a) } else { None })
             .map(Eip712FieldValue::FixedBytes),
+        serde_json::Value::String(s) => hex_decode(s)
+            .ok()
+            .and_then(|a| if a.len() == fixed_len { Some(a) } else { None })
+            .map(Eip712FieldValue::FixedBytes),
         _ => None,
     }
 }
@@ -315,9 +320,7 @@ mod eip712_deserializing_tests {
     const RECURSIVELY_NESTED_JSON_TYPED_DATA: &str = r#"
         {
             "domain": {
-                "name": "Ether Mail",
-                "version": "2",
-                "chainId": 2,
+                "chainId": "25",
                 "verifyingContract": "0xEeEEeeeeEEEEeEEEEEEeEeEeeEeEEEeEeeeeeeeE"
             },
             "message": {
@@ -329,14 +332,14 @@ mod eip712_deserializing_tests {
                     "name": "Bob",
                     "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
                 },
-                "contents": "Hello, Bob!"
+                "contents": "0x0a0b0c0d"
             },
             "primaryType": "Mail",
             "types": {
                 "Mail": [
                     { "name": "from", "type": "Person" },
                     { "name": "to", "type": "Person" },
-                    { "name": "contents", "type": "string" }
+                    { "name": "contents", "type": "bytes4" }
                 ],
                 "Person": [
                     { "name": "name", "type": "string" },
@@ -351,12 +354,12 @@ mod eip712_deserializing_tests {
         assert_eq!(typed_data.primary_type, "Person");
 
         // Validate domain.
-        assert_eq!(typed_data.domain.name, "Ether Person");
-        assert_eq!(typed_data.domain.version, "1");
-        assert_eq!(typed_data.domain.chain_id, 1_u64.into());
+        assert_eq!(typed_data.domain.name, Some("Ether Person".to_owned()));
+        assert_eq!(typed_data.domain.version, Some("1".to_owned()));
+        assert_eq!(typed_data.domain.chain_id, Some(1_u64.into()));
         assert_eq!(
             typed_data.domain.verifying_contract,
-            H160::from_str("0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC").unwrap()
+            Some(H160::from_str("0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC").unwrap())
         );
         assert_eq!(
             typed_data.domain.salt,
@@ -407,12 +410,12 @@ mod eip712_deserializing_tests {
         assert_eq!(typed_data.primary_type, "Mail");
 
         // Validate domain.
-        assert_eq!(typed_data.domain.name, "Ether Mail");
-        assert_eq!(typed_data.domain.version, "2");
-        assert_eq!(typed_data.domain.chain_id, 2_u64.into());
+        assert_eq!(typed_data.domain.name, None);
+        assert_eq!(typed_data.domain.version, None);
+        assert_eq!(typed_data.domain.chain_id, Some(25_u64.into()));
         assert_eq!(
             typed_data.domain.verifying_contract,
-            H160::from_str("0xEeEEeeeeEEEEeEEEEEEeEeEeeEeEEEeEeeeeeeeE").unwrap()
+            Some(H160::from_str("0xEeEEeeeeEEEEeEEEEEEeEeEeeEeEEEeEeeeeeeeE").unwrap())
         );
         assert_eq!(typed_data.domain.salt, None);
 
@@ -433,7 +436,7 @@ mod eip712_deserializing_tests {
                     },
                     Eip712Field {
                         name: "contents".to_owned(),
-                        r#type: Eip712FieldType::String,
+                        r#type: Eip712FieldType::FixedBytes(4),
                     },
                 ],
             ),
@@ -498,7 +501,7 @@ mod eip712_deserializing_tests {
         assert!(inserted_result.is_none());
         let inserted_result = values.insert(
             "contents".to_owned(),
-            Eip712FieldValue::String("Hello, Bob!".to_owned()),
+            Eip712FieldValue::FixedBytes(vec![10, 11, 12, 13]),
         );
         assert!(inserted_result.is_none());
         assert_eq!(typed_data.values, values);

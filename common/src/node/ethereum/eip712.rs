@@ -2,8 +2,10 @@
 
 use crate::node::ethereum::abi::{EthAbiParamType, EthAbiToken};
 use crate::transaction::{Eip712Error, EthError};
-use ethers::prelude::{abi, U256};
-use ethers::types::transaction::eip712;
+use ethers::prelude::{abi, H160, U256};
+use ethers::types::transaction::eip712::{
+    encode_eip712_type, EIP712_DOMAIN_TYPE_HASH, EIP712_DOMAIN_TYPE_HASH_WITH_SALT,
+};
 use ethers::utils::keccak256;
 use std::collections::{HashMap, HashSet};
 
@@ -19,7 +21,7 @@ type Result<T> = std::result::Result<T, EthError>;
 /// EIP-712 typed data
 #[derive(Debug, Default)]
 pub struct Eip712TypedData {
-    domain: eip712::EIP712Domain,
+    domain: Eip712Domain,
     primary_type: Eip712StructName,
     type_hashes: HashMap<Eip712StructName, U256>,
     types: HashMap<Eip712StructName, Eip712Struct>,
@@ -180,7 +182,7 @@ impl Eip712TypedData {
                 "Tuple is unsupported by EIP-712".to_owned(),
             )
             .into()),
-            _ => Ok(eip712::encode_eip712_type(field_value.try_into()?)),
+            _ => Ok(encode_eip712_type(field_value.try_into()?)),
         }
     }
 
@@ -256,6 +258,44 @@ impl Eip712Struct {
 struct Eip712Field {
     name: String,
     r#type: Eip712FieldType,
+}
+
+/// EIP-712 domain
+#[derive(Debug, Default)]
+struct Eip712Domain {
+    name: Option<String>,
+    version: Option<String>,
+    chain_id: Option<U256>,
+    verifying_contract: Option<H160>,
+    salt: Option<[u8; 32]>,
+}
+
+impl Eip712Domain {
+    pub fn separator(&self) -> [u8; 32] {
+        let domain_type_hash = if self.salt.is_some() {
+            EIP712_DOMAIN_TYPE_HASH_WITH_SALT
+        } else {
+            EIP712_DOMAIN_TYPE_HASH
+        };
+        let mut tokens = vec![abi::Token::Uint(U256::from(domain_type_hash))];
+        if let Some(name) = &self.name {
+            tokens.push(abi::Token::Uint(U256::from(keccak256(name))));
+        }
+        if let Some(version) = &self.version {
+            tokens.push(abi::Token::Uint(U256::from(keccak256(version))));
+        }
+        if let Some(chain_id) = self.chain_id {
+            tokens.push(abi::Token::Uint(chain_id));
+        }
+        if let Some(verifying_contract) = self.verifying_contract {
+            tokens.push(abi::Token::Address(verifying_contract));
+        }
+        if let Some(salt) = &self.salt {
+            tokens.push(abi::Token::Uint(U256::from(salt)));
+        }
+
+        keccak256(abi::encode(&tokens))
+    }
 }
 
 #[cfg(test)]
