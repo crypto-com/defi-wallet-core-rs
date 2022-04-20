@@ -80,7 +80,7 @@ impl From<&str> for EthAbiParamType {
             "int256" | "int" | "uint" | "uint256" => EthAbiParamType::Uint(256),
             "string" => EthAbiParamType::String,
             iden => parse_param_type_fixed_bytes(iden)
-                .or(parse_param_type_integer(iden))
+                .or_else(|| parse_param_type_integer(iden))
                 .unwrap_or_else(|| EthAbiParamType::Struct(iden.to_owned())),
         }
     }
