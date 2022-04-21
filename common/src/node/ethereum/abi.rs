@@ -236,12 +236,13 @@ fn parse_param_type_fixed_array(iden: &str) -> Option<EthAbiParamType> {
 
 /// Parse a string to parameter type FixedBytes with specified size, return None otherwise.
 fn parse_param_type_fixed_bytes(iden: &str) -> Option<EthAbiParamType> {
-    if !iden.starts_with("bytes") {
+    let prefix = "bytes";
+    if !iden.starts_with(prefix) {
         return None;
     }
     let size = iden
         .chars()
-        .skip(5)
+        .skip(prefix.len())
         .collect::<String>()
         .parse::<usize>()
         .ok()?;
@@ -268,12 +269,13 @@ fn parse_param_type_from_abbreviated_integer(iden: &str) -> Option<EthAbiParamTy
 
 /// Parse a string to parameter type Int with specified size, return None otherwise.
 fn parse_param_type_int(iden: &str) -> Option<EthAbiParamType> {
-    if !iden.starts_with("int") {
+    let prefix = "int";
+    if !iden.starts_with(prefix) {
         return None;
     }
     let size = iden
         .chars()
-        .skip(3)
+        .skip(prefix.len())
         .collect::<String>()
         .parse::<usize>()
         .ok()?;
@@ -282,12 +284,13 @@ fn parse_param_type_int(iden: &str) -> Option<EthAbiParamType> {
 
 /// Parse a string to parameter type Uint with specified size, return None otherwise.
 fn parse_param_type_uint(iden: &str) -> Option<EthAbiParamType> {
-    if !iden.starts_with("uint") {
+    let prefix = "uint";
+    if !iden.starts_with(prefix) {
         return None;
     }
     let size = iden
         .chars()
-        .skip(4)
+        .skip(prefix.len())
         .collect::<String>()
         .parse::<usize>()
         .ok()?;

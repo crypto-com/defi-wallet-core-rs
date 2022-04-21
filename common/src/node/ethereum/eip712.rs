@@ -7,7 +7,7 @@ use ethers::types::transaction::eip712::{
     encode_eip712_type, EIP712_DOMAIN_TYPE_HASH, EIP712_DOMAIN_TYPE_HASH_WITH_SALT,
 };
 use ethers::utils::keccak256;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 
 mod deserializer;
 use deserializer::Eip712TypedDataSerde;
@@ -103,12 +103,8 @@ impl Eip712TypedData {
             // `Transaction(Person from,Person to,Asset tx)Asset(address token,uint256 amount)Person(address wallet,string name)`.
 
             // Get referenced sub-struct names.
-            let mut ref_struct_names = HashSet::new();
+            let mut ref_struct_names = BTreeSet::new();
             self.get_referenced_struct_names(struct_name, &mut ref_struct_names)?;
-
-            // Sort referenced sub-struct names.
-            let mut ref_struct_names = ref_struct_names.into_iter().collect::<Vec<_>>();
-            ref_struct_names.sort();
 
             // Initialize encoded data of this struct.
             let mut encoded_data = encoded_types
@@ -193,7 +189,7 @@ impl Eip712TypedData {
     fn get_referenced_struct_names(
         &self,
         parent_struct_name: &str,
-        current_struct_names: &mut HashSet<Eip712StructName>,
+        current_struct_names: &mut BTreeSet<Eip712StructName>,
     ) -> Result<()> {
         let sub_struct_names = self.get_struct(parent_struct_name)?.get_sub_struct_names();
         for name in sub_struct_names {
@@ -242,8 +238,8 @@ impl Eip712Struct {
     /// Get unique sub-struct names by fields of this struct.
     /// e.g. encoding `Transaction(Person from,Person to,Asset tx)` has referenced sub-struct
     /// `Asset` and `Person`.
-    fn get_sub_struct_names(&self) -> HashSet<Eip712StructName> {
-        let mut struct_names = HashSet::new();
+    fn get_sub_struct_names(&self) -> BTreeSet<Eip712StructName> {
+        let mut struct_names = BTreeSet::new();
         for f in &self.fields {
             if let Eip712FieldType::Struct(name) = &f.r#type {
                 struct_names.insert(name.clone());
