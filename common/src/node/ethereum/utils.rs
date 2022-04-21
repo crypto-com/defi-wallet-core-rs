@@ -505,6 +505,7 @@ pub async fn broadcast_eth_signed_raw_tx(
 }
 
 /// Returns the corresponding account's native token balance
+#[cfg(not(target_arch = "wasm32"))]
 pub fn get_eth_balance_blocking(address: &str, web3api_url: &str) -> Result<String, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     Ok(rt
@@ -527,6 +528,7 @@ pub fn get_eth_transaction_count_blocking(
 /// Returns the corresponding account's contract token balance in a hexadecimal string,
 /// i.e. in its base units unformatted
 /// (blocking; not compiled to wasm).
+#[cfg(not(target_arch = "wasm32"))]
 pub fn get_contract_balance_blocking(
     account_address: &str,
     contract_details: ContractBalance,
