@@ -1,6 +1,6 @@
 use crate::PrivateKey;
 use anyhow::Result;
-use common::get_contract_balance_blocking;
+use common::get_contract_balance;
 use common::node::ethereum;
 use common::EthNetwork;
 use defi_wallet_core_common as common;
@@ -17,13 +17,15 @@ fn new_erc20(contract_address: String, web3api_url: String, chain_id: u64) -> ff
 impl ffi::Erc20 {
     /// Returns the decimal amount of tokens owned by `account_address`.
     fn balance_of(&self, account_address: String) -> Result<ffi::U256> {
-        let balance = get_contract_balance_blocking(
+        // TODO Reuse runtime on blocking function
+        let rt = tokio::runtime::Runtime::new()?;
+        let balance = rt.block_on(get_contract_balance(
             &account_address,
             common::ContractBalance::Erc20 {
                 contract_address: self.contract_address.clone(),
             },
             &self.web3api_url,
-        )?;
+        ))?;
         Ok(balance.into())
     }
 
@@ -156,13 +158,15 @@ fn new_erc721(contract_address: String, web3api_url: String, chain_id: u64) -> f
 impl ffi::Erc721 {
     /// Returns the number of tokens in owner's `account_address`.
     fn balance_of(&self, account_address: String) -> Result<ffi::U256> {
-        let balance = get_contract_balance_blocking(
+        // TODO Reuse runtime on blocking function
+        let rt = tokio::runtime::Runtime::new()?;
+        let balance = rt.block_on(get_contract_balance(
             &account_address,
             common::ContractBalance::Erc721 {
                 contract_address: self.contract_address.clone(),
             },
             &self.web3api_url,
-        )?;
+        ))?;
         Ok(balance.into())
     }
     /// Returns the owner of the `token_id` token.
@@ -400,14 +404,16 @@ fn new_erc1155(contract_address: String, web3api_url: String, chain_id: u64) -> 
 impl ffi::Erc1155 {
     /// Returns the amount of tokens of `token_id` owned by `account_address`.
     fn balance_of(&self, account_address: String, token_id: String) -> Result<ffi::U256> {
-        let balance = get_contract_balance_blocking(
+        // TODO Reuse runtime on blocking function
+        let rt = tokio::runtime::Runtime::new()?;
+        let balance = rt.block_on(get_contract_balance(
             &account_address,
             common::ContractBalance::Erc1155 {
                 contract_address: self.contract_address.clone(),
                 token_id,
             },
             &self.web3api_url,
-        )?;
+        ))?;
         Ok(balance.into())
     }
 

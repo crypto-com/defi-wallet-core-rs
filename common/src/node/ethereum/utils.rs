@@ -505,13 +505,6 @@ pub async fn broadcast_eth_signed_raw_tx(
 }
 
 /// Returns the corresponding account's native token balance
-#[cfg(all(not(feature = "uniffi-binding"), not(target_arch = "wasm32")))]
-pub fn get_eth_balance_blocking(address: &str, web3api_url: &str) -> Result<U256, EthError> {
-    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    rt.block_on(get_eth_balance(address, web3api_url))
-}
-
-#[cfg(all(feature = "uniffi-binding", not(target_arch = "wasm32")))]
 pub fn get_eth_balance_blocking(address: &str, web3api_url: &str) -> Result<String, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     Ok(rt
@@ -534,22 +527,6 @@ pub fn get_eth_transaction_count_blocking(
 /// Returns the corresponding account's contract token balance in a hexadecimal string,
 /// i.e. in its base units unformatted
 /// (blocking; not compiled to wasm).
-#[cfg(all(not(feature = "uniffi-binding"), not(target_arch = "wasm32")))]
-pub fn get_contract_balance_blocking(
-    account_address: &str,
-    contract_details: ContractBalance,
-    web3api_url: &str,
-) -> Result<U256, EthError> {
-    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    let result = rt.block_on(get_contract_balance(
-        account_address,
-        contract_details,
-        web3api_url,
-    ))?;
-    Ok(result)
-}
-
-#[cfg(all(feature = "uniffi-binding", not(target_arch = "wasm32")))]
 pub fn get_contract_balance_blocking(
     account_address: &str,
     contract_details: ContractBalance,

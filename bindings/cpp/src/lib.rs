@@ -1120,7 +1120,9 @@ pub fn build_custom_eth_signed_tx(
 /// Returns the corresponding account's native token balance
 /// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
 pub fn get_eth_balance(address: &str, api_url: &str) -> Result<ffi::U256> {
-    let res = defi_wallet_core_common::get_eth_balance_blocking(address, api_url)?;
+    // TODO Reuse runtime on blocking function
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    let res = rt.block_on(defi_wallet_core_common::get_eth_balance(address, api_url))?;
     Ok(res.into())
 }
 
