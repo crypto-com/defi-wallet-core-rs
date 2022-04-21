@@ -106,11 +106,7 @@ impl CosmosMsg {
     #[wasm_bindgen]
     pub fn build_nft_issue_denom_msg(id: String, name: String, schema: String) -> Self {
         Self {
-            msg: CosmosSDKMsg::NftIssueDenom {
-                id,
-                name,
-                schema,
-            },
+            msg: CosmosSDKMsg::NftIssueDenom { id, name, schema },
         }
     }
 
