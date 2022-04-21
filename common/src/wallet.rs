@@ -4,7 +4,7 @@ use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use cosmrs::bip32::{self, DerivationPath, PrivateKey, Seed, XPrv};
 use cosmrs::crypto::PublicKey;
 use ethers::core::k256::ecdsa;
-use ethers::prelude::{LocalWallet, Signature, Signer};
+use ethers::prelude::{LocalWallet, Signature, Signer, H256};
 use ethers::utils::hex::{self, FromHexError, ToHex};
 use ethers::utils::{hash_message, secret_key_to_address};
 use rand_core::{OsRng, RngCore};
@@ -273,11 +273,21 @@ impl SecretKey {
 
     /// signs an arbitrary message as per EIP-191
     /// TODO: chain_id may not be necessary?
-    pub fn sign_eth(&self, message: &[u8], chain_id: u64) -> Result<Signature, HdWrapError> {
+    pub fn eth_sign(&self, message: &[u8], chain_id: u64) -> Result<Signature, HdWrapError> {
         let hash = hash_message(message);
         let wallet = LocalWallet::from(self.get_signing_key()).with_chain_id(chain_id);
         // TODO: EIP-155 normalization (it seems `siwe` expects raw values)
         let signature = wallet.sign_hash(hash, false);
+        Ok(signature)
+    }
+
+    // eth sign hash hex string without the 0x prefix
+    pub fn eth_sign_by_hash(&self, hash: String, chain_id: u64) -> Result<Signature, HdWrapError> {
+        let vhash = hex_to_bytes(hash);
+        let bhash: [u8; 32] = vhash.try_into().unwrap();
+        let uhash: H256 = bhash.into();
+        let wallet = LocalWallet::from(self.get_signing_key()).with_chain_id(chain_id);
+        let signature = wallet.sign_hash(uhash, false);
         Ok(signature)
     }
 
@@ -324,6 +334,11 @@ impl From<SigningKey> for SecretKey {
 /// Convert byte array to a hex string without the 0x prefix
 pub fn bytes_to_hex(data: Vec<u8>) -> String {
     hex::encode(data)
+}
+
+/// Convert hex string to byte array, hex string without the 0x prefix
+pub fn hex_to_bytes(data: String) -> Vec<u8> {
+    hex::decode(data).expect("hex data error")
 }
 
 #[cfg(test)]
@@ -589,7 +604,7 @@ mod secret_key_tests {
         let secret_key = SecretKey::new();
         secret_key.get_signing_key();
         secret_key
-            .sign_eth("hello world".as_bytes(), 1)
+            .eth_sign("hello world".as_bytes(), 1)
             .expect("failed to sign a message");
 
         assert!(!secret_key.get_public_key_bytes().is_empty());
@@ -609,7 +624,7 @@ mod secret_key_tests {
             .expect("Failed to construct Secret Key from bytes");
         secret_key.get_signing_key();
         secret_key
-            .sign_eth("hello world".as_bytes(), 1)
+            .eth_sign("hello world".as_bytes(), 1)
             .expect("failed to sign a message");
 
         assert_eq!(
@@ -638,7 +653,7 @@ mod secret_key_tests {
             SecretKey::from_hex(hex.to_owned()).expect("Failed to construct Secret Key from hex");
         secret_key.get_signing_key();
         secret_key
-            .sign_eth("hello world".as_bytes(), 1)
+            .eth_sign("hello world".as_bytes(), 1)
             .expect("failed to sign a message");
 
         assert_eq!(
@@ -678,5 +693,42 @@ mod secret_key_tests {
             })
             .expect("get key address error");
         assert_eq!(address, "0x714e0ed767d99f8be2b789f9dd1e2113de8eac53");
+    }
+
+    #[test]
+    fn test_eth_sign() {
+        let words = "lumber flower voice hood obvious behave relax chief warm they they mountain";
+
+        let wallet = HDWallet::recover_wallet(words.to_owned(), Some("".to_owned()))
+            .expect("Failed to recover wallet");
+        let key = wallet
+            .get_key_from_index(
+                WalletCoin::Ethereum {
+                    network: EthNetwork::BSC,
+                },
+                0,
+            )
+            .expect("get_key_from_index error");
+
+        let address = key
+            .to_address(WalletCoin::Ethereum {
+                network: EthNetwork::BSC,
+            })
+            .expect("address error");
+        assert_eq!(address, "0x45f508caf79cb329a46f1757f3526faf8c6b2ea5");
+
+        let chain_id: u64 = 0;
+        let signature = key
+            .eth_sign_by_hash(
+                "879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0".to_owned(),
+                chain_id,
+            )
+            .unwrap();
+
+        assert_eq!(signature.to_string().as_str(),"59e8f544fdee652ae4475a53921ad8030794df66aedf77b218349ba1f476712739caf09dfee2c8ac60e17cc5f2102c09d4ad04de6223a38e9705b28276d71f471b");
+
+        let test_msg = "Example `personal_sign` message";
+        let signature = key.eth_sign(test_msg.as_bytes(), chain_id).unwrap();
+        assert_eq!(signature.to_string().as_str(),"1490cd65cdfd5145a2b4e4e562b8c78008cb374ac36b2bbcd6b65dbcc14d31c453c705c4399e745fbf22ccd3939754ff2e4bbbe13a7dacae8a44aeb95f6e68c81b");
     }
 }

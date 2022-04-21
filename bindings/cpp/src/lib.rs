@@ -1028,7 +1028,7 @@ impl CppLoginInfo {
         let message = self.logininfo.msg.to_string();
         let secretkey = private_key.key.clone();
         let ret = secretkey
-            .sign_eth(message.as_bytes(), self.logininfo.msg.chain_id)
+            .eth_sign(message.as_bytes(), self.logininfo.msg.chain_id)
             .map(|x| x.to_vec())?;
         Ok(ret)
     }

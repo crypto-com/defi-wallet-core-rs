@@ -1,6 +1,7 @@
 use ethers::utils::hex::{self, FromHexError};
 use serde::de;
 
+#[allow(dead_code)]
 pub(crate) fn deserialize_option_u64_from_any<'de, D>(
     deserializer: D,
 ) -> Result<Option<u64>, D::Error>
