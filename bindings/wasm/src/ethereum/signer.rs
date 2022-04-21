@@ -4,7 +4,7 @@ use wasm_bindgen::prelude::*;
 
 /// Sign a hash value directly.
 /// Argument `hash` must be a hex value of 32 bytes (H256).
-/// Return a signature of hex string without prefix `0x`.
+/// Return a signature of hex string with prefix `0x`.
 /// The security concern around `eth_sign` is not that the signature could be forged or the key
 /// be stolen, but rather a malicious website could trick a user into signing a message that is
 /// actually a valid transaction, and use it to steal ether or tokens.
@@ -16,7 +16,7 @@ pub fn eth_sign_insecure(private_key: PrivateKey, hash: &str) -> Result<String, 
 }
 
 /// Sign an arbitrary message as per EIP-191.
-/// Return a signature of hex string without prefix `0x`.
+/// Return a signature of hex string with prefix `0x`.
 #[wasm_bindgen]
 pub fn personal_sign(private_key: PrivateKey, message: &str) -> String {
     EthSigner::new(private_key.key).personal_sign(message)
@@ -25,7 +25,7 @@ pub fn personal_sign(private_key: PrivateKey, message: &str) -> String {
 /// Sign an EIP-712 typed data from a JSON string of specified schema as below. The field
 /// `domain`, `message`, `primaryType` and `types` are all mandatory as described in
 /// [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
-/// Return a signature of hex string without prefix `0x`.
+/// Return a signature of hex string with prefix `0x`.
 ///
 /// {
 ///   "domain": {
@@ -35,20 +35,26 @@ pub fn personal_sign(private_key: PrivateKey, message: &str) -> String {
 ///     "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
 ///   },
 ///   "message": {
-///     "name": "Bob",
-///     "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
-///   }
-///   "primaryType": "Person",
+///     "from": {
+///       "name": "Cow",
+///       "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+///     },
+///     "to": {
+///       "name": "Bob",
+///       "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+///     },
+///     "contents": "Hello, Bob!"
+///   },
+///   "primaryType": "Mail",
 ///   "types": {
+///     "Mail": [
+///       { "name": "from", "type": "Person" },
+///       { "name": "to", "type": "Person" },
+///       { "name": "contents", "type": "string" }
+///     ],
 ///     "Person": [
-///       {
-///         "name": "name",
-///         "type": "string"
-///       },
-///       {
-///         "name": "wallet",
-///         "type": "address"
-///       }
+///       { "name": "name", "type": "string" },
+///       { "name": "wallet", "type": "address" }
 ///     ]
 ///   }
 /// }

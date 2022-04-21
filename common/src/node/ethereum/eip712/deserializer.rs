@@ -1,10 +1,10 @@
 use crate::node::ethereum::eip712::{
-    Eip712Field, Eip712FieldName, Eip712FieldType, Eip712FieldValue, Eip712Struct,
+    Eip712Domain, Eip712Field, Eip712FieldName, Eip712FieldType, Eip712FieldValue, Eip712Struct,
     Eip712StructName, Eip712TypedData, Result,
 };
 use crate::transaction::{Eip712Error, EthError};
+use crate::utils::{deserialize_option_u64_from_any, hex_decode};
 use ethers::prelude::{H160, U256};
-use ethers::types::transaction::eip712::EIP712Domain;
 use ethers::utils::keccak256;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -14,19 +14,20 @@ use std::str::FromStr;
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Eip712DomainSerde {
-    name: String,
-    version: String,
-    chain_id: u64,
-    verifying_contract: H160,
+    name: Option<String>,
+    version: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_option_u64_from_any")]
+    chain_id: Option<u64>,
+    verifying_contract: Option<H160>,
     salt: Option<String>,
 }
 
-impl From<Eip712DomainSerde> for EIP712Domain {
+impl From<Eip712DomainSerde> for Eip712Domain {
     fn from(domain: Eip712DomainSerde) -> Self {
         Self {
             name: domain.name,
             version: domain.version,
-            chain_id: domain.chain_id.into(),
+            chain_id: domain.chain_id.map(Into::into),
             verifying_contract: domain.verifying_contract,
             salt: domain.salt.map(keccak256),
         }
@@ -46,7 +47,7 @@ impl TryFrom<&Eip712FieldSerde> for Eip712Field {
     fn try_from(serde_field: &Eip712FieldSerde) -> Result<Self> {
         Ok(Self {
             name: serde_field.name.clone(),
-            r#type: serde_field.r#type.as_str().try_into()?,
+            r#type: serde_field.r#type.as_str().into(),
         })
     }
 }
@@ -73,16 +74,18 @@ impl TryFrom<Eip712TypedDataSerde> for Eip712TypedData {
 
     fn try_from(serde_typed_data: Eip712TypedDataSerde) -> Result<Self> {
         let types = convert_types(&serde_typed_data.types)?;
-        let primary_struct = types
-            .get(&serde_typed_data.primary_type)
-            .ok_or_else(|| Eip712Error::MissingTypeError(serde_typed_data.primary_type.clone()))?;
-        let values = convert_message_to_values(primary_struct, &serde_typed_data.message)?;
+        let values = convert_values(
+            &serde_typed_data.primary_type,
+            &types,
+            &serde_typed_data.message,
+        )?;
 
         Ok(Self {
             domain: serde_typed_data.domain.into(),
             primary_type: serde_typed_data.primary_type,
             types,
             values,
+            ..Default::default()
         })
     }
 }
@@ -91,6 +94,7 @@ impl TryFrom<Eip712TypedDataSerde> for Eip712TypedData {
 fn convert_json_by_type(
     json_value: &serde_json::Value,
     field_type: &Eip712FieldType,
+    struct_types: &HashMap<Eip712StructName, Eip712Struct>,
 ) -> Result<Eip712FieldValue> {
     let field_value = match field_type {
         Eip712FieldType::Address => json_to_address(json_value),
@@ -100,38 +104,27 @@ fn convert_json_by_type(
         Eip712FieldType::Uint(_) => json_to_uint(json_value),
         Eip712FieldType::Bool => json_to_bool(json_value),
         Eip712FieldType::String => json_to_string(json_value),
-        Eip712FieldType::Array(item_type) => json_to_array(json_value, item_type),
+        Eip712FieldType::Array(item_type) => json_to_array(json_value, item_type, struct_types),
         Eip712FieldType::FixedArray(item_type, fixed_len) => {
-            json_to_fixed_array(json_value, item_type, *fixed_len)
+            json_to_fixed_array(json_value, item_type, *fixed_len, struct_types)
         }
-        // TODO: Extend both `EthAbiParamType` and `EthAbiToken` to support nested struct.
+        // Solidity type `tuple` is unsupported for EIP-712.
         Eip712FieldType::Tuple(_) => None,
+        // Convert to nested struct values.
+        Eip712FieldType::Struct(struct_name) => {
+            json_value.as_object().and_then(|json_field_values| {
+                let json_field_values = json_field_values.clone().into_iter().collect();
+                convert_values(struct_name, struct_types, &json_field_values)
+                    .map(|values| Eip712FieldValue::Struct(struct_name.clone(), values))
+                    .ok()
+            })
+        }
     };
 
     field_value.ok_or_else(|| invalid_value_for_type_error(field_type, json_value))
 }
 
-/// Convert to values of EIP-712 typed data from deserialized message.
-fn convert_message_to_values(
-    struct_type: &Eip712Struct,
-    message: &HashMap<Eip712FieldName, serde_json::Value>,
-) -> Result<HashMap<Eip712FieldName, Eip712FieldValue>> {
-    struct_type
-        .fields
-        .iter()
-        .map(|field| {
-            let field_name = &field.name;
-            let json_value = message
-                .get(field_name)
-                .ok_or_else(|| Eip712Error::MissingFieldError(field_name.clone()))?;
-            let field_value = convert_json_by_type(json_value, &field.r#type)?;
-
-            Ok((field_name.clone(), field_value))
-        })
-        .collect()
-}
-
-/// Convert to types of EIP-712 typed data.
+/// Convert types to EIP-712 struct types.
 fn convert_types(
     types: &HashMap<Eip712StructName, Vec<Eip712FieldSerde>>,
 ) -> Result<HashMap<Eip712StructName, Eip712Struct>> {
@@ -145,6 +138,32 @@ fn convert_types(
             Ok((name.clone(), Eip712Struct::new(name.clone(), fields)))
         })
         .collect::<Result<HashMap<Eip712StructName, Eip712Struct>>>()
+}
+
+/// Convert JSON values to EIP-712 field values of specified struct type.
+fn convert_values(
+    struct_name: &str,
+    struct_types: &HashMap<Eip712StructName, Eip712Struct>,
+    json_values: &HashMap<Eip712FieldName, serde_json::Value>,
+) -> Result<HashMap<Eip712FieldName, Eip712FieldValue>> {
+    let struct_type = struct_types
+        .get(struct_name)
+        .ok_or_else(|| Eip712Error::MissingTypeError(struct_name.to_owned()))?;
+
+    struct_type
+        .fields
+        .iter()
+        .map(|field| {
+            let field_name = &field.name;
+            let json_value = json_values
+                .get(field_name)
+                .ok_or_else(|| Eip712Error::MissingFieldError(field_name.clone()))?;
+
+            let field_value = convert_json_by_type(json_value, &field.r#type, struct_types)?;
+
+            Ok((field_name.clone(), field_value))
+        })
+        .collect()
 }
 
 /// Construct EIP-712 error `InvalidValueForType`.
@@ -172,11 +191,12 @@ fn json_to_address(json_value: &serde_json::Value) -> Option<Eip712FieldValue> {
 fn json_to_array(
     json_value: &serde_json::Value,
     item_type: &Eip712FieldType,
+    struct_types: &HashMap<Eip712StructName, Eip712Struct>,
 ) -> Option<Eip712FieldValue> {
     match json_value {
         serde_json::Value::Array(a) => a
             .iter()
-            .map(|v| convert_json_by_type(v, item_type))
+            .map(|v| convert_json_by_type(v, item_type, struct_types))
             .collect::<Result<Vec<_>>>()
             .map(Eip712FieldValue::Array)
             .ok(),
@@ -200,6 +220,7 @@ fn json_to_bytes(json_value: &serde_json::Value) -> Option<Eip712FieldValue> {
             .map(|i| i.as_u64().and_then(|i| u8::try_from(i).ok()))
             .collect::<Option<Vec<u8>>>()
             .map(Eip712FieldValue::Bytes),
+        serde_json::Value::String(s) => hex_decode(s).ok().map(Eip712FieldValue::FixedBytes),
         _ => None,
     }
 }
@@ -209,11 +230,12 @@ fn json_to_fixed_array(
     json_value: &serde_json::Value,
     item_type: &Eip712FieldType,
     fixed_len: usize,
+    struct_types: &HashMap<Eip712StructName, Eip712Struct>,
 ) -> Option<Eip712FieldValue> {
     match json_value {
         serde_json::Value::Array(a) => a
             .iter()
-            .map(|v| convert_json_by_type(v, item_type))
+            .map(|v| convert_json_by_type(v, item_type, struct_types))
             .collect::<Result<Vec<_>>>()
             .ok()
             .and_then(|a| if a.len() == fixed_len { Some(a) } else { None })
@@ -232,6 +254,10 @@ fn json_to_fixed_bytes(
             .iter()
             .map(|i| i.as_u64().and_then(|i| u8::try_from(i).ok()))
             .collect::<Option<Vec<u8>>>()
+            .and_then(|a| if a.len() == fixed_len { Some(a) } else { None })
+            .map(Eip712FieldValue::FixedBytes),
+        serde_json::Value::String(s) => hex_decode(s)
+            .ok()
             .and_then(|a| if a.len() == fixed_len { Some(a) } else { None })
             .map(Eip712FieldValue::FixedBytes),
         _ => None,
@@ -270,7 +296,7 @@ fn json_to_uint(json_value: &serde_json::Value) -> Option<Eip712FieldValue> {
 mod eip712_deserializing_tests {
     use super::*;
 
-    const JSON_TYPED_DATA: &str = r#"
+    const SIMPLE_JSON_TYPED_DATA: &str = r#"
         {
             "domain": {
                 "name": "Ether Person",
@@ -292,18 +318,49 @@ mod eip712_deserializing_tests {
             }
         }"#;
 
+    const RECURSIVELY_NESTED_JSON_TYPED_DATA: &str = r#"
+        {
+            "domain": {
+                "chainId": "25",
+                "verifyingContract": "0xEeEEeeeeEEEEeEEEEEEeEeEeeEeEEEeEeeeeeeeE"
+            },
+            "message": {
+                "from": {
+                    "name": "Cow",
+                    "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+                },
+                "to": {
+                    "name": "Bob",
+                    "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+                },
+                "contents": "0x0a0b0c0d"
+            },
+            "primaryType": "Mail",
+            "types": {
+                "Mail": [
+                    { "name": "from", "type": "Person" },
+                    { "name": "to", "type": "Person" },
+                    { "name": "contents", "type": "bytes4" }
+                ],
+                "Person": [
+                    { "name": "name", "type": "string" },
+                    { "name": "wallet", "type": "address" }
+                ]
+            }
+        }"#;
+
     #[test]
-    fn test_eip712_typed_data_deserializing() {
-        let typed_data = Eip712TypedData::new(JSON_TYPED_DATA).unwrap();
+    fn test_eip712_simple_typed_data_deserializing() {
+        let typed_data = Eip712TypedData::new(SIMPLE_JSON_TYPED_DATA).unwrap();
         assert_eq!(typed_data.primary_type, "Person");
 
         // Validate domain.
-        assert_eq!(typed_data.domain.name, "Ether Person");
-        assert_eq!(typed_data.domain.version, "1");
-        assert_eq!(typed_data.domain.chain_id, 1_u64.into());
+        assert_eq!(typed_data.domain.name, Some("Ether Person".to_owned()));
+        assert_eq!(typed_data.domain.version, Some("1".to_owned()));
+        assert_eq!(typed_data.domain.chain_id, Some(1_u64.into()));
         assert_eq!(
             typed_data.domain.verifying_contract,
-            H160::from_str("0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC").unwrap()
+            Some(H160::from_str("0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC").unwrap())
         );
         assert_eq!(
             typed_data.domain.salt,
@@ -343,6 +400,109 @@ mod eip712_deserializing_tests {
             Eip712FieldValue::Address(
                 H160::from_str("0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB").unwrap(),
             ),
+        );
+        assert!(inserted_result.is_none());
+        assert_eq!(typed_data.values, values);
+    }
+
+    #[test]
+    fn test_eip712_recursively_nested_typed_data_deserializing() {
+        let typed_data = Eip712TypedData::new(RECURSIVELY_NESTED_JSON_TYPED_DATA).unwrap();
+        assert_eq!(typed_data.primary_type, "Mail");
+
+        // Validate domain.
+        assert_eq!(typed_data.domain.name, None);
+        assert_eq!(typed_data.domain.version, None);
+        assert_eq!(typed_data.domain.chain_id, Some(25_u64.into()));
+        assert_eq!(
+            typed_data.domain.verifying_contract,
+            Some(H160::from_str("0xEeEEeeeeEEEEeEEEEEEeEeEeeEeEEEeEeeeeeeeE").unwrap())
+        );
+        assert_eq!(typed_data.domain.salt, None);
+
+        // Validate types.
+        let mut types = HashMap::new();
+        let inserted_result = types.insert(
+            "Mail".to_owned(),
+            Eip712Struct::new(
+                "Mail".to_owned(),
+                vec![
+                    Eip712Field {
+                        name: "from".to_owned(),
+                        r#type: Eip712FieldType::Struct("Person".to_owned()),
+                    },
+                    Eip712Field {
+                        name: "to".to_owned(),
+                        r#type: Eip712FieldType::Struct("Person".to_owned()),
+                    },
+                    Eip712Field {
+                        name: "contents".to_owned(),
+                        r#type: Eip712FieldType::FixedBytes(4),
+                    },
+                ],
+            ),
+        );
+        assert!(inserted_result.is_none());
+        let inserted_result = types.insert(
+            "Person".to_owned(),
+            Eip712Struct::new(
+                "Person".to_owned(),
+                vec![
+                    Eip712Field {
+                        name: "name".to_owned(),
+                        r#type: Eip712FieldType::String,
+                    },
+                    Eip712Field {
+                        name: "wallet".to_owned(),
+                        r#type: Eip712FieldType::Address,
+                    },
+                ],
+            ),
+        );
+        assert!(inserted_result.is_none());
+        assert_eq!(typed_data.types, types);
+
+        // Validate values.
+        let mut from_person_values = HashMap::new();
+        let inserted_result = from_person_values.insert(
+            "name".to_owned(),
+            Eip712FieldValue::String("Cow".to_owned()),
+        );
+        assert!(inserted_result.is_none());
+        let inserted_result = from_person_values.insert(
+            "wallet".to_owned(),
+            Eip712FieldValue::Address(
+                H160::from_str("0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826").unwrap(),
+            ),
+        );
+        assert!(inserted_result.is_none());
+        let mut to_person_values = HashMap::new();
+        let inserted_result = to_person_values.insert(
+            "name".to_owned(),
+            Eip712FieldValue::String("Bob".to_owned()),
+        );
+        assert!(inserted_result.is_none());
+        let inserted_result = to_person_values.insert(
+            "wallet".to_owned(),
+            Eip712FieldValue::Address(
+                H160::from_str("0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB").unwrap(),
+            ),
+        );
+        assert!(inserted_result.is_none());
+        let mut values = HashMap::new();
+        let inserted_result = values.insert(
+            "from".to_owned(),
+            Eip712FieldValue::Struct("Person".to_owned(), from_person_values),
+        );
+        assert!(inserted_result.is_none());
+        let inserted_result = values.insert(
+            "to".to_owned(),
+            Eip712FieldValue::Struct("Person".to_owned(), to_person_values),
+        );
+        assert!(inserted_result.is_none());
+        let inserted_result = values.insert(
+            "contents".to_owned(),
+            Eip712FieldValue::FixedBytes(vec![10, 11, 12, 13]),
         );
         assert!(inserted_result.is_none());
         assert_eq!(typed_data.values, values);
