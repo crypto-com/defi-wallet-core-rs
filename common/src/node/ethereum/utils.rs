@@ -230,7 +230,7 @@ pub async fn get_contract_balance(
             contract.balance_of(address, token_id)
         }
     };
-    Ok(ContractCall::from(call).call().await?)
+    ContractCall::from(call).call().await
 }
 
 /// given the contract approval details, it'll construct, sign and broadcast a
