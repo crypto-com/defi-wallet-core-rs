@@ -244,7 +244,10 @@ fn json_to_fixed_bytes(
 fn json_to_int(json_value: &serde_json::Value) -> Option<Eip712FieldValue> {
     match json_value {
         serde_json::Value::Number(i) => i.as_i64().map(Into::into),
-        serde_json::Value::String(s) => U256::from_str(s).ok(),
+        serde_json::Value::String(s) => s
+            .parse::<i128>()
+            .ok()
+            .map_or_else(|| U256::from_str(s).ok(), |i| Some(i.into())),
         _ => None,
     }
     .map(Eip712FieldValue::Int)
@@ -262,7 +265,10 @@ fn json_to_string(json_value: &serde_json::Value) -> Option<Eip712FieldValue> {
 fn json_to_uint(json_value: &serde_json::Value) -> Option<Eip712FieldValue> {
     match json_value {
         serde_json::Value::Number(u) => u.as_u64().map(Into::into),
-        serde_json::Value::String(s) => U256::from_str(s).ok(),
+        serde_json::Value::String(s) => s
+            .parse::<u128>()
+            .ok()
+            .map_or_else(|| U256::from_str(s).ok(), |u| Some(u.into())),
         _ => None,
     }
     .map(Eip712FieldValue::Uint)
@@ -445,7 +451,7 @@ mod eip712_deserializing_tests {
         assert_eq!(typed_data.domain.get("version"), None);
         assert_eq!(
             typed_data.domain.get("chainId"),
-            Some(&Eip712FieldValue::Uint(0x25.into()))
+            Some(&Eip712FieldValue::Uint(25.into()))
         );
         assert_eq!(
             typed_data.domain.get("verifyingContract"),
