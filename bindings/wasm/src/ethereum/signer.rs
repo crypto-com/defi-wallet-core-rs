@@ -47,6 +47,12 @@ pub fn personal_sign(private_key: PrivateKey, message: &str) -> String {
 ///   },
 ///   "primaryType": "Mail",
 ///   "types": {
+///     "EIP712Domain": [
+///       { "name": "name", "type": "string" },
+///       { "name": "version", "type": "string" },
+///       { "name": "chainId", "type": "uint256" },
+///       { "name": "verifyingContract", "type": "address" }
+///     ],
 ///     "Mail": [
 ///       { "name": "from", "type": "Person" },
 ///       { "name": "to", "type": "Person" },

@@ -1,22 +1,4 @@
 use ethers::utils::hex::{self, FromHexError};
-use serde::de;
-
-pub(crate) fn deserialize_option_u64_from_any<'de, D>(
-    deserializer: D,
-) -> Result<Option<u64>, D::Error>
-where
-    D: de::Deserializer<'de>,
-{
-    let json_value: serde_json::Value = serde::Deserialize::deserialize(deserializer)?;
-    Ok(match json_value {
-        serde_json::Value::Number(u) => Some(
-            u.as_u64()
-                .ok_or_else(|| de::Error::custom(format!("Must be an u64: {u}")))?,
-        ),
-        serde_json::Value::String(s) => Some(s.parse::<u64>().map_err(de::Error::custom)?),
-        _ => None,
-    })
-}
 
 pub(crate) fn hex_decode(hex_string: &str) -> Result<Vec<u8>, FromHexError> {
     let hex_string = hex_string.strip_prefix("0x").unwrap_or(hex_string);
