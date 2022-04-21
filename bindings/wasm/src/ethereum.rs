@@ -672,7 +672,7 @@ impl TryFrom<ContractTransferDetails> for ContractTransfer {
                 from_address,
                 to_address: details.to_address,
                 token_id,
-                additional_data: additional_data,
+                additional_data,
             }),
             (
                 ContractType::Erc1155,
@@ -687,7 +687,7 @@ impl TryFrom<ContractTransferDetails> for ContractTransfer {
                 to_address: details.to_address,
                 token_id,
                 amount,
-                additional_data: additional_data.unwrap_or_else(|| vec![]),
+                additional_data: additional_data.unwrap_or_default(),
             }),
             (ContractType::Erc1155, _, None, _, _, _)
             | (ContractType::Erc721, _, None, _, _, _) => {
@@ -783,6 +783,7 @@ pub struct TokenAmount {
 impl TokenAmount {
     /// Create an instance and serialize it to JsValue.
     #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(token_id: String, amount: String) -> Result<JsValue, JsValue> {
         JsValue::from_serde(&Self { token_id, amount }).map_err(format_to_js_error)
     }

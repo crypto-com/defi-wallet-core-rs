@@ -107,9 +107,9 @@ impl CosmosMsg {
     pub fn build_nft_issue_denom_msg(id: String, name: String, schema: String) -> Self {
         Self {
             msg: CosmosSDKMsg::NftIssueDenom {
-                id: id,
-                name: name,
-                schema: schema,
+                id,
+                name,
+                schema,
             },
         }
     }
@@ -242,6 +242,7 @@ impl CosmosMsg {
     }
 
     /// construct IbcTransfer message
+    #[allow(clippy::too_many_arguments)]
     pub fn build_ibc_transfer_msg(
         receiver: String,
         source_port: String,
@@ -281,6 +282,7 @@ pub struct CosmosTx {
 impl CosmosTx {
     /// Create a Cosmos transaction
     #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self { msgs: vec![] }
     }
@@ -587,6 +589,7 @@ pub fn get_distribution_withdraw_reward_signed_tx(
 /// wasm-bindgen only supports the C-style enums,
 /// hences this duplicate function
 #[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
 pub fn get_ibc_transfer_signed_tx(
     tx_info: CosmosSDKTxInfoRaw,
     private_key: PrivateKey,
