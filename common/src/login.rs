@@ -20,7 +20,7 @@ impl LoginInfo {
     pub fn sign(&self, private_key: &SecretKey) -> Result<Vec<u8>, EthError> {
         let message = self.msg.to_string();
         private_key
-            .sign_eth(message.as_bytes(), self.msg.chain_id)
+            .eth_sign(message.as_bytes(), self.msg.chain_id)
             .map_err(|_e| EthError::SignatureError)
             .map(|x| x.to_vec())
     }

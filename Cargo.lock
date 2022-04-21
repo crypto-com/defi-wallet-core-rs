@@ -2949,7 +2949,7 @@ dependencies = [
  "multimap",
  "petgraph 0.6.0",
  "prost 0.10.0",
- "prost-types 0.10.0",
+ "prost-types 0.10.1",
  "regex",
  "tempfile",
  "which",
