@@ -355,7 +355,7 @@ pub async fn broadcast_transfer_eth(
     )
     .await?;
 
-    Ok(JsValue::from_serde(&receipt).map_err(format_to_js_error)?)
+    JsValue::from_serde(&receipt).map_err(format_to_js_error)
 }
 
 /// details needed for contract approval transaction
@@ -816,7 +816,7 @@ pub async fn broadcast_approval_contract(
     )
     .await?;
 
-    Ok(JsValue::from_serde(&receipt).map_err(format_to_js_error)?)
+    JsValue::from_serde(&receipt).map_err(format_to_js_error)
 }
 
 /// construct, sign and broadcast a transfer of an ERC20/ERC721/ERC1155 token
@@ -838,7 +838,7 @@ pub async fn broadcast_transfer_contract(
     )
     .await?;
 
-    Ok(JsValue::from_serde(&receipt).map_err(format_to_js_error)?)
+    JsValue::from_serde(&receipt).map_err(format_to_js_error)
 }
 
 /// construct, sign and broadcast batch-transfer of an ERC1155 token
@@ -860,5 +860,5 @@ pub async fn broadcast_batch_transfer_contract(
     )
     .await?;
 
-    Ok(JsValue::from_serde(&receipt).map_err(format_to_js_error)?)
+    JsValue::from_serde(&receipt).map_err(format_to_js_error)
 }

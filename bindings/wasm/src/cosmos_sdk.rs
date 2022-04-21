@@ -625,7 +625,7 @@ pub fn get_ibc_transfer_signed_tx(
 #[wasm_bindgen]
 pub async fn query_account_details(api_url: String, address: String) -> Result<JsValue, JsValue> {
     let account_details = get_account_details(&api_url, &address).await?;
-    Ok(JsValue::from_serde(&account_details).map_err(format_to_js_error)?)
+    JsValue::from_serde(&account_details).map_err(format_to_js_error)
 }
 
 /// retrieves the account balance for a given address and a denom
@@ -647,7 +647,7 @@ pub async fn query_account_balance(
     };
     let account_details =
         get_account_balance(&api_url, &address, &denom, balance_api_version).await?;
-    Ok(JsValue::from_serde(&account_details).map_err(format_to_js_error)?)
+    JsValue::from_serde(&account_details).map_err(format_to_js_error)
 }
 
 /// broadcasts a signed cosmos sdk tx
@@ -665,5 +665,5 @@ pub async fn broadcast_tx(
         return Err(JsValue::from_serde(&resp).map_err(format_to_js_error)?);
     }
 
-    Ok(JsValue::from_serde(&resp).map_err(format_to_js_error)?)
+    JsValue::from_serde(&resp).map_err(format_to_js_error)
 }
