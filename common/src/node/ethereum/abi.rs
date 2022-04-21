@@ -80,7 +80,9 @@ impl From<&str> for EthAbiParamType {
             "int256" | "int" | "uint" | "uint256" => EthAbiParamType::Uint(256),
             "string" => EthAbiParamType::String,
             iden => parse_param_type_fixed_bytes(iden)
-                .or_else(|| parse_param_type_integer(iden))
+                .or_else(|| parse_param_type_int(iden))
+                .or_else(|| parse_param_type_uint(iden))
+                .or_else(|| parse_param_type_from_abbreviated_integer(iden))
                 .unwrap_or_else(|| EthAbiParamType::Struct(iden.to_owned())),
         }
     }
@@ -246,8 +248,9 @@ fn parse_param_type_fixed_bytes(iden: &str) -> Option<EthAbiParamType> {
     Some(EthAbiParamType::FixedBytes(size))
 }
 
-/// Parse a string to parameter type Int or Uint with specified size, return None otherwise.
-fn parse_param_type_integer(iden: &str) -> Option<EthAbiParamType> {
+/// Parse a string to parameter type Int or Uint from abbreviated integer and specified size, return
+/// None otherwise.
+fn parse_param_type_from_abbreviated_integer(iden: &str) -> Option<EthAbiParamType> {
     let size = iden
         .chars()
         .skip(1)
@@ -261,4 +264,32 @@ fn parse_param_type_integer(iden: &str) -> Option<EthAbiParamType> {
     } else {
         None
     }
+}
+
+/// Parse a string to parameter type Int with specified size, return None otherwise.
+fn parse_param_type_int(iden: &str) -> Option<EthAbiParamType> {
+    if !iden.starts_with("int") {
+        return None;
+    }
+    let size = iden
+        .chars()
+        .skip(3)
+        .collect::<String>()
+        .parse::<usize>()
+        .ok()?;
+    Some(EthAbiParamType::Int(size))
+}
+
+/// Parse a string to parameter type Uint with specified size, return None otherwise.
+fn parse_param_type_uint(iden: &str) -> Option<EthAbiParamType> {
+    if !iden.starts_with("uint") {
+        return None;
+    }
+    let size = iden
+        .chars()
+        .skip(4)
+        .collect::<String>()
+        .parse::<usize>()
+        .ok()?;
+    Some(EthAbiParamType::Uint(size))
 }

@@ -220,6 +220,7 @@ fn json_to_bytes(json_value: &serde_json::Value) -> Option<Eip712FieldValue> {
             .map(|i| i.as_u64().and_then(|i| u8::try_from(i).ok()))
             .collect::<Option<Vec<u8>>>()
             .map(Eip712FieldValue::Bytes),
+        serde_json::Value::String(s) => hex_decode(s).ok().map(Eip712FieldValue::FixedBytes),
         _ => None,
     }
 }
