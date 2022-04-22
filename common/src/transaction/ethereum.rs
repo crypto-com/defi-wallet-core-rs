@@ -184,14 +184,8 @@ pub fn build_signed_eth_tx(
         tx_info.legacy_tx || legacy,
         chain_id,
     )?;
-    tx.set_nonce(
-        U256::from_dec_str(&tx_info.nonce)
-            .map_err(|e| EthError::ParseError(ConversionError::FromDecStrError(e)))?,
-    );
-    tx.set_gas(
-        U256::from_dec_str(&tx_info.gas_limit)
-            .map_err(|e| EthError::ParseError(ConversionError::FromDecStrError(e)))?,
-    );
+    tx.set_nonce(U256::from_dec_str(&tx_info.nonce).map_err(EthError::DecConversion)?);
+    tx.set_gas(U256::from_dec_str(&tx_info.gas_limit).map_err(EthError::DecConversion)?);
     let gas_price: U256 = tx_info.gas_price.try_into().map_err(EthError::ParseError)?;
     tx.set_gas_price(gas_price);
     if let Some(data) = tx_info.data {

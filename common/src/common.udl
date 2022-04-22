@@ -273,8 +273,11 @@ dictionary Collection {
 
 [Error]
 enum EthError {
-  "DecConversion",
+  "Overflow",
+  "HdWrapError",
   "HexConversion",
+  "StrRadixConversion",
+  "DecConversion",
   "ParseError",
   "NodeUrl",
   "SendTxFail",

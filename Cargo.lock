@@ -965,6 +965,7 @@ dependencies = [
  "serde",
  "serde_json",
  "siwe",
+ "tokio",
 ]
 
 [[package]]
