@@ -70,6 +70,12 @@ impl EthSigner {
     ///   },
     ///   "primaryType": "Mail",
     ///   "types": {
+    ///     "EIP712Domain": [
+    ///       { "name": "name", "type": "string" },
+    ///       { "name": "version", "type": "string" },
+    ///       { "name": "chainId", "type": "uint256" },
+    ///       { "name": "verifyingContract", "type": "address" }
+    ///     ],
     ///     "Mail": [
     ///       { "name": "from", "type": "Person" },
     ///       { "name": "to", "type": "Person" },
@@ -146,6 +152,12 @@ mod ethereum_signing_tests {
             },
             "primaryType": "Mail",
             "types": {
+                "EIP712Domain": [
+                    { "name": "name", "type": "string" },
+                    { "name": "version", "type": "string" },
+                    { "name": "chainId", "type": "uint256" },
+                    { "name": "verifyingContract", "type": "address" }
+                ],
                 "Mail": [
                     { "name": "from", "type": "Person" },
                     { "name": "to", "type": "Person" },
@@ -191,6 +203,6 @@ mod ethereum_signing_tests {
         let signature = get_signer()
             .sign_typed_data(RECURSIVELY_NESTED_JSON_TYPED_DATA)
             .unwrap();
-        assert_eq!(signature, "0x7b26b85e4806529d2013146a98282a8bca97712720def119ac5396845b90433c270d07de560dd61c8ad4d53dc94118678ad11b08c9bf52ceac33e2c86d1967601b");
+        assert_eq!(signature, "0x1518da25a02d4aaf8635df026148d6b260a5d2f214530f003837c40a04088e0819aea58addc9e9ecc60fe5d3391b4b78c04b86181fbb8cf3a9a2d0112ee6b1391c");
     }
 }

@@ -2,10 +2,8 @@
 
 use crate::node::ethereum::abi::{EthAbiParamType, EthAbiToken};
 use crate::transaction::{Eip712Error, EthError};
-use ethers::prelude::{abi, H160, U256};
-use ethers::types::transaction::eip712::{
-    encode_eip712_type, EIP712_DOMAIN_TYPE_HASH, EIP712_DOMAIN_TYPE_HASH_WITH_SALT,
-};
+use ethers::prelude::{abi, U256};
+use ethers::types::transaction::eip712::encode_eip712_type;
 use ethers::utils::keccak256;
 use std::collections::{BTreeSet, HashMap};
 
@@ -18,10 +16,12 @@ type Eip712FieldValue = EthAbiToken;
 type Eip712StructName = String;
 type Result<T> = std::result::Result<T, EthError>;
 
+const EIP712_DOMAIN_TYPE_NAME: &str = "EIP712Domain";
+
 /// EIP-712 typed data
 #[derive(Debug, Default)]
 pub struct Eip712TypedData {
-    domain: Eip712Domain,
+    domain: HashMap<Eip712FieldName, Eip712FieldValue>,
     primary_type: Eip712StructName,
     type_hashes: HashMap<Eip712StructName, U256>,
     types: HashMap<Eip712StructName, Eip712Struct>,
@@ -53,6 +53,12 @@ impl Eip712TypedData {
     ///   },
     ///   "primaryType": "Mail",
     ///   "types": {
+    ///     "EIP712Domain": [
+    ///       { "name": "name", "type": "string" },
+    ///       { "name": "version", "type": "string" },
+    ///       { "name": "chainId", "type": "uint256" },
+    ///       { "name": "verifyingContract", "type": "address" }
+    ///     ],
     ///     "Mail": [
     ///       { "name": "from", "type": "Person" },
     ///       { "name": "to", "type": "Person" },
@@ -79,7 +85,7 @@ impl Eip712TypedData {
 
     /// Encode the typed data.
     pub fn encode(&self) -> Result<Vec<u8>> {
-        let domain_separator = self.domain.separator();
+        let domain_separator = self.build_struct_hash(EIP712_DOMAIN_TYPE_NAME, &self.domain)?;
         let struct_hash = self.build_struct_hash(&self.primary_type, &self.values)?;
         let digest_input = [&[0x19, 0x01], &domain_separator[..], &struct_hash[..]].concat();
 
@@ -193,7 +199,7 @@ impl Eip712TypedData {
     ) -> Result<()> {
         let sub_struct_names = self.get_struct(parent_struct_name)?.get_sub_struct_names();
         for name in sub_struct_names {
-            if !current_struct_names.contains(&name) {
+            if current_struct_names.insert(name.clone()) {
                 self.get_referenced_struct_names(&name, current_struct_names)?;
             }
         }
@@ -241,8 +247,28 @@ impl Eip712Struct {
     fn get_sub_struct_names(&self) -> BTreeSet<Eip712StructName> {
         let mut struct_names = BTreeSet::new();
         for f in &self.fields {
-            if let Eip712FieldType::Struct(name) = &f.r#type {
-                struct_names.insert(name.clone());
+            match &f.r#type {
+                Eip712FieldType::Array(item_param_type) => {
+                    if let Eip712FieldType::Struct(name) = item_param_type.as_ref() {
+                        struct_names.insert(name.clone());
+                    }
+                }
+                Eip712FieldType::FixedArray(item_param_type, _size) => {
+                    if let Eip712FieldType::Struct(name) = item_param_type.as_ref() {
+                        struct_names.insert(name.clone());
+                    }
+                }
+                Eip712FieldType::Tuple(item_param_types) => {
+                    for item_param_type in item_param_types {
+                        if let Eip712FieldType::Struct(name) = item_param_type {
+                            struct_names.insert(name.clone());
+                        }
+                    }
+                }
+                Eip712FieldType::Struct(name) => {
+                    struct_names.insert(name.clone());
+                }
+                _ => {}
             }
         }
         struct_names
@@ -256,47 +282,10 @@ struct Eip712Field {
     r#type: Eip712FieldType,
 }
 
-/// EIP-712 domain
-#[derive(Debug, Default)]
-struct Eip712Domain {
-    name: Option<String>,
-    version: Option<String>,
-    chain_id: Option<U256>,
-    verifying_contract: Option<H160>,
-    salt: Option<[u8; 32]>,
-}
-
-impl Eip712Domain {
-    pub fn separator(&self) -> [u8; 32] {
-        let domain_type_hash = if self.salt.is_some() {
-            EIP712_DOMAIN_TYPE_HASH_WITH_SALT
-        } else {
-            EIP712_DOMAIN_TYPE_HASH
-        };
-        let mut tokens = vec![abi::Token::Uint(U256::from(domain_type_hash))];
-        if let Some(name) = &self.name {
-            tokens.push(abi::Token::Uint(U256::from(keccak256(name))));
-        }
-        if let Some(version) = &self.version {
-            tokens.push(abi::Token::Uint(U256::from(keccak256(version))));
-        }
-        if let Some(chain_id) = self.chain_id {
-            tokens.push(abi::Token::Uint(chain_id));
-        }
-        if let Some(verifying_contract) = self.verifying_contract {
-            tokens.push(abi::Token::Address(verifying_contract));
-        }
-        if let Some(salt) = &self.salt {
-            tokens.push(abi::Token::Uint(U256::from(salt)));
-        }
-
-        keccak256(abi::encode(&tokens))
-    }
-}
-
 #[cfg(test)]
 mod eip712_encoding_tests {
     use super::*;
+    use ethers::utils::hex;
 
     const SIMPLE_JSON_TYPED_DATA: &str = r#"
         {
@@ -327,41 +316,78 @@ mod eip712_encoding_tests {
 
     const RECURSIVELY_NESTED_JSON_TYPED_DATA: &str = r#"
         {
-            "domain": {
-                "name": "Ether Mail",
-                "version": "1",
-                "chainId": 1,
-                "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+          "types": {
+            "EIP712Domain": [
+              { "name": "chainId", "type": "uint256" },
+              { "name": "name", "type": "string" },
+              { "name": "verifyingContract", "type": "address" },
+              { "name": "version", "type": "string" }
+            ],
+            "Action": [
+              { "name": "action", "type": "string" },
+              { "name": "params", "type": "string" }
+            ],
+            "Cell": [
+              { "name": "capacity", "type": "string" },
+              { "name": "lock", "type": "string" },
+              { "name": "type", "type": "string" },
+              { "name": "data", "type": "string" },
+              { "name": "extraData", "type": "string" }
+            ],
+            "Transaction": [
+              { "name": "DAS_MESSAGE", "type": "string" },
+              { "name": "inputsCapacity", "type": "string" },
+              { "name": "outputsCapacity", "type": "string" },
+              { "name": "fee", "type": "string" },
+              { "name": "action", "type": "Action" },
+              { "name": "inputs", "type": "Cell[]" },
+              { "name": "outputs", "type": "Cell[]" },
+              { "name": "digest", "type": "bytes32" }
+            ]
+          },
+          "primaryType": "Transaction",
+          "domain": {
+            "chainId": 56,
+            "name": "da.systems",
+            "verifyingContract": "0x0000000000000000000000000000000020210722",
+            "version": "1"
+          },
+          "message": {
+            "DAS_MESSAGE": "SELL mobcion.bit FOR 100000 CKB",
+            "inputsCapacity": "1216.9999 CKB",
+            "outputsCapacity": "1216.9998 CKB",
+            "fee": "0.0001 CKB",
+            "digest": "0x53a6c0f19ec281604607f5d6817e442082ad1882bef0df64d84d3810dae561eb",
+            "action": {
+              "action": "start_account_sale",
+              "params": "0x00"
             },
-            "message": {
-                "from": {
-                    "name": "Cow",
-                    "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
-                },
-                "to": {
-                    "name": "Bob",
-                    "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
-                },
-                "contents": "Hello, Bob!"
-            },
-            "primaryType": "Mail",
-            "types": {
-                "EIP712Domain": [
-                    { "name": "name", "type": "string" },
-                    { "name": "version", "type": "string" },
-                    { "name": "chainId", "type": "uint256" },
-                    { "name": "verifyingContract", "type": "address" }
-                ],
-                "Mail": [
-                    { "name": "from", "type": "Person" },
-                    { "name": "to", "type": "Person" },
-                    { "name": "contents", "type": "string" }
-                ],
-                "Person": [
-                    { "name": "name", "type": "string" },
-                    { "name": "wallet", "type": "address" }
-                ]
-            }
+            "inputs": [
+              {
+                "capacity": "218 CKB",
+                "lock": "das-lock,0x01,0x051c152f77f8efa9c7c6d181cc97ee67c165c506...",
+                "type": "account-cell-type,0x01,0x",
+                "data": "{ account: mobcion.bit, expired_at: 1670913958 }",
+                "extraData": "{ status: 0, records_hash: 0x55478d76900611eb079b22088081124ed6c8bae21a05dd1a0d197efcc7c114ce }"
+              }
+            ],
+            "outputs": [
+              {
+                "capacity": "218 CKB",
+                "lock": "das-lock,0x01,0x051c152f77f8efa9c7c6d181cc97ee67c165c506...",
+                "type": "account-cell-type,0x01,0x",
+                "data": "{ account: mobcion.bit, expired_at: 1670913958 }",
+                "extraData": "{ status: 1, records_hash: 0x55478d76900611eb079b22088081124ed6c8bae21a05dd1a0d197efcc7c114ce }"
+              },
+              {
+                "capacity": "201 CKB",
+                "lock": "das-lock,0x01,0x051c152f77f8efa9c7c6d181cc97ee67c165c506...",
+                "type": "account-sale-cell-type,0x01,0x",
+                "data": "0x1209460ef3cb5f1c68ed2c43a3e020eec2d9de6e...",
+                "extraData": ""
+              }
+            ]
+          }
         }"#;
 
     #[test]
@@ -370,11 +396,8 @@ mod eip712_encoding_tests {
         let encoded_data = typed_data.encode().unwrap();
 
         assert_eq!(
-            encoded_data,
-            [
-                182, 232, 94, 47, 97, 186, 229, 123, 119, 62, 140, 229, 52, 142, 10, 122, 161, 104,
-                105, 146, 232, 140, 235, 153, 192, 138, 40, 7, 179, 114, 125, 174
-            ]
+            hex::encode(encoded_data),
+            "b6e85e2f61bae57b773e8ce5348e0a7aa1686992e88ceb99c08a2807b3727dae"
         );
     }
 
@@ -384,11 +407,8 @@ mod eip712_encoding_tests {
         let encoded_data = typed_data.encode().unwrap();
 
         assert_eq!(
-            encoded_data,
-            [
-                187, 37, 204, 25, 4, 87, 40, 67, 2, 128, 149, 138, 235, 206, 18, 177, 36, 205, 201,
-                31, 129, 127, 207, 185, 49, 63, 192, 93, 120, 76, 65, 192
-            ],
+            hex::encode(encoded_data),
+            "42b1aca82bb6900ff75e90a136de550a58f1a220a071704088eabd5e6ce20446"
         );
     }
 }
