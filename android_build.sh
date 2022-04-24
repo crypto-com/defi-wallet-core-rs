@@ -73,6 +73,7 @@ uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml -
 
 rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android || exit 1
 
+type python || exit 1
 if [ ! -d "NDK/arm64" ]
 then
         "$MAKETOOL" --api 28 --arch arm64 --install-dir NDK/arm64 2> /dev/null || exit 1
