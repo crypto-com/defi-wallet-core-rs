@@ -1,9 +1,8 @@
 use crate::{format_to_js_error, PrivateKey};
 use defi_wallet_core_common::{
     broadcast_tx_sync, build_signed_msg_tx, build_signed_single_msg_tx, get_account_balance,
-    get_account_details, get_single_msg_sign_payload, BalanceApiVersion, CosmosSDKMsg,
-    CosmosSDKTxInfo, Height, Network, PublicKeyBytesWrapper, SingleCoin,
-    COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    get_account_details, BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, Height, Network,
+    SingleCoin,
 };
 use js_sys::Promise;
 use serde::{Deserialize, Serialize};

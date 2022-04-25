@@ -30,7 +30,7 @@ async fn test_delegate_and_unbound() {
     let private_key = wallet.get_key("m/44'/394'/0'/0/0".to_owned()).unwrap();
 
     // Query account for delegating.
-    let account = query_account(DELEGATOR1).await;
+    let account = query_chainmain_account(DELEGATOR1).await;
 
     // Build tx info for delegating.
     let tx_info = CosmosSDKTxInfoRaw::new(
@@ -80,7 +80,7 @@ async fn test_delegate_and_unbound() {
     );
 
     // Query account for unbonding. Since `account.sequence` is changed.
-    let account = query_account(DELEGATOR1).await;
+    let account = query_chainmain_account(DELEGATOR1).await;
 
     // Build tx info for unbonding.
     let tx_info = CosmosSDKTxInfoRaw::new(
@@ -134,7 +134,7 @@ async fn test_redelegate() {
     assert_eq!(address.unwrap(), DELEGATOR2.to_owned());
     let private_key = wallet.get_key("m/44'/394'/0'/0/0".to_owned()).unwrap();
 
-    let account = query_account(DELEGATOR2).await;
+    let account = query_chainmain_account(DELEGATOR2).await;
 
     // Build tx info for delegating.
     let tx_info = CosmosSDKTxInfoRaw::new(
@@ -183,7 +183,7 @@ async fn test_redelegate() {
     );
 
     // Query account for redelegating. Since `account.sequence` is changed.
-    let account = query_account(DELEGATOR2).await;
+    let account = query_chainmain_account(DELEGATOR2).await;
 
     // Build tx info for redelegating.
     let tx_info = CosmosSDKTxInfoRaw::new(

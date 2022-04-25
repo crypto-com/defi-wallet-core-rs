@@ -90,7 +90,7 @@ async fn test_reward_withdrawed_to_set_address() {
 }
 
 async fn build_tx_info(address: &str) -> CosmosSDKTxInfoRaw {
-    let account = query_account(address).await;
+    let account = query_chainmain_account(address).await;
 
     CosmosSDKTxInfoRaw::new(
         account.account_number,
