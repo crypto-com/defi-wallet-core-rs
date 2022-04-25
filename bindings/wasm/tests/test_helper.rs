@@ -16,7 +16,7 @@ pub(crate) const CHAIN_ID: &str = "chainmain-1";
 pub(crate) const CHAINMAIN_DENOM: &str = "basecro";
 pub(crate) const CRONOS_DENOM: &str = "basetcro";
 pub(crate) const CHAINMAIN_API_URL: &str = "http://127.0.0.1:26804";
-pub(crate) const CRONOS_API_URL: &str = "http://127.0.0.1:26654";
+pub(crate) const CRONOS_API_URL: &str = "http://127.0.0.1:26651";
 pub(crate) const TENDERMINT_RPC_URL: &str = "http://127.0.0.1:26807";
 pub(crate) const GRPC_WEB_URL: &str = "http://127.0.0.1:26808";
 

@@ -558,6 +558,7 @@ pub mod ffi {
         pub fn broadcast_eth_signed_raw_tx(
             raw_tx: Vec<u8>,
             web3api_url: &str,
+            polling_interval_ms: u64,
         ) -> Result<CronosTransactionReceiptRaw>;
 
     } // end of RUST block
@@ -1138,8 +1139,13 @@ pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
 pub fn broadcast_eth_signed_raw_tx(
     raw_tx: Vec<u8>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<CronosTransactionReceiptRaw> {
-    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(raw_tx, web3api_url)?;
+    let res = defi_wallet_core_common::broadcast_eth_signed_raw_tx_blocking(
+        raw_tx,
+        web3api_url,
+        polling_interval_ms,
+    )?;
     Ok(res.into())
 }
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import subprocess
+import time
 from pathlib import Path
 
 from .utils import ADDRS, CONTRACTS, KEYS, Contract
@@ -90,9 +91,15 @@ def test_basic(chainmain, cronos):
     # Test cppexamplestatic
     # TODO Pass input and assert output
     cmd = Path(__file__).parent / "../example/cpp-example/cppexamplestatic"
+
+    start = time.time()
+
     output = subprocess.getoutput(str(cmd))
     print(output)
     if "Assertion failed" in output:
         assert False
+
+    end = time.time()
+    print(f"Total Execucute Time: {end} - {start}")
 
     # TODO Test cppexample

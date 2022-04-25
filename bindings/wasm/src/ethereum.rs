@@ -1,4 +1,5 @@
 use crate::{format_to_js_error, CoinType, PrivateKey};
+use defi_wallet_core_common as common;
 use defi_wallet_core_common::node::erc721::get_token_owner;
 use defi_wallet_core_common::node::ethereum::abi::EthAbiToken;
 use defi_wallet_core_common::{
@@ -12,7 +13,7 @@ use wasm_bindgen::prelude::*;
 
 mod signer;
 
-use js_sys::BigInt;
+use js_sys::{BigInt, Object};
 pub use signer::*;
 
 /// Ethereum contract
@@ -167,7 +168,7 @@ impl EthTxAmount {
 }
 impl EthTxAmount {
     pub fn to_eth_amount(self) -> EthAmount {
-        match self.denom.as_str() {
+        match self.denom.to_lowercase().as_str() {
             "wei" => EthAmount::WeiDecimal {
                 amount: (self.amount),
             },
@@ -217,8 +218,8 @@ impl EthTxInfo {
     pub fn new(
         to_address: String,
         amount: EthTxAmount,
-        nonce: String,
-        gas_limit: String,
+        nonce: BigInt,
+        gas_limit: BigInt,
         gas_price: EthTxAmount,
         data: Option<Vec<u8>>,
         legacy_tx: bool,
@@ -227,8 +228,8 @@ impl EthTxInfo {
             info: defi_wallet_core_common::EthTxInfo {
                 to_address,
                 amount: amount.to_eth_amount(),
-                nonce,
-                gas_limit,
+                nonce: Object::from(nonce).to_string().into(),
+                gas_limit: Object::from(gas_limit).to_string().into(),
                 gas_price: gas_price.to_eth_amount(),
                 data,
                 legacy_tx,
@@ -251,6 +252,20 @@ pub fn build_signed_eth_tx(
         EthNetwork::Custom { chain_id, legacy },
         private_key.key,
     )?)
+}
+
+/// broadcast a previously signed ethereum tx async
+/// If successful, it returns the transaction receipt
+#[wasm_bindgen]
+pub async fn broadcast_eth_signed_raw_tx(
+    raw_tx: Vec<u8>,
+    web3api_url: String,
+    polling_interval_ms: u64,
+) -> Result<JsValue, JsValue> {
+    let receipt =
+        common::broadcast_eth_signed_raw_tx(raw_tx, &web3api_url, polling_interval_ms).await?;
+
+    JsValue::from_serde(&receipt).map_err(format_to_js_error)
 }
 
 /// Parse the json data that meets the walletconnect standard and build raw transaction
@@ -337,21 +352,19 @@ pub async fn query_account_contract_token_balance(
 pub async fn broadcast_transfer_eth(
     web3_api_url: String,
     to_address_hex: String,
-    eth_amount_decimal: String,
+    amount: EthTxAmount,
     chain_id: u64,
+    polling_interval_ms: u64,
+    legacy: bool,
     private_key: PrivateKey,
 ) -> Result<JsValue, JsValue> {
     let receipt = broadcast_sign_eth_tx(
         &to_address_hex,
-        EthAmount::EthDecimal {
-            amount: eth_amount_decimal,
-        },
-        EthNetwork::Custom {
-            chain_id,
-            legacy: false,
-        },
+        amount.to_eth_amount(),
+        EthNetwork::Custom { chain_id, legacy },
         private_key.key,
         &web3_api_url,
+        polling_interval_ms,
     )
     .await?;
 
@@ -803,6 +816,7 @@ pub async fn broadcast_approval_contract(
     details: ContractApprovalDetails,
     web3_api_url: String,
     chain_id: u64,
+    polling_interval_ms: u64,
     private_key: PrivateKey,
 ) -> Result<JsValue, JsValue> {
     let receipt = broadcast_contract_approval_tx(
@@ -813,6 +827,7 @@ pub async fn broadcast_approval_contract(
         },
         private_key.key,
         &web3_api_url,
+        polling_interval_ms,
     )
     .await?;
 
@@ -825,6 +840,7 @@ pub async fn broadcast_transfer_contract(
     details: ContractTransferDetails,
     web3_api_url: String,
     chain_id: u64,
+    polling_interval_ms: u64,
     private_key: PrivateKey,
 ) -> Result<JsValue, JsValue> {
     let receipt = broadcast_contract_transfer_tx(
@@ -835,6 +851,7 @@ pub async fn broadcast_transfer_contract(
         },
         private_key.key,
         &web3_api_url,
+        polling_interval_ms,
     )
     .await?;
 
@@ -847,6 +864,7 @@ pub async fn broadcast_batch_transfer_contract(
     details: ContractBatchTransferDetails,
     web3_api_url: String,
     chain_id: u64,
+    polling_interval_ms: u64,
     private_key: PrivateKey,
 ) -> Result<JsValue, JsValue> {
     let receipt = broadcast_contract_batch_transfer_tx(
@@ -857,8 +875,22 @@ pub async fn broadcast_batch_transfer_contract(
         },
         private_key.key,
         &web3_api_url,
+        polling_interval_ms,
     )
     .await?;
 
     JsValue::from_serde(&receipt).map_err(format_to_js_error)
+}
+
+/// construct, sign and broadcast a plain transfer of eth/native token
+#[wasm_bindgen]
+pub async fn get_eth_transaction_count(
+    address: String,
+    web3api_url: String,
+) -> Result<BigInt, JsValue> {
+    let nonce = common::get_eth_transaction_count(&address, &web3api_url).await?;
+
+    Ok(BigInt::new(
+        &JsValue::from_serde(&nonce).map_err(format_to_js_error)?,
+    )?)
 }
