@@ -1,10 +1,12 @@
 #include "defi-wallet-core-cpp/src/contract.rs.h"
 #include "defi-wallet-core-cpp/src/lib.rs.h"
+#include "defi-wallet-core-cpp/src/uint.rs.h"
 #include "rust/cxx.h"
 #include <cassert>
 #include <iostream>
 
 void cronos_process();
+void test_uint();
 void test_approval();
 using namespace std;
 using namespace org::defi_wallet_core;
@@ -36,13 +38,15 @@ void cronos_process() {
   eth_tx_info.amount_unit = EthAmount::EthDecimal;
   rust::Vec<uint8_t> signedtx =
       build_eth_signed_tx(eth_tx_info, chainid, true, *privatekey);
-  String balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
-  cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
+  U256 balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
+  cout << "address=" << myaddress1.c_str() << " balance=" << balance.to_string()
+       << endl;
   String status = broadcast_eth_signed_raw_tx(signedtx, mycronosrpc).status;
   assert(status == "1");
 
   balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
-  cout << "address=" << myaddress1.c_str() << " balance=" << balance << endl;
+  cout << "address=" << myaddress1.c_str() << " balance=" << balance.to_string()
+       << endl;
 
   Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
                           mycronosrpc, chainid)
@@ -50,8 +54,10 @@ void cronos_process() {
   assert(erc20.name() == "Gold");
   assert(erc20.symbol() == "GLD");
   assert(erc20.decimals() == 18);
-  assert(erc20.total_supply() == "100000000000000000000000000");
-  assert(erc20.balance_of(myaddress1) == "100000000000000000000000000");
+  U256 erc20_total_supply = erc20.total_supply();
+  assert(erc20_total_supply == u256("100000000000000000000000000"));
+  U256 erc20_balance = erc20.balance_of(myaddress1);
+  assert(erc20_balance == erc20_total_supply);
 
   Erc721 erc721 = new_erc721("0x2305f3980715c9D247455504080b41072De38aB9",
                              mycronosrpc, chainid)
@@ -62,7 +68,7 @@ void cronos_process() {
   // cout << "Total Supply of ERC721=" << erc721.total_supply() << endl; // the
   // contract must support IERC721Enumerable
   assert(erc721.owner_of("1") == myaddress1);
-  assert(erc721.balance_of(myaddress1) == "1");
+  assert(erc721.balance_of(myaddress1) == u256("1"));
 
   Erc1155 erc1155 = new_erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc",
                                 mycronosrpc, chainid)
@@ -73,11 +79,12 @@ void cronos_process() {
   assert(erc1155.uri("2") == "https://game.example/api/item/{id}.json");
   assert(erc1155.uri("3") == "https://game.example/api/item/{id}.json");
   assert(erc1155.uri("4") == "https://game.example/api/item/{id}.json");
-  assert(erc1155.balance_of(myaddress1, "0") == "1000000000000000000");
-  assert(erc1155.balance_of(myaddress1, "1") == "1000000000000000000000000000");
-  assert(erc1155.balance_of(myaddress1, "2") == "1");
-  assert(erc1155.balance_of(myaddress1, "3") == "1000000000");
-  assert(erc1155.balance_of(myaddress1, "4") == "1000000000");
+  assert(erc1155.balance_of(myaddress1, "0") == u256("1000000000000000000"));
+  assert(erc1155.balance_of(myaddress1, "1") ==
+         u256("1000000000000000000000000000"));
+  assert(erc1155.balance_of(myaddress1, "2") == u256("1"));
+  assert(erc1155.balance_of(myaddress1, "3") == u256("1000000000"));
+  assert(erc1155.balance_of(myaddress1, "4") == u256("1000000000"));
 
   String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
   Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
@@ -87,13 +94,13 @@ void cronos_process() {
   // transfer erc20 token from signer1 to signer2
   status = erc20.transfer(signer2_address, "100", *privatekey).status;
   assert(status == "1");
-  assert(erc20.balance_of(myaddress1) == "99999999999999999999999900");
+  assert(erc20.balance_of(myaddress1) == erc20_balance.sub(u256("100")));
 
   // transfer erc721 from signer1 to signer2
   status = erc721.transfer_from(myaddress1, signer2_address, "1", *privatekey)
                .status;
   assert(status == "1");
-  assert(erc721.balance_of(myaddress1) == "0");
+  assert(erc721.balance_of(myaddress1) == u256("0"));
   assert(erc721.owner_of("1") == signer2_address);
 
   // safe transfer erc721 from signer2 to signer1
@@ -102,7 +109,7 @@ void cronos_process() {
                                    *signer2_privatekey)
                .status;
   assert(status == "1");
-  assert(erc721.balance_of(myaddress1) == "1");
+  assert(erc721.balance_of(myaddress1) == u256("1"));
   assert(erc721.owner_of("1") == myaddress1);
 
   // safe transfer erc1155 from signer1 to signer2
@@ -112,7 +119,7 @@ void cronos_process() {
                                    erc1155_data, *privatekey)
                .status;
   assert(status == "1");
-  assert(erc1155.balance_of(myaddress1, "0") == "999999999999999850");
+  assert(erc1155.balance_of(myaddress1, "0") == u256("999999999999999850"));
 
   // safe batch transfer erc1155 from signer1 to signer2
   rust::Vec<String> token_ids, amounts;
@@ -131,11 +138,13 @@ void cronos_process() {
                .status;
   assert(status == "1");
   // TODO Can not do calculation on balance
-  assert(erc1155.balance_of(myaddress1, "1") == "999999999999999999999999800");
-  assert(erc1155.balance_of(myaddress1, "2") == "0");
-  assert(erc1155.balance_of(myaddress1, "3") == "999999700");
-  assert(erc1155.balance_of(myaddress1, "4") == "999999600");
+  assert(erc1155.balance_of(myaddress1, "1") ==
+         u256("999999999999999999999999800"));
+  assert(erc1155.balance_of(myaddress1, "2") == u256("0"));
+  assert(erc1155.balance_of(myaddress1, "3") == u256("999999700"));
+  assert(erc1155.balance_of(myaddress1, "4") == u256("999999600"));
 
+  test_uint();
   test_approval();
 }
 
@@ -178,7 +187,7 @@ void test_approval() {
   Erc721 erc721 = new_erc721("0x2305f3980715c9D247455504080b41072De38aB9",
                              mycronosrpc, chainid)
                       .legacy();
-  assert(erc721.balance_of(signer1_address) == "1");
+  assert(erc721.balance_of(signer1_address) == u256("1"));
   assert(erc721.get_approved("1") ==
          "0x0000000000000000000000000000000000000000");
   // toggle set_approval_for_all
@@ -198,7 +207,7 @@ void test_approval() {
                                           "1", *signer2_privatekey)
                       .status;
   assert(status == "1");
-  assert(erc721.balance_of(validator1_address) == "1");
+  assert(erc721.balance_of(validator1_address) == u256("1"));
   assert(erc721.owner_of("1") == validator1_address);
 
   // validator1 set_approval_for_all for singer2 to transfer all assets
@@ -211,7 +220,7 @@ void test_approval() {
                                    *signer2_privatekey)
                .status;
   assert(status == "1");
-  assert(erc721.balance_of(signer1_address) == "1");
+  assert(erc721.balance_of(signer1_address) == u256("1"));
   assert(erc721.owner_of("1") == signer1_address);
 
   Erc1155 erc1155 = new_erc1155("0x939D7350c54228e4958e05b65512C4a5BB6A2ACc",
@@ -244,18 +253,35 @@ void test_approval() {
   assert(status == "1");
   // TODO Can not do calculation on balance
   assert(erc1155.balance_of(signer1_address, "1") ==
-         "999999999999999999999999300");
-  assert(erc1155.balance_of(signer1_address, "2") == "0");
-  assert(erc1155.balance_of(signer1_address, "3") == "999999100");
-  assert(erc1155.balance_of(signer1_address, "4") == "999998900");
+         u256("999999999999999999999999300"));
+  assert(erc1155.balance_of(signer1_address, "2") == u256("0"));
+  assert(erc1155.balance_of(signer1_address, "3") == u256("999999100"));
+  assert(erc1155.balance_of(signer1_address, "4") == u256("999998900"));
 
-  assert(erc1155.balance_of(signer2_address, "1") == "200");
-  assert(erc1155.balance_of(signer2_address, "2") == "1");
-  assert(erc1155.balance_of(signer2_address, "3") == "300");
-  assert(erc1155.balance_of(signer2_address, "4") == "400");
+  assert(erc1155.balance_of(signer2_address, "1") == u256("200"));
+  assert(erc1155.balance_of(signer2_address, "2") == u256("1"));
+  assert(erc1155.balance_of(signer2_address, "3") == u256("300"));
+  assert(erc1155.balance_of(signer2_address, "4") == u256("400"));
 
-  assert(erc1155.balance_of(validator1_address, "1") == "500");
-  assert(erc1155.balance_of(validator1_address, "2") == "0");
-  assert(erc1155.balance_of(validator1_address, "3") == "600");
-  assert(erc1155.balance_of(validator1_address, "4") == "700");
+  assert(erc1155.balance_of(validator1_address, "1") == u256("500"));
+  assert(erc1155.balance_of(validator1_address, "2") == u256("0"));
+  assert(erc1155.balance_of(validator1_address, "3") == u256("600"));
+  assert(erc1155.balance_of(validator1_address, "4") == u256("700"));
+}
+
+void test_uint() {
+  assert(u256("15") == u256("15", 10));
+  assert(u256("15") == u256("0xf", 16));
+  assert(u256("1000") == u256("100").add(u256("900")));
+  assert(u256("999999999999999999999999300") ==
+         u256("1000000000000000000000000000").sub(u256("700")));
+  assert(u256("199999999999999999980000200") ==
+         u256("99999999999999999990000100").mul(u256("2")));
+  assert(u256("1999999999999999999800002") ==
+         u256("199999999999999999980000200").div(u256("100")));
+  assert(u256("800002") ==
+         u256("1999999999999999999800002").rem(u256("1000000")));
+  assert(u256("512003840009600008") == u256("800002").pow(u256("3")));
+  assert(u256("512003840009600008").neg() ==
+         u256_max_value().sub(u256("512003840009600007")));
 }

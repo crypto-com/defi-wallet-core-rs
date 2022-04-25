@@ -27,7 +27,10 @@ impl EthAbiContract {
         tokens: Vec<EthAbiToken>,
     ) -> Result<Vec<u8>, EthError> {
         let function = self.contract.function(function_name)?;
-        let tokens: Vec<Token> = tokens.iter().map(Into::into).collect();
+        let tokens = tokens
+            .iter()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<Token>, _>>()?;
         function.encode_input(&tokens).map_err(Into::into)
     }
 }

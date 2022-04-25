@@ -106,11 +106,7 @@ impl CosmosMsg {
     #[wasm_bindgen]
     pub fn build_nft_issue_denom_msg(id: String, name: String, schema: String) -> Self {
         Self {
-            msg: CosmosSDKMsg::NftIssueDenom {
-                id: id,
-                name: name,
-                schema: schema,
-            },
+            msg: CosmosSDKMsg::NftIssueDenom { id, name, schema },
         }
     }
 
@@ -242,6 +238,7 @@ impl CosmosMsg {
     }
 
     /// construct IbcTransfer message
+    #[allow(clippy::too_many_arguments)]
     pub fn build_ibc_transfer_msg(
         receiver: String,
         source_port: String,
@@ -281,6 +278,7 @@ pub struct CosmosTx {
 impl CosmosTx {
     /// Create a Cosmos transaction
     #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self { msgs: vec![] }
     }
@@ -533,6 +531,7 @@ pub fn get_distribution_withdraw_reward_signed_tx(
 /// wasm-bindgen only supports the C-style enums,
 /// hences this duplicate function
 #[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
 pub fn get_ibc_transfer_signed_tx(
     tx_info: CosmosSDKTxInfoRaw,
     private_key: PrivateKey,
@@ -572,7 +571,7 @@ pub fn get_ibc_transfer_signed_tx(
 #[wasm_bindgen]
 pub async fn query_account_details(api_url: String, address: String) -> Result<JsValue, JsValue> {
     let account_details = get_account_details(&api_url, &address).await?;
-    Ok(JsValue::from_serde(&account_details).map_err(format_to_js_error)?)
+    JsValue::from_serde(&account_details).map_err(format_to_js_error)
 }
 
 /// retrieves the account balance for a given address and a denom
@@ -594,7 +593,7 @@ pub async fn query_account_balance(
     };
     let account_details =
         get_account_balance(&api_url, &address, &denom, balance_api_version).await?;
-    Ok(JsValue::from_serde(&account_details).map_err(format_to_js_error)?)
+    JsValue::from_serde(&account_details).map_err(format_to_js_error)
 }
 
 /// broadcasts a signed cosmos sdk tx
@@ -612,5 +611,5 @@ pub async fn broadcast_tx(
         return Err(JsValue::from_serde(&resp).map_err(format_to_js_error)?);
     }
 
-    Ok(JsValue::from_serde(&resp).map_err(format_to_js_error)?)
+    JsValue::from_serde(&resp).map_err(format_to_js_error)
 }

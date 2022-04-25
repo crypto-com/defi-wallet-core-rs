@@ -16,6 +16,8 @@ mod nft;
 
 mod contract;
 
+mod uint;
+
 /// Wrapper of `CosmosSDKMsg`
 ///
 /// For now, types used as extern Rust types are required to be defined by the same crate that
@@ -376,6 +378,11 @@ pub mod ffi {
         pub effective_gas_price: String,
     }
 
+    extern "C++" {
+        include!("defi-wallet-core-cpp/src/uint.rs.h");
+        type U256 = crate::uint::ffi::U256;
+    }
+
     extern "Rust" {
         /// query account details from cosmos address
         pub fn query_account_details(api_url: String, address: String) -> Result<String>;
@@ -541,9 +548,7 @@ pub mod ffi {
         ) -> Result<Vec<u8>>;
 
         /// given the account address, it returns the amount of native token it owns
-        /// Returns the corresponding account's native token balance
-        /// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
-        pub fn get_eth_balance(address: &str, api_url: &str) -> Result<String>;
+        pub fn get_eth_balance(address: &str, api_url: &str) -> Result<U256>;
 
         /// Returns the corresponding account's nonce / number of transactions
         /// sent from it.
@@ -1028,7 +1033,7 @@ impl CppLoginInfo {
         let message = self.logininfo.msg.to_string();
         let secretkey = private_key.key.clone();
         let ret = secretkey
-            .sign_eth(message.as_bytes(), self.logininfo.msg.chain_id)
+            .eth_sign(message.as_bytes(), self.logininfo.msg.chain_id)
             .map(|x| x.to_vec())?;
         Ok(ret)
     }
@@ -1114,9 +1119,11 @@ pub fn build_custom_eth_signed_tx(
 
 /// Returns the corresponding account's native token balance
 /// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
-pub fn get_eth_balance(address: &str, api_url: &str) -> Result<String> {
-    let res = defi_wallet_core_common::get_eth_balance_blocking(address, api_url)?;
-    Ok(res)
+pub fn get_eth_balance(address: &str, api_url: &str) -> Result<ffi::U256> {
+    // TODO Reuse runtime on blocking function
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    let res = rt.block_on(defi_wallet_core_common::get_eth_balance(address, api_url))?;
+    Ok(res.into())
 }
 
 /// Returns the corresponding account's nonce / number of transactions

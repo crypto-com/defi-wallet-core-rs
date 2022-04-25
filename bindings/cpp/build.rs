@@ -1,4 +1,4 @@
-const BRIDGES: &[&str] = &["src/lib.rs", "src/nft.rs", "src/contract.rs"];
+const BRIDGES: &[&str] = &["src/lib.rs", "src/nft.rs", "src/contract.rs", "src/uint.rs"];
 
 fn main() {
     cxx_build::bridges(BRIDGES)

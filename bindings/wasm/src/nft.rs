@@ -29,6 +29,7 @@ pub fn get_nft_issue_denom_signed_tx(
 /// wasm-bindgen only supports the C-style enums,
 /// hences this duplicate function
 #[wasm_bindgen]
+#[allow(clippy::too_many_arguments)]
 pub fn get_nft_mint_signed_tx(
     tx_info: CosmosSDKTxInfoRaw,
     private_key: PrivateKey,

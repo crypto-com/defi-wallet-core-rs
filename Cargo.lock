@@ -541,6 +541,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmake"
+version = "0.1.48"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8ad8cef104ac57b68b89df3208164d228503abbdce70f6880ffa3d970e7443a"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "codespan-reporting"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -906,7 +915,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-common"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "bech32 0.8.1",
@@ -956,6 +965,7 @@ dependencies = [
  "serde",
  "serde_json",
  "siwe",
+ "tokio",
 ]
 
 [[package]]
@@ -965,7 +975,7 @@ dependencies = [
  "cosmos-sdk-proto",
  "cosmrs",
  "prost 0.9.0",
- "prost-types 0.10.0",
+ "prost-types 0.10.1",
  "serde",
  "tendermint-proto",
  "tonic",
@@ -973,7 +983,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-wasm"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "console_error_panic_hook",
  "defi-wallet-core-common",
@@ -1813,6 +1823,12 @@ checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
 dependencies = [
  "unicode-segmentation",
 ]
+
+[[package]]
+name = "heck"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
 
 [[package]]
 name = "hermit-abi"
@@ -2905,7 +2921,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62941722fb675d463659e49c4f3fe1fe792ff24fe5bbaa9c08cd3b98a1c354f5"
 dependencies = [
  "bytes",
- "heck",
+ "heck 0.3.3",
  "itertools",
  "lazy_static",
  "log",
@@ -2913,6 +2929,28 @@ dependencies = [
  "petgraph 0.6.0",
  "prost 0.9.0",
  "prost-types 0.9.0",
+ "regex",
+ "tempfile",
+ "which",
+]
+
+[[package]]
+name = "prost-build"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "120fbe7988713f39d780a58cf1a7ef0d7ef66c6d87e5aa3438940c05357929f4"
+dependencies = [
+ "bytes",
+ "cfg-if 1.0.0",
+ "cmake",
+ "heck 0.4.0",
+ "itertools",
+ "lazy_static",
+ "log",
+ "multimap",
+ "petgraph 0.6.0",
+ "prost 0.10.0",
+ "prost-types 0.10.1",
  "regex",
  "tempfile",
  "which",
@@ -2956,9 +2994,9 @@ dependencies = [
 
 [[package]]
 name = "prost-types"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "926681c118ae6e512a3ccefd4abbe5521a14f4cc1e207356d4d00c0b7f2006fd"
+checksum = "2d0a014229361011dc8e69c8a1ec6c2e8d0f2af7c91e3ea3f5b2170298461e68"
 dependencies = [
  "bytes",
  "prost 0.10.0",
@@ -2969,7 +3007,7 @@ name = "proto-build"
 version = "0.1.0"
 dependencies = [
  "prost 0.9.0",
- "prost-build",
+ "prost-build 0.10.1",
  "regex",
  "tonic",
  "tonic-build",
@@ -4284,7 +4322,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9403f1bafde247186684b230dc6f38b5cd514584e8bec1dd32514be4745fa757"
 dependencies = [
  "proc-macro2",
- "prost-build",
+ "prost-build 0.9.0",
  "quote",
  "syn",
 ]
@@ -4452,7 +4490,7 @@ dependencies = [
  "askama",
  "cargo_metadata 0.13.1",
  "clap",
- "heck",
+ "heck 0.3.3",
  "paste",
  "serde",
  "toml",

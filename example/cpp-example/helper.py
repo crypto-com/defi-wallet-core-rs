@@ -10,8 +10,11 @@ SOURCES = [
 CPP_EXAMPLE_PATH = "."
 VS_EXAMPLE_PATH = "../vs-example/vs-example"
 
-INITIAL_INCLUDE = '#include "defi-wallet-core-cpp/src/lib.rs.h"'
-FINAL_INCLUDE = '#include "lib.rs.h"'
+INITIAL_INCLUDES = [
+    '#include "defi-wallet-core-cpp/src/lib.rs.h"',
+    '#include "defi-wallet-core-cpp/src/uint.rs.h"',
+]
+FINAL_INCLUDES = ['#include "lib.rs.h"', '#include "uint.rs.h"']
 TARGET_DIR = "../../target/release"
 
 OUT_DIR = "../../target/cxxbridge"
@@ -28,17 +31,24 @@ def copy_cxxbridge(output_path):
     files.extend(collect_files("*.h", OUT_DIR))
     files.extend(collect_files("*.cc", OUT_DIR))
 
+    def has_include_string(s):
+        for include in INITIAL_INCLUDES:
+            if include in s:
+                return True
+        return False
+
     # replace string
     for filename in files:
         # Safely read the input filename using 'with'
         with open(filename) as f:
             s = f.read()
-            if INITIAL_INCLUDE not in s:
+            if not has_include_string(s):
                 continue
 
         # Safely write the changed content, if found in the file
         with open(filename, "w") as f:
-            s = s.replace(INITIAL_INCLUDE, FINAL_INCLUDE)
+            for i, include in enumerate(INITIAL_INCLUDES):
+                s = s.replace(include, FINAL_INCLUDES[i])
             f.write(s)
 
     # copy the bindings, need python 3.8+
