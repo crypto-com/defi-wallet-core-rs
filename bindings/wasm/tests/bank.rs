@@ -18,15 +18,12 @@ const BANK_SEND_AMOUNT: u64 = 100;
 
 #[wasm_bindgen_test]
 async fn test_get_single_bank_send_signed_tx() {
-    // Create a transaction with a BankSend message.
     let mut tx = CosmosTx::new();
     tx.add_msg(CosmosMsg::build_bank_send_msg(
         SIGNER2.to_owned(),
         BANK_SEND_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
     ));
-
-    // Sign the transaction.
     let signed_data = tx
         .sign_into(
             get_private_key(SIGNER1_MNEMONIC),
@@ -35,13 +32,10 @@ async fn test_get_single_bank_send_signed_tx() {
         .unwrap();
 
     let balance1 = query_chainmain_balance(SIGNER2).await;
-
-    // Broadcast signed data.
     JsFuture::from(chainmain_client().broadcast_tx(signed_data))
         .await
         .unwrap();
     wait_for_timeout().await;
-
     let balance2 = query_chainmain_balance(SIGNER2).await;
 
     assert_eq!(

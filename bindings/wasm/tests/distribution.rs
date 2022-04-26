@@ -5,168 +5,124 @@
 mod test_helper;
 
 use defi_wallet_core_common::{Network, RawRpcBalance};
-use defi_wallet_core_wasm::{
-    broadcast_tx, get_distribution_set_withdraw_address_signed_tx,
-    get_distribution_withdraw_reward_signed_tx, get_staking_delegate_signed_tx, CosmosSDKTxInfoRaw,
-    PrivateKey, Wallet,
-};
+use defi_wallet_core_wasm::{CosmosMsg, CosmosTx};
 use ethers::types::U256;
 use std::assert_eq;
 use test_helper::*;
+use wasm_bindgen_futures::JsFuture;
 use wasm_bindgen_test::*;
-use wasm_timer::Delay;
 
 wasm_bindgen_test_configure!(run_in_browser);
 
+const STAKING_DELEGATE_AMOUNT: u64 = 100_000_000_000;
+
 #[wasm_bindgen_test]
 async fn test_reward_withdrawed_to_default_address() {
-    let private_key = get_private_key(DELEGATOR1_MNEMONIC);
-    let beginning_balance = query_chainmain_balance(DELEGATOR1).await;
+    let mut tx = CosmosTx::new();
+    add_delegate_msg(&mut tx);
+    let signed_data = sign_tx(&mut tx).await;
 
-    send_delegate_msg(DELEGATOR1, VALIDATOR1, &private_key).await;
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
-
-    let after_delegating_balance = query_chainmain_balance(DELEGATOR1).await;
+    let balance1 = query_chainmain_balance(DELEGATOR1).await;
+    JsFuture::from(chainmain_client().broadcast_tx(signed_data))
+        .await
+        .unwrap();
+    wait_for_timeout().await;
+    let balance2 = query_chainmain_balance(DELEGATOR1).await;
 
     assert_eq!(
-        after_delegating_balance,
+        balance2,
         RawRpcBalance {
             denom: CHAINMAIN_DENOM.to_owned(),
-            amount: (U256::from_dec_str(&beginning_balance.amount).unwrap()
-                - 100_000_000_000_u64
-                - 25_000_000_000_u64)
+            amount: (U256::from_dec_str(&balance1.amount).unwrap()
+                - STAKING_DELEGATE_AMOUNT
+                - DEFAULT_FEE_AMOUNT)
                 .to_string()
         }
     );
 
-    send_withdraw_reward_msg(DELEGATOR1, VALIDATOR1, &private_key).await;
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    add_withdraw_reward_msg(&mut tx);
+    let signed_data = sign_tx(&mut tx).await;
+    JsFuture::from(chainmain_client().broadcast_tx(signed_data))
+        .await
+        .unwrap();
+    wait_for_timeout().await;
+    let balance3 = query_chainmain_balance(DELEGATOR1).await;
 
-    let after_withdrawal_balance = query_chainmain_balance(DELEGATOR1).await;
-    assert_eq!(after_withdrawal_balance.denom, CHAINMAIN_DENOM.to_owned());
+    assert_eq!(balance3.denom, CHAINMAIN_DENOM.to_owned());
 
-    // Balance should be equal to or greater than the balance after delegating since reward withdrawal.
+    // Balance should be equal to or greater than the balance after delegating since reward
+    // withdrawal.
     assert!(
-        U256::from_dec_str(&after_withdrawal_balance.amount).unwrap()
-            >= U256::from_dec_str(&after_delegating_balance.amount).unwrap() - 25000000000u64
+        U256::from_dec_str(&balance3.amount).unwrap()
+            >= U256::from_dec_str(&balance3.amount).unwrap() - DEFAULT_FEE_AMOUNT
     );
 }
 
 #[wasm_bindgen_test]
 async fn test_reward_withdrawed_to_set_address() {
-    let private_key = get_private_key(DELEGATOR1_MNEMONIC);
+    let mut tx = CosmosTx::new();
+    add_delegate_msg(&mut tx);
+    add_set_withdraw_address_msg(&mut tx);
+    let signed_data = sign_tx(&mut tx).await;
 
-    send_delegate_msg(DELEGATOR1, VALIDATOR1, &private_key).await;
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    JsFuture::from(chainmain_client().broadcast_tx(signed_data))
+        .await
+        .unwrap();
+    wait_for_timeout().await;
 
-    send_set_withdraw_address_msg(DELEGATOR1, DELEGATOR2, &private_key).await;
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    add_withdraw_reward_msg(&mut tx);
+    let signed_data = sign_tx(&mut tx).await;
 
-    let delegator_beginning_balance = query_chainmain_balance(DELEGATOR1).await;
-    let withdrawer_beginning_balance = query_chainmain_balance(DELEGATOR2).await;
-
-    send_withdraw_reward_msg(DELEGATOR1, VALIDATOR1, &private_key).await;
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
-
-    let delegator_complete_balance = query_chainmain_balance(DELEGATOR1).await;
-    let withdrawer_complete_balance = query_chainmain_balance(DELEGATOR2).await;
+    let delegator_balance1 = query_chainmain_balance(DELEGATOR1).await;
+    let withdrawer_balance1 = query_chainmain_balance(DELEGATOR2).await;
+    JsFuture::from(chainmain_client().broadcast_tx(signed_data))
+        .await
+        .unwrap();
+    wait_for_timeout().await;
+    let delegator_balance2 = query_chainmain_balance(DELEGATOR1).await;
+    let withdrawer_balance2 = query_chainmain_balance(DELEGATOR2).await;
 
     // Delegator should only pay the fee and receive no reward.
     assert_eq!(
-        delegator_complete_balance,
+        delegator_balance2,
         RawRpcBalance {
             denom: CHAINMAIN_DENOM.to_owned(),
-            amount: (U256::from_dec_str(&delegator_beginning_balance.amount).unwrap()
-                - 25_000_000_000_u64)
+            amount: (U256::from_dec_str(&delegator_balance1.amount).unwrap() - DEFAULT_FEE_AMOUNT)
                 .to_string()
         }
     );
 
     // Withdrawer should get the reward.
     assert!(
-        U256::from_dec_str(&withdrawer_complete_balance.amount).unwrap()
-            > U256::from_dec_str(&withdrawer_beginning_balance.amount).unwrap()
+        U256::from_dec_str(&withdrawer_balance2.amount).unwrap()
+            > U256::from_dec_str(&withdrawer_balance1.amount).unwrap()
     );
 }
 
-async fn build_tx_info(address: &str) -> CosmosSDKTxInfoRaw {
-    let account = query_chainmain_account(address).await;
-
-    CosmosSDKTxInfoRaw::new(
-        account.account_number,
-        account.sequence,
-        DEFAULT_GAS_LIMIT,
-        DEFAULT_FEE_AMOUNT,
+fn add_delegate_msg(tx: &mut CosmosTx) {
+    tx.add_msg(CosmosMsg::build_staking_delegate_msg(
+        VALIDATOR1.to_owned(),
+        STAKING_DELEGATE_AMOUNT,
         CHAINMAIN_DENOM.to_owned(),
-        0,
-        Some("".to_owned()),
-        CHAIN_ID.to_owned(),
-        Network::CryptoOrgMainnet.get_bech32_hrp().to_owned(),
-        Network::CryptoOrgMainnet.get_coin_type(),
-    )
+    ));
 }
 
-fn get_private_key(mnemonic: &str) -> PrivateKey {
-    let wallet = Wallet::recover_wallet(mnemonic.to_owned(), None).unwrap();
-    wallet.get_key("m/44'/394'/0'/0/0".to_owned()).unwrap()
+fn add_set_withdraw_address_msg(tx: &mut CosmosTx) {
+    tx.add_msg(CosmosMsg::build_distribution_set_withdraw_address_msg(
+        DELEGATOR2.to_owned(),
+    ));
 }
 
-async fn send_delegate_msg(
-    delegator_address: &str,
-    validator_address: &str,
-    private_key: &PrivateKey,
-) {
-    let tx_info = build_tx_info(delegator_address).await;
-
-    let signed_tx = get_staking_delegate_signed_tx(
-        tx_info,
-        private_key.clone(),
-        validator_address.to_owned(),
-        100_000_000_000,
-        CHAINMAIN_DENOM.to_owned(),
-        true,
-    )
-    .unwrap();
-
-    broadcast_tx(TENDERMINT_RPC_URL.to_owned(), signed_tx)
-        .await
-        .unwrap();
+fn add_withdraw_reward_msg(tx: &mut CosmosTx) {
+    tx.add_msg(CosmosMsg::build_distribution_withdraw_delegator_reward_msg(
+        VALIDATOR1.to_owned(),
+    ));
 }
 
-async fn send_set_withdraw_address_msg(
-    delegator_address: &str,
-    withdraw_address: &str,
-    private_key: &PrivateKey,
-) {
-    let tx_info = build_tx_info(delegator_address).await;
-
-    let signed_tx = get_distribution_set_withdraw_address_signed_tx(
-        tx_info,
-        private_key.clone(),
-        withdraw_address.to_owned(),
+async fn sign_tx(tx: &mut CosmosTx) -> Vec<u8> {
+    tx.sign_into(
+        get_private_key(DELEGATOR1_MNEMONIC),
+        chainmain_tx_info(DELEGATOR1).await,
     )
-    .unwrap();
-
-    broadcast_tx(TENDERMINT_RPC_URL.to_owned(), signed_tx)
-        .await
-        .unwrap();
-}
-
-async fn send_withdraw_reward_msg(
-    delegator_address: &str,
-    validator_address: &str,
-    private_key: &PrivateKey,
-) {
-    let tx_info = build_tx_info(delegator_address).await;
-
-    let signed_tx = get_distribution_withdraw_reward_signed_tx(
-        tx_info,
-        private_key.clone(),
-        validator_address.to_owned(),
-    )
-    .unwrap();
-
-    broadcast_tx(TENDERMINT_RPC_URL.to_owned(), signed_tx)
-        .await
-        .unwrap();
+    .unwrap()
 }
