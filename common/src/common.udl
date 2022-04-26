@@ -48,6 +48,9 @@ interface SecretKey {
     string get_public_key_hex();
     sequence<u8> to_bytes();
     string to_hex();
+
+    [Throws=HdWrapError]
+    string to_address(WalletCoin coin);
 };
 
 [Error]
@@ -294,6 +297,30 @@ enum EthError {
   "JsonError",
 };
 
+interface EthAbiContract {
+  [Throws=EthError]
+  constructor([ByRef] string abi);
+};
+
+interface CosmosSigner {
+    constructor(SecretKey secret_key);
+
+    [Throws=CosmosError]
+    string sign_direct([ByRef] string chain_id, [ByRef] string account_number, [ByRef] string auth_info_bytes, [ByRef] string body_bytes);
+};
+
+interface EthSigner {
+    constructor(SecretKey secret_key);
+
+    [Throws=EthError]
+    string eth_sign_insecure([ByRef] string hash);
+
+    string personal_sign([ByRef] string message);
+
+    [Throws=EthError]
+    string sign_typed_data([ByRef] string json_typed_data);
+};
+
 [Enum]
 interface EthAmount {
     WeiDecimal(string amount);
@@ -400,4 +427,8 @@ namespace common {
   [Throws=EthError]
   TransactionReceipt broadcast_contract_batch_transfer_tx_blocking(ContractBatchTransfer batch_transfer_details, EthNetwork network, SecretKey secret_key, [ByRef] string web3api_url);
   string bytes_to_hex(sequence<u8> data);
+  [Throws=EthError]
+  sequence<u8> eth_sign_transaction([ByRef] string json_str, SecretKey secret_key);
+  [Throws=EthError]
+  sequence<u8> eth_sign_transaction_with_chainid([ByRef] string json_str, SecretKey secret_key, u64 chain_id);
 };
