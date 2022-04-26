@@ -2,6 +2,7 @@ UNAME := $(shell uname)
 
 cpp_example = ./example/cpp-example
 
+cpp_docs = ./docs/cpp
 .PHONY: wasm js wasmweb android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests mobile-release
 
 wasm:
@@ -47,6 +48,11 @@ build_cpp:
 	cargo build --package defi-wallet-core-cpp --release
 	cd $(cpp_example) && make build
 
+build_cpp_with_doxygen:
+	cargo build --package defi-wallet-core-cpp --features doxygen --release
+	cd $(cpp_example) && make build
+
+
 cpp: build_cpp
 	. ./scripts/.env && cd $(cpp_example) && make run
 
@@ -85,8 +91,7 @@ cpp-ci-tests: build_cpp
 
 cpp-tests: python-tests
 
-# TODO or use other docs engine
-cpp-docs: build_cpp
+cpp-docs-legacy: build_cpp
 	grep -h -R -E "//" -A 1 -R --include "$(cpp_example)/defi-wallet-core-cpp/src/*.h" > cpp_docs.md
 # add break line
 	sed -i '' 's/--/---\n/g' cpp_docs.md
@@ -99,6 +104,35 @@ cpp-docs: build_cpp
 # remove } // lines
 	sed -i '' 's/^} \/\/.*//g' cpp_docs.md
 
+cpp-docs: cpp-docs-mdbook
+
+cpp-docs-doxygen: build_cpp_with_doxygen
+	cd $(cpp_docs) && doxygen
+	open $(cpp_docs)/doxygen/html/index.html
+
+cpp-docs-sphinx: build_cpp_with_doxygen
+	cd $(cpp_docs) && doxygen && cd sphinx && make html
+	open $(cpp_docs)/sphinx/_build/html/index.html
+
+cpp-docs-gitbook: build_cpp_with_doxygen
+	cd $(cpp_docs) && doxygen
+	cd $(cpp_docs) && doxybook2 \
+		--input doxygen/xml \
+		--output gitbook/src \
+		--config config.json \
+		--summary-input SUMMARY.md.tmpl \
+		--summary-output gitbook/src/SUMMARY.md
+	cd $(cpp_docs)/gitbook/src && gitbook serve
+
+cpp-docs-mdbook: build_cpp_with_doxygen
+	cd $(cpp_docs) && doxygen
+	cd $(cpp_docs) && doxybook2 \
+		--input doxygen/xml \
+		--output mdbook/src \
+		--config config.json \
+		--summary-input SUMMARY.md.tmpl \
+		--summary-output mdbook/src/SUMMARY.md
+	cd $(cpp_docs)/mdbook && mdbook serve --open
 
 lint-py:
 	flake8 --show-source --count --statistics \

@@ -19,6 +19,11 @@ tokio = { version = "1", features = ["rt"] }
 [build-dependencies]
 cxx-build = "1"
 
+# TODO Wait until https://github.com/dtolnay/cxx/pull/1048 is merged or similar solution is found
+cxx-build-with-doxygen = { git = "https://github.com/crypto-com/cxx.git", rev = "42b011184b6d5a593cd7513edb1d554e0f086a0f", package = "cxx-build", optional = true }
+
+[features]
+doxygen = ["cxx-build-with-doxygen/doxygen"]
 
 [lib]
 crate-type = ["staticlib", "cdylib"]
