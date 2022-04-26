@@ -6,7 +6,9 @@
 
 use core::time::Duration;
 use defi_wallet_core_common::{Network, RawRpcAccountResponse, RawRpcAccountStatus, RawRpcBalance};
-use defi_wallet_core_wasm::{CosmosClient, CosmosClientConfig, CosmosSDKTxInfoRaw};
+use defi_wallet_core_wasm::{
+    CosmosClient, CosmosClientConfig, CosmosSDKTxInfoRaw, PrivateKey, Wallet,
+};
 use wasm_bindgen_futures::JsFuture;
 use wasm_timer::Delay;
 
@@ -47,19 +49,36 @@ pub(crate) const DEFAULT_WAITING_DURATION: Duration = Duration::from_secs(3);
 
 // Helper functions
 
-pub(crate) async fn wait_for_timeout() {
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
-}
-
 pub(crate) fn chainmain_client() -> CosmosClient {
     let config =
         CosmosClientConfig::new(CHAINMAIN_API_URL.to_owned(), TENDERMINT_RPC_URL.to_owned());
     CosmosClient::new(config)
 }
 
+pub(crate) async fn chainmain_tx_info(address: &str) -> CosmosSDKTxInfoRaw {
+    let account = query_chainmain_account(address).await;
+    CosmosSDKTxInfoRaw::new(
+        account.account_number,
+        account.sequence, // the sequence returned by server is what we need for next tx
+        DEFAULT_GAS_LIMIT,
+        DEFAULT_FEE_AMOUNT,
+        CHAINMAIN_DENOM.to_owned(),
+        0,
+        Some("".to_owned()),
+        CHAIN_ID.to_owned(),
+        Network::CryptoOrgMainnet.get_bech32_hrp().to_owned(),
+        Network::CryptoOrgMainnet.get_coin_type(),
+    )
+}
+
 pub(crate) fn cronos_client() -> CosmosClient {
     let config = CosmosClientConfig::new(CRONOS_API_URL.to_owned(), TENDERMINT_RPC_URL.to_owned());
     CosmosClient::new(config)
+}
+
+pub(crate) fn get_private_key(mnemonic: &str) -> PrivateKey {
+    let wallet = Wallet::recover_wallet(mnemonic.to_owned(), None).unwrap();
+    wallet.get_key("m/44'/394'/0'/0/0".to_owned()).unwrap()
 }
 
 pub(crate) async fn query_chainmain_account(address: &str) -> RawRpcAccountStatus {
@@ -88,19 +107,6 @@ pub(crate) async fn query_chainmain_balance(address: &str) -> RawRpcBalance {
     .unwrap()
 }
 
-pub(crate) async fn query_cronos_account(address: &str) -> RawRpcAccountStatus {
-    let account_details = JsFuture::from(cronos_client().query_account_details(address.to_owned()))
-        .await
-        .unwrap()
-        .into_serde::<RawRpcAccountResponse>()
-        .unwrap();
-
-    match account_details {
-        RawRpcAccountResponse::OkResponse { account } => account,
-        _ => panic!("Failed to query account details"),
-    }
-}
-
 pub(crate) async fn query_cronos_balance(address: &str) -> RawRpcBalance {
     JsFuture::from(cronos_client().query_account_balance(
         address.to_owned(),
@@ -113,18 +119,6 @@ pub(crate) async fn query_cronos_balance(address: &str) -> RawRpcBalance {
     .unwrap()
 }
 
-pub(crate) async fn chainmain_tx_info(address: &str) -> CosmosSDKTxInfoRaw {
-    let account = query_chainmain_account(address).await;
-    CosmosSDKTxInfoRaw::new(
-        account.account_number,
-        account.sequence, // the sequence returned by server is what we need for next tx
-        DEFAULT_GAS_LIMIT,
-        DEFAULT_FEE_AMOUNT,
-        CHAINMAIN_DENOM.to_owned(),
-        0,
-        Some("".to_owned()),
-        CHAIN_ID.to_owned(),
-        Network::CryptoOrgMainnet.get_bech32_hrp().to_owned(),
-        Network::CryptoOrgMainnet.get_coin_type(),
-    )
+pub(crate) async fn wait_for_timeout() {
+    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
 }
