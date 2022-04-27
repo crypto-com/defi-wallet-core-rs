@@ -45,7 +45,7 @@ pub(crate) const SIGNER2_MNEMONIC: &str = "night renew tonight dinner shaft sche
 pub(crate) const DEFAULT_GAS_LIMIT: u64 = 50_000_000;
 pub(crate) const DEFAULT_FEE_AMOUNT: u64 = 25_000_000_000;
 
-pub(crate) const DEFAULT_WAITING_DURATION: Duration = Duration::from_secs(3);
+pub(crate) const DEFAULT_WAITING_SECS: u64 = 3;
 
 // Helper functions
 
@@ -119,6 +119,8 @@ pub(crate) async fn query_cronos_balance(address: &str) -> RawRpcBalance {
     .unwrap()
 }
 
-pub(crate) async fn wait_for_timeout() {
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+pub(crate) async fn wait_for_timeout(secs: Option<u64>) {
+    Delay::new(Duration::from_secs(secs.unwrap_or(DEFAULT_WAITING_SECS)))
+        .await
+        .unwrap();
 }

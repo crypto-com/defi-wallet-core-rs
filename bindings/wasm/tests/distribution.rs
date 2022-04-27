@@ -4,7 +4,7 @@
 
 mod test_helper;
 
-use defi_wallet_core_common::{Network, RawRpcBalance};
+use defi_wallet_core_common::RawRpcBalance;
 use defi_wallet_core_wasm::{CosmosMsg, CosmosTx};
 use ethers::types::U256;
 use std::assert_eq;
@@ -26,7 +26,7 @@ async fn test_reward_withdrawed_to_default_address() {
     JsFuture::from(chainmain_client().broadcast_tx(signed_data))
         .await
         .unwrap();
-    wait_for_timeout().await;
+    wait_for_timeout(None).await;
     let balance2 = query_chainmain_balance(DELEGATOR1).await;
 
     assert_eq!(
@@ -45,7 +45,7 @@ async fn test_reward_withdrawed_to_default_address() {
     JsFuture::from(chainmain_client().broadcast_tx(signed_data))
         .await
         .unwrap();
-    wait_for_timeout().await;
+    wait_for_timeout(None).await;
     let balance3 = query_chainmain_balance(DELEGATOR1).await;
 
     assert_eq!(balance3.denom, CHAINMAIN_DENOM.to_owned());
@@ -68,7 +68,7 @@ async fn test_reward_withdrawed_to_set_address() {
     JsFuture::from(chainmain_client().broadcast_tx(signed_data))
         .await
         .unwrap();
-    wait_for_timeout().await;
+    wait_for_timeout(None).await;
 
     add_withdraw_reward_msg(&mut tx);
     let signed_data = sign_tx(&mut tx).await;
@@ -78,7 +78,7 @@ async fn test_reward_withdrawed_to_set_address() {
     JsFuture::from(chainmain_client().broadcast_tx(signed_data))
         .await
         .unwrap();
-    wait_for_timeout().await;
+    wait_for_timeout(None).await;
     let delegator_balance2 = query_chainmain_balance(DELEGATOR1).await;
     let withdrawer_balance2 = query_chainmain_balance(DELEGATOR2).await;
 

@@ -12,7 +12,6 @@ use defi_wallet_core_wasm::{
 use std::{assert, assert_eq};
 use test_helper::*;
 use wasm_bindgen_test::*;
-use wasm_timer::Delay;
 
 use tendermint_rpc::endpoint::broadcast::tx_sync::Response;
 
@@ -86,7 +85,7 @@ impl NftWallet {
     }
 
     async fn issue(&self, denom: Denom) -> Response {
-        wait_for_timeout().await;
+        wait_for_timeout(None).await;
         self.broadcast(
             get_nft_issue_denom_signed_tx(
                 chainmain_tx_info(&self.address).await,
@@ -109,7 +108,7 @@ impl NftWallet {
         data: &str,
         recipient: &str,
     ) -> Response {
-        wait_for_timeout().await;
+        wait_for_timeout(None).await;
         self.broadcast(
             get_nft_mint_signed_tx(
                 chainmain_tx_info(&self.address).await,
@@ -127,7 +126,7 @@ impl NftWallet {
     }
 
     async fn edit(&self, id: &str, denom_id: &str, name: &str, uri: &str, data: &str) -> Response {
-        wait_for_timeout().await;
+        wait_for_timeout(None).await;
         self.broadcast(
             get_nft_edit_signed_tx(
                 chainmain_tx_info(&self.address).await,
@@ -144,7 +143,7 @@ impl NftWallet {
     }
 
     async fn transfer(&self, id: &str, denom_id: &str, recipient: &str) -> Response {
-        wait_for_timeout().await;
+        wait_for_timeout(None).await;
         self.broadcast(
             get_nft_transfer_signed_tx(
                 chainmain_tx_info(&self.address).await,
@@ -159,7 +158,7 @@ impl NftWallet {
     }
 
     async fn burn(&self, id: &str, denom_id: &str) -> Response {
-        wait_for_timeout().await;
+        wait_for_timeout(None).await;
         self.broadcast(
             get_nft_burn_signed_tx(
                 chainmain_tx_info(&self.address).await,
@@ -242,7 +241,7 @@ async fn test_nft() {
     };
     let res = wallet.issue(denom2.clone()).await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    wait_for_timeout(None).await;
 
     let res = wallet
         .grpc_web_client
@@ -295,7 +294,7 @@ async fn test_nft() {
         .mint(tokenid, &denom1.clone().id, "", "testuri", "", SIGNER2)
         .await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    wait_for_timeout(None).await;
 
     // Check nft after minting
     let res = wallet
@@ -336,7 +335,7 @@ async fn test_nft() {
         .finalize();
     let res = wallet.transfer(tokenid, &denom1.clone().id, SIGNER1).await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    wait_for_timeout(None).await;
     let res = wallet
         .grpc_web_client
         .nft(denom1.clone().id, tokenid.to_owned())
@@ -371,7 +370,7 @@ async fn test_nft() {
         .edit(tokenid, &denom1.clone().id, "newname", "newuri", "newdata")
         .await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    wait_for_timeout(None).await;
     let res = wallet
         .grpc_web_client
         .nft(denom1.clone().id, tokenid.to_owned())
@@ -396,7 +395,7 @@ async fn test_nft() {
     //
     let res = wallet.burn(tokenid, &denom1.clone().id).await;
     assert_eq!(res.code, tendermint::abci::Code::Ok);
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    wait_for_timeout(None).await;
     let res = wallet
         .grpc_web_client
         .nft(denom1.clone().id, tokenid.to_owned())

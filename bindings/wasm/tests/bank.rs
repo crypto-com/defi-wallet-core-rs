@@ -35,7 +35,7 @@ async fn test_get_single_bank_send_signed_tx() {
     JsFuture::from(chainmain_client().broadcast_tx(signed_data))
         .await
         .unwrap();
-    wait_for_timeout().await;
+    wait_for_timeout(None).await;
     let balance2 = query_chainmain_balance(SIGNER2).await;
 
     assert_eq!(

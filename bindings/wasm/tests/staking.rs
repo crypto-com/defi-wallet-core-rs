@@ -13,7 +13,6 @@ use ethers::types::U256;
 use std::assert_eq;
 use test_helper::*;
 use wasm_bindgen_test::*;
-use wasm_timer::Delay;
 
 wasm_bindgen_test_configure!(run_in_browser);
 
@@ -64,8 +63,7 @@ async fn test_delegate_and_unbound() {
         .await
         .unwrap();
 
-    // Delay to wait the tx is included in the block, could be improved by waiting block
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    wait_for_timeout(None).await;
 
     // Query and compare balance after delegating.
     let after_delegating_balance = query_chainmain_balance(DELEGATOR1).await;
@@ -111,8 +109,7 @@ async fn test_delegate_and_unbound() {
         .await
         .unwrap();
 
-    // Delay to wait the tx is included in the block, could be improved by waiting block
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    wait_for_timeout(None).await;
 
     // Query and compare balance after unbonding.
     let after_unbonding_balance = query_chainmain_balance(DELEGATOR1).await;
@@ -167,8 +164,7 @@ async fn test_redelegate() {
         .await
         .unwrap();
 
-    // Delay to wait the tx is included in the block, could be improved by waiting block
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    wait_for_timeout(None).await;
 
     // Query and compare balance after delegating.
     let after_delegating_balance = query_chainmain_balance(DELEGATOR2).await;
@@ -214,8 +210,7 @@ async fn test_redelegate() {
         .await
         .unwrap();
 
-    // Delay to wait the tx is included in the block, could be improved by waiting block
-    Delay::new(DEFAULT_WAITING_DURATION).await.unwrap();
+    wait_for_timeout(None).await;
 
     // Query and compare balance after redelegating.
     let after_redelegating_balance = query_chainmain_balance(DELEGATOR2).await;
