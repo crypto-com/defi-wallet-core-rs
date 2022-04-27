@@ -65,5 +65,5 @@ async fn send_transfer_msg() {
     JsFuture::from(chainmain_client().broadcast_tx(signed_data))
         .await
         .unwrap();
-    wait_for_timeout(None).await;
+    wait_for_timeout(Some(6)).await;
 }
