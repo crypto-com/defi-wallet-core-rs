@@ -25,11 +25,3 @@ async fn test_query_chainmain_balance() {
     assert_eq!(balance.denom, CHAINMAIN_DENOM);
     assert!(balance.amount.parse::<u128>().unwrap() > 0);
 }
-
-#[wasm_bindgen_test]
-async fn test_query_cronos_balance() {
-    let balance = query_cronos_balance(CRONOS_COMMUNITY).await;
-
-    assert_eq!(balance.denom, CRONOS_DENOM);
-    assert!(balance.amount.parse::<u128>().unwrap() > 0);
-}

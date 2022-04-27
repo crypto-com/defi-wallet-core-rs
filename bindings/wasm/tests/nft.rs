@@ -41,7 +41,6 @@ async fn test_nft() {
     let denom2 = test_denom2();
     let mut client1 = NftClient::new(SIGNER1, SIGNER1_MNEMONIC);
     let mut client2 = NftClient::new(SIGNER2, SIGNER2_MNEMONIC);
-    let mut grpc_client = grpc_web_client();
 
     // Issue denom1 and denom2 by signer1.
     client1.add_issue_msg(&denom1);
