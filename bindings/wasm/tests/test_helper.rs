@@ -7,7 +7,7 @@
 use core::time::Duration;
 use defi_wallet_core_common::{Network, RawRpcAccountResponse, RawRpcAccountStatus, RawRpcBalance};
 use defi_wallet_core_wasm::{
-    CosmosClient, CosmosClientConfig, CosmosSDKTxInfoRaw, PrivateKey, Wallet,
+    CosmosClient, CosmosClientConfig, CosmosSDKTxInfoRaw, GrpcWebClient, PrivateKey, Wallet,
 };
 use wasm_bindgen_futures::JsFuture;
 use wasm_timer::Delay;
@@ -79,6 +79,10 @@ pub(crate) fn cronos_client() -> CosmosClient {
 pub(crate) fn get_private_key(mnemonic: &str) -> PrivateKey {
     let wallet = Wallet::recover_wallet(mnemonic.to_owned(), None).unwrap();
     wallet.get_key("m/44'/394'/0'/0/0".to_owned()).unwrap()
+}
+
+pub(crate) fn grpc_web_client() -> GrpcWebClient {
+    GrpcWebClient::new(GRPC_WEB_URL.to_owned())
 }
 
 pub(crate) async fn query_chainmain_account(address: &str) -> RawRpcAccountStatus {

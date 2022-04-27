@@ -6,12 +6,10 @@ use wasm_bindgen::prelude::*;
 
 mod cosmos_sdk;
 mod ethereum;
-mod nft;
 mod utils;
 
 pub use cosmos_sdk::*;
 pub use ethereum::*;
-pub use nft::*;
 pub use utils::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
