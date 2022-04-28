@@ -17,8 +17,9 @@ cp bindings/ios/dwc_commonFFI.h mobile_modules/ios_module/dwclib/dwclib/include/
 cp bindings/ios/common.swift mobile_modules/ios_module/dwclib/dwclib/ || exit 1
 cd mobile_modules/ios_module/dwclib/
 type strip || exit 1
-xcodebuild SYMROOT="./build" -configuration Release -target dwclib -arch arm64 -sdk iphoneos build || exit 1
-strip --strip-all build/Release-iphoneos/dwclib.framework/dwclib || exit 1
+# Because the build needs to be signed, so comment first
+# xcodebuild SYMROOT="./build" -configuration Release -target dwclib -arch arm64 -sdk iphoneos build || exit 1
+# strip --strip-all build/Release-iphoneos/dwclib.framework/dwclib || exit 1
 xcodebuild SYMROOT="./build" -configuration Release -target dwclib -arch x86_64 -sdk iphonesimulator build || exit 1
 strip --strip-all build/Release-iphoneos/dwclib.framework/dwclib || exit 1
 xcodebuild -scheme dwclib -destination 'platform=iOS Simulator,name=iPhone 12' test || exit 1
