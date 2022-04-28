@@ -1,6 +1,7 @@
 //! Test suite for ethereum transactions.
 
 #![cfg(target_arch = "wasm32")]
+#![cfg(feature = "cronos-test")]
 
 mod test_helper;
 use defi_wallet_core_wasm::{
