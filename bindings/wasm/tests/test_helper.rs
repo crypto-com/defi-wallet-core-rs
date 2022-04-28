@@ -6,7 +6,10 @@
 
 use core::time::Duration;
 use defi_wallet_core_common::{Network, RawRpcAccountResponse, RawRpcAccountStatus, RawRpcBalance};
-use defi_wallet_core_wasm::{query_account_balance, query_account_details, CosmosSDKTxInfoRaw};
+use defi_wallet_core_wasm::{
+    CosmosClient, CosmosClientConfig, CosmosSDKTxInfoRaw, GrpcWebClient, PrivateKey, Wallet,
+};
+use wasm_bindgen_futures::JsFuture;
 use wasm_timer::Delay;
 
 pub(crate) const CHAIN_ID: &str = "chainmain-1";
@@ -25,7 +28,13 @@ pub(crate) const SIGNER2: &str = "cro1apdh4yc2lnpephevc6lmpvkyv6s5cjh652n6e4";
 pub(crate) const VALIDATOR1: &str = "crocncl1pk9eajj4zuzpptnadwz6tzfgcpchqvpkvql0a9";
 pub(crate) const VALIDATOR2: &str = "crocncl1dkwjtmkueye3fqwzyv2jrdn7fspd2jkm37nunc";
 
+pub(crate) const CRONOS_COMMUNITY: &str = "crc1x7x9pkfxf33l87ftspk5aetwnkr0lvlv3346cd";
 pub(crate) const CRONOS_DELEGATOR1: &str = "crc1zgxux2e3m8aexy9husuglyez2dcdmyw6nlkv79";
+pub(crate) const CRONOS_DELEGATOR2: &str = "crc1nmptsrsac2hejmtc6kkz70zlc745ls5mm3pl7q";
+pub(crate) const CRONOS_SIGNER1: &str = "crc16z0herz998946wr659lr84c8c556da55dc34hh";
+pub(crate) const CRONOS_SIGNER2: &str = "crc1q04jewhxw4xxu3vlg3rc85240h9q7ns6hglz0g";
+pub(crate) const CRONOS_VALIDATOR1: &str = "crc12luku6uxehhak02py4rcz65zu0swh7wjsrw0pp";
+pub(crate) const CRONOS_VALIDATOR2: &str = "crc18z6q38mhvtsvyr5mak8fj8s8g4gw7kjjtsgrn7";
 
 pub(crate) const COMMUNITY_MNEMONIC: &str = "notable error gospel wave pair ugly measure elite toddler cost various fly make eye ketchup despair slab throw tribe swarm word fruit into inmate";
 pub(crate) const DELEGATOR1_MNEMONIC: &str = "yard night airport critic main upper measure metal unhappy cliff pistol square upon access math owner enemy unfold scan small injury blind aunt million";
@@ -36,63 +45,18 @@ pub(crate) const SIGNER2_MNEMONIC: &str = "night renew tonight dinner shaft sche
 pub(crate) const DEFAULT_GAS_LIMIT: u64 = 50_000_000;
 pub(crate) const DEFAULT_FEE_AMOUNT: u64 = 25_000_000_000;
 
-pub(crate) const DEFAULT_WAITING_DURATION: Duration = Duration::from_secs(3);
+pub(crate) const DEFAULT_WAITING_SECS: u64 = 3;
 
 // Helper functions
 
-pub(crate) async fn query_account(address: &str) -> RawRpcAccountStatus {
-    let account_details = query_account_details(CHAINMAIN_API_URL.to_owned(), address.to_owned())
-        .await
-        .unwrap()
-        .into_serde::<RawRpcAccountResponse>()
-        .unwrap();
-
-    match account_details {
-        RawRpcAccountResponse::OkResponse { account } => account,
-        _ => panic!("Failed to query account details"),
-    }
+pub(crate) fn chainmain_client() -> CosmosClient {
+    let config =
+        CosmosClientConfig::new(CHAINMAIN_API_URL.to_owned(), TENDERMINT_RPC_URL.to_owned());
+    CosmosClient::new(config)
 }
 
-pub(crate) async fn query_chainmain_balance(address: &str) -> RawRpcBalance {
-    query_account_balance(
-        CHAINMAIN_API_URL.to_owned(),
-        address.to_owned(),
-        CHAINMAIN_DENOM.to_owned(),
-        1,
-    )
-    .await
-    .unwrap()
-    .into_serde::<RawRpcBalance>()
-    .unwrap()
-}
-
-pub(crate) async fn query_cronos_balance(address: &str) -> RawRpcBalance {
-    query_account_balance(
-        CRONOS_API_URL.to_owned(),
-        address.to_owned(),
-        CRONOS_DENOM.to_owned(),
-        0,
-    )
-    .await
-    .unwrap()
-    .into_serde::<RawRpcBalance>()
-    .unwrap()
-}
-
-pub(crate) async fn get_tx_info(address: String) -> CosmosSDKTxInfoRaw {
-    // Delay to wait the tx is included in the block, could be improved by waiting block
-    let _ = Delay::new(DEFAULT_WAITING_DURATION).await;
-    let account_details = query_account_details(CHAINMAIN_API_URL.to_owned(), address)
-        .await
-        .unwrap()
-        .into_serde::<RawRpcAccountResponse>()
-        .unwrap();
-
-    let account = match account_details {
-        RawRpcAccountResponse::OkResponse { account } => account,
-        _ => panic!("Failed to query account details"),
-    };
-
+pub(crate) async fn chainmain_tx_info(address: &str) -> CosmosSDKTxInfoRaw {
+    let account = query_chainmain_account(address).await;
     CosmosSDKTxInfoRaw::new(
         account.account_number,
         account.sequence, // the sequence returned by server is what we need for next tx
@@ -105,4 +69,62 @@ pub(crate) async fn get_tx_info(address: String) -> CosmosSDKTxInfoRaw {
         Network::CryptoOrgMainnet.get_bech32_hrp().to_owned(),
         Network::CryptoOrgMainnet.get_coin_type(),
     )
+}
+
+pub(crate) fn cronos_client() -> CosmosClient {
+    let config = CosmosClientConfig::new(CRONOS_API_URL.to_owned(), TENDERMINT_RPC_URL.to_owned());
+    CosmosClient::new(config)
+}
+
+pub(crate) fn get_private_key(mnemonic: &str) -> PrivateKey {
+    let wallet = Wallet::recover_wallet(mnemonic.to_owned(), None).unwrap();
+    wallet.get_key("m/44'/394'/0'/0/0".to_owned()).unwrap()
+}
+
+pub(crate) fn grpc_web_client() -> GrpcWebClient {
+    GrpcWebClient::new(GRPC_WEB_URL.to_owned())
+}
+
+pub(crate) async fn query_chainmain_account(address: &str) -> RawRpcAccountStatus {
+    let account_details =
+        JsFuture::from(chainmain_client().query_account_details(address.to_owned()))
+            .await
+            .unwrap()
+            .into_serde::<RawRpcAccountResponse>()
+            .unwrap();
+
+    match account_details {
+        RawRpcAccountResponse::OkResponse { account } => account,
+        _ => panic!("Failed to query account details"),
+    }
+}
+
+pub(crate) async fn query_chainmain_balance(address: &str) -> RawRpcBalance {
+    JsFuture::from(chainmain_client().query_account_balance(
+        address.to_owned(),
+        CHAINMAIN_DENOM.to_owned(),
+        1,
+    ))
+    .await
+    .unwrap()
+    .into_serde::<RawRpcBalance>()
+    .unwrap()
+}
+
+pub(crate) async fn query_cronos_balance(address: &str) -> RawRpcBalance {
+    JsFuture::from(cronos_client().query_account_balance(
+        address.to_owned(),
+        CRONOS_DENOM.to_owned(),
+        0,
+    ))
+    .await
+    .unwrap()
+    .into_serde::<RawRpcBalance>()
+    .unwrap()
+}
+
+pub(crate) async fn wait_for_timeout(secs: Option<u64>) {
+    Delay::new(Duration::from_secs(secs.unwrap_or(DEFAULT_WAITING_SECS)))
+        .await
+        .unwrap();
 }
