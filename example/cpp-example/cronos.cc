@@ -433,17 +433,9 @@ void test_interval() {
                     .legacy();
 
   // signer1 approve singer2 allowance
-  try {
-    timepoint begin = std::chrono::high_resolution_clock::now();
-    erc20.interval(100).approve(signer2_address, "1000", *signer1_privatekey);
-    measure_time(begin, "erc20.approve 1st try");
-  } catch (const rust::cxxbridge1::Error &e) {
-    if (std::strcmp(e.what(), "Transaction dropped from the mempool") == 0) {
-      timepoint begin = std::chrono::high_resolution_clock::now();
-      erc20.approve(signer2_address, "1000", *signer1_privatekey);
-      measure_time(begin, "erc20.approve 2nd try");
-    }
-  }
+  timepoint begin = std::chrono::high_resolution_clock::now();
+  erc20.interval(4000).approve(signer2_address, "1000", *signer1_privatekey);
+  measure_time(begin, "erc20.approve polling 4000ms");
 }
 
 timepoint measure_time(timepoint t1, std::string label) {
