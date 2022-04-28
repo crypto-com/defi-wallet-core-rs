@@ -61,7 +61,7 @@ wasm-ci-tests:
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/start-all"
-	cd bindings/wasm/ && wasm-pack test --chrome --headless -- --features cronos-test ibc-test --test ethereum ibc && cd ../..
+	cd bindings/wasm/ && wasm-pack test --chrome --headless -- --features cronos-test,ibc-test --test ibc --test ethereum && cd ../..
 	@nix-shell ./integration_tests/shell.nix --run "scripts/stop-all"
 
 # No ibc test
