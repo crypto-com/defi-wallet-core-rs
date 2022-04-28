@@ -24,11 +24,11 @@ async fn test_ethereum() {
     let to_address = to_wallet.get_default_address(CoinType::Cronos).unwrap();
     let now = Instant::now();
     let initial_balance: BigInt =
-        query_account_eth_balance(CRONOS_API_URL.to_owned(), to_address.clone())
+        query_account_eth_balance(CRONOS_RPC_URL.to_owned(), to_address.clone())
             .await
             .unwrap();
     broadcast_transfer_eth(
-        CRONOS_API_URL.to_owned(),
+        CRONOS_RPC_URL.to_owned(),
         to_address.clone(),
         EthTxAmount::new("100".to_owned(), "wei".to_owned()),
         777,
@@ -39,13 +39,13 @@ async fn test_ethereum() {
     .await
     .unwrap();
     let second_balance: BigInt =
-        query_account_eth_balance(CRONOS_API_URL.to_owned(), to_address.clone())
+        query_account_eth_balance(CRONOS_RPC_URL.to_owned(), to_address.clone())
             .await
             .unwrap();
     assert_eq!(second_balance, initial_balance + BigInt::from(100));
     assert!(now.elapsed().as_millis() > 4000); // test the interval works
 
-    let nonce = get_eth_transaction_count(from_address, CRONOS_API_URL.to_string())
+    let nonce = get_eth_transaction_count(from_address, CRONOS_RPC_URL.to_string())
         .await
         .unwrap();
     let eth_tx_info = EthTxInfo::new(
@@ -58,12 +58,12 @@ async fn test_ethereum() {
         true,
     );
     let raw_tx = build_signed_eth_tx(eth_tx_info, 777, private_key).unwrap();
-    broadcast_eth_signed_raw_tx(raw_tx, CRONOS_API_URL.to_string(), 4000)
+    broadcast_eth_signed_raw_tx(raw_tx, CRONOS_RPC_URL.to_string(), 4000)
         .await
         .unwrap();
 
     let final_balance: BigInt =
-        query_account_eth_balance(CRONOS_API_URL.to_owned(), to_address.clone())
+        query_account_eth_balance(CRONOS_RPC_URL.to_owned(), to_address.clone())
             .await
             .unwrap();
     assert_eq!(final_balance, second_balance + BigInt::from(1000000000));
