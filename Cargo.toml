@@ -17,7 +17,7 @@ default-members = [
 opt-level = "s"
 debug = true
 lto = "thin"
-# The following configuration minimizes the size of the output packet
+# The following configuration minimizes the size of the output packet, Reference https://github.com/johnthagen/min-sized-rust
 # opt-level = "z"
 # debug = false
 # lto = true
