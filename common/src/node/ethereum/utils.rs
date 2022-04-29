@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::{str::FromStr, sync::Arc, time::Duration};
 
 use crate::{
     construct_simple_eth_transfer_tx, EthAmount, EthError, EthNetwork, SecretKey, WalletCoin,
@@ -241,10 +241,12 @@ pub async fn broadcast_contract_approval_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let provider = provider.interval(Duration::from_millis(polling_interval_ms));
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match approval_details {
@@ -301,10 +303,12 @@ pub async fn broadcast_contract_transfer_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let provider = provider.interval(Duration::from_millis(polling_interval_ms));
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match transfer_details {
@@ -411,10 +415,12 @@ pub async fn broadcast_contract_batch_transfer_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let provider = provider.interval(Duration::from_millis(polling_interval_ms));
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match details {
@@ -460,6 +466,7 @@ pub async fn broadcast_sign_eth_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
@@ -472,6 +479,7 @@ pub async fn broadcast_sign_eth_tx(
     .map_err(EthError::HdWrapError)?;
     let tx = construct_simple_eth_transfer_tx(&from_address, to_hex, amount, legacy, chain_id)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let provider = provider.interval(Duration::from_millis(polling_interval_ms));
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
 
@@ -491,8 +499,10 @@ pub async fn broadcast_sign_eth_tx(
 pub async fn broadcast_eth_signed_raw_tx(
     raw_tx: Vec<u8>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let provider = provider.interval(Duration::from_millis(polling_interval_ms));
     let pending_tx = provider
         .send_raw_transaction(raw_tx.into())
         .await
@@ -554,6 +564,7 @@ pub fn broadcast_sign_eth_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_sign_eth_tx(
@@ -562,6 +573,7 @@ pub fn broadcast_sign_eth_tx_blocking(
         network,
         secret_key,
         web3api_url,
+        polling_interval_ms,
     ))?;
     Ok(result.into())
 }
@@ -576,6 +588,7 @@ pub fn broadcast_contract_approval_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_contract_approval_tx(
@@ -583,6 +596,7 @@ pub fn broadcast_contract_approval_tx_blocking(
         network,
         secret_key,
         web3api_url,
+        polling_interval_ms,
     ))?;
     Ok(result.into())
 }
@@ -597,6 +611,7 @@ pub fn broadcast_contract_transfer_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_contract_transfer_tx(
@@ -604,6 +619,7 @@ pub fn broadcast_contract_transfer_tx_blocking(
         network,
         secret_key,
         web3api_url,
+        polling_interval_ms,
     ))?;
     Ok(result.into())
 }
@@ -618,6 +634,7 @@ pub fn broadcast_contract_batch_transfer_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_contract_batch_transfer_tx(
@@ -625,6 +642,7 @@ pub fn broadcast_contract_batch_transfer_tx_blocking(
         network,
         secret_key,
         web3api_url,
+        polling_interval_ms,
     ))?;
     Ok(result.into())
 }
@@ -636,9 +654,14 @@ pub fn broadcast_contract_batch_transfer_tx_blocking(
 pub fn broadcast_eth_signed_raw_tx_blocking(
     raw_tx: Vec<u8>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    let result = rt.block_on(broadcast_eth_signed_raw_tx(raw_tx, web3api_url))?;
+    let result = rt.block_on(broadcast_eth_signed_raw_tx(
+        raw_tx,
+        web3api_url,
+        polling_interval_ms,
+    ))?;
     Ok(result.into())
 }
 

@@ -4,6 +4,7 @@ use common::get_contract_balance;
 use common::node::ethereum;
 use common::EthNetwork;
 use defi_wallet_core_common as common;
+use ethers::providers::DEFAULT_POLL_INTERVAL;
 
 /// Construct an Erc20 struct
 fn new_erc20(contract_address: String, web3api_url: String, chain_id: u64) -> ffi::Erc20 {
@@ -11,6 +12,7 @@ fn new_erc20(contract_address: String, web3api_url: String, chain_id: u64) -> ff
         contract_address,
         web3api_url,
         inner_legacy: false,
+        inner_polling_interval_ms: DEFAULT_POLL_INTERVAL.as_millis() as u64,
         chain_id,
     }
 }
@@ -55,6 +57,12 @@ impl ffi::Erc20 {
         self.clone()
     }
 
+    /// Sets the default polling interval for event filters and pending transactions
+    fn interval(&mut self, polling_interval_ms: u64) -> Self {
+        self.inner_polling_interval_ms = polling_interval_ms;
+        self.clone()
+    }
+
     /// Moves `amount` tokens from the caller’s account to `to_address`.
     fn transfer(
         &self,
@@ -74,6 +82,7 @@ impl ffi::Erc20 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -99,6 +108,7 @@ impl ffi::Erc20 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -123,6 +133,7 @@ impl ffi::Erc20 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -152,6 +163,7 @@ fn new_erc721(contract_address: String, web3api_url: String, chain_id: u64) -> f
         contract_address,
         web3api_url,
         inner_legacy: false,
+        inner_polling_interval_ms: DEFAULT_POLL_INTERVAL.as_millis() as u64,
         chain_id,
     }
 }
@@ -208,6 +220,12 @@ impl ffi::Erc721 {
         self.clone()
     }
 
+    /// Sets the default polling interval for event filters and pending transactions
+    fn interval(&mut self, polling_interval_ms: u64) -> Self {
+        self.inner_polling_interval_ms = polling_interval_ms;
+        self.clone()
+    }
+
     /// Transfers `token_id` token from `from_address` to `to_address`.
     fn transfer_from(
         &self,
@@ -229,6 +247,7 @@ impl ffi::Erc721 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -254,6 +273,7 @@ impl ffi::Erc721 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -282,6 +302,7 @@ impl ffi::Erc721 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -307,6 +328,7 @@ impl ffi::Erc721 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -331,6 +353,7 @@ impl ffi::Erc721 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -398,6 +421,7 @@ fn new_erc1155(contract_address: String, web3api_url: String, chain_id: u64) -> 
         contract_address,
         web3api_url,
         inner_legacy: false,
+        inner_polling_interval_ms: DEFAULT_POLL_INTERVAL.as_millis() as u64,
         chain_id,
     }
 }
@@ -455,6 +479,12 @@ impl ffi::Erc1155 {
         self.clone()
     }
 
+    /// Sets the default polling interval for event filters and pending transactions
+    fn interval(&mut self, polling_interval_ms: u64) -> Self {
+        self.inner_polling_interval_ms = polling_interval_ms;
+        self.clone()
+    }
+
     /// Transfers `amount` tokens of `token_id` from `from_address` to `to_address` with
     /// `additional_data`.
     fn safe_transfer_from(
@@ -481,6 +511,7 @@ impl ffi::Erc1155 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -510,6 +541,7 @@ impl ffi::Erc1155 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -534,6 +566,7 @@ impl ffi::Erc1155 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -559,6 +592,7 @@ mod ffi {
         contract_address: String,
         web3api_url: String,
         inner_legacy: bool,
+        inner_polling_interval_ms: u64,
         chain_id: u64,
     }
 
@@ -567,6 +601,7 @@ mod ffi {
         contract_address: String,
         web3api_url: String,
         inner_legacy: bool,
+        inner_polling_interval_ms: u64,
         chain_id: u64,
     }
 
@@ -575,6 +610,7 @@ mod ffi {
         contract_address: String,
         web3api_url: String,
         inner_legacy: bool,
+        inner_polling_interval_ms: u64,
         chain_id: u64,
     }
 
@@ -599,6 +635,8 @@ mod ffi {
         fn decimals(self: &Erc20) -> Result<u8>;
         /// Makes a legacy transaction instead of an EIP-1559 one
         fn legacy(self: &mut Erc20) -> Erc20;
+        /// Sets the default polling interval for event filters and pending transactions
+        fn interval(self: &mut Erc20, polling_interval_ms: u64) -> Erc20;
         /// Moves `amount` tokens from the caller’s account to `to_address`.
         fn transfer(
             self: &Erc20,
@@ -641,6 +679,8 @@ mod ffi {
         fn token_uri(self: &Erc721, token_id: String) -> Result<String>;
         /// Makes a legacy transaction instead of an EIP-1559 one
         fn legacy(self: &mut Erc721) -> Erc721;
+        /// Sets the default polling interval for event filters and pending transactions
+        fn interval(self: &mut Erc721, polling_interval_ms: u64) -> Erc721;
         /// Transfers `token_id` token from `from_address` to `to_address`.
         fn transfer_from(
             self: &Erc721,
@@ -722,6 +762,8 @@ mod ffi {
         fn uri(self: &Erc1155, token_id: String) -> Result<String>;
         /// Makes a legacy transaction instead of an EIP-1559 one
         fn legacy(self: &mut Erc1155) -> Erc1155;
+        /// Sets the default polling interval for event filters and pending transactions
+        fn interval(self: &mut Erc1155, polling_interval_ms: u64) -> Erc1155;
         /// Transfers `amount` tokens of `token_id` from `from_address` to `to_address` with
         /// `additional_data`.
         fn safe_transfer_from(
