@@ -16,4 +16,7 @@ cd example/ios-example || exit 1
 make clean
 cd -
 
-
+rm -rf bindings/wasm/target
+rm -rf bindings/wasm/pkg/*
+rm -rf example/extension-example/node_modules
+rm -rf example/js-example/node_modules
