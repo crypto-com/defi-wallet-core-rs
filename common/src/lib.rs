@@ -4,6 +4,7 @@ pub mod contract;
 pub mod node;
 /// transaction building etc.
 pub mod transaction;
+
 /// HD wallet-related functionality
 mod wallet;
 
