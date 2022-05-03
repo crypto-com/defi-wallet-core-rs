@@ -11,7 +11,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val textview = findViewById<TextView>(R.id.textview)
 
-        val wallet = HdWallet.generateWallet("")
+        val wallet = HdWallet.generateWallet("",MnemonicWordCount.TWELVE)
         val mnemonic = wallet.getBackupMnemonicPhrase()
         var text = "mnemonic:" + mnemonic + "\n"
         val address = wallet.getDefaultAddress(WalletCoin.CosmosSdk(Network.CosmosHub))

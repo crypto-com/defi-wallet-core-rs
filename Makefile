@@ -2,7 +2,7 @@ UNAME := $(shell uname)
 
 cpp_example = ./example/cpp-example
 
-.PHONY: wasm wasmweb android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests
+.PHONY: wasm wasmweb android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests mobile-release
 
 wasm:
 	wasm-pack build --scope crypto-com bindings/wasm
@@ -28,6 +28,10 @@ cleanall:
 	rm -rf NDK
 	./clean.sh
 
+mobile-release:
+	cp mobile_modules/android_module/dwclib/build/outputs/aar/dwclib-release.aar target/release/
+	zip -q -r target/release/dwclib-framework-iphoneos.zip mobile_modules/ios_module/dwclib/build/Release-iphoneos/dwclib.framework
+	zip -q -r target/release/dwclib-framework-iphonesimulator.zip mobile_modules/ios_module/dwclib/build/Release-iphonesimulator/dwclib.framework
 
 mac_install:
 	cargo install uniffi_bindgen

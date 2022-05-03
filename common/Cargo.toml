@@ -13,7 +13,7 @@ default = []
 # error-prone and less security for the end user.
 abi-contract = []
 login = ["siwe"]
-uniffi-binding = ["uniffi", "uniffi_build", "uniffi_macros"]
+uniffi-binding = ["abi-contract", "uniffi", "uniffi_build", "uniffi_macros"]
 
 [dependencies]
 anyhow = "1"
