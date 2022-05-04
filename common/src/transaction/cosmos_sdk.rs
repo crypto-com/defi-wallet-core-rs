@@ -19,8 +19,10 @@ use ibc_proto::cosmos::base::v1beta1::Coin as IbcCoin;
 use std::str::FromStr;
 use std::sync::Arc;
 
+mod parser;
 mod signer;
 
+pub use parser::*;
 pub use signer::*;
 
 /// human-readable bech32 prefix for Crypto.org Chain accounts

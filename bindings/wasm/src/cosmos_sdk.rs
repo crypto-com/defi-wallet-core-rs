@@ -8,8 +8,10 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
+mod parser;
 mod signer;
 
+pub use parser::*;
 pub use signer::*;
 
 /// Cosmos client
