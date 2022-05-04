@@ -11,15 +11,14 @@ jobs:
     runs-on: macos-11
     steps:
       - uses: actions/checkout@v2
-      - name: Build cache
+      - name: iOS module cache
         uses: actions/cache@v2
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/git/db/
-            target/
             mobile_modules/ios_module/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-ios-${{ hashFiles('ios_build.sh') }}
+          key: ${{ runner.os }}-ios-${{ hashFiles('**/Cargo.lock', 'ios_build.sh') }}
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v1
       - run: command -v uniffi-bindgen || cargo install uniffi_bindgen --version 0.17.0
       - run: |
           make ios
