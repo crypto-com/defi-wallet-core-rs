@@ -16,6 +16,7 @@ use ibc::timestamp::Timestamp;
 use ibc::tx_msg::Msg as IbcMsg;
 use ibc::Height;
 use ibc_proto::cosmos::base::v1beta1::Coin as IbcCoin;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -43,7 +44,7 @@ pub const CRONOS_CHAIN_ID: &str = "cronosmainnet_25-1";
 pub const COSMOS_CHAIN_ID: &str = "cosmoshub-4";
 
 /// Network to work with
-#[derive(Clone)]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum Network {
     /// Crypto.org Chain mainnet
     CryptoOrgMainnet,
@@ -100,6 +101,7 @@ impl Network {
 }
 
 /// single coin amount
+#[derive(Deserialize, Serialize)]
 pub enum SingleCoin {
     /// basecro
     BaseCRO { amount: u64 },
@@ -273,6 +275,7 @@ pub struct CosmosSDKTxInfo {
 }
 
 /// Cosmos SDK message types
+#[derive(Deserialize, Serialize)]
 pub enum CosmosSDKMsg {
     /// MsgSend
     BankSend {

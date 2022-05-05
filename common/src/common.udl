@@ -213,6 +213,55 @@ interface CosmosSDKClient {
     u64 simulate(sequence<u8> raw_signed_tx);
 };
 
+dictionary CosmosAny {
+    string type_url;
+    string value;
+};
+
+dictionary CosmosAuthInfo {
+    sequence<CosmosSignerInfo> signer_infos;
+    CosmosFee fee;
+};
+
+dictionary CosmosBody {
+    sequence<CosmosSDKMsg> messages;
+    string memo;
+    u64 timeout_height;
+    sequence<CosmosAny> extension_options;
+    sequence<CosmosAny> non_critical_extension_options;
+};
+
+dictionary CosmosFee {
+    sequence<SingleCoin> amount;
+    u64 gas_limit;
+    string? payer;
+    string? granter;
+};
+
+dictionary CosmosLegacyAminoMultisig {
+    u32 threshold;
+    sequence<CosmosAny> public_keys;
+};
+
+[Enum]
+interface CosmosModeInfo {
+    Single(string mode);
+    Multi(sequence<string> modes);
+};
+
+dictionary CosmosSignerInfo {
+    CosmosSignerPublicKey? public_key;
+    CosmosModeInfo mode_info;
+    u64 sequence;
+};
+
+[Enum]
+interface CosmosSignerPublicKey {
+    Single(CosmosAny key);
+    LegacyAminoMultisig(CosmosLegacyAminoMultisig key);
+    Any(CosmosAny key);
+};
+
 [Enum]
 interface ContractApproval {
   Erc20(string contract_address, string approved_address, string amount);

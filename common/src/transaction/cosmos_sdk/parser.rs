@@ -1,4 +1,9 @@
-use crate::transaction::cosmos_sdk::{CosmosSDKMsg, SingleCoin};
+/// Cosmos parser is used to deserialize Protobuf or JSON to specified structs. The parsed
+/// instances could be encoded to a JSON string for display, and `CosmosSDKMsg`s could be used to
+/// build a new transaction.
+/// FIXME: It seems that these structs are only used for Cosmos parsing for now. They could be
+/// moved to `cosmos_sdk.rs` if reusable.
+use crate::transaction::cosmos_sdk::{CosmosError, CosmosSDKMsg, SingleCoin};
 use crate::utils::hex_decode;
 use prost::Message;
 use serde::{Deserialize, Serialize};
@@ -6,7 +11,7 @@ use serde::{Deserialize, Serialize};
 /// Any contains arbitrary data along with a URL that describes the data type.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Any {
+pub struct CosmosAny {
     /// URL of data type
     pub type_url: String,
     /// Base64 encoded data
@@ -16,16 +21,16 @@ pub struct Any {
 /// AuthInfo describes the fee and signer modes that are used to sign a transaction.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AuthInfo {
+pub struct CosmosAuthInfo {
     /// Signing modes for the required signers
-    pub signer_infos: Vec<SignerInfo>,
+    pub signer_infos: Vec<CosmosSignerInfo>,
     /// Fee and gas limit
-    pub fee: Fee,
+    pub fee: CosmosFee,
 }
 
 /// Body of a transaction that all signers sign over.
 #[derive(Deserialize, Serialize)]
-pub struct Body {
+pub struct CosmosBody {
     /// Message list
     pub messages: Vec<CosmosSDKMsg>,
     /// Memo
@@ -33,15 +38,15 @@ pub struct Body {
     /// Timeout
     pub timeout_height: u64,
     /// Extension options
-    pub extension_options: Vec<Any>,
+    pub extension_options: Vec<CosmosAny>,
     /// Non critical extension options
-    pub non_critical_extension_options: Vec<Any>,
+    pub non_critical_extension_options: Vec<CosmosAny>,
 }
 
 /// Fee includes the amount of coins paid in fees and the maximum gas to be used by the transaction.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Fee {
+pub struct CosmosFee {
     /// Amount
     pub amount: Vec<SingleCoin>,
     /// Gas limit
@@ -55,30 +60,30 @@ pub struct Fee {
 /// Legacy Amino multisig key.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LegacyAminoMultisig {
+pub struct CosmosLegacyAminoMultisig {
     /// Multisig threshold
     pub threshold: u32,
     /// Public keys which comprise the multisig key
-    pub public_keys: Vec<Any>,
+    pub public_keys: Vec<CosmosAny>,
 }
 
 /// ModeInfo describes the signing mode of a single or nested multisig signer.
 #[derive(Deserialize, Serialize)]
-pub enum ModeInfo {
+pub enum CosmosModeInfo {
     /// Single signer
-    Single(String),
+    Single { mode: String },
     /// Nested multisig signer
-    Multi(Vec<String>),
+    Multi { modes: Vec<String> },
 }
 
 /// SignerInfo describes the public key and signing mode of a single top-level signer.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SignerInfo {
+pub struct CosmosSignerInfo {
     /// Signer's public key
-    pub public_key: Option<SignerPublicKey>,
+    pub public_key: Option<CosmosSignerPublicKey>,
     /// Signing mode
-    pub mode_info: ModeInfo,
+    pub mode_info: CosmosModeInfo,
     /// Account sequence
     pub sequence: u64,
 }
@@ -86,13 +91,13 @@ pub struct SignerInfo {
 /// Signer's public key.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub enum SignerPublicKey {
+pub enum CosmosSignerPublicKey {
     /// Single singer
-    Single(Any),
+    Single { key: CosmosAny },
     /// Legacy Amino multisig
-    LegacyAminoMultisig(LegacyAminoMultisig),
+    LegacyAminoMultisig { key: CosmosLegacyAminoMultisig },
     /// Other key types
-    Any(Any),
+    Any { key: CosmosAny },
 }
 
 /// Create a Cosmos parser for `crypto.org`.
@@ -105,7 +110,7 @@ pub fn new_crypto_org_parser() -> impl CosmosParser {
 /// Cosmos parser trait
 pub trait CosmosParser {
     ///
-    fn parse_proto_auto_info(&self, hex_string: &str) -> Result<AuthInfo> {
+    fn parse_proto_auto_info(&self, hex_string: &str) -> Result<CosmosAuthInfo, CosmosError> {
         todo!();
         // let bytes = hex_decode(hex_string)?;
         // cosmos_sdk_proto::cosmos::tx::v1beta1::AuthInfo::decode(bytes.as_slice())?.try_into()
