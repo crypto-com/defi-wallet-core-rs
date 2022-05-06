@@ -219,8 +219,8 @@ dictionary CosmosAny {
 };
 
 dictionary CosmosAuthInfo {
-    sequence<CosmosSignerInfo> signer_infos;
     CosmosFee fee;
+    sequence<CosmosSignerInfo> signer_infos;
 };
 
 dictionary CosmosBody {
