@@ -387,6 +387,9 @@ pub enum CosmosSDKMsg {
         /// The timeout is disabled when set to 0.
         timeout_timestamp: u64,
     },
+    /// Any
+    /// It is only used for message which has not been supported.
+    Any { type_url: String, value: Vec<u8> },
 }
 
 impl CosmosSDKMsg {
@@ -566,6 +569,10 @@ impl CosmosSDKMsg {
                     value: any.value,
                 })
             }
+            CosmosSDKMsg::Any { type_url, value } => Ok(cosmrs::Any {
+                type_url: type_url.clone(),
+                value: value.clone(),
+            }),
         }
     }
 }

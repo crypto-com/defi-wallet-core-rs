@@ -78,11 +78,32 @@ pub struct CosmosTxBody {
     pub non_critical_extension_options: Vec<CosmosAny>,
 }
 
-// gupeng - comment for any message
+// This conversion directly transforms messages to type `CosmosSDKMsg::Any`. The detailed messages
+// (as `CosmosSDKMsg::BankSend`) should be transformed in specified parser.
 impl From<Body> for CosmosTxBody {
-    fn from(_body: Body) -> Self {
-        // gupeng
-        todo!()
+    fn from(body: Body) -> Self {
+        let messages = body
+            .messages
+            .into_iter()
+            .map(|any| CosmosSDKMsg::Any {
+                type_url: any.type_url,
+                value: any.value,
+            })
+            .collect();
+        let extension_options = body.extension_options.into_iter().map(Into::into).collect();
+        let non_critical_extension_options = body
+            .non_critical_extension_options
+            .into_iter()
+            .map(Into::into)
+            .collect();
+
+        Self {
+            messages,
+            memo: body.memo,
+            timeout_height: body.timeout_height.value(),
+            extension_options,
+            non_critical_extension_options,
+        }
     }
 }
 
