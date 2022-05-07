@@ -223,7 +223,7 @@ dictionary CosmosAuthInfo {
     sequence<CosmosSignerInfo> signer_infos;
 };
 
-dictionary CosmosBody {
+dictionary CosmosTxBody {
     sequence<CosmosSDKMsg> messages;
     string memo;
     u64 timeout_height;
@@ -260,6 +260,17 @@ interface CosmosSignerPublicKey {
     Single(CosmosAny key);
     LegacyAminoMultisig(CosmosLegacyAminoMultisig key);
     Any(CosmosAny key);
+};
+
+interface CosmosParserWrapper {
+    [Name=new_crypto_org_parser]
+    constructor();
+    [Name=new_terra_parser]
+    constructor();
+    [Throws=CosmosError]
+    CosmosAuthInfo parse_proto_auto_info([ByRef] string hex_string);
+    [Throws=CosmosError]
+    CosmosTxBody parse_proto_tx_body([ByRef] string hex_string);
 };
 
 [Enum]
