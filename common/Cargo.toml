@@ -64,4 +64,4 @@ tokio = { version = "1", features = ["rt"] }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
 
 [build-dependencies]
-uniffi_build = { version = "^0.17", features=["builtin-bindgen"], optional = true }
+uniffi_build = { version = "^0.18", features=["builtin-bindgen"], optional = true }
