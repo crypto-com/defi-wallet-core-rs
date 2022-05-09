@@ -14,14 +14,14 @@ impl CosmosParserWrapper {
     /// Create a Cosmos parser for `crypto.org` chain.
     pub fn new_crypto_org_parser() -> Self {
         Self {
-            inner: Box::new(CryptoOrgParser {}),
+            inner: Box::new(CryptoOrgParser::new()),
         }
     }
 
     /// Create a Cosmos parser for `Terra` chain.
     pub fn new_terra_parser() -> Self {
         Self {
-            inner: Box::new(TerraParser {}),
+            inner: Box::new(TerraParser::new()),
         }
     }
 

@@ -1,3 +1,4 @@
+use crate::proto::chainmain;
 use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
 use crate::transaction::nft::{
     DenomId, DenomName, MsgBurnNft, MsgEditNft, MsgIssueDenom, MsgMintNft, MsgTransferNft, TokenId,
@@ -171,6 +172,75 @@ impl TryFrom<MsgTransfer> for CosmosRawMsg {
                 timeout_timestamp: msg.timeout_timestamp.nanoseconds(),
             },
         })
+    }
+}
+
+impl From<chainmain::nft::v1::MsgIssueDenom> for CosmosRawMsg {
+    fn from(msg: chainmain::nft::v1::MsgIssueDenom) -> Self {
+        Self::CryptoOrg {
+            msg: CosmosRawCryptoOrgMsg::NftIssueDenom {
+                id: msg.id,
+                name: msg.name,
+                schema: msg.schema,
+                sender: msg.sender,
+            },
+        }
+    }
+}
+
+impl From<chainmain::nft::v1::MsgMintNft> for CosmosRawMsg {
+    fn from(msg: chainmain::nft::v1::MsgMintNft) -> Self {
+        Self::CryptoOrg {
+            msg: CosmosRawCryptoOrgMsg::NftMint {
+                id: msg.id,
+                denom_id: msg.denom_id,
+                name: msg.name,
+                uri: msg.uri,
+                data: msg.data,
+                sender: msg.sender,
+                recipient: msg.recipient,
+            },
+        }
+    }
+}
+
+impl From<chainmain::nft::v1::MsgEditNft> for CosmosRawMsg {
+    fn from(msg: chainmain::nft::v1::MsgEditNft) -> Self {
+        Self::CryptoOrg {
+            msg: CosmosRawCryptoOrgMsg::NftEdit {
+                id: msg.id,
+                denom_id: msg.denom_id,
+                name: msg.name,
+                uri: msg.uri,
+                data: msg.data,
+                sender: msg.sender,
+            },
+        }
+    }
+}
+
+impl From<chainmain::nft::v1::MsgTransferNft> for CosmosRawMsg {
+    fn from(msg: chainmain::nft::v1::MsgTransferNft) -> Self {
+        Self::CryptoOrg {
+            msg: CosmosRawCryptoOrgMsg::NftTransfer {
+                id: msg.id,
+                denom_id: msg.denom_id,
+                sender: msg.sender,
+                recipient: msg.recipient,
+            },
+        }
+    }
+}
+
+impl From<chainmain::nft::v1::MsgBurnNft> for CosmosRawMsg {
+    fn from(msg: chainmain::nft::v1::MsgBurnNft) -> Self {
+        Self::CryptoOrg {
+            msg: CosmosRawCryptoOrgMsg::NftBurn {
+                id: msg.id,
+                denom_id: msg.denom_id,
+                sender: msg.sender,
+            },
+        }
     }
 }
 

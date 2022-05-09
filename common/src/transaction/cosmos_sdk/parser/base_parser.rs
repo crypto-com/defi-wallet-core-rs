@@ -13,7 +13,7 @@ use prost::Message;
 use tendermint_proto::Protobuf;
 
 /// Base parser for standard Cosmos messages
-struct BaseParser;
+pub struct BaseParser;
 
 impl CosmosParser for BaseParser {
     fn transform_tx_body(&self, tx_body: &mut CosmosTxBody) -> Result<(), CosmosError> {
