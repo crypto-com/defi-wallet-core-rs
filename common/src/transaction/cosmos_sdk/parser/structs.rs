@@ -2,12 +2,15 @@
 // It seems that these structs are only used for Cosmos parsing results for now. They could be
 // moved to `cosmos_sdk.rs` if reusable.
 
-use crate::transaction::cosmos_sdk::{CosmosError, CosmosSDKMsg, SingleCoin};
+use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
 use cosmrs::crypto::{LegacyAminoMultisig, PublicKey};
 use cosmrs::tx::{mode_info, AuthInfo, Body, Fee, ModeInfo, SignerInfo, SignerPublicKey};
 use cosmrs::Any;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+
+mod cosmos_raw_msg;
+pub use cosmos_raw_msg::*;
 
 /// Any contains arbitrary data along with a URL that describes the data type.
 #[derive(Deserialize, Serialize)]
@@ -63,50 +66,6 @@ impl TryFrom<AuthInfo> for CosmosAuthInfo {
     }
 }
 
-/// Body of a transaction that all signers sign over.
-#[derive(Deserialize, Serialize)]
-pub struct CosmosTxBody {
-    /// Message list
-    pub messages: Vec<CosmosSDKMsg>,
-    /// Memo
-    pub memo: String,
-    /// Timeout
-    pub timeout_height: u64,
-    /// Extension options
-    pub extension_options: Vec<CosmosAny>,
-    /// Non critical extension options
-    pub non_critical_extension_options: Vec<CosmosAny>,
-}
-
-// This conversion directly transforms messages to type `CosmosSDKMsg::Any`. The detailed messages
-// (as `CosmosSDKMsg::BankSend`) should be transformed in specified parser.
-impl From<Body> for CosmosTxBody {
-    fn from(body: Body) -> Self {
-        let messages = body
-            .messages
-            .into_iter()
-            .map(|any| CosmosSDKMsg::Any {
-                type_url: any.type_url,
-                value: any.value,
-            })
-            .collect();
-        let extension_options = body.extension_options.into_iter().map(Into::into).collect();
-        let non_critical_extension_options = body
-            .non_critical_extension_options
-            .into_iter()
-            .map(Into::into)
-            .collect();
-
-        Self {
-            messages,
-            memo: body.memo,
-            timeout_height: body.timeout_height.value(),
-            extension_options,
-            non_critical_extension_options,
-        }
-    }
-}
-
 /// Fee includes the amount of coins paid in fees and the maximum gas to be used by the transaction.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -143,6 +102,15 @@ impl From<Fee> for CosmosFee {
             granter: fee.granter.map(|g| g.to_string()),
         }
     }
+}
+
+/// Block height.
+#[derive(Clone, Deserialize, Serialize)]
+pub struct CosmosHeight {
+    /// Epoch
+    pub revision_number: u64,
+    /// Height
+    pub revision_height: u64,
 }
 
 /// Legacy Amino multisig key.
@@ -243,6 +211,50 @@ impl TryFrom<SignerPublicKey> for CosmosSignerPublicKey {
             },
             SignerPublicKey::Any(any) => Self::Any { key: any.into() },
         })
+    }
+}
+
+/// Body of a transaction that all signers sign over.
+#[derive(Deserialize, Serialize)]
+pub struct CosmosTxBody {
+    /// Message list
+    pub messages: Vec<CosmosRawMsg>,
+    /// Memo
+    pub memo: String,
+    /// Timeout
+    pub timeout_height: u64,
+    /// Extension options
+    pub extension_options: Vec<CosmosAny>,
+    /// Non critical extension options
+    pub non_critical_extension_options: Vec<CosmosAny>,
+}
+
+// This conversion directly transforms messages to type `CosmosSDKMsg::Any`. The detailed messages
+// (as `CosmosSDKMsg::BankSend`) should be transformed in specified parser.
+impl From<Body> for CosmosTxBody {
+    fn from(body: Body) -> Self {
+        let messages = body
+            .messages
+            .into_iter()
+            .map(|any| CosmosRawMsg::Any {
+                type_url: any.type_url,
+                value: any.value,
+            })
+            .collect();
+        let extension_options = body.extension_options.into_iter().map(Into::into).collect();
+        let non_critical_extension_options = body
+            .non_critical_extension_options
+            .into_iter()
+            .map(Into::into)
+            .collect();
+
+        Self {
+            messages,
+            memo: body.memo,
+            timeout_height: body.timeout_height.value(),
+            extension_options,
+            non_critical_extension_options,
+        }
     }
 }
 

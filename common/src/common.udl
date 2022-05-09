@@ -144,7 +144,39 @@ interface CosmosSDKMsg {
   DistributionSetWithdrawAddress(string withdraw_address);
   DistributionWithdrawDelegatorReward(string validator_address);
   IbcTransfer(string receiver, string source_port, string source_channel, SingleCoin token, Height timeout_height, u64 timeout_timestamp);
+  Raw(CosmosRawMsg raw_msg);
+};
+
+[Enum]
+interface CosmosRawMsg {
+  Normal(CosmosRawNormalMsg msg);
+  CryptoOrg(CosmosRawCryptoOrgMsg msg);
+  Terra(CosmosRawTerraMsg msg);
   Any(string type_url, sequence<u8> value);
+};
+
+[Enum]
+interface CosmosRawNormalMsg {
+  BankSend(string from_address, string to_address, SingleCoin amount);
+  StakingBeginRedelegate(string delegator_address, string validator_src_address, string validator_dst_address, SingleCoin amount);
+  StakingDelegate(string delegator_address, string validator_address, SingleCoin amount);
+  StakingUndelegate(string delegator_address, string validator_address, SingleCoin amount);
+  DistributionSetWithdrawAddress(string delegator_address, string withdraw_address);
+  DistributionWithdrawDelegatorReward(string delegator_address, string validator_address);
+  IbcTransfer(string sender, string receiver, string source_port, string source_channel, SingleCoin token, Height timeout_height, u64 timeout_timestamp);
+};
+
+[Enum]
+interface CosmosRawCryptoOrgMsg {
+  NftIssueDenom(string id, string name, string schema, string sender);
+  NftMint(string id, string denom_id, string name, string uri, string data, string sender, string recipient);
+  NftEdit(string id, string denom_id, string name, string uri, string data, string sender);
+  NftTransfer(string id, string denom_id, string sender, string recipient);
+  NftBurn(string id, string denom_id, string sender);
+};
+
+[Enum]
+interface CosmosRawTerraMsg {
 };
 
 [Error]
@@ -224,14 +256,6 @@ dictionary CosmosAuthInfo {
     sequence<CosmosSignerInfo> signer_infos;
 };
 
-dictionary CosmosTxBody {
-    sequence<CosmosSDKMsg> messages;
-    string memo;
-    u64 timeout_height;
-    sequence<CosmosAny> extension_options;
-    sequence<CosmosAny> non_critical_extension_options;
-};
-
 dictionary CosmosFee {
     sequence<SingleCoin> amount;
     u64 gas_limit;
@@ -261,6 +285,14 @@ interface CosmosSignerPublicKey {
     Single(CosmosAny key);
     LegacyAminoMultisig(CosmosLegacyAminoMultisig key);
     Any(CosmosAny key);
+};
+
+dictionary CosmosTxBody {
+    sequence<CosmosSDKMsg> messages;
+    string memo;
+    u64 timeout_height;
+    sequence<CosmosAny> extension_options;
+    sequence<CosmosAny> non_critical_extension_options;
 };
 
 interface CosmosParserWrapper {

@@ -1,4 +1,5 @@
 use super::nft::*;
+use crate::transaction::cosmos_sdk::parser::CosmosRawMsg;
 use crate::SecretKey;
 use cosmrs::bank::MsgSend;
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
@@ -44,7 +45,7 @@ pub const CRONOS_CHAIN_ID: &str = "cronosmainnet_25-1";
 pub const COSMOS_CHAIN_ID: &str = "cosmoshub-4";
 
 /// Network to work with
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub enum Network {
     /// Crypto.org Chain mainnet
     CryptoOrgMainnet,
@@ -101,7 +102,7 @@ impl Network {
 }
 
 /// single coin amount
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum SingleCoin {
     /// basecro
     BaseCRO { amount: u64 },
@@ -387,9 +388,10 @@ pub enum CosmosSDKMsg {
         /// The timeout is disabled when set to 0.
         timeout_timestamp: u64,
     },
-    /// Any
-    /// It is only used for message which has not been supported.
-    Any { type_url: String, value: Vec<u8> },
+    /// Raw message which is not constructed by fields (may be parsed from `CosmosParser`) or an
+    /// unsupported message.
+    /// It also could be serialized and added to a transaction.
+    Raw { raw_msg: CosmosRawMsg },
 }
 
 impl CosmosSDKMsg {
@@ -569,10 +571,7 @@ impl CosmosSDKMsg {
                     value: any.value,
                 })
             }
-            CosmosSDKMsg::Any { type_url, value } => Ok(cosmrs::Any {
-                type_url: type_url.clone(),
-                value: value.clone(),
-            }),
+            CosmosSDKMsg::Raw { raw_msg } => raw_msg.to_any(),
         }
     }
 }

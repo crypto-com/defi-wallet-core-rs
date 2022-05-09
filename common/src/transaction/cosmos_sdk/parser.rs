@@ -43,7 +43,10 @@ pub trait CosmosParser {
         Ok(tx_body)
     }
 
-    /// Transform `CosmosTxBody`
+    /// Transform `CosmosTxBody` for specified chain.
+    /// This trait function must be implemented by sub-struct. The field `messages` has been
+    /// initialized to type `CosmosSDKMsg::Any` which should be transformed to detailed messages of
+    /// specified chain.
     fn transform_tx_body(&self, tx_body: &mut CosmosTxBody) -> Result<(), CosmosError>;
 }
 
