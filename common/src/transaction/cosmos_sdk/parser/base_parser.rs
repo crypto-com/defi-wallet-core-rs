@@ -1,13 +1,62 @@
-use crate::transaction::cosmos_sdk::parser::structs::CosmosTxBody;
+use crate::transaction::cosmos_sdk::parser::structs::{CosmosRawMsg, CosmosTxBody};
 use crate::transaction::cosmos_sdk::parser::CosmosParser;
 use crate::transaction::cosmos_sdk::CosmosError;
+use cosmos_sdk_proto::cosmos::bank::v1beta1::MsgSend;
+use cosmos_sdk_proto::cosmos::distribution::v1beta1::{
+    MsgSetWithdrawAddress, MsgWithdrawDelegatorReward,
+};
+use cosmos_sdk_proto::cosmos::staking::v1beta1::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
+use cosmrs::tx::MsgProto;
+use eyre::WrapErr;
+use ibc::applications::ics20_fungible_token_transfer::msgs::transfer;
+use prost::Message;
+use tendermint_proto::Protobuf;
 
 /// Base parser for standard Cosmos messages
-struct BaseParser {}
+struct BaseParser;
 
 impl CosmosParser for BaseParser {
-    fn transform_tx_body(&self, _tx_body: &mut CosmosTxBody) -> Result<(), CosmosError> {
-        todo!()
+    fn transform_tx_body(&self, tx_body: &mut CosmosTxBody) -> Result<(), CosmosError> {
+        tx_body.messages = tx_body
+            .messages
+            .iter()
+            .map(transform_msg)
+            .collect::<Result<_, _>>()?;
+        Ok(())
+    }
+}
+
+// Transform `CosmosRawMsg::Any` messages to standard Cosmos ones.
+fn transform_msg(msg: &CosmosRawMsg) -> Result<CosmosRawMsg, CosmosError> {
+    if let CosmosRawMsg::Any { type_url, value } = msg {
+        Ok(match type_url.as_str() {
+            MsgSend::TYPE_URL => MsgSend::decode(value.as_slice())
+                .wrap_err("Failed to decode MsgSend from Protobuf")?
+                .into(),
+            MsgBeginRedelegate::TYPE_URL => MsgBeginRedelegate::decode(value.as_slice())
+                .wrap_err("Failed to decode MsgBeginRedelegate from Protobuf")?
+                .try_into()?,
+            MsgDelegate::TYPE_URL => MsgDelegate::decode(value.as_slice())
+                .wrap_err("Failed to decode MsgDelegate from Protobuf")?
+                .try_into()?,
+            MsgUndelegate::TYPE_URL => MsgUndelegate::decode(value.as_slice())
+                .wrap_err("Failed to decode MsgUndelegate from Protobuf")?
+                .try_into()?,
+            MsgSetWithdrawAddress::TYPE_URL => MsgSetWithdrawAddress::decode(value.as_slice())
+                .wrap_err("Failed to decode MsgSetWithdrawAddress from Protobuf")?
+                .into(),
+            MsgWithdrawDelegatorReward::TYPE_URL => {
+                MsgWithdrawDelegatorReward::decode(value.as_slice())
+                    .wrap_err("Failed to decode MsgWithdrawDelegatorReward from Protobuf")?
+                    .into()
+            }
+            transfer::TYPE_URL => transfer::MsgTransfer::decode(value.as_slice())
+                .wrap_err("Failed to decode MsgTransfer from Protobuf")?
+                .try_into()?,
+            _ => msg.clone(),
+        })
+    } else {
+        Ok(msg.clone())
     }
 }
 

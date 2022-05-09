@@ -1,8 +1,9 @@
-use crate::transaction::cosmos_sdk::SingleCoin;
+use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
 use crate::transaction::nft::{
     DenomId, DenomName, MsgBurnNft, MsgEditNft, MsgIssueDenom, MsgMintNft, MsgTransferNft, TokenId,
     TokenUri,
 };
+use cosmos_sdk_proto::cosmos::{bank, distribution, staking};
 use cosmrs::bank::MsgSend;
 use cosmrs::distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward};
 use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
@@ -47,6 +48,132 @@ impl CosmosRawMsg {
     }
 }
 
+impl From<bank::v1beta1::MsgSend> for CosmosRawMsg {
+    fn from(msg: bank::v1beta1::MsgSend) -> Self {
+        Self::Normal {
+            msg: CosmosRawNormalMsg::BankSend {
+                from_address: msg.from_address,
+                to_address: msg.to_address,
+                amount: msg
+                    .amount
+                    .into_iter()
+                    .map(|coin| SingleCoin::Other {
+                        amount: coin.amount,
+                        denom: coin.denom,
+                    })
+                    .collect(),
+            },
+        }
+    }
+}
+
+impl TryFrom<staking::v1beta1::MsgBeginRedelegate> for CosmosRawMsg {
+    type Error = CosmosError;
+
+    fn try_from(msg: staking::v1beta1::MsgBeginRedelegate) -> Result<Self, Self::Error> {
+        let coin = msg
+            .amount
+            .ok_or_else(|| eyre::eyre!("Missing amount of MsgBeginRedelegate"))?;
+        Ok(Self::Normal {
+            msg: CosmosRawNormalMsg::StakingBeginRedelegate {
+                delegator_address: msg.delegator_address,
+                validator_src_address: msg.validator_src_address,
+                validator_dst_address: msg.validator_dst_address,
+                amount: SingleCoin::Other {
+                    amount: coin.amount,
+                    denom: coin.denom,
+                },
+            },
+        })
+    }
+}
+
+impl TryFrom<staking::v1beta1::MsgDelegate> for CosmosRawMsg {
+    type Error = CosmosError;
+
+    fn try_from(msg: staking::v1beta1::MsgDelegate) -> Result<Self, Self::Error> {
+        let coin = msg
+            .amount
+            .ok_or_else(|| eyre::eyre!("Missing amount of MsgDelegate"))?;
+        Ok(Self::Normal {
+            msg: CosmosRawNormalMsg::StakingDelegate {
+                delegator_address: msg.delegator_address,
+                validator_address: msg.validator_address,
+                amount: SingleCoin::Other {
+                    amount: coin.amount,
+                    denom: coin.denom,
+                },
+            },
+        })
+    }
+}
+
+impl TryFrom<staking::v1beta1::MsgUndelegate> for CosmosRawMsg {
+    type Error = CosmosError;
+
+    fn try_from(msg: staking::v1beta1::MsgUndelegate) -> Result<Self, Self::Error> {
+        let coin = msg
+            .amount
+            .ok_or_else(|| eyre::eyre!("Missing amount of MsgUndelegate"))?;
+        Ok(Self::Normal {
+            msg: CosmosRawNormalMsg::StakingUndelegate {
+                delegator_address: msg.delegator_address,
+                validator_address: msg.validator_address,
+                amount: SingleCoin::Other {
+                    amount: coin.amount,
+                    denom: coin.denom,
+                },
+            },
+        })
+    }
+}
+
+impl From<distribution::v1beta1::MsgSetWithdrawAddress> for CosmosRawMsg {
+    fn from(msg: distribution::v1beta1::MsgSetWithdrawAddress) -> Self {
+        Self::Normal {
+            msg: CosmosRawNormalMsg::DistributionSetWithdrawAddress {
+                delegator_address: msg.delegator_address,
+                withdraw_address: msg.withdraw_address,
+            },
+        }
+    }
+}
+
+impl From<distribution::v1beta1::MsgWithdrawDelegatorReward> for CosmosRawMsg {
+    fn from(msg: distribution::v1beta1::MsgWithdrawDelegatorReward) -> Self {
+        Self::Normal {
+            msg: CosmosRawNormalMsg::DistributionWithdrawDelegatorReward {
+                delegator_address: msg.delegator_address,
+                validator_address: msg.validator_address,
+            },
+        }
+    }
+}
+
+impl TryFrom<MsgTransfer> for CosmosRawMsg {
+    type Error = CosmosError;
+
+    fn try_from(msg: MsgTransfer) -> Result<Self, Self::Error> {
+        let coin = msg
+            .token
+            .ok_or_else(|| eyre::eyre!("Missing token of MsgTransfer"))?;
+        Ok(Self::Normal {
+            msg: CosmosRawNormalMsg::IbcTransfer {
+                sender: msg.sender.to_string(),
+                receiver: msg.receiver.to_string(),
+                source_port: msg.source_port.to_string(),
+                source_channel: msg.source_channel.to_string(),
+                token: SingleCoin::Other {
+                    amount: coin.amount,
+                    denom: coin.denom,
+                },
+                timeout_height: msg.timeout_height,
+                timeout_timestamp: msg.timeout_timestamp.nanoseconds(),
+            },
+        })
+    }
+}
+
 #[derive(Clone, Deserialize, Serialize)]
 pub enum CosmosRawNormalMsg {
     /// MsgSend
@@ -56,7 +183,7 @@ pub enum CosmosRawNormalMsg {
         /// recipient address in bech32
         to_address: String,
         /// amount to send
-        amount: SingleCoin,
+        amount: Vec<SingleCoin>,
     },
     /// MsgBeginRedelegate
     StakingBeginRedelegate {
@@ -132,7 +259,10 @@ impl CosmosRawNormalMsg {
             } => MsgSend {
                 from_address: from_address.parse::<AccountId>()?,
                 to_address: to_address.parse::<AccountId>()?,
-                amount: vec![amount.try_into()?],
+                amount: amount
+                    .iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_, _>>()?,
             }
             .to_any(),
             Self::StakingBeginRedelegate {

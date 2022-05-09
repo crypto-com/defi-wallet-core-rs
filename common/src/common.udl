@@ -156,7 +156,7 @@ interface CosmosRawMsg {
 
 [Enum]
 interface CosmosRawNormalMsg {
-  BankSend(string from_address, string to_address, SingleCoin amount);
+  BankSend(string from_address, string to_address, sequence<SingleCoin> amount);
   StakingBeginRedelegate(string delegator_address, string validator_src_address, string validator_dst_address, SingleCoin amount);
   StakingDelegate(string delegator_address, string validator_address, SingleCoin amount);
   StakingUndelegate(string delegator_address, string validator_address, SingleCoin amount);
