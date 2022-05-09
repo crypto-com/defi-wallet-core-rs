@@ -17,6 +17,7 @@ uniffi-binding = ["abi-contract", "uniffi", "uniffi_build", "uniffi_macros"]
 
 [dependencies]
 anyhow = "1"
+base64 = "0.13"
 bech32 = "0.8"
 bip39 = "1"
 cosmrs = "0.5"
@@ -25,6 +26,7 @@ eyre = "0.6"
 ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "de275db56a1be948cf4a543e1837f5add6f4750c" }
 ibc = { version = "0.13", default-features = false }
 ibc-proto = { version = "0.17", default-features = false }
+itertools = "0.10"
 lazy_static = "1"
 prost = "0.9"
 rand_core = { version = "0.6", features = ["std"] }
@@ -36,6 +38,7 @@ serde_json = "1"
 serde_with = "1"
 siwe = { version = "0.2", optional = true }
 tendermint = "0.23"
+tendermint-proto = "0.23"
 tendermint-rpc = "0.23"
 thiserror = "1"
 uniffi = { version = "^0.17", optional = true }

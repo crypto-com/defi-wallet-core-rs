@@ -128,7 +128,7 @@ impl TryFrom<LegacyAminoMultisig> for CosmosLegacyAminoMultisig {
 
     fn try_from(multisig: LegacyAminoMultisig) -> Result<Self, CosmosError> {
         Ok(Self {
-            threshold: multisig.threshold.into(),
+            threshold: multisig.threshold,
             public_keys: multisig
                 .public_keys
                 .into_iter()
