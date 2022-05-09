@@ -10,6 +10,7 @@ OS=`uname | tr 'A-Z' 'a-z'`
 if [ "$OS" != "darwin" -a  "$OS" != "linux" ]
 then
         echo "not support for $OS"
+        exit 1
 fi
 
 OPENSSLTAG="openssl-3.0.1"
