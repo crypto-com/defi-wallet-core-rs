@@ -1,5 +1,4 @@
 use super::nft::*;
-use crate::transaction::cosmos_sdk::parser::CosmosRawMsg;
 use crate::SecretKey;
 use cosmrs::bank::MsgSend;
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
@@ -45,7 +44,7 @@ pub const CRONOS_CHAIN_ID: &str = "cronosmainnet_25-1";
 pub const COSMOS_CHAIN_ID: &str = "cosmoshub-4";
 
 /// Network to work with
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub enum Network {
     /// Crypto.org Chain mainnet
     CryptoOrgMainnet,

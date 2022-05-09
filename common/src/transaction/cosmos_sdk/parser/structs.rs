@@ -229,8 +229,8 @@ pub struct CosmosTxBody {
     pub non_critical_extension_options: Vec<CosmosAny>,
 }
 
-// This conversion directly transforms messages to type `CosmosSDKMsg::Any`. The detailed messages
-// (as `CosmosSDKMsg::BankSend`) should be transformed in specified parser.
+// This conversion directly transforms messages to type `CosmosRawMsg::Any`. The detailed messages
+// (as `BankSend`) should be transformed in specified parser.
 impl From<Body> for CosmosTxBody {
     fn from(body: Body) -> Self {
         let messages = body

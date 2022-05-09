@@ -151,7 +151,6 @@ interface CosmosSDKMsg {
 interface CosmosRawMsg {
   Normal(CosmosRawNormalMsg msg);
   CryptoOrg(CosmosRawCryptoOrgMsg msg);
-  Terra(CosmosRawTerraMsg msg);
   Any(string type_url, sequence<u8> value);
 };
 
@@ -173,10 +172,6 @@ interface CosmosRawCryptoOrgMsg {
   NftEdit(string id, string denom_id, string name, string uri, string data, string sender);
   NftTransfer(string id, string denom_id, string sender, string recipient);
   NftBurn(string id, string denom_id, string sender);
-};
-
-[Enum]
-interface CosmosRawTerraMsg {
 };
 
 [Error]
@@ -288,7 +283,7 @@ interface CosmosSignerPublicKey {
 };
 
 dictionary CosmosTxBody {
-    sequence<CosmosSDKMsg> messages;
+    sequence<CosmosRawMsg> messages;
     string memo;
     u64 timeout_height;
     sequence<CosmosAny> extension_options;

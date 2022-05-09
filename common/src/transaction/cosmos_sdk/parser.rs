@@ -1,5 +1,5 @@
 // Cosmos parser is used to deserialize Protobuf or Amino JSON to specified structs. The parsed
-// instances could be encoded to a JSON string for display, and `CosmosSDKMsg`s could be used to
+// instances could be encoded to a JSON string for display, and `CosmosRawMsg`s could be used to
 // build a new transaction.
 
 use crate::transaction::cosmos_sdk::CosmosError;
@@ -45,7 +45,7 @@ pub trait CosmosParser {
 
     /// Transform `CosmosTxBody` for specified chain.
     /// This trait function must be implemented by sub-struct. The field `messages` has been
-    /// initialized to type `CosmosSDKMsg::Any` which should be transformed to detailed messages of
+    /// initialized to type `CosmosRawMsg::Any` which should be transformed to detailed messages of
     /// specified chain.
     fn transform_tx_body(&self, tx_body: &mut CosmosTxBody) -> Result<(), CosmosError>;
 }

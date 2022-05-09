@@ -1,7 +1,21 @@
-use crate::transaction::cosmos_sdk::parser::structs::CosmosHeight;
-use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
-use cosmrs::Any;
+use crate::transaction::cosmos_sdk::SingleCoin;
+use crate::transaction::nft::{
+    DenomId, DenomName, MsgBurnNft, MsgEditNft, MsgIssueDenom, MsgMintNft, MsgTransferNft, TokenId,
+    TokenUri,
+};
+use cosmrs::bank::MsgSend;
+use cosmrs::distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward};
+use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
+use cosmrs::tx::Msg;
+use cosmrs::{AccountId, Any};
+use ibc::applications::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
+use ibc::core::ics24_host::identifier::{ChannelId, PortId};
+use ibc::signer::Signer;
+use ibc::timestamp::Timestamp;
+use ibc::tx_msg::Msg as IbcMsg;
+use ibc::Height;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 /// Cosmos raw message that is parsed from Protobuf or JSON.
 /// FIXME:
@@ -14,16 +28,22 @@ pub enum CosmosRawMsg {
     Normal { msg: CosmosRawNormalMsg },
     /// `crypto.org` special message
     CryptoOrg { msg: CosmosRawCryptoOrgMsg },
-    /// `Terra` special message
-    Terra { msg: CosmosRawTerraMsg },
+    // TODO: Add messages of `Terra` chain here.
     /// Any message
     /// It is only used for messages which has not been supported.
     Any { type_url: String, value: Vec<u8> },
 }
 
 impl CosmosRawMsg {
-    pub fn to_any(&self) -> Result<Any, CosmosError> {
-        todo!()
+    pub fn to_any(&self) -> eyre::Result<Any> {
+        match self {
+            Self::Normal { msg } => msg.to_any(),
+            Self::CryptoOrg { msg } => msg.to_any(),
+            Self::Any { type_url, value } => Ok(cosmrs::Any {
+                type_url: type_url.clone(),
+                value: value.clone(),
+            }),
+        }
     }
 }
 
@@ -95,11 +115,107 @@ pub enum CosmosRawNormalMsg {
         token: SingleCoin,
         /// Timeout height relative to the current block height.
         /// The timeout is disabled when set to 0.
-        timeout_height: CosmosHeight,
+        timeout_height: Height,
         /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
         /// The timeout is disabled when set to 0.
         timeout_timestamp: u64,
     },
+}
+
+impl CosmosRawNormalMsg {
+    pub fn to_any(&self) -> eyre::Result<Any> {
+        match self {
+            Self::BankSend {
+                from_address,
+                to_address,
+                amount,
+            } => MsgSend {
+                from_address: from_address.parse::<AccountId>()?,
+                to_address: to_address.parse::<AccountId>()?,
+                amount: vec![amount.try_into()?],
+            }
+            .to_any(),
+            Self::StakingBeginRedelegate {
+                delegator_address,
+                validator_src_address,
+                validator_dst_address,
+                amount,
+            } => MsgBeginRedelegate {
+                delegator_address: delegator_address.parse::<AccountId>()?,
+                validator_src_address: validator_src_address.parse::<AccountId>()?,
+                validator_dst_address: validator_dst_address.parse::<AccountId>()?,
+                amount: amount.try_into()?,
+            }
+            .to_any(),
+            Self::StakingDelegate {
+                delegator_address,
+                validator_address,
+                amount,
+            } => MsgDelegate {
+                delegator_address: delegator_address.parse::<AccountId>()?,
+                validator_address: validator_address.parse::<AccountId>()?,
+                amount: amount.try_into()?,
+            }
+            .to_any(),
+            Self::StakingUndelegate {
+                delegator_address,
+                validator_address,
+                amount,
+            } => MsgUndelegate {
+                delegator_address: delegator_address.parse::<AccountId>()?,
+                validator_address: validator_address.parse::<AccountId>()?,
+                amount: amount.try_into()?,
+            }
+            .to_any(),
+            Self::DistributionSetWithdrawAddress {
+                delegator_address,
+                withdraw_address,
+            } => MsgSetWithdrawAddress {
+                delegator_address: delegator_address.parse::<AccountId>()?,
+                withdraw_address: withdraw_address.parse::<AccountId>()?,
+            }
+            .to_any(),
+            Self::DistributionWithdrawDelegatorReward {
+                delegator_address,
+                validator_address,
+            } => MsgWithdrawDelegatorReward {
+                delegator_address: delegator_address.parse::<AccountId>()?,
+                validator_address: validator_address.parse::<AccountId>()?,
+            }
+            .to_any(),
+            Self::IbcTransfer {
+                sender,
+                receiver,
+                source_port,
+                source_channel,
+                token,
+                timeout_height,
+                timeout_timestamp,
+            } => {
+                let any = MsgTransfer {
+                    sender: Signer::new(sender),
+                    receiver: Signer::new(receiver),
+                    source_port: PortId::from_str(source_port)?,
+                    source_channel: ChannelId::from_str(source_channel)?,
+                    token: Some(token.try_into()?),
+                    // TODO: timeout_height and timeout_timestamp cannot both be 0.
+                    timeout_height: *timeout_height,
+                    timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
+                }
+                .to_any();
+                // FIXME:
+                // ibc-proto used Google's Protobuf type definitions instead of
+                // prost_types in `0.17`. But cosmrs still used prost_types. So
+                // we need to convert manually.
+                // Associate cosmos-rust issue:
+                // https://github.com/cosmos/cosmos-rust/issues/185
+                Ok(cosmrs::Any {
+                    type_url: any.type_url,
+                    value: any.value,
+                })
+            }
+        }
+    }
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -169,7 +285,77 @@ pub enum CosmosRawCryptoOrgMsg {
     },
 }
 
-#[derive(Clone, Deserialize, Serialize)]
-pub enum CosmosRawTerraMsg {
-    // TODO: Add `Terra` special messages here. Wait for proto integration.
+impl CosmosRawCryptoOrgMsg {
+    pub fn to_any(&self) -> eyre::Result<Any> {
+        match self {
+            Self::NftIssueDenom {
+                id,
+                name,
+                schema,
+                sender,
+            } => MsgIssueDenom {
+                id: id.parse::<DenomId>()?,
+                name: name.parse::<DenomName>()?,
+                schema: schema.to_owned(),
+                sender: sender.parse::<AccountId>()?,
+            }
+            .to_any(),
+            Self::NftMint {
+                id,
+                denom_id,
+                name,
+                uri,
+                data,
+                sender,
+                recipient,
+            } => MsgMintNft {
+                id: id.parse::<TokenId>()?,
+                denom_id: denom_id.parse::<DenomId>()?,
+                name: name.to_owned(),
+                uri: uri.parse::<TokenUri>()?,
+                data: data.to_owned(),
+                sender: sender.parse::<AccountId>()?,
+                recipient: recipient.parse::<AccountId>()?,
+            }
+            .to_any(),
+            Self::NftEdit {
+                id,
+                denom_id,
+                name,
+                uri,
+                data,
+                sender,
+            } => MsgEditNft {
+                id: id.parse::<TokenId>()?,
+                denom_id: denom_id.parse::<DenomId>()?,
+                name: name.to_owned(),
+                uri: uri.parse::<TokenUri>()?,
+                data: data.to_owned(),
+                sender: sender.parse::<AccountId>()?,
+            }
+            .to_any(),
+            Self::NftTransfer {
+                id,
+                denom_id,
+                sender,
+                recipient,
+            } => MsgTransferNft {
+                id: id.parse::<TokenId>()?,
+                denom_id: denom_id.parse::<DenomId>()?,
+                sender: sender.parse::<AccountId>()?,
+                recipient: recipient.parse::<AccountId>()?,
+            }
+            .to_any(),
+            Self::NftBurn {
+                id,
+                denom_id,
+                sender,
+            } => MsgBurnNft {
+                id: id.parse::<TokenId>()?,
+                denom_id: denom_id.parse::<DenomId>()?,
+                sender: sender.parse::<AccountId>()?,
+            }
+            .to_any(),
+        }
+    }
 }
