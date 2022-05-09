@@ -945,7 +945,7 @@ dependencies = [
  "tokio",
  "tonic",
  "uniffi",
- "uniffi_build",
+ "uniffi_build 0.17.0",
  "uniffi_macros",
  "url",
  "wasm-bindgen",
@@ -4510,16 +4510,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "uniffi_macros"
-version = "0.17.0"
+name = "uniffi_build"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fb8e1cc005baa085499d4802f9ffe5137f8d251b1fc75045b0767372199b21d"
+checksum = "bcb7401cfd8da93541c23a0683c1dab3c782d2a118254536106b0aa4d9b30607"
+dependencies = [
+ "anyhow",
+]
+
+[[package]]
+name = "uniffi_macros"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e7b60ccb030ef51b0c85eb9ca55f28ff68b82c1a29d2bc0c7053777010af0d3"
 dependencies = [
  "glob",
  "proc-macro2",
  "quote",
  "syn",
- "uniffi_build",
+ "uniffi_build 0.18.0",
 ]
 
 [[package]]
