@@ -297,9 +297,26 @@ enum EthError {
   "JsonError",
 };
 
+[Enum]
+interface EthAbiTokenBind{
+  Address(string data);
+  FixedBytes(sequence<u8> data);
+  Bytes(sequence<u8> data);
+  Int(string data);
+  Uint(string data);
+  Bool(boolean data);
+  Str(string data);
+  FixedArray(sequence<EthAbiTokenBind> data);
+  Array(sequence<EthAbiTokenBind> data);
+  Tuple(sequence<EthAbiTokenBind> data);
+};
+
 interface EthAbiContract {
   [Throws=EthError]
   constructor([ByRef] string abi);
+
+  [Throws=EthError]
+  sequence<u8> encode_bind([ByRef] string function_name, sequence<EthAbiTokenBind> tokens);
 };
 
 interface CosmosSigner {
