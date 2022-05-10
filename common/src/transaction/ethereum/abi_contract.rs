@@ -4,6 +4,51 @@ use crate::node::ethereum::abi::EthAbiToken;
 use crate::EthError;
 use ethers::prelude::abi::{Contract, Token};
 
+/// Ethereum ABI token to ffi bind
+#[derive(Debug, Eq, PartialEq)]
+pub enum EthAbiTokenBind {
+    Address { data: String },
+    FixedBytes { data: Vec<u8> },
+    Bytes { data: Vec<u8> },
+    Int { data: String },
+    Uint { data: String },
+    Bool { data: bool },
+    Str { data: String },
+    FixedArray { data: Vec<EthAbiTokenBind> },
+    Array { data: Vec<EthAbiTokenBind> },
+    Tuple { data: Vec<EthAbiTokenBind> },
+}
+
+impl TryFrom<&EthAbiTokenBind> for EthAbiToken {
+    type Error = EthError;
+    fn try_from(token: &EthAbiTokenBind) -> Result<Self, Self::Error> {
+        Ok(match token {
+            EthAbiTokenBind::Address { data } => EthAbiToken::from_address_str(data.as_str())?,
+            EthAbiTokenBind::FixedBytes { data } => EthAbiToken::FixedBytes(data.clone()),
+            EthAbiTokenBind::Bytes { data } => EthAbiToken::Bytes(data.clone()),
+            EthAbiTokenBind::Int { data } => EthAbiToken::from_int_str(data.as_str())?,
+            EthAbiTokenBind::Uint { data } => EthAbiToken::from_uint_str(data.as_str())?,
+            EthAbiTokenBind::Bool { data } => EthAbiToken::Bool(*data),
+            EthAbiTokenBind::Str { data } => EthAbiToken::String(data.clone()),
+            EthAbiTokenBind::FixedArray { data } => EthAbiToken::FixedArray(
+                data.iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_, _>>()?,
+            ),
+            EthAbiTokenBind::Array { data } => EthAbiToken::FixedArray(
+                data.iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_, _>>()?,
+            ),
+            EthAbiTokenBind::Tuple { data } => EthAbiToken::FixedArray(
+                data.iter()
+                    .map(TryInto::try_into)
+                    .collect::<Result<_, _>>()?,
+            ),
+        })
+    }
+}
+
 /// Ethereum ABI Contract
 pub struct EthAbiContract {
     contract: Contract,
@@ -32,6 +77,21 @@ impl EthAbiContract {
             .map(TryInto::try_into)
             .collect::<Result<Vec<Token>, _>>()?;
         function.encode_input(&tokens).map_err(Into::into)
+    }
+
+    /// Encode input data of specified function and arguments. The encoded data
+    /// should be set to field data of EthTxInfo when invoking function
+    /// build_signed_eth_tx.
+    pub fn encode_bind(
+        &self,
+        function_name: &str,
+        tokens: Vec<EthAbiTokenBind>,
+    ) -> Result<Vec<u8>, EthError> {
+        let tokens = tokens
+            .iter()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<EthAbiToken>, _>>()?;
+        self.encode(function_name, tokens)
     }
 }
 
@@ -115,6 +175,68 @@ mod tests {
             EthAbiToken::from_uint_str("100").unwrap(),
         ];
         let encoded_data = abi_contract.encode("approve", tokens).unwrap();
+        assert_eq!(
+            hex::encode(encoded_data.clone()),
+            "095ea7b30000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000064"
+        );
+
+        // Verify signed transaction data.
+        let secret_key = SecretKey::from_hex(
+            "24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e".to_owned(),
+        )
+        .unwrap();
+        let tx_info = EthTxInfo {
+            to_address: "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d".to_owned(),
+            amount: EthAmount::EthDecimal {
+                amount: 1.to_string(),
+            },
+            nonce: 0.to_string(),
+            gas_limit: 21_000.to_string(),
+            gas_price: EthAmount::WeiDecimal {
+                amount: 1_000.to_string(),
+            },
+            data: Some(encoded_data),
+            legacy_tx: true,
+        };
+
+        let signed_tx_data = build_signed_eth_tx(
+            tx_info,
+            EthNetwork::Custom {
+                chain_id: 1,
+                legacy: true,
+            },
+            Arc::new(secret_key),
+        )
+        .unwrap();
+
+        assert_eq!(
+            hex::encode(signed_tx_data),
+            "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844095ea7b30000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe779368000000000000000000000000000000000000000000000000000000000000006426a06f1b09bd3a1edc708297cfcb9692c21d64d5b663451345eb3be6104e626f261ea010d6c96d7f4c9660921bd5ce51a85e5de1bc8ff84dec72dc84020745d46687b7",
+        );
+    }
+
+    #[test]
+    fn eth_abi_token_bind_test() {
+        // Read the content of an ABI contract file.
+        let dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+        let mut contract_file_path = PathBuf::new();
+        contract_file_path.push(dir);
+        contract_file_path.push("src/contract/erc721-abi.json");
+        let abi_contract_str = std::fs::read_to_string(contract_file_path).unwrap();
+
+        // Load ABI contract and encode input data.
+        let abi_contract = EthAbiContract::new(&abi_contract_str).unwrap();
+
+        let tokens_bind = vec![
+            EthAbiTokenBind::Address {
+                data: "0x2c600e0a72b3ae39e9b27d2e310b180abe779368".to_owned(),
+            },
+            EthAbiTokenBind::Uint {
+                data: "100".to_owned(),
+            },
+        ];
+
+        let encoded_data = abi_contract.encode_bind("approve", tokens_bind).unwrap();
         assert_eq!(
             hex::encode(encoded_data.clone()),
             "095ea7b30000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000064"
