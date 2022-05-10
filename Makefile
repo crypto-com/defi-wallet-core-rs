@@ -48,11 +48,6 @@ build_cpp:
 	cargo build --package defi-wallet-core-cpp --release
 	cd $(cpp_example) && make build
 
-build_cpp_with_doxygen:
-	cargo build --package defi-wallet-core-cpp --features doxygen --release
-	cd $(cpp_example) && make build
-
-
 cpp: build_cpp
 	. ./scripts/.env && cd $(cpp_example) && make run
 
@@ -106,15 +101,15 @@ cpp-docs-legacy: build_cpp
 
 cpp-docs: cpp-docs-mdbook
 
-cpp-docs-doxygen: build_cpp_with_doxygen
+cpp-docs-doxygen: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen"
 	open $(cpp_docs)/doxygen/html/index.html
 
-cpp-docs-sphinx: build_cpp_with_doxygen
+cpp-docs-sphinx: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen && cd sphinx && make html"
 	open $(cpp_docs)/sphinx/_build/html/index.html
 
-cpp-docs-gitbook: build_cpp_with_doxygen
+cpp-docs-gitbook: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "\
 	cd $(cpp_docs) && doxygen && doxybook2 \
 		--input doxygen/xml \
@@ -124,7 +119,7 @@ cpp-docs-gitbook: build_cpp_with_doxygen
 		--summary-output gitbook/src/SUMMARY.md"
 	cd $(cpp_docs)/gitbook/src && gitbook serve
 
-cpp-docs-mdbook: build_cpp_with_doxygen
+cpp-docs-mdbook: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "\
 		cd $(cpp_docs) && doxygen && doxybook2 \
 		--input doxygen/xml \

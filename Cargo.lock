@@ -861,21 +861,6 @@ dependencies = [
 [[package]]
 name = "cxx-build"
 version = "1.0.67"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c209a753be08ea0e89867de3830329c5fc4468e0dacb7aaa79983845d437281e"
-dependencies = [
- "cc",
- "codespan-reporting",
- "once_cell",
- "proc-macro2",
- "quote",
- "scratch",
- "syn",
-]
-
-[[package]]
-name = "cxx-build"
-version = "1.0.67"
 source = "git+https://github.com/crypto-com/cxx.git?rev=42b011184b6d5a593cd7513edb1d554e0f086a0f#42b011184b6d5a593cd7513edb1d554e0f086a0f"
 dependencies = [
  "cc",
@@ -986,8 +971,7 @@ version = "0.2.0"
 dependencies = [
  "anyhow",
  "cxx",
- "cxx-build 1.0.67 (registry+https://github.com/rust-lang/crates.io-index)",
- "cxx-build 1.0.67 (git+https://github.com/crypto-com/cxx.git?rev=42b011184b6d5a593cd7513edb1d554e0f086a0f)",
+ "cxx-build",
  "defi-wallet-core-common",
  "defi-wallet-core-proto",
  "ethers",

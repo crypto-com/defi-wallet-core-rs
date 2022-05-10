@@ -16,14 +16,24 @@ ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "de275db56a1be948
 hex = "0.4"
 tokio = { version = "1", features = ["rt"] }
 
-[build-dependencies]
-cxx-build = "1"
+[target.'cfg(target_os = "windows")'.build-dependencies]
+# TODO
+# Wait until https://github.com/dtolnay/cxx/pull/1048 is merged or similar solution is found
+#
+# When building `cxx` from a git clone, git's symlink support needs to be enabled on platforms
+# that have it off by default (Windows).
+#
+# Check the test result here:
+# https://github.com/crypto-com/defi-wallet-core-rs/runs/6304031148?check_suite_focus=true
+#
+# Disable the doxygen document generation fature in windows at this moment until the PR#1048 is
+# merged or similar solution is found
+cxx-build = { git = "https://github.com/crypto-com/cxx.git", rev = "42b011184b6d5a593cd7513edb1d554e0f086a0f" }
 
-# TODO Wait until https://github.com/dtolnay/cxx/pull/1048 is merged or similar solution is found
-cxx-build-with-doxygen = { git = "https://github.com/crypto-com/cxx.git", rev = "42b011184b6d5a593cd7513edb1d554e0f086a0f", package = "cxx-build", optional = true }
-
-[features]
-doxygen = ["cxx-build-with-doxygen/doxygen"]
+[target.'cfg(not(target_os = "windows"))'.build-dependencies]
+# TODO
+# Wait until https://github.com/dtolnay/cxx/pull/1048 is merged or similar solution is found
+cxx-build = { git = "https://github.com/crypto-com/cxx.git", rev = "42b011184b6d5a593cd7513edb1d554e0f086a0f", features=["doxygen"] }
 
 [lib]
 crate-type = ["staticlib", "cdylib"]
