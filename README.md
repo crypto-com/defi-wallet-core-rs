@@ -3,13 +3,13 @@
 ## Pre-requisites
 
 - https://rustup.rs
-- `uniffi_bindgen` 0.17.0 or newer
+- `uniffi_bindgen` 0.18.0 or newer
 
 ```
 curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
 cargo install uniffi_bindgen
-uniffi-bindgen --version # check the version is 0.17.0 or newer
+uniffi-bindgen --version # check the version is 0.18.0 or newer
 brew install ktlint
 brew install swiftformat
 ```

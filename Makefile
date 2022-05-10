@@ -2,10 +2,14 @@ UNAME := $(shell uname)
 
 cpp_example = ./example/cpp-example
 
-.PHONY: wasm wasmweb android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests mobile-release
+.PHONY: wasm js wasmweb android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests mobile-release
 
 wasm:
 	wasm-pack build --scope crypto-com bindings/wasm
+
+js:
+	wasm-pack build --scope crypto-com bindings/wasm
+	./js_build.sh
 
 wasmweb:
 	wasm-pack build -d target/wasmweb --scope crypto-com bindings/wasm --target web
