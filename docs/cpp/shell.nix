@@ -1,4 +1,5 @@
-{ system ? builtins.currentSystem, pkgs ? import ../../nix { inherit system; }
+{ system ? builtins.currentSystem
+, pkgs ? import ../../nix { inherit system; }
 }:
 
 with pkgs;
