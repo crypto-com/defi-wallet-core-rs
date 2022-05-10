@@ -13,7 +13,7 @@ mod cosmos_raw_msg;
 pub use cosmos_raw_msg::*;
 
 /// Any contains arbitrary data along with a URL that describes the data type.
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CosmosAny {
     /// URL of data type
@@ -40,7 +40,7 @@ impl TryFrom<PublicKey> for CosmosAny {
 }
 
 /// AuthInfo describes the fee and signer modes that are used to sign a transaction.
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CosmosAuthInfo {
     /// Fee and gas limit
@@ -67,7 +67,7 @@ impl TryFrom<AuthInfo> for CosmosAuthInfo {
 }
 
 /// Fee includes the amount of coins paid in fees and the maximum gas to be used by the transaction.
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CosmosFee {
     /// Amount
@@ -114,7 +114,7 @@ pub struct CosmosHeight {
 }
 
 /// Legacy Amino multisig key.
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CosmosLegacyAminoMultisig {
     /// Multisig threshold
@@ -139,7 +139,7 @@ impl TryFrom<LegacyAminoMultisig> for CosmosLegacyAminoMultisig {
 }
 
 /// ModeInfo describes the signing mode of a single or nested multisig signer.
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub enum CosmosModeInfo {
     /// Single signer
     Single { mode: String },
@@ -161,7 +161,7 @@ impl From<ModeInfo> for CosmosModeInfo {
 }
 
 /// SignerInfo describes the public key and signing mode of a single top-level signer.
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CosmosSignerInfo {
     /// Signer's public key
@@ -187,7 +187,7 @@ impl TryFrom<SignerInfo> for CosmosSignerInfo {
 }
 
 /// Signer's public key.
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum CosmosSignerPublicKey {
     /// Single singer
@@ -215,7 +215,7 @@ impl TryFrom<SignerPublicKey> for CosmosSignerPublicKey {
 }
 
 /// Body of a transaction that all signers sign over.
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub struct CosmosTxBody {
     /// Message list
     pub messages: Vec<CosmosRawMsg>,

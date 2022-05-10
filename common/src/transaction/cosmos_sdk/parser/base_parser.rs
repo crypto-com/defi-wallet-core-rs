@@ -63,12 +63,34 @@ fn transform_msg(msg: &CosmosRawMsg) -> Result<CosmosRawMsg, CosmosError> {
 #[cfg(test)]
 mod cosmos_base_parsing_tests {
     use super::*;
+    use crate::transaction::cosmos_sdk::parser::structs::{CosmosRawMsg, CosmosRawNormalMsg};
+    use crate::transaction::cosmos_sdk::SingleCoin;
 
     #[test]
-    fn test_proto_body_parsing() {
-        let body_bytes = "0a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d120731323334353637";
+    fn test_proto_tx_body_parsing() {
+        let tx_body_bytes = "0a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d120731323334353637";
 
-        let parser = CosmosParser::new();
-        let body = parser.parse_proto_body(body_bytes).unwrap();
+        let parser = BaseParser {};
+        let tx_body = parser.parse_proto_tx_body(tx_body_bytes).unwrap();
+
+        assert_eq!(
+            tx_body,
+            CosmosTxBody {
+                messages: vec![CosmosRawMsg::Normal {
+                    msg: CosmosRawNormalMsg::BankSend {
+                        from_address: "cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6".to_string(),
+                        to_address: "cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu".to_string(),
+                        amount: vec![SingleCoin::Other {
+                            amount: "1234567".to_string(),
+                            denom: "ucosm".to_string()
+                        }]
+                    }
+                }],
+                memo: "".to_string(),
+                timeout_height: 0,
+                extension_options: vec![],
+                non_critical_extension_options: vec![],
+            }
+        );
     }
 }

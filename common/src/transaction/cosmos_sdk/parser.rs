@@ -53,12 +53,41 @@ pub trait CosmosParser {
 #[cfg(test)]
 mod cosmos_parsing_tests {
     use super::*;
+    use crate::transaction::cosmos_sdk::parser::base_parser::BaseParser;
+    use crate::transaction::cosmos_sdk::SingleCoin;
 
     #[test]
     fn test_proto_auth_info_parsing() {
         let auth_info_bytes = "0a0a0a0012040a020801180112130a0d0a0575636f736d12043230303010c09a0c";
 
-        let parser = CosmosParser::new();
-        let auto_info = parser.parse_proto_auto_info(auth_info_bytes).unwrap();
+        let parser = BaseParser {};
+        let auth_info = parser.parse_proto_auto_info(auth_info_bytes).unwrap();
+
+        assert_eq!(
+            auth_info,
+            CosmosAuthInfo {
+                fee: CosmosFee {
+                    amount: vec![SingleCoin::Other {
+                        amount: "2000".to_string(),
+                        denom: "ucosm".to_string()
+                    }],
+                    gas_limit: 200000,
+                    payer: None,
+                    granter: None,
+                },
+                signer_infos: vec![CosmosSignerInfo {
+                    public_key: Some(CosmosSignerPublicKey::Any {
+                        key: CosmosAny {
+                            type_url: "".to_string(),
+                            value: "".to_string()
+                        }
+                    }),
+                    mode_info: CosmosModeInfo::Single {
+                        mode: "Direct".to_string()
+                    },
+                    sequence: 1
+                }]
+            }
+        );
     }
 }

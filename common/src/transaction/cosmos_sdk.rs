@@ -44,7 +44,7 @@ pub const CRONOS_CHAIN_ID: &str = "cronosmainnet_25-1";
 pub const COSMOS_CHAIN_ID: &str = "cosmoshub-4";
 
 /// Network to work with
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum Network {
     /// Crypto.org Chain mainnet
     CryptoOrgMainnet,
@@ -101,7 +101,7 @@ impl Network {
 }
 
 /// single coin amount
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum SingleCoin {
     /// basecro
     BaseCRO { amount: u64 },
@@ -389,7 +389,7 @@ pub enum CosmosSDKMsg {
     },
     /// Raw message which is not constructed by fields (may be parsed from `CosmosParser`) or an
     /// unsupported message.
-    /// It also could be serialized and added to a transaction.
+    /// It could also be serialized and added to a transaction.
     Raw { raw_msg: CosmosRawMsg },
 }
 

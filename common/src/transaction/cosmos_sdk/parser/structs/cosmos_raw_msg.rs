@@ -24,7 +24,7 @@ use std::str::FromStr;
 /// Since `CosmosSDKMsg` is constructed by fields and has no `sender_address` which is a wallet
 /// address. `CosmosRawMsg` is parsed directly from Protobuf or JSON, it should have the all fields
 /// of original message.
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum CosmosRawMsg {
     /// Normal message
     Normal { msg: CosmosRawNormalMsg },
@@ -244,7 +244,7 @@ impl From<chainmain::nft::v1::MsgBurnNft> for CosmosRawMsg {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum CosmosRawNormalMsg {
     /// MsgSend
     BankSend {
@@ -418,7 +418,7 @@ impl CosmosRawNormalMsg {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum CosmosRawCryptoOrgMsg {
     /// MsgIssueDenom
     NftIssueDenom {
