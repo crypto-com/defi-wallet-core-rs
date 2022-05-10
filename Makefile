@@ -86,20 +86,8 @@ cpp-ci-tests: build_cpp
 
 cpp-tests: python-tests
 
-cpp-docs-legacy: build_cpp
-	grep -h -R -E "//" -A 1 -R --include "$(cpp_example)/defi-wallet-core-cpp/src/*.h" > cpp_docs.md
-# add break line
-	sed -i '' 's/--/---\n/g' cpp_docs.md
-# add more spaces in beginning of line
-	sed -i '' 's/  /    /g' cpp_docs.md
-	sed -i '' "s/^\/\//    \/\//g" cpp_docs.md
-	sed -i '' "s/^::/    ::/g" cpp_docs.md
-# remove #endif lines
-	sed -i '' 's/^#endif.*//g' cpp_docs.md
-# remove } // lines
-	sed -i '' 's/^} \/\/.*//g' cpp_docs.md
-
-cpp-docs: cpp-docs-mdbook
+# Choose the defualt cpp docs engine
+cpp-docs: cpp-docs-gitbook
 
 cpp-docs-doxygen: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen"
