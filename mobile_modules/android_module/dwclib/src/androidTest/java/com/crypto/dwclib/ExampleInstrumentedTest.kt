@@ -9,6 +9,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 import org.junit.Assert.*
+import java.security.PrivateKey
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -565,27 +566,70 @@ class ExampleInstrumentedTest {
         val wallet = HdWallet.recoverWallet(words, "")
         val priv = wallet.getKeyFromIndex(WalletCoin.CosmosSdk(Network.CosmosHub), 0U)
         val address = wallet.getAddress(WalletCoin.CosmosSdk(Network.CosmosHub), 0U)
-        Assert.assertEquals(address,"cosmos1ztqcmg76d54d468t6ftkz4zcwwurzz7xhwlsmz")
+        Assert.assertEquals(address, "cosmos1ztqcmg76d54d468t6ftkz4zcwwurzz7xhwlsmz")
 
         val auth_info_bytes = "0a0a0a0012040a020801180112130a0d0a0575636f736d12043230303010c09a0c"
-        val body_bytes = "0a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d120731323334353637"
+        val body_bytes =
+            "0a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d120731323334353637"
 
         val cosmosSigner = CosmosSigner(priv)
-        val signature = cosmosSigner.signDirect("cosmoshub-4","1",auth_info_bytes,body_bytes)
-        Assert.assertEquals(signature,"0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712210a0a0a0012040a020801180112130a0d0a0575636f736d12043230303010c09a0c1a40cc782d8685e320962a3b8379f32119056eab979c7e33f697519c50c0d60aef602c8e97c0155a6e1f99553a5a6bc39e513fe576ce43fa877a459c6c382aa03c2a")
+        val signature = cosmosSigner.signDirect("cosmoshub-4", "1", auth_info_bytes, body_bytes)
+        Assert.assertEquals(
+            signature,
+            "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712210a0a0a0012040a020801180112130a0d0a0575636f736d12043230303010c09a0c1a40cc782d8685e320962a3b8379f32119056eab979c7e33f697519c50c0d60aef602c8e97c0155a6e1f99553a5a6bc39e513fe576ce43fa877a459c6c382aa03c2a"
+        )
     }
 
     @Test
     fun ethereumDemo() {
         // build transaction data with abi and args
-        val contractData =
+        val contractAbi =
             "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"initialSupply\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
-//        Eth
-//        const contract = new EthContract(contractData);
-//        console.dir(contract);
-//        const address = wasm.EthContractFunctionArg.build_address("0x2c600e0a72b3ae39e9b27d2e310b180abe779368");
-//        const amount = wasm.EthContractFunctionArg.build_uint("100");
-//        const inputData = contract.encode("transfer", [address, amount]);
+        val contract = EthAbiContract(contractAbi)
+        val address = EthAbiTokenBind.Address("0x2c600e0a72b3ae39e9b27d2e310b180abe779368")
+        val amount = EthAbiTokenBind.Uint("100")
+        val argList = listOf(address, amount)
+
+        val inputData = contract.encodeBind("transfer", argList)
+        Assert.assertEquals(
+            bytesToHex(inputData),
+            "a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe7793680000000000000000000000000000000000000000000000000000000000000064"
+        )
+
+        // build transaction with data
+        var txinfo = EthTxInfo(
+            "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d",
+            EthAmount.EthDecimal("1"),
+            "0",
+            "21000",
+            EthAmount.WeiDecimal("1000"),
+            inputData,
+            true
+        )
+
+        val priv =
+            SecretKey.fromHex("24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e")
+        var signedTx = buildSignedEthTx(txinfo, EthNetwork.Mainnet, priv)
+        Assert.assertEquals(
+            bytesToHex(signedTx),
+            "f8ae808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a7640000b844a9059cbb0000000000000000000000002c600e0a72b3ae39e9b27d2e310b180abe779368000000000000000000000000000000000000000000000000000000000000006425a0760334254a823052f95c286f48a2da50cc4b88f5cbe2088d79de620c3855d32ba059ec64d055db5de03e4095dc9d0669b7bff4ae920b1860c99c9be420c354e432"
+        )
+
+        // build transaction with no data
+        txinfo = EthTxInfo(
+            "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d",
+            EthAmount.EthDecimal("1"),
+            "0",
+            "21000",
+            EthAmount.WeiDecimal("1000"),
+            null,
+            true
+        )
+        signedTx = buildSignedEthTx(txinfo, EthNetwork.Mainnet, priv)
+        Assert.assertEquals(
+            bytesToHex(signedTx),
+            "f869808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a76400008026a0f65f41ceaadda3c64f68c4d65b202b89a8dc508bbd0957ba28c61eb65ba694f6a03d5c681c4a5c21f4ad1616aed9a0e0b72344dbcfdeddb60a11bfc19a11e60120"
+        )
     }
 
     @Test
