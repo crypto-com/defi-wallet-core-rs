@@ -304,14 +304,13 @@ async function ethereum_demo() {
 
   // build transaction with no data
   priv = wasm.PrivateKey.from_hex("24e585759e492f5e810607c82c202476c22c5876b10247ebf8b2bb7f75dbed2e");
-  var bufView = new Uint8Array();
   var info2 = new wasm.EthTxInfo(
     "0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d",
     new wasm.EthTxAmount("1", "eth",),
     "0",
     "21000",
     new wasm.EthTxAmount("1000", "wei",),
-    bufView,
+    null,
     true,
   );
   txData = wasm.build_signed_eth_tx(info2, BigInt(1), priv);
@@ -325,16 +324,16 @@ async function eth_signTransaction_eip1559_demo() {
   // eip1559 build signed raw transaction
   let jsonStr = '{"from":"0x68418d0fdb846e8736aa613159035a9d9fde11f0","to":"0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d","gas":"0x5208","value":"0xde0b6b3a7640000","data":"0x","nonce":"0x0","maxPriorityFeePerGas":"0x1","maxFeePerGas":"0x77359401","chainId":"0x0539"}';
   var priv = wasm.PrivateKey.from_hex("6f53576748877b603718b1aa1e7106aec5e15c1a2f39ea8c4683ac0d5a435a13");
-  let rawTx = wasm.eth_sign_transaction(jsonStr,priv);
+  let rawTx = wasm.eth_sign_transaction(jsonStr, priv);
   console.assert(wasm.bytes2hex(rawTx) === "02f87082053980018477359401825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080c001a0caa0df6665a08e4fae0839395387aabeeef4064134dd09a771eed6e41d6c258da07817000d01107a554e8e885c872a672df50e2dc25ed5068b83a93e2a27982bce");
   // Sign with the specified chainid
   priv = wasm.PrivateKey.from_hex("6f53576748877b603718b1aa1e7106aec5e15c1a2f39ea8c4683ac0d5a435a13");
-  rawTx = wasm.eth_sign_transaction_with_chainid(jsonStr,priv,BigInt(1337));
+  rawTx = wasm.eth_sign_transaction_with_chainid(jsonStr, priv, BigInt(1337));
   console.assert(wasm.bytes2hex(rawTx) === "02f87082053980018477359401825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080c001a0caa0df6665a08e4fae0839395387aabeeef4064134dd09a771eed6e41d6c258da07817000d01107a554e8e885c872a672df50e2dc25ed5068b83a93e2a27982bce");
 
   priv = wasm.PrivateKey.from_hex("6f53576748877b603718b1aa1e7106aec5e15c1a2f39ea8c4683ac0d5a435a13");
   jsonStr = '{"from":"0x68418d0fdb846e8736aa613159035a9d9fde11f0","to":"0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d","gas":"0x5208","value":"0xde0b6b3a7640000","data":"0x","nonce":"0x0","accessList":[{"address":"0x0000000000000000000000000000000000000000","storageKeys":["0x0000000000000000000000000000000000000000000000000000000000000000"]}],"maxPriorityFeePerGas":"0x1","maxFeePerGas":"0x77359401","chainId":"0x0539"}';
-  rawTx = wasm.eth_sign_transaction_with_chainid(jsonStr,priv,BigInt(1337));
+  rawTx = wasm.eth_sign_transaction_with_chainid(jsonStr, priv, BigInt(1337));
   console.assert(wasm.bytes2hex(rawTx) === "02f8a982053980018477359401825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080f838f7940000000000000000000000000000000000000000e1a0000000000000000000000000000000000000000000000000000000000000000080a0462c27c0ae0a8a2fd448ab299d519823c7016c280881c38747dcda913dc1c4caa0685acccb1f37f87250e9688e805725f2eb0e9f63b53fe311f9ed485f07987cf4");
 
 }
@@ -346,7 +345,7 @@ async function eth_signTransaction_eip2930_demo() {
   let jsonStr = '{"from":"0x68418d0fdb846e8736aa613159035a9d9fde11f0","to":"0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d","gas":"0x5208","gasPrice":"0x5f5e100","value":"0xde0b6b3a7640000","data":"0x","nonce":"0x0","accessList":[{"address":"0x0000000000000000000000000000000000000000","storageKeys":["0x0000000000000000000000000000000000000000000000000000000000000000"]}],"chainId":"0x0539"}';
 
   let priv = wasm.PrivateKey.from_hex("6f53576748877b603718b1aa1e7106aec5e15c1a2f39ea8c4683ac0d5a435a13");
-  let rawTx = wasm.eth_sign_transaction_with_chainid(jsonStr,priv,BigInt(1337));
+  let rawTx = wasm.eth_sign_transaction_with_chainid(jsonStr, priv, BigInt(1337));
   console.assert(wasm.bytes2hex(rawTx) === "01f8a8820539808405f5e100825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080f838f7940000000000000000000000000000000000000000e1a0000000000000000000000000000000000000000000000000000000000000000080a024117c04934ced6c3d272447816f0ebc00e97dd012f8d3872d661a48152c0e5ca0601c21637bad2f399da6a7e314a6119956f4bb8c2d7dd2df6905786e56a35c47");
 }
 
@@ -357,7 +356,7 @@ async function eth_signTransaction_legacy_demo() {
   let jsonStr = '{"from":"0x68418d0fdb846e8736aa613159035a9d9fde11f0","to":"0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d","gas":"0x5208","gasPrice":"0x5f5e100","value":"0xde0b6b3a7640000","data":"0x","nonce":"0x0","chainId":"0x0539"}';
 
   let priv = wasm.PrivateKey.from_hex("6f53576748877b603718b1aa1e7106aec5e15c1a2f39ea8c4683ac0d5a435a13");
-  let rawTx = wasm.eth_sign_transaction_with_chainid(jsonStr,priv,BigInt(1337));
+  let rawTx = wasm.eth_sign_transaction_with_chainid(jsonStr, priv, BigInt(1337));
   console.assert(wasm.bytes2hex(rawTx) === "f86d808405f5e100825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080820a96a0dd110c3396ac52d7a23db8e5cca23b42983636192190baeec2178d5b33b02369a057ace20b2e326e7e24b0e1ca57d312b19a29a8353301d2280e5a829fa7866f10");
 }
 
@@ -397,7 +396,7 @@ async function eth_sign_demo() {
   // eth_sign
   let signature = priv.eth_sign_by_hash("879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0", BigInt(0));
   console.assert(wasm.bytes2hex(signature) === "59e8f544fdee652ae4475a53921ad8030794df66aedf77b218349ba1f476712739caf09dfee2c8ac60e17cc5f2102c09d4ad04de6223a38e9705b28276d71f471b");
-  signature = wasm.eth_sign(priv,"879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0");
+  signature = wasm.eth_sign(priv, "879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0");
   console.assert(signature === "0x59e8f544fdee652ae4475a53921ad8030794df66aedf77b218349ba1f476712739caf09dfee2c8ac60e17cc5f2102c09d4ad04de6223a38e9705b28276d71f471b");
 
   priv = wallet.get_key_from_index(wasm.CoinType.Ethereum, 0);
@@ -406,7 +405,7 @@ async function eth_sign_demo() {
   signature = priv.eth_sign(message, BigInt(0));
   console.assert(wasm.bytes2hex(signature) === "1490cd65cdfd5145a2b4e4e562b8c78008cb374ac36b2bbcd6b65dbcc14d31c453c705c4399e745fbf22ccd3939754ff2e4bbbe13a7dacae8a44aeb95f6e68c81b");
 
-  signature = wasm.personal_sign(priv,"Example `personal_sign` message");
+  signature = wasm.personal_sign(priv, "Example `personal_sign` message");
   console.assert(signature === "0x1490cd65cdfd5145a2b4e4e562b8c78008cb374ac36b2bbcd6b65dbcc14d31c453c705c4399e745fbf22ccd3939754ff2e4bbbe13a7dacae8a44aeb95f6e68c81b");
 
 }
@@ -442,12 +441,12 @@ async function cosmos_signDirect_demo() {
   let wallet = wasm.Wallet.recover_wallet(words, "");
   let priv = wallet.get_key_from_index(wasm.CoinType.CosmosHub, 0);
   let address = wallet.get_address(wasm.CoinType.CosmosHub, 0);
-  console.assert(address,"cosmos1ztqcmg76d54d468t6ftkz4zcwwurzz7xhwlsmz");
+  console.assert(address, "cosmos1ztqcmg76d54d468t6ftkz4zcwwurzz7xhwlsmz");
 
   let auth_info_bytes = "0a0a0a0012040a020801180112130a0d0a0575636f736d12043230303010c09a0c";
   let body_bytes = "0a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d120731323334353637";
 
-  const signature = wasm.cosmos_signDirect(priv,"cosmoshub-4","1",auth_info_bytes,body_bytes);
+  const signature = wasm.cosmos_signDirect(priv, "cosmoshub-4", "1", auth_info_bytes, body_bytes);
   console.assert(signature === "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712210a0a0a0012040a020801180112130a0d0a0575636f736d12043230303010c09a0c1a40cc782d8685e320962a3b8379f32119056eab979c7e33f697519c50c0d60aef602c8e97c0155a6e1f99553a5a6bc39e513fe576ce43fa877a459c6c382aa03c2a");
 }
 
