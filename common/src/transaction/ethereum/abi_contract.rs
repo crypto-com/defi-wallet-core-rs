@@ -5,6 +5,7 @@ use crate::EthError;
 use ethers::prelude::abi::{Contract, Token};
 
 /// Ethereum ABI token to ffi bind
+#[cfg(feature = "uniffi-binding")]
 #[derive(Debug, Eq, PartialEq)]
 pub enum EthAbiTokenBind {
     Address { data: String },
@@ -19,6 +20,7 @@ pub enum EthAbiTokenBind {
     Tuple { data: Vec<EthAbiTokenBind> },
 }
 
+#[cfg(feature = "uniffi-binding")]
 impl TryFrom<&EthAbiTokenBind> for EthAbiToken {
     type Error = EthError;
     fn try_from(token: &EthAbiTokenBind) -> Result<Self, Self::Error> {
@@ -82,6 +84,7 @@ impl EthAbiContract {
     /// Encode input data of specified function and arguments. The encoded data
     /// should be set to field data of EthTxInfo when invoking function
     /// build_signed_eth_tx.
+    #[cfg(feature = "uniffi-binding")]
     pub fn encode_bind(
         &self,
         function_name: &str,
@@ -216,6 +219,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "uniffi-binding")]
     fn eth_abi_token_bind_test() {
         // Read the content of an ABI contract file.
         let dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();

@@ -298,7 +298,7 @@ enum EthError {
 };
 
 [Enum]
-interface EthAbiTokenBind{
+interface EthAbiTokenBind {
   Address(string data);
   FixedBytes(sequence<u8> data);
   Bytes(sequence<u8> data);
