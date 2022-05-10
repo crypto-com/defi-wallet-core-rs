@@ -7,7 +7,7 @@ then
 fi
 
 rustup target add x86_64-apple-ios aarch64-apple-ios || exit 1
-uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language swift --out-dir bindings/ios || exit 1
+uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language swift --out-dir bindings/ios || exit 1
 cargo build --features uniffi-binding --target aarch64-apple-ios -p defi-wallet-core-common --release || exit 1
 cargo build --features uniffi-binding --target x86_64-apple-ios -p defi-wallet-core-common --release || exit 1
 mkdir -p mobile_modules/ios_module/dwclib/dwclib/lib.a
