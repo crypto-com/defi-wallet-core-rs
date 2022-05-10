@@ -11,7 +11,7 @@ use prost::Message;
 
 /// Cosmos parser for `crypto.org` chain
 pub(crate) struct CryptoOrgParser {
-    base: BaseParser,
+    pub base: BaseParser,
 }
 
 impl CosmosParser for CryptoOrgParser {
@@ -23,14 +23,6 @@ impl CosmosParser for CryptoOrgParser {
             .map(transform_msg)
             .collect::<Result<_, _>>()?;
         Ok(())
-    }
-}
-
-impl CryptoOrgParser {
-    pub fn new() -> Self {
-        Self {
-            base: BaseParser {},
-        }
     }
 }
 
