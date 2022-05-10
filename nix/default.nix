@@ -9,6 +9,9 @@ import sources.nixpkgs {
         src = sources.pystarport;
       };
     })
+
+    (_: pkgs: { pypkgs = import ./pypkgs.nix { inherit pkgs; }; })
+
     (_: pkgs: { test-env = import ./testenv.nix { inherit pkgs; }; })
 
   ];

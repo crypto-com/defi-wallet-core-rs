@@ -107,32 +107,32 @@ cpp-docs-legacy: build_cpp
 cpp-docs: cpp-docs-mdbook
 
 cpp-docs-doxygen: build_cpp_with_doxygen
-	cd $(cpp_docs) && doxygen
+	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen"
 	open $(cpp_docs)/doxygen/html/index.html
 
 cpp-docs-sphinx: build_cpp_with_doxygen
-	cd $(cpp_docs) && doxygen && cd sphinx && make html
+	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen && cd sphinx && make html"
 	open $(cpp_docs)/sphinx/_build/html/index.html
 
 cpp-docs-gitbook: build_cpp_with_doxygen
-	cd $(cpp_docs) && doxygen
-	cd $(cpp_docs) && doxybook2 \
+	@nix-shell ./docs/cpp/shell.nix --run "\
+	cd $(cpp_docs) && doxygen && doxybook2 \
 		--input doxygen/xml \
 		--output gitbook/src \
 		--config config.json \
 		--summary-input SUMMARY.md.tmpl \
-		--summary-output gitbook/src/SUMMARY.md
+		--summary-output gitbook/src/SUMMARY.md"
 	cd $(cpp_docs)/gitbook/src && gitbook serve
 
 cpp-docs-mdbook: build_cpp_with_doxygen
-	cd $(cpp_docs) && doxygen
-	cd $(cpp_docs) && doxybook2 \
+	@nix-shell ./docs/cpp/shell.nix --run "\
+		cd $(cpp_docs) && doxygen && doxybook2 \
 		--input doxygen/xml \
 		--output mdbook/src \
 		--config config.json \
 		--summary-input SUMMARY.md.tmpl \
-		--summary-output mdbook/src/SUMMARY.md
-	cd $(cpp_docs)/mdbook && mdbook serve --open
+		--summary-output mdbook/src/SUMMARY.md \
+		&& cd mdbook && mdbook serve --open"
 
 lint-py:
 	flake8 --show-source --count --statistics \
