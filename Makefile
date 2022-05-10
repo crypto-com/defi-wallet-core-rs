@@ -91,15 +91,15 @@ cpp-docs: cpp-docs-gitbook
 
 cpp-docs-doxygen: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen"
-	ifeq ($(UNAME), Darwin)
-		open $(cpp_docs)/doxygen/html/index.html
-	endif
+ifeq ($(UNAME), Darwin)
+	open $(cpp_docs)/doxygen/html/index.html
+endif
 
 cpp-docs-sphinx: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen && cd sphinx && make html"
-	ifeq ($(UNAME), Darwin)
-		open $(cpp_docs)/sphinx/_build/html/index.html
-	endif
+ifeq ($(UNAME), Darwin)
+	open $(cpp_docs)/sphinx/_build/html/index.html
+endif
 
 cpp-docs-gitbook: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "\
