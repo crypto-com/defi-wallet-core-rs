@@ -9,7 +9,7 @@ on:
       - "*"
 
 jobs:
-  integration_tests:
+  Cpp Documents:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
