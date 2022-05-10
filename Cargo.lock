@@ -876,7 +876,7 @@ dependencies = [
 [[package]]
 name = "cxx-build"
 version = "1.0.67"
-source = "git+https://github.com/damoncro/cxx.git?rev=42b011184b6d5a593cd7513edb1d554e0f086a0f#42b011184b6d5a593cd7513edb1d554e0f086a0f"
+source = "git+https://github.com/crypto-com/cxx.git?rev=42b011184b6d5a593cd7513edb1d554e0f086a0f#42b011184b6d5a593cd7513edb1d554e0f086a0f"
 dependencies = [
  "cc",
  "codespan-reporting",
@@ -987,7 +987,7 @@ dependencies = [
  "anyhow",
  "cxx",
  "cxx-build 1.0.67 (registry+https://github.com/rust-lang/crates.io-index)",
- "cxx-build 1.0.67 (git+https://github.com/damoncro/cxx.git?rev=42b011184b6d5a593cd7513edb1d554e0f086a0f)",
+ "cxx-build 1.0.67 (git+https://github.com/crypto-com/cxx.git?rev=42b011184b6d5a593cd7513edb1d554e0f086a0f)",
  "defi-wallet-core-common",
  "defi-wallet-core-proto",
  "ethers",
