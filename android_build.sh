@@ -69,7 +69,7 @@ then
         exit 1
 fi
 
-uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language kotlin --out-dir bindings/android || exit 1
+uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language kotlin --out-dir bindings/android || exit 1
 
 rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android || exit 1
 
