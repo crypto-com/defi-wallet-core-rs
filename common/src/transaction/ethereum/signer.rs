@@ -33,7 +33,7 @@ impl EthSigner {
     pub fn eth_sign_insecure(&self, hash: &str) -> Result<String, EthError> {
         let hash = hash.strip_prefix("0x").unwrap_or(hash);
         let hash = H256::from_str(hash).map_err(|_| EthError::HexConversion)?;
-        let signature = self.wallet.sign_hash(hash, false).to_string();
+        let signature = self.wallet.sign_hash(hash).to_string();
         Ok(format!("0x{signature}"))
     }
 
@@ -41,7 +41,7 @@ impl EthSigner {
     /// Return a signature of hex string with prefix `0x`.
     pub fn personal_sign(&self, message: &str) -> String {
         let hash = hash_message(message);
-        let signature = self.wallet.sign_hash(hash, false).to_string();
+        let signature = self.wallet.sign_hash(hash).to_string();
         format!("0x{signature}")
     }
 
@@ -91,7 +91,7 @@ impl EthSigner {
         let encoded_data = Eip712TypedData::new(json_typed_data)?.encode()?;
         let signature = self
             .wallet
-            .sign_hash(H256::from_slice(&encoded_data), false)
+            .sign_hash(H256::from_slice(&encoded_data))
             .to_string();
         Ok(format!("0x{signature}"))
     }
