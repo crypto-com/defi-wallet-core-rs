@@ -22,8 +22,7 @@ bech32 = "0.8"
 bip39 = "1"
 cosmrs = "0.5"
 eyre = "0.6"
-# NOTE: add `features = ["legacy"]` if non-EIP-1559 network support is required
-ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "de275db56a1be948cf4a543e1837f5add6f4750c" }
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "0a031417d8ec9e8696229eb5d172f7155ec3c79c" }
 ibc = { version = "0.13", default-features = false }
 ibc-proto = { version = "0.17", default-features = false }
 itertools = "0.10"

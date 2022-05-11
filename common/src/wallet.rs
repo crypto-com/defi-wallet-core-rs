@@ -276,8 +276,7 @@ impl SecretKey {
     pub fn eth_sign(&self, message: &[u8], chain_id: u64) -> Result<Signature, HdWrapError> {
         let hash = hash_message(message);
         let wallet = LocalWallet::from(self.get_signing_key()).with_chain_id(chain_id);
-        // TODO: EIP-155 normalization (it seems `siwe` expects raw values)
-        let signature = wallet.sign_hash(hash, false);
+        let signature = wallet.sign_hash(hash);
         Ok(signature)
     }
 
@@ -287,7 +286,7 @@ impl SecretKey {
         let bhash: [u8; 32] = vhash.try_into().unwrap();
         let uhash: H256 = bhash.into();
         let wallet = LocalWallet::from(self.get_signing_key()).with_chain_id(chain_id);
-        let signature = wallet.sign_hash(uhash, false);
+        let signature = wallet.sign_hash(uhash);
         Ok(signature)
     }
 
