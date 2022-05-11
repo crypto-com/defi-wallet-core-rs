@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = "Defi Wallet Core Cpp"
-copyright = "2022, Crypto.com"
+copyright = "Crypto.com"
 author = "Crypto.com"
 
 # The full version, including alpha/beta/rc tags

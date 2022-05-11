@@ -108,8 +108,9 @@ cpp-docs-gitbook: build_cpp
 		--output gitbook/src \
 		--config config.json \
 		--summary-input SUMMARY.md.tmpl \
-		--summary-output gitbook/src/SUMMARY.md"
-	cd $(cpp_docs)/gitbook/src && gitbook serve
+		--summary-output gitbook/src/SUMMARY.md \
+		&& cd gitbook/src && gitbook serve"
+
 
 cpp-docs-mdbook: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "\

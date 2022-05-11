@@ -10,8 +10,6 @@ import sources.nixpkgs {
       };
     })
 
-    (_: pkgs: { pypkgs = import ./pypkgs.nix { inherit pkgs; }; })
-
     (_: pkgs: { test-env = import ./testenv.nix { inherit pkgs; }; })
 
   ];
