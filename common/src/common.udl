@@ -144,6 +144,34 @@ interface CosmosSDKMsg {
   DistributionSetWithdrawAddress(string withdraw_address);
   DistributionWithdrawDelegatorReward(string validator_address);
   IbcTransfer(string receiver, string source_port, string source_channel, SingleCoin token, Height timeout_height, u64 timeout_timestamp);
+  Raw(CosmosRawMsg raw_msg);
+};
+
+[Enum]
+interface CosmosRawMsg {
+  Normal(CosmosRawNormalMsg msg);
+  CryptoOrg(CosmosRawCryptoOrgMsg msg);
+  Any(string type_url, sequence<u8> value);
+};
+
+[Enum]
+interface CosmosRawNormalMsg {
+  BankSend(string from_address, string to_address, sequence<SingleCoin> amount);
+  StakingBeginRedelegate(string delegator_address, string validator_src_address, string validator_dst_address, SingleCoin amount);
+  StakingDelegate(string delegator_address, string validator_address, SingleCoin amount);
+  StakingUndelegate(string delegator_address, string validator_address, SingleCoin amount);
+  DistributionSetWithdrawAddress(string delegator_address, string withdraw_address);
+  DistributionWithdrawDelegatorReward(string delegator_address, string validator_address);
+  IbcTransfer(string sender, string receiver, string source_port, string source_channel, SingleCoin token, Height timeout_height, u64 timeout_timestamp);
+};
+
+[Enum]
+interface CosmosRawCryptoOrgMsg {
+  NftIssueDenom(string id, string name, string schema, string sender);
+  NftMint(string id, string denom_id, string name, string uri, string data, string sender, string recipient);
+  NftEdit(string id, string denom_id, string name, string uri, string data, string sender);
+  NftTransfer(string id, string denom_id, string sender, string recipient);
+  NftBurn(string id, string denom_id, string sender);
 };
 
 [Error]
@@ -211,6 +239,66 @@ interface CosmosSDKClient {
 
     [Throws=RestError]
     u64 simulate(sequence<u8> raw_signed_tx);
+};
+
+dictionary CosmosAny {
+    string type_url;
+    string value;
+};
+
+dictionary CosmosAuthInfo {
+    CosmosFee fee;
+    sequence<CosmosSignerInfo> signer_infos;
+};
+
+dictionary CosmosFee {
+    sequence<SingleCoin> amount;
+    u64 gas_limit;
+    string? payer;
+    string? granter;
+};
+
+dictionary CosmosLegacyAminoMultisig {
+    u32 threshold;
+    sequence<CosmosAny> public_keys;
+};
+
+[Enum]
+interface CosmosModeInfo {
+    Single(string mode);
+    Multi(sequence<string> modes);
+};
+
+dictionary CosmosSignerInfo {
+    CosmosSignerPublicKey? public_key;
+    CosmosModeInfo mode_info;
+    u64 sequence;
+};
+
+[Enum]
+interface CosmosSignerPublicKey {
+    Single(CosmosAny key);
+    LegacyAminoMultisig(CosmosLegacyAminoMultisig key);
+    Any(CosmosAny key);
+};
+
+dictionary CosmosTxBody {
+    sequence<CosmosRawMsg> messages;
+    string memo;
+    u64 timeout_height;
+    sequence<CosmosAny> extension_options;
+    sequence<CosmosAny> non_critical_extension_options;
+};
+
+interface CosmosParserWrapper {
+    [Name=new_crypto_org_parser]
+    constructor();
+    [Name=new_terra_parser]
+    constructor();
+    [Throws=CosmosError]
+    CosmosAuthInfo parse_proto_auto_info([ByRef] string hex_string);
+    [Throws=CosmosError]
+    CosmosTxBody parse_proto_tx_body([ByRef] string hex_string);
 };
 
 [Enum]
