@@ -109,8 +109,11 @@ cpp-docs-gitbook: build_cpp
 		--config config.json \
 		--summary-input SUMMARY.md.tmpl \
 		--summary-output gitbook/src/SUMMARY.md \
-		&& cd gitbook/src && gitbook serve"
-
+		&& cd gitbook/src && gitbook build"
+ifeq ($(UNAME), Darwin)
+	@nix-shell ./docs/cpp/shell.nix --run "\
+		cd $(cpp_docs)/gitbook/src && gitbook serve --open"
+endif
 
 cpp-docs-mdbook: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "\
@@ -120,7 +123,13 @@ cpp-docs-mdbook: build_cpp
 		--config config.json \
 		--summary-input SUMMARY.md.tmpl \
 		--summary-output mdbook/src/SUMMARY.md \
-		&& cd mdbook && mdbook serve --open"
+		&& cd mdbook && mdbook build"
+ifeq ($(UNAME), Darwin)
+	@nix-shell ./docs/cpp/shell.nix --run "\
+		cd $(cpp_docs)/mdbook && mdbook serve --open"
+endif
+
+
 
 lint-py:
 	flake8 --show-source --count --statistics \
