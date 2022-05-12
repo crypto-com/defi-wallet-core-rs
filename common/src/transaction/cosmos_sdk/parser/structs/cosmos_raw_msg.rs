@@ -25,6 +25,7 @@ use std::str::FromStr;
 /// Since `CosmosSDKMsg` is constructed by fields and has no `sender_address` which is a wallet
 /// address. `CosmosRawMsg` is parsed directly from Protobuf or JSON, it should have the all fields
 /// of original message.
+#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum CosmosRawMsg {
     /// Normal message
