@@ -2,10 +2,9 @@
 // It seems that these structs are only used for Cosmos parsing results for now. They could be
 // moved to `cosmos_sdk.rs` if reusable.
 
-use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
+use crate::transaction::cosmos_sdk::CosmosError;
 use cosmrs::crypto::{LegacyAminoMultisig, PublicKey};
 use cosmrs::tx::{mode_info, AuthInfo, Body, Fee, ModeInfo, SignerInfo, SignerPublicKey};
-use cosmrs::Any;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
@@ -22,8 +21,8 @@ pub struct CosmosAny {
     pub value: String,
 }
 
-impl From<Any> for CosmosAny {
-    fn from(any: Any) -> Self {
+impl From<cosmrs::Any> for CosmosAny {
+    fn from(any: cosmrs::Any) -> Self {
         Self {
             type_url: any.type_url,
             value: base64::encode(any.value),
@@ -66,12 +65,68 @@ impl TryFrom<AuthInfo> for CosmosAuthInfo {
     }
 }
 
+/// Coin defines a token with a denomination and an amount.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct CosmosCoin {
+    /// Amount
+    pub amount: String,
+    /// Denomination
+    pub denom: String,
+}
+
+impl From<cosmrs::Coin> for CosmosCoin {
+    fn from(coin: cosmrs::Coin) -> Self {
+        Self {
+            amount: coin.amount.to_string(),
+            denom: coin.denom.to_string(),
+        }
+    }
+}
+
+impl From<cosmos_sdk_proto::cosmos::base::v1beta1::Coin> for CosmosCoin {
+    fn from(coin: cosmos_sdk_proto::cosmos::base::v1beta1::Coin) -> Self {
+        Self {
+            amount: coin.amount,
+            denom: coin.denom,
+        }
+    }
+}
+
+impl From<ibc_proto::cosmos::base::v1beta1::Coin> for CosmosCoin {
+    fn from(coin: ibc_proto::cosmos::base::v1beta1::Coin) -> Self {
+        Self {
+            amount: coin.amount,
+            denom: coin.denom,
+        }
+    }
+}
+
+impl From<&CosmosCoin> for ibc_proto::cosmos::base::v1beta1::Coin {
+    fn from(coin: &CosmosCoin) -> Self {
+        Self {
+            amount: coin.amount.clone(),
+            denom: coin.denom.clone(),
+        }
+    }
+}
+
+impl TryFrom<&CosmosCoin> for cosmrs::Coin {
+    type Error = CosmosError;
+
+    fn try_from(coin: &CosmosCoin) -> Result<Self, Self::Error> {
+        Ok(Self {
+            amount: coin.amount.parse()?,
+            denom: coin.denom.parse()?,
+        })
+    }
+}
+
 /// Fee includes the amount of coins paid in fees and the maximum gas to be used by the transaction.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CosmosFee {
     /// Amount
-    pub amount: Vec<SingleCoin>,
+    pub amount: Vec<CosmosCoin>,
     /// Gas limit
     pub gas_limit: u64,
     /// Payer
@@ -82,18 +137,7 @@ pub struct CosmosFee {
 
 impl From<Fee> for CosmosFee {
     fn from(fee: Fee) -> Self {
-        let amount = fee
-            .amount
-            .into_iter()
-            .map(|coin|
-            // FIXME:
-            // It seems unnecessary to convert to definite Enum value of `SingleCoin`. Since it is
-            // only used for display or converting back to `cosmrs::Coin`.
-            SingleCoin::Other {
-                amount: coin.amount.to_string(),
-                denom: coin.denom.to_string(),
-            })
-            .collect();
+        let amount = fee.amount.into_iter().map(Into::into).collect();
 
         Self {
             amount,

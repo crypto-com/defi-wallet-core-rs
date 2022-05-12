@@ -16,6 +16,13 @@ use tendermint_proto::Protobuf;
 pub struct BaseParser;
 
 impl CosmosParser for BaseParser {
+    fn parse_amino_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
+        Ok(CosmosRawMsg::Normal {
+            msg: serde_json::from_str(json_string)
+                .wrap_err("Failed to parse to Cosmos message from an Amino JSON string")?,
+        })
+    }
+
     fn transform_tx_body(&self, tx_body: &mut CosmosTxBody) -> Result<(), CosmosError> {
         tx_body.messages = tx_body
             .messages

@@ -2,7 +2,9 @@ use crate::proto::chainmain::nft::v1::{
     MsgBurnNft, MsgEditNft, MsgIssueDenom, MsgMintNft, MsgTransferNft,
 };
 use crate::transaction::cosmos_sdk::parser::base_parser::BaseParser;
-use crate::transaction::cosmos_sdk::parser::structs::{CosmosRawMsg, CosmosTxBody};
+use crate::transaction::cosmos_sdk::parser::structs::{
+    CosmosRawCryptoOrgMsg, CosmosRawMsg, CosmosRawNormalMsg, CosmosTxBody,
+};
 use crate::transaction::cosmos_sdk::parser::CosmosParser;
 use crate::transaction::cosmos_sdk::CosmosError;
 use cosmrs::tx::MsgProto;
@@ -15,6 +17,16 @@ pub(crate) struct CryptoOrgParser {
 }
 
 impl CosmosParser for CryptoOrgParser {
+    fn parse_amino_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
+        Ok(serde_json::from_str::<CosmosRawNormalMsg>(json_string)
+            .map(|msg| CosmosRawMsg::Normal { msg })
+            .or_else(|_| {
+                serde_json::from_str::<CosmosRawCryptoOrgMsg>(json_string)
+                    .map(|msg| CosmosRawMsg::CryptoOrg { msg })
+            })
+            .wrap_err("Failed to parse to Cosmos message from an Amino JSON string")?)
+    }
+
     fn transform_tx_body(&self, tx_body: &mut CosmosTxBody) -> Result<(), CosmosError> {
         self.base.transform_tx_body(tx_body)?;
         tx_body.messages = tx_body

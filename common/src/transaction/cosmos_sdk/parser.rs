@@ -43,6 +43,9 @@ pub trait CosmosParser {
         Ok(tx_body)
     }
 
+    /// Parse `CosmosRawMsg` from json data of Amino.
+    fn parse_amino_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError>;
+
     /// Transform `CosmosTxBody` for specified chain.
     /// This trait function must be implemented by sub-struct. The field `messages` has been
     /// initialized to type `CosmosRawMsg::Any` which should be transformed to detailed messages of
