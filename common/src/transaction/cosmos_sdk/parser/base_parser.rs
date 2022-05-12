@@ -19,7 +19,7 @@ impl CosmosParser for BaseParser {
     fn parse_amino_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
         Ok(CosmosRawMsg::Normal {
             msg: serde_json::from_str(json_string)
-                .wrap_err("Failed to parse to Cosmos message from an Amino JSON string")?,
+                .wrap_err("Failed to decode CosmosRawMsg from Amino JSON")?,
         })
     }
 

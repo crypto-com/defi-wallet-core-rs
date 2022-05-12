@@ -2,7 +2,9 @@
 
 use crate::transaction::cosmos_sdk::parser::base_parser::BaseParser;
 use crate::transaction::cosmos_sdk::parser::crypto_org_parser::CryptoOrgParser;
-use crate::transaction::cosmos_sdk::parser::structs::{CosmosAuthInfo, CosmosRawMsg, CosmosTxBody};
+use crate::transaction::cosmos_sdk::parser::structs::{
+    CosmosAuthInfo, CosmosFee, CosmosRawMsg, CosmosTxBody,
+};
 use crate::transaction::cosmos_sdk::parser::terra_parser::TerraParser;
 use crate::transaction::cosmos_sdk::parser::CosmosParser;
 use crate::transaction::cosmos_sdk::CosmosError;
@@ -35,6 +37,11 @@ impl CosmosParserWrapper {
                 base: BaseParser {},
             }),
         }
+    }
+
+    /// Parse `CosmosFee` from json data of Amino.
+    pub fn parse_amino_json_fee(&self, json_string: &str) -> Result<CosmosFee, CosmosError> {
+        self.inner.parse_amino_json_fee(json_string)
     }
 
     /// Parse `CosmosRawMsg` from json data of Amino.

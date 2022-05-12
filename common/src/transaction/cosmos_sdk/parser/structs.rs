@@ -6,14 +6,15 @@ use crate::transaction::cosmos_sdk::CosmosError;
 use cosmrs::crypto::{LegacyAminoMultisig, PublicKey};
 use cosmrs::tx::{mode_info, AuthInfo, Body, Fee, ModeInfo, SignerInfo, SignerPublicKey};
 use itertools::Itertools;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
+use std::fmt::Display;
+use std::str::FromStr;
 
 mod cosmos_raw_msg;
 pub use cosmos_raw_msg::*;
 
 /// Any contains arbitrary data along with a URL that describes the data type.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct CosmosAny {
     /// URL of data type
     pub type_url: String,
@@ -40,7 +41,6 @@ impl TryFrom<PublicKey> for CosmosAny {
 
 /// AuthInfo describes the fee and signer modes that are used to sign a transaction.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct CosmosAuthInfo {
     /// Fee and gas limit
     pub fee: CosmosFee,
@@ -123,11 +123,11 @@ impl TryFrom<&CosmosCoin> for cosmrs::Coin {
 
 /// Fee includes the amount of coins paid in fees and the maximum gas to be used by the transaction.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct CosmosFee {
     /// Amount
     pub amount: Vec<CosmosCoin>,
     /// Gas limit
+    #[serde(deserialize_with = "deserialize_from_str")]
     pub gas_limit: u64,
     /// Payer
     pub payer: Option<String>,
@@ -159,7 +159,6 @@ pub struct CosmosHeight {
 
 /// Legacy Amino multisig key.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct CosmosLegacyAminoMultisig {
     /// Multisig threshold
     pub threshold: u32,
@@ -206,7 +205,6 @@ impl From<ModeInfo> for CosmosModeInfo {
 
 /// SignerInfo describes the public key and signing mode of a single top-level signer.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct CosmosSignerInfo {
     /// Signer's public key
     pub public_key: Option<CosmosSignerPublicKey>,
@@ -232,7 +230,6 @@ impl TryFrom<SignerInfo> for CosmosSignerInfo {
 
 /// Signer's public key.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub enum CosmosSignerPublicKey {
     /// Single singer
     Single { key: CosmosAny },
@@ -300,6 +297,16 @@ impl From<Body> for CosmosTxBody {
             non_critical_extension_options,
         }
     }
+}
+
+fn deserialize_from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+where
+    T: FromStr,
+    T::Err: Display,
+    D: de::Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    T::from_str(&s).map_err(de::Error::custom)
 }
 
 fn format_mode_info(mode_info: ModeInfo) -> String {

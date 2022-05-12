@@ -20,6 +20,12 @@ pub use uniffi_binding::*;
 
 /// Cosmos parser trait
 pub trait CosmosParser {
+    /// Parse `CosmosFee` from json data of Amino.
+    fn parse_amino_json_fee(&self, json_string: &str) -> Result<CosmosFee, CosmosError> {
+        Ok(serde_json::from_str(json_string)
+            .wrap_err("Failed to decode CosmosFee from Amino JSON")?)
+    }
+
     /// Parse `CosmosAuthInfo` from hex data of Protobuf.
     fn parse_proto_auto_info(&self, hex_string: &str) -> Result<CosmosAuthInfo, CosmosError> {
         let bytes = hex_decode(hex_string).wrap_err("Failed to decode hex string")?;
@@ -57,6 +63,27 @@ pub trait CosmosParser {
 mod cosmos_parsing_tests {
     use super::*;
     use crate::transaction::cosmos_sdk::parser::base_parser::BaseParser;
+
+    #[test]
+    fn test_amino_json_fee_parsing() {
+        let json_fee = "{\"amount\":[{\"amount\":\"27743\",\"denom\":\"uusd\"}],\"gas_limit\":\"184953\",\"payer\":\"\"}";
+
+        let parser = BaseParser {};
+        let fee = parser.parse_amino_json_fee(json_fee).unwrap();
+
+        assert_eq!(
+            fee,
+            CosmosFee {
+                amount: vec![CosmosCoin {
+                    amount: "27743".to_string(),
+                    denom: "uusd".to_string()
+                }],
+                gas_limit: 184953,
+                payer: Some("".to_string()),
+                granter: None,
+            },
+        );
+    }
 
     #[test]
     fn test_proto_auth_info_parsing() {

@@ -24,7 +24,7 @@ impl CosmosParser for CryptoOrgParser {
                 serde_json::from_str::<CosmosRawCryptoOrgMsg>(json_string)
                     .map(|msg| CosmosRawMsg::CryptoOrg { msg })
             })
-            .wrap_err("Failed to parse to Cosmos message from an Amino JSON string")?)
+            .wrap_err("Failed to decode CosmosRawMsg from Amino JSON")?)
     }
 
     fn transform_tx_body(&self, tx_body: &mut CosmosTxBody) -> Result<(), CosmosError> {
