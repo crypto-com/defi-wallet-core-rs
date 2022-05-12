@@ -2,7 +2,7 @@
 
 use crate::transaction::cosmos_sdk::parser::base_parser::BaseParser;
 use crate::transaction::cosmos_sdk::parser::crypto_org_parser::CryptoOrgParser;
-use crate::transaction::cosmos_sdk::parser::structs::{CosmosAuthInfo, CosmosTxBody};
+use crate::transaction::cosmos_sdk::parser::structs::{CosmosAuthInfo, CosmosRawMsg, CosmosTxBody};
 use crate::transaction::cosmos_sdk::parser::terra_parser::TerraParser;
 use crate::transaction::cosmos_sdk::parser::CosmosParser;
 use crate::transaction::cosmos_sdk::CosmosError;
@@ -12,6 +12,13 @@ pub struct CosmosParserWrapper {
 }
 
 impl CosmosParserWrapper {
+    /// Create a base parser for decoding standard Cosmos messages.
+    pub fn new_base_parser() -> Self {
+        Self {
+            inner: Box::new(BaseParser {}),
+        }
+    }
+
     /// Create a Cosmos parser for `crypto.org` chain.
     pub fn new_crypto_org_parser() -> Self {
         Self {
@@ -28,6 +35,11 @@ impl CosmosParserWrapper {
                 base: BaseParser {},
             }),
         }
+    }
+
+    /// Parse `CosmosRawMsg` from json data of Amino.
+    pub fn parse_amino_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
+        self.inner.parse_amino_json_msg(json_string)
     }
 
     /// Parse `CosmosAuthInfo` from hex data of Protobuf.

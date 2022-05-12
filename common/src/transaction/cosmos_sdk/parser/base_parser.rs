@@ -70,8 +70,31 @@ fn transform_msg(msg: &CosmosRawMsg) -> Result<CosmosRawMsg, CosmosError> {
 #[cfg(test)]
 mod cosmos_base_parsing_tests {
     use super::*;
-    use crate::transaction::cosmos_sdk::parser::structs::{CosmosRawMsg, CosmosRawNormalMsg};
-    use crate::transaction::cosmos_sdk::SingleCoin;
+    use crate::transaction::cosmos_sdk::parser::structs::{
+        CosmosCoin, CosmosRawMsg, CosmosRawNormalMsg,
+    };
+
+    #[test]
+    fn test_amino_json_msg_parsing() {
+        let json_msg = "{\"@type\":\"/cosmos.bank.v1beta1.MsgSend\",\"amount\":[{\"amount\":\"1234567\",\"denom\":\"ucosm\"}],\"from_address\":\"cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6\",\"to_address\":\"cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu\"}";
+
+        let parser = BaseParser {};
+        let msg = parser.parse_amino_json_msg(json_msg).unwrap();
+
+        assert_eq!(
+            msg,
+            CosmosRawMsg::Normal {
+                msg: CosmosRawNormalMsg::BankSend {
+                    from_address: "cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6".to_string(),
+                    to_address: "cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu".to_string(),
+                    amount: vec![CosmosCoin {
+                        amount: "1234567".to_string(),
+                        denom: "ucosm".to_string()
+                    }],
+                },
+            },
+        );
+    }
 
     #[test]
     fn test_proto_tx_body_parsing() {
@@ -87,7 +110,7 @@ mod cosmos_base_parsing_tests {
                     msg: CosmosRawNormalMsg::BankSend {
                         from_address: "cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6".to_string(),
                         to_address: "cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu".to_string(),
-                        amount: vec![SingleCoin::Other {
+                        amount: vec![CosmosCoin {
                             amount: "1234567".to_string(),
                             denom: "ucosm".to_string()
                         }]

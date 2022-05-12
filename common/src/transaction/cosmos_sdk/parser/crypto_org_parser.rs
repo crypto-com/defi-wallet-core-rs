@@ -63,3 +63,36 @@ fn transform_msg(msg: &CosmosRawMsg) -> Result<CosmosRawMsg, CosmosError> {
         Ok(msg.clone())
     }
 }
+
+#[cfg(test)]
+mod cosmos_crypto_org_parsing_tests {
+    use super::*;
+    use crate::transaction::cosmos_sdk::parser::structs::{
+        CosmosCoin, CosmosRawMsg, CosmosRawNormalMsg,
+    };
+
+    #[test]
+    fn test_amino_json_msg_parsing() {
+        let json_msg = "{\"@type\":\"/chainmain.nft.v1.MsgMintNFT\",\"id\":\"test_token_id\",\"denom_id\":\"test_denom_id\",\"name\":\"\",\"uri\":\"test_uri\",\"data\":\"\",\"sender\":\"cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6\",\"recipient\":\"cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu\"}";
+
+        let parser = CryptoOrgParser {
+            base: BaseParser {},
+        };
+        let msg = parser.parse_amino_json_msg(json_msg).unwrap();
+
+        assert_eq!(
+            msg,
+            CosmosRawMsg::CryptoOrg {
+                msg: CosmosRawCryptoOrgMsg::NftMint {
+                    id: "test_token_id".to_string(),
+                    denom_id: "test_denom_id".to_string(),
+                    name: "".to_string(),
+                    uri: "test_uri".to_string(),
+                    data: "".to_string(),
+                    sender: "cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6".to_string(),
+                    recipient: "cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu".to_string(),
+                },
+            },
+        );
+    }
+}

@@ -57,7 +57,6 @@ pub trait CosmosParser {
 mod cosmos_parsing_tests {
     use super::*;
     use crate::transaction::cosmos_sdk::parser::base_parser::BaseParser;
-    use crate::transaction::cosmos_sdk::SingleCoin;
 
     #[test]
     fn test_proto_auth_info_parsing() {
@@ -70,7 +69,7 @@ mod cosmos_parsing_tests {
             auth_info,
             CosmosAuthInfo {
                 fee: CosmosFee {
-                    amount: vec![SingleCoin::Other {
+                    amount: vec![CosmosCoin {
                         amount: "2000".to_string(),
                         denom: "ucosm".to_string()
                     }],

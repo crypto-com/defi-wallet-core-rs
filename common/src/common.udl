@@ -296,10 +296,14 @@ dictionary CosmosTxBody {
 };
 
 interface CosmosParserWrapper {
+    [Name=new_base_parser]
+    constructor();
     [Name=new_crypto_org_parser]
     constructor();
     [Name=new_terra_parser]
     constructor();
+    [Throws=CosmosError]
+    CosmosRawMsg parse_amino_json_msg([ByRef] string json_string);
     [Throws=CosmosError]
     CosmosAuthInfo parse_proto_auto_info([ByRef] string hex_string);
     [Throws=CosmosError]
