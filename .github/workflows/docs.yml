@@ -1,0 +1,40 @@
+name: Documents
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release/**
+    tags:
+      - "*"
+
+jobs:
+  cpp_documents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cachix/install-nix-action@v15
+      - uses: cachix/cachix-action@v10
+        with:
+          name: cronos
+          extraPullNames: dapp
+          # github don't pass secrets for pull request from fork repos,
+          # in that case the push is disabled naturally.
+          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+      - name: 'Tar debug files'
+        if: failure()
+        run: tar cfz debug_files.tar.gz -C /tmp/pytest-of-runner .
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: debug-files
+          path: debug_files.tar.gz
+          if-no-files-found: ignore
+      - name: Generate doxygen
+        run: make cpp-docs-doxygen
+      - name: Generate sphinx
+        run: make cpp-docs-sphinx
+      - name: Generate gitbook
+        run: make cpp-docs-gitbook
+      - name: Generate mdbook
+        run: make cpp-docs-mdbook

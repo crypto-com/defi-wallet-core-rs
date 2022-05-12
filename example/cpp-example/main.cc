@@ -8,6 +8,7 @@
 
 void cronos_process();
 void test_interval();
+void test_cronos_testnet();
 using namespace std;
 using namespace org::defi_wallet_core;
 using namespace std::this_thread; // sleep_for, sleep_until
@@ -301,6 +302,7 @@ int main() {
     test_chainmain_nft(); // chainmain nft tests
     test_login();         // decentralized login
     cronos_process();     // cronos
+    test_cronos_testnet(); // cronos testnet
   } catch (const rust::cxxbridge1::Error &e) {
     // Use `Assertion failed`, the same as `assert` function
     cout << "Assertion failed: " << e.what() << endl;

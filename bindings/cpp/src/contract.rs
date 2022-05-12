@@ -18,6 +18,14 @@ fn new_erc20(contract_address: String, web3api_url: String, chain_id: u64) -> ff
 }
 impl ffi::Erc20 {
     /// Returns the decimal amount of tokens owned by `account_address`.
+    /// # Examples
+    /// ```
+    /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+    ///    "https://cronos-testnet-3.crypto.org:8545", 383)
+    ///  .legacy();
+    /// U256 = erc20.balance_of("0xf0307093f23311FE6776a7742dB619EB3df62969");
+    /// cout << balance.to_string() << endl;
+    /// ```
     fn balance_of(&self, account_address: String) -> Result<ffi::U256> {
         // TODO Reuse runtime on blocking function
         let rt = tokio::runtime::Runtime::new()?;
@@ -624,20 +632,76 @@ mod ffi {
 
     extern "Rust" {
         /// Construct an Erc20 struct
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383);
+        /// ```
         fn new_erc20(address: String, web3api_url: String, chian_id: u64) -> Erc20;
         /// Returns the decimal amount of tokens owned by `account_address`.
         fn balance_of(self: &Erc20, account_address: String) -> Result<U256>;
         /// Returns the name of the token
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383);
+        /// String name = erc20.name();
+        /// assert(name == "USDC");
+        /// ```
         fn name(self: &Erc20) -> Result<String>;
         /// Returns the symbol of the token
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383);
+        /// String symbol = erc20.symbol();
+        /// assert(symbol == "USDC");
+        /// ```
         fn symbol(self: &Erc20) -> Result<String>;
         /// Returns the number of decimals the token uses
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383)
+        ///  .legacy();
+        /// uint8_t decimals = erc20.decimals();
+        /// assert(decimals == 6);
+        /// ```
         fn decimals(self: &Erc20) -> Result<u8>;
         /// Makes a legacy transaction instead of an EIP-1559 one
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383);
+        /// erc20 = erc20.legacy();
+        /// ```
         fn legacy(self: &mut Erc20) -> Erc20;
         /// Sets the default polling interval for event filters and pending transactions
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383);
+        /// erc20 = erc20.interval(3000);
+        /// ```
         fn interval(self: &mut Erc20, polling_interval_ms: u64) -> Erc20;
         /// Moves `amount` tokens from the caller’s account to `to_address`.
+        /// # Transfer 100 tokens (devnet)
+        /// ```
+        /// String mycronosrpc = getEnv("MYCRONOSRPC");
+        /// char hdpath[100];
+        /// int cointype = 60;
+        /// int chainid = 777;
+        /// snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+        ///
+        /// String signer1_mnemonics = getEnv("SIGNER1_MNEMONIC");
+        /// Box<Wallet> signer1_wallet = createWallet(signer1_mnemonics);
+        /// String signer1_address = signer1_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer1_privatekey = signer1_wallet->get_key(hdpath);
+        ///
+        /// String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
+        /// Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
+        /// String signer2_address = signer2_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer2_privatekey = signer2_wallet->get_key(hdpath);
+        ///
+        /// Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
+        ///                         mycronosrpc, chainid)
+        ///                 .legacy();
+        /// erc20.transfer(signer2_address, "100", *privatekey);
+        /// ```
         fn transfer(
             self: &Erc20,
             to_address: String,
@@ -645,6 +709,30 @@ mod ffi {
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
         /// Moves `amount` tokens from `from_address` to `to_address` using the allowance mechanism.
+        /// # Transfer from signer1 to validator1 using the allowance mechanism (devnet)
+        /// ```
+        /// String mycronosrpc = getEnv("MYCRONOSRPC");
+        /// char hdpath[100];
+        /// int cointype = 60;
+        /// int chainid = 777;
+        /// snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+        ///
+        /// String signer1_mnemonics = getEnv("SIGNER1_MNEMONIC");
+        /// Box<Wallet> signer1_wallet = createWallet(signer1_mnemonics);
+        /// String signer1_address = signer1_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer1_privatekey = signer1_wallet->get_key(hdpath);
+        ///
+        /// String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
+        /// Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
+        /// String signer2_address = signer2_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer2_privatekey = signer2_wallet->get_key(hdpath);
+        ///
+        /// Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
+        ///                         mycronosrpc, chainid)
+        ///                 .legacy();
+        /// erc20.transfer_from(signer1_address, validator1_address, "100",
+        ///                 *signer2_privatekey);
+        /// ```
         fn transfer_from(
             self: &Erc20,
             from_address: String,
@@ -654,6 +742,29 @@ mod ffi {
         ) -> Result<CronosTransactionReceiptRaw>;
         /// Allows `approved_address` to withdraw from your account multiple times, up to the
         /// `amount` amount.
+        /// ## approves 1000 allowance (devnet)
+        /// ```
+        /// String mycronosrpc = getEnv("MYCRONOSRPC");
+        /// char hdpath[100];
+        /// int cointype = 60;
+        /// int chainid = 777;
+        /// snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+        ///
+        /// String signer1_mnemonics = getEnv("SIGNER1_MNEMONIC");
+        /// Box<Wallet> signer1_wallet = createWallet(signer1_mnemonics);
+        /// String signer1_address = signer1_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer1_privatekey = signer1_wallet->get_key(hdpath);
+        ///
+        /// String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
+        /// Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
+        /// String signer2_address = signer2_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer2_privatekey = signer2_wallet->get_key(hdpath);
+        ///
+        /// Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
+        ///                         mycronosrpc, chainid)
+        ///                 .legacy();
+        /// erc20.interval(3000).approve(signer2_address, "1000", *signer1_privatekey);
+        /// ```
         fn approve(
             self: &Erc20,
             approved_address: String,
@@ -661,8 +772,20 @@ mod ffi {
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
         /// Returns the amount which `spender` is still allowed to withdraw from `owner`.
+        /// ```
+        /// Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
+        ///                         mycronosrpc, chainid)
+        ///                 .legacy();
+        /// erc20.allowance(owner, spender);
+        /// ```
         fn allowance(self: &Erc20, owner: String, spender: String) -> Result<String>;
         /// Returns the amount of tokens in existence.
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///                         "https://cronos-testnet-3.crypto.org:8545", 383)
+        ///                 .legacy();
+        /// U256 total_supply = erc20.total_supply();
+        /// ```
         fn total_supply(self: &Erc20) -> Result<U256>;
 
         /// Construct an Erc721 struct

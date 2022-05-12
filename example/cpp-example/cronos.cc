@@ -453,3 +453,51 @@ timepoint measure_time(timepoint t1, std::string label) {
             << " (" << int_usec.count() << "us)" << std::endl;
   return t2;
 }
+
+void test_erc20_balance_of() {
+  Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+                          "https://cronos-testnet-3.crypto.org:8545", 383)
+                    .legacy();
+  U256 balance = erc20.balance_of("0xf0307093f23311FE6776a7742dB619EB3df62969");
+  cout << balance.to_string() << endl;
+}
+
+void test_erc20_name() {
+  Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+                          "https://cronos-testnet-3.crypto.org:8545", 383)
+                    .legacy();
+  String name = erc20.name();
+  assert(name == "USDC");
+}
+
+void test_erc20_symbol() {
+  Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+                          "https://cronos-testnet-3.crypto.org:8545", 383)
+                    .legacy();
+  String symbol = erc20.symbol();
+  assert(symbol == "USDC");
+}
+
+void test_erc20_decimals() {
+  Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+                          "https://cronos-testnet-3.crypto.org:8545", 383)
+                    .legacy();
+  uint8_t decimals = erc20.decimals();
+  assert(decimals == 6);
+}
+
+void test_erc20_total_supply() {
+  Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+                          "https://cronos-testnet-3.crypto.org:8545", 383)
+                    .legacy();
+  U256 total_supply = erc20.total_supply();
+  assert(total_supply == u256("100000000000000000000000000000000"));
+}
+
+void test_cronos_testnet() {
+  test_erc20_balance_of();
+  test_erc20_name();
+  test_erc20_symbol();
+  test_erc20_decimals();
+  test_erc20_total_supply();
+}

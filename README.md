@@ -156,3 +156,12 @@ Please install `nix` before running this test.
 ``` bash
 make python-tests
 ```
+
+
+## Documents
+### C++
+``` bash
+make cpp-docs
+```
+
+For more detailed setup, check [Defi Wallet Core Cpp Documents Generation Guide](./docs/cpp/README.md)

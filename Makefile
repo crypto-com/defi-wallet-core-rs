@@ -2,6 +2,7 @@ UNAME := $(shell uname)
 
 cpp_example = ./example/cpp-example
 
+cpp_docs = ./docs/cpp
 .PHONY: wasm js wasmweb android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests mobile-release
 
 wasm:
@@ -85,19 +86,49 @@ cpp-ci-tests: build_cpp
 
 cpp-tests: python-tests
 
-# TODO or use other docs engine
-cpp-docs: build_cpp
-	grep -h -R -E "//" -A 1 -R --include "$(cpp_example)/defi-wallet-core-cpp/src/*.h" > cpp_docs.md
-# add break line
-	sed -i '' 's/--/---\n/g' cpp_docs.md
-# add more spaces in beginning of line
-	sed -i '' 's/  /    /g' cpp_docs.md
-	sed -i '' "s/^\/\//    \/\//g" cpp_docs.md
-	sed -i '' "s/^::/    ::/g" cpp_docs.md
-# remove #endif lines
-	sed -i '' 's/^#endif.*//g' cpp_docs.md
-# remove } // lines
-	sed -i '' 's/^} \/\/.*//g' cpp_docs.md
+# Choose the defualt cpp docs engine
+cpp-docs: cpp-docs-gitbook
+
+cpp-docs-doxygen: build_cpp
+	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen"
+ifeq ($(UNAME), Darwin)
+	open $(cpp_docs)/doxygen/html/index.html
+endif
+
+cpp-docs-sphinx: build_cpp
+	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen && cd sphinx && make html"
+ifeq ($(UNAME), Darwin)
+	open $(cpp_docs)/sphinx/_build/html/index.html
+endif
+
+cpp-docs-gitbook: build_cpp
+	@nix-shell ./docs/cpp/shell.nix --run "\
+	cd $(cpp_docs) && doxygen && doxybook2 \
+		--input doxygen/xml \
+		--output gitbook/src \
+		--config config.json \
+		--summary-input SUMMARY.md.tmpl \
+		--summary-output gitbook/src/SUMMARY.md \
+		&& cd gitbook/src && gitbook build"
+ifeq ($(UNAME), Darwin)
+	@nix-shell ./docs/cpp/shell.nix --run "\
+		cd $(cpp_docs)/gitbook/src && gitbook serve --open"
+endif
+
+cpp-docs-mdbook: build_cpp
+	@nix-shell ./docs/cpp/shell.nix --run "\
+		cd $(cpp_docs) && doxygen && doxybook2 \
+		--input doxygen/xml \
+		--output mdbook/src \
+		--config config.json \
+		--summary-input SUMMARY.md.tmpl \
+		--summary-output mdbook/src/SUMMARY.md \
+		&& cd mdbook && mdbook build"
+ifeq ($(UNAME), Darwin)
+	@nix-shell ./docs/cpp/shell.nix --run "\
+		cd $(cpp_docs)/mdbook && mdbook serve --open"
+endif
+
 
 
 lint-py:
