@@ -67,9 +67,7 @@ fn transform_msg(msg: &CosmosRawMsg) -> Result<CosmosRawMsg, CosmosError> {
 #[cfg(test)]
 mod cosmos_crypto_org_parsing_tests {
     use super::*;
-    use crate::transaction::cosmos_sdk::parser::structs::{
-        CosmosCoin, CosmosRawMsg, CosmosRawNormalMsg,
-    };
+    use crate::transaction::cosmos_sdk::parser::structs::CosmosRawMsg;
 
     #[test]
     fn test_amino_json_msg_parsing() {
