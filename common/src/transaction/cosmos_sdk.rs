@@ -1,4 +1,5 @@
 use super::nft::*;
+use super::terra_core::*;
 use crate::SecretKey;
 use cosmrs::bank::MsgSend;
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
@@ -387,6 +388,17 @@ pub enum CosmosSDKMsg {
         /// The timeout is disabled when set to 0.
         timeout_timestamp: u64,
     },
+
+    /// MsgExecuteContract
+    ExecuteContract {
+        /// contract address in bech32
+        contract: String,
+        /// ExecuteMsg json encoded message to be passed to the contract
+        execute_msg: Vec<u8>,
+        /// coins to send
+        coins: SingleCoin,
+    },
+
     /// Raw message which is not constructed by fields (may be parsed from `CosmosParser`) or an
     /// unsupported message.
     /// It could also be serialized and added to a transaction.
@@ -569,6 +581,21 @@ impl CosmosSDKMsg {
                     type_url: any.type_url,
                     value: any.value,
                 })
+            }
+            CosmosSDKMsg::ExecuteContract {
+                contract,
+                execute_msg,
+                coins,
+            } => {
+                let coin: Coin = coins.try_into()?;
+                let contract_account_id = contract.parse::<AccountId>()?;
+                let msg_send = MsgExecuteContract {
+                    sender: sender_address,
+                    contract: contract_account_id,
+                    execute_msg: execute_msg.clone(),
+                    coins: vec![coin],
+                };
+                msg_send.to_any()
             }
             CosmosSDKMsg::Raw { raw_msg } => raw_msg.to_any(),
         }
