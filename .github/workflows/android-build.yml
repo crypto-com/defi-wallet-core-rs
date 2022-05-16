@@ -25,14 +25,6 @@ jobs:
           key: ${{ runner.os }}-ndk-${{ hashFiles('android_build.sh') }}
           restore-keys: |
             ${{ runner.os }}-ndk-
-      - name: Android module cache
-        uses: actions/cache@v2
-        with:
-          path: |
-            mobile_modules/android_module/
-          key: ${{ runner.os }}-android-${{ hashFiles('**/Cargo.lock', 'android_build.sh') }}
-          restore-keys: |
-            ${{ runner.os }}-android-
       - name: Rust cache
         uses: Swatinem/rust-cache@v1
       - name: Gradle cache
