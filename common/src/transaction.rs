@@ -4,6 +4,7 @@ mod cosmos_sdk;
 mod ethereum;
 /// wrapper and helper for NFT functionality
 pub mod nft;
+/// wrapper and helpers for Terra chain
 mod terra_core;
 /// UniFFI binding related functions
 mod uniffi_binding;
