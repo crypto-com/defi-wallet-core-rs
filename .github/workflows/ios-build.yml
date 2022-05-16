@@ -17,8 +17,6 @@ jobs:
           path: |
             mobile_modules/ios_module/
           key: ${{ runner.os }}-ios-${{ hashFiles('**/Cargo.lock', '**/*.swift', 'ios_build.sh') }}
-          restore-keys: |
-            ${{ runner.os }}-ios-
       - name: Rust cache
         uses: Swatinem/rust-cache@v1
       - run: command -v uniffi-bindgen || cargo install uniffi_bindgen --version 0.18.0
