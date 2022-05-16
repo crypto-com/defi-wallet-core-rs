@@ -303,13 +303,13 @@ interface CosmosParserWrapper {
     [Name=new_terra_parser]
     constructor();
     [Throws=CosmosError]
-    CosmosFee parse_amino_json_fee([ByRef] string json_string);
+    CosmosFee parse_proto_json_fee([ByRef] string json_string);
     [Throws=CosmosError]
-    CosmosRawMsg parse_amino_json_msg([ByRef] string json_string);
+    CosmosRawMsg parse_proto_json_msg([ByRef] string json_string);
     [Throws=CosmosError]
-    CosmosAuthInfo parse_proto_auto_info([ByRef] string hex_string);
+    CosmosAuthInfo parse_protobuf_auto_info([ByRef] string hex_string);
     [Throws=CosmosError]
-    CosmosTxBody parse_proto_tx_body([ByRef] string hex_string);
+    CosmosTxBody parse_protobuf_tx_body([ByRef] string hex_string);
 };
 
 [Enum]

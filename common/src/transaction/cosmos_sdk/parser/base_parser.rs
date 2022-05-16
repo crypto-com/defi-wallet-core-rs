@@ -16,10 +16,10 @@ use tendermint_proto::Protobuf;
 pub struct BaseParser;
 
 impl CosmosParser for BaseParser {
-    fn parse_amino_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
+    fn parse_proto_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
         Ok(CosmosRawMsg::Normal {
             msg: serde_json::from_str(json_string)
-                .wrap_err("Failed to decode CosmosRawMsg from Amino JSON")?,
+                .wrap_err("Failed to decode CosmosRawMsg from proto JSON mapping")?,
         })
     }
 
@@ -75,11 +75,11 @@ mod cosmos_base_parsing_tests {
     };
 
     #[test]
-    fn test_amino_json_msg_parsing() {
+    fn test_proto_json_msg_parsing() {
         let json_msg = "{\"@type\":\"/cosmos.bank.v1beta1.MsgSend\",\"amount\":[{\"amount\":\"1234567\",\"denom\":\"ucosm\"}],\"from_address\":\"cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6\",\"to_address\":\"cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu\"}";
 
         let parser = BaseParser {};
-        let msg = parser.parse_amino_json_msg(json_msg).unwrap();
+        let msg = parser.parse_proto_json_msg(json_msg).unwrap();
 
         assert_eq!(
             msg,
@@ -97,11 +97,11 @@ mod cosmos_base_parsing_tests {
     }
 
     #[test]
-    fn test_proto_tx_body_parsing() {
+    fn test_protobuf_tx_body_parsing() {
         let tx_body_bytes = "0a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d120731323334353637";
 
         let parser = BaseParser {};
-        let tx_body = parser.parse_proto_tx_body(tx_body_bytes).unwrap();
+        let tx_body = parser.parse_protobuf_tx_body(tx_body_bytes).unwrap();
 
         assert_eq!(
             tx_body,

@@ -39,23 +39,26 @@ impl CosmosParserWrapper {
         }
     }
 
-    /// Parse `CosmosFee` from json data of Amino.
-    pub fn parse_amino_json_fee(&self, json_string: &str) -> Result<CosmosFee, CosmosError> {
-        self.inner.parse_amino_json_fee(json_string)
+    /// Parse `CosmosFee` from data of proto JSON mapping.
+    pub fn parse_proto_json_fee(&self, json_string: &str) -> Result<CosmosFee, CosmosError> {
+        self.inner.parse_proto_json_fee(json_string)
     }
 
-    /// Parse `CosmosRawMsg` from json data of Amino.
-    pub fn parse_amino_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
-        self.inner.parse_amino_json_msg(json_string)
+    /// Parse `CosmosRawMsg` from data of proto JSON mapping.
+    pub fn parse_proto_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
+        self.inner.parse_proto_json_msg(json_string)
     }
 
     /// Parse `CosmosAuthInfo` from hex data of Protobuf.
-    pub fn parse_proto_auto_info(&self, hex_string: &str) -> Result<CosmosAuthInfo, CosmosError> {
-        self.inner.parse_proto_auto_info(hex_string)
+    pub fn parse_protobuf_auto_info(
+        &self,
+        hex_string: &str,
+    ) -> Result<CosmosAuthInfo, CosmosError> {
+        self.inner.parse_protobuf_auto_info(hex_string)
     }
 
     /// Parse `CosmosTxBody` from hex data of Protobuf.
-    pub fn parse_proto_tx_body(&self, hex_string: &str) -> Result<CosmosTxBody, CosmosError> {
-        self.inner.parse_proto_tx_body(hex_string)
+    pub fn parse_protobuf_tx_body(&self, hex_string: &str) -> Result<CosmosTxBody, CosmosError> {
+        self.inner.parse_protobuf_tx_body(hex_string)
     }
 }

@@ -10,11 +10,11 @@ pub(crate) struct TerraParser {
 }
 
 impl CosmosParser for TerraParser {
-    fn parse_amino_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
+    fn parse_proto_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
         // TODO: Process `Terra` special messages.
         Ok(CosmosRawMsg::Normal {
             msg: serde_json::from_str(json_string)
-                .wrap_err("Failed to parse to Cosmos message from an Amino JSON string")?,
+                .wrap_err("Failed to decode CosmosRawMsg from proto JSON mapping")?,
         })
     }
 

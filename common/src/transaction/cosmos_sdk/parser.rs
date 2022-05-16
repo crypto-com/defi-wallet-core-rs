@@ -1,6 +1,6 @@
-// Cosmos parser is used to deserialize Protobuf or Amino JSON to specified structs. The parsed
-// instances could be encoded to a JSON string for display, and `CosmosRawMsg`s could be used to
-// build a new transaction.
+// Cosmos parser is used to deserialize Protobuf or proto JSON mapping to specified structs. The
+// parsed instances could be encoded to a JSON string for display, and `CosmosRawMsg`s could be
+// used to build a new transaction.
 
 use crate::transaction::cosmos_sdk::CosmosError;
 use crate::utils::hex_decode;
@@ -20,14 +20,14 @@ pub use uniffi_binding::*;
 
 /// Cosmos parser trait
 pub trait CosmosParser {
-    /// Parse `CosmosFee` from json data of Amino.
-    fn parse_amino_json_fee(&self, json_string: &str) -> Result<CosmosFee, CosmosError> {
+    /// Parse `CosmosFee` from data of proto JSON mapping.
+    fn parse_proto_json_fee(&self, json_string: &str) -> Result<CosmosFee, CosmosError> {
         Ok(serde_json::from_str(json_string)
-            .wrap_err("Failed to decode CosmosFee from Amino JSON")?)
+            .wrap_err("Failed to decode CosmosFee from proto JSON mapping")?)
     }
 
     /// Parse `CosmosAuthInfo` from hex data of Protobuf.
-    fn parse_proto_auto_info(&self, hex_string: &str) -> Result<CosmosAuthInfo, CosmosError> {
+    fn parse_protobuf_auto_info(&self, hex_string: &str) -> Result<CosmosAuthInfo, CosmosError> {
         let bytes = hex_decode(hex_string).wrap_err("Failed to decode hex string")?;
         let auth_info = AuthInfo::try_from(
             cosmos_sdk_proto::cosmos::tx::v1beta1::AuthInfo::decode(bytes.as_slice())
@@ -37,7 +37,7 @@ pub trait CosmosParser {
     }
 
     /// Parse `CosmosTxBody` from hex data of Protobuf.
-    fn parse_proto_tx_body(&self, hex_string: &str) -> Result<CosmosTxBody, CosmosError> {
+    fn parse_protobuf_tx_body(&self, hex_string: &str) -> Result<CosmosTxBody, CosmosError> {
         let bytes = hex_decode(hex_string).wrap_err("Failed to decode hex string")?;
         let mut tx_body = Body::try_from(
             cosmos_sdk_proto::cosmos::tx::v1beta1::TxBody::decode(bytes.as_slice())
@@ -49,8 +49,8 @@ pub trait CosmosParser {
         Ok(tx_body)
     }
 
-    /// Parse `CosmosRawMsg` from json data of Amino.
-    fn parse_amino_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError>;
+    /// Parse `CosmosRawMsg` from data of proto JSON mapping.
+    fn parse_proto_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError>;
 
     /// Transform `CosmosTxBody` for specified chain.
     /// This trait function must be implemented by sub-struct. The field `messages` has been
@@ -65,11 +65,11 @@ mod cosmos_parsing_tests {
     use crate::transaction::cosmos_sdk::parser::base_parser::BaseParser;
 
     #[test]
-    fn test_amino_json_fee_parsing() {
+    fn test_proto_json_fee_parsing() {
         let json_fee = "{\"amount\":[{\"amount\":\"27743\",\"denom\":\"uusd\"}],\"gas_limit\":\"184953\",\"payer\":\"\"}";
 
         let parser = BaseParser {};
-        let fee = parser.parse_amino_json_fee(json_fee).unwrap();
+        let fee = parser.parse_proto_json_fee(json_fee).unwrap();
 
         assert_eq!(
             fee,
@@ -86,11 +86,11 @@ mod cosmos_parsing_tests {
     }
 
     #[test]
-    fn test_proto_auth_info_parsing() {
+    fn test_protobuf_auth_info_parsing() {
         let auth_info_bytes = "0a0a0a0012040a020801180112130a0d0a0575636f736d12043230303010c09a0c";
 
         let parser = BaseParser {};
-        let auth_info = parser.parse_proto_auto_info(auth_info_bytes).unwrap();
+        let auth_info = parser.parse_protobuf_auto_info(auth_info_bytes).unwrap();
 
         assert_eq!(
             auth_info,

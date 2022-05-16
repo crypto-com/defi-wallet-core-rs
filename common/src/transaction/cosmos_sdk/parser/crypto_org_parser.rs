@@ -17,14 +17,14 @@ pub(crate) struct CryptoOrgParser {
 }
 
 impl CosmosParser for CryptoOrgParser {
-    fn parse_amino_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
+    fn parse_proto_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
         Ok(serde_json::from_str::<CosmosRawNormalMsg>(json_string)
             .map(|msg| CosmosRawMsg::Normal { msg })
             .or_else(|_| {
                 serde_json::from_str::<CosmosRawCryptoOrgMsg>(json_string)
                     .map(|msg| CosmosRawMsg::CryptoOrg { msg })
             })
-            .wrap_err("Failed to decode CosmosRawMsg from Amino JSON")?)
+            .wrap_err("Failed to decode CosmosRawMsg from proto JSON mapping")?)
     }
 
     fn transform_tx_body(&self, tx_body: &mut CosmosTxBody) -> Result<(), CosmosError> {
@@ -70,13 +70,13 @@ mod cosmos_crypto_org_parsing_tests {
     use crate::transaction::cosmos_sdk::parser::structs::CosmosRawMsg;
 
     #[test]
-    fn test_amino_json_msg_parsing() {
+    fn test_proto_json_msg_parsing() {
         let json_msg = "{\"@type\":\"/chainmain.nft.v1.MsgMintNFT\",\"id\":\"test_token_id\",\"denom_id\":\"test_denom_id\",\"name\":\"\",\"uri\":\"test_uri\",\"data\":\"\",\"sender\":\"cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6\",\"recipient\":\"cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu\"}";
 
         let parser = CryptoOrgParser {
             base: BaseParser {},
         };
-        let msg = parser.parse_amino_json_msg(json_msg).unwrap();
+        let msg = parser.parse_proto_json_msg(json_msg).unwrap();
 
         assert_eq!(
             msg,
