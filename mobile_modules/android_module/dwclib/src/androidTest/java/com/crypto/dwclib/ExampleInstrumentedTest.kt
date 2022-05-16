@@ -641,7 +641,7 @@ class ExampleInstrumentedTest {
         val txBody = parser.parseProtobufTxBody(txBodyBytes)
 
         val amounts = listOf(
-            SingleCoin.Other("1234567", "ucosm"),
+            CosmosCoin("1234567", "ucosm"),
         )
 
         val rawMsg = CosmosRawMsg.Normal(
