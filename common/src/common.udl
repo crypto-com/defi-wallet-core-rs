@@ -144,6 +144,7 @@ interface CosmosSDKMsg {
   DistributionSetWithdrawAddress(string withdraw_address);
   DistributionWithdrawDelegatorReward(string validator_address);
   IbcTransfer(string receiver, string source_port, string source_channel, SingleCoin token, Height timeout_height, u64 timeout_timestamp);
+  ExecuteContract(string contract, sequence<u8> execute_msg, SingleCoin coins);
   Raw(CosmosRawMsg raw_msg);
 };
 

@@ -16,10 +16,11 @@ mod utils;
 
 pub use defi_wallet_core_proto as proto;
 // expose all proto related types (e.g. for uniffi)
-pub use cosmrs::{tx::Msg, AccountId};
+pub use cosmrs::{tx::Msg, AccountId, Coin};
 pub use eyre::{Report as ErrorReport, Result};
 pub use ibc::Height;
 pub use proto::chainmain::nft::v1::*;
+pub use proto::terra::wasm::v1beta1::*;
 
 #[cfg(feature = "login")]
 pub use login::*;
