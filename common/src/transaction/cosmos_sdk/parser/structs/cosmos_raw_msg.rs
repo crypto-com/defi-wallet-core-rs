@@ -1,5 +1,6 @@
 use crate::proto::chainmain;
-use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
+use crate::transaction::cosmos_sdk::parser::structs::CosmosCoin;
+use crate::transaction::cosmos_sdk::CosmosError;
 use crate::transaction::nft::{
     DenomId, DenomName, MsgBurnNft, MsgEditNft, MsgIssueDenom, MsgMintNft, MsgTransferNft, TokenId,
     TokenUri,
@@ -24,6 +25,7 @@ use std::str::FromStr;
 /// Since `CosmosSDKMsg` is constructed by fields and has no `sender_address` which is a wallet
 /// address. `CosmosRawMsg` is parsed directly from Protobuf or JSON, it should have the all fields
 /// of original message.
+#[non_exhaustive]
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum CosmosRawMsg {
     /// Normal message
@@ -55,14 +57,7 @@ impl From<bank::v1beta1::MsgSend> for CosmosRawMsg {
             msg: CosmosRawNormalMsg::BankSend {
                 from_address: msg.from_address,
                 to_address: msg.to_address,
-                amount: msg
-                    .amount
-                    .into_iter()
-                    .map(|coin| SingleCoin::Other {
-                        amount: coin.amount,
-                        denom: coin.denom,
-                    })
-                    .collect(),
+                amount: msg.amount.into_iter().map(Into::into).collect(),
             },
         }
     }
@@ -80,10 +75,7 @@ impl TryFrom<staking::v1beta1::MsgBeginRedelegate> for CosmosRawMsg {
                 delegator_address: msg.delegator_address,
                 validator_src_address: msg.validator_src_address,
                 validator_dst_address: msg.validator_dst_address,
-                amount: SingleCoin::Other {
-                    amount: coin.amount,
-                    denom: coin.denom,
-                },
+                amount: coin.into(),
             },
         })
     }
@@ -100,10 +92,7 @@ impl TryFrom<staking::v1beta1::MsgDelegate> for CosmosRawMsg {
             msg: CosmosRawNormalMsg::StakingDelegate {
                 delegator_address: msg.delegator_address,
                 validator_address: msg.validator_address,
-                amount: SingleCoin::Other {
-                    amount: coin.amount,
-                    denom: coin.denom,
-                },
+                amount: coin.into(),
             },
         })
     }
@@ -120,10 +109,7 @@ impl TryFrom<staking::v1beta1::MsgUndelegate> for CosmosRawMsg {
             msg: CosmosRawNormalMsg::StakingUndelegate {
                 delegator_address: msg.delegator_address,
                 validator_address: msg.validator_address,
-                amount: SingleCoin::Other {
-                    amount: coin.amount,
-                    denom: coin.denom,
-                },
+                amount: coin.into(),
             },
         })
     }
@@ -164,10 +150,7 @@ impl TryFrom<MsgTransfer> for CosmosRawMsg {
                 receiver: msg.receiver.to_string(),
                 source_port: msg.source_port.to_string(),
                 source_channel: msg.source_channel.to_string(),
-                token: SingleCoin::Other {
-                    amount: coin.amount,
-                    denom: coin.denom,
-                },
+                token: coin.into(),
                 timeout_height: msg.timeout_height,
                 timeout_timestamp: msg.timeout_timestamp.nanoseconds(),
             },
@@ -245,17 +228,20 @@ impl From<chainmain::nft::v1::MsgBurnNft> for CosmosRawMsg {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(tag = "@type")]
 pub enum CosmosRawNormalMsg {
     /// MsgSend
+    #[serde(rename = "/cosmos.bank.v1beta1.MsgSend")]
     BankSend {
         /// sender address in bech32
         from_address: String,
         /// recipient address in bech32
         to_address: String,
         /// amount to send
-        amount: Vec<SingleCoin>,
+        amount: Vec<CosmosCoin>,
     },
     /// MsgBeginRedelegate
+    #[serde(rename = "/cosmos.staking.v1beta1.MsgBeginRedelegate")]
     StakingBeginRedelegate {
         /// delegator address in bech32
         delegator_address: String,
@@ -264,27 +250,30 @@ pub enum CosmosRawNormalMsg {
         /// destination validator address in bech32
         validator_dst_address: String,
         /// amount to redelegate
-        amount: SingleCoin,
+        amount: CosmosCoin,
     },
     /// MsgDelegate
+    #[serde(rename = "/cosmos.staking.v1beta1.MsgDelegate")]
     StakingDelegate {
         /// delegator address in bech32
         delegator_address: String,
         /// validator address in bech32
         validator_address: String,
         /// amount to delegate
-        amount: SingleCoin,
+        amount: CosmosCoin,
     },
     /// MsgUndelegate
+    #[serde(rename = "/cosmos.staking.v1beta1.MsgUndelegate")]
     StakingUndelegate {
         /// delegator address in bech32
         delegator_address: String,
         /// validator address in bech32
         validator_address: String,
         /// amount to undelegate
-        amount: SingleCoin,
+        amount: CosmosCoin,
     },
     /// MsgSetWithdrawAddress
+    #[serde(rename = "/cosmos.distribution.v1beta1.MsgSetWithdrawAddress")]
     DistributionSetWithdrawAddress {
         /// delegator address in bech32
         delegator_address: String,
@@ -292,6 +281,7 @@ pub enum CosmosRawNormalMsg {
         withdraw_address: String,
     },
     /// MsgWithdrawDelegatorReward
+    #[serde(rename = "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward")]
     DistributionWithdrawDelegatorReward {
         /// delegator address in bech32
         delegator_address: String,
@@ -299,6 +289,7 @@ pub enum CosmosRawNormalMsg {
         validator_address: String,
     },
     /// MsgTransfer
+    #[serde(rename = "/ibc.applications.transfer.v1.MsgTransfer")]
     IbcTransfer {
         /// the sender address
         sender: String,
@@ -309,7 +300,7 @@ pub enum CosmosRawNormalMsg {
         /// the channel by which the packet will be sent
         source_channel: String,
         /// the tokens to be transferred
-        token: SingleCoin,
+        token: CosmosCoin,
         /// Timeout height relative to the current block height.
         /// The timeout is disabled when set to 0.
         timeout_height: Height,
@@ -419,8 +410,10 @@ impl CosmosRawNormalMsg {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(tag = "@type")]
 pub enum CosmosRawCryptoOrgMsg {
     /// MsgIssueDenom
+    #[serde(rename = "/chainmain.nft.v1.MsgIssueDenom")]
     NftIssueDenom {
         /// The denomination ID of the NFT, necessary as multiple denominations are able to be represented on each chain.
         id: String,
@@ -432,6 +425,7 @@ pub enum CosmosRawCryptoOrgMsg {
         sender: String,
     },
     /// MsgMintNft
+    #[serde(rename = "/chainmain.nft.v1.MsgMintNFT")]
     NftMint {
         /// The unique ID of the NFT being minted
         id: String,
@@ -449,6 +443,7 @@ pub enum CosmosRawCryptoOrgMsg {
         recipient: String,
     },
     /// MsgEditNft
+    #[serde(rename = "/chainmain.nft.v1.MsgEditNFT")]
     NftEdit {
         /// The unique ID of the NFT being edited
         id: String,
@@ -464,6 +459,7 @@ pub enum CosmosRawCryptoOrgMsg {
         sender: String,
     },
     /// MsgTransferNft
+    #[serde(rename = "/chainmain.nft.v1.MsgTransferNFT")]
     NftTransfer {
         /// The unique ID of the NFT being transferred
         id: String,
@@ -475,6 +471,7 @@ pub enum CosmosRawCryptoOrgMsg {
         recipient: String,
     },
     /// MsgBurnNft
+    #[serde(rename = "/chainmain.nft.v1.MsgBurnNFT")]
     NftBurn {
         /// The ID of the Token
         id: String,

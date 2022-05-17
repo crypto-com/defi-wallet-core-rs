@@ -30,9 +30,7 @@ jobs:
         with:
           path: |
             mobile_modules/android_module/
-          key: ${{ runner.os }}-android-${{ hashFiles('**/Cargo.lock', 'android_build.sh') }}
-          restore-keys: |
-            ${{ runner.os }}-android-
+          key: ${{ runner.os }}-android-${{ hashFiles('**/Cargo.lock', '**/*.kt', 'android_build.sh') }}
       - name: Rust cache
         uses: Swatinem/rust-cache@v1
       - name: Gradle cache

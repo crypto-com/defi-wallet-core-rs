@@ -2,7 +2,9 @@ use crate::proto::chainmain::nft::v1::{
     MsgBurnNft, MsgEditNft, MsgIssueDenom, MsgMintNft, MsgTransferNft,
 };
 use crate::transaction::cosmos_sdk::parser::base_parser::BaseParser;
-use crate::transaction::cosmos_sdk::parser::structs::{CosmosRawMsg, CosmosTxBody};
+use crate::transaction::cosmos_sdk::parser::structs::{
+    CosmosRawCryptoOrgMsg, CosmosRawMsg, CosmosRawNormalMsg, CosmosTxBody,
+};
 use crate::transaction::cosmos_sdk::parser::CosmosParser;
 use crate::transaction::cosmos_sdk::CosmosError;
 use cosmrs::tx::MsgProto;
@@ -15,6 +17,16 @@ pub(crate) struct CryptoOrgParser {
 }
 
 impl CosmosParser for CryptoOrgParser {
+    fn parse_proto_json_msg(&self, json_string: &str) -> Result<CosmosRawMsg, CosmosError> {
+        Ok(serde_json::from_str::<CosmosRawNormalMsg>(json_string)
+            .map(|msg| CosmosRawMsg::Normal { msg })
+            .or_else(|_| {
+                serde_json::from_str::<CosmosRawCryptoOrgMsg>(json_string)
+                    .map(|msg| CosmosRawMsg::CryptoOrg { msg })
+            })
+            .wrap_err("Failed to decode CosmosRawMsg from proto JSON mapping")?)
+    }
+
     fn transform_tx_body(&self, tx_body: &mut CosmosTxBody) -> Result<(), CosmosError> {
         self.base.transform_tx_body(tx_body)?;
         tx_body.messages = tx_body
@@ -49,5 +61,36 @@ fn transform_msg(msg: &CosmosRawMsg) -> Result<CosmosRawMsg, CosmosError> {
         })
     } else {
         Ok(msg.clone())
+    }
+}
+
+#[cfg(test)]
+mod cosmos_crypto_org_parsing_tests {
+    use super::*;
+    use crate::transaction::cosmos_sdk::parser::structs::CosmosRawMsg;
+
+    #[test]
+    fn test_proto_json_msg_parsing() {
+        let json_msg = "{\"@type\":\"/chainmain.nft.v1.MsgMintNFT\",\"id\":\"test_token_id\",\"denom_id\":\"test_denom_id\",\"name\":\"\",\"uri\":\"test_uri\",\"data\":\"\",\"sender\":\"cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6\",\"recipient\":\"cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu\"}";
+
+        let parser = CryptoOrgParser {
+            base: BaseParser {},
+        };
+        let msg = parser.parse_proto_json_msg(json_msg).unwrap();
+
+        assert_eq!(
+            msg,
+            CosmosRawMsg::CryptoOrg {
+                msg: CosmosRawCryptoOrgMsg::NftMint {
+                    id: "test_token_id".to_string(),
+                    denom_id: "test_denom_id".to_string(),
+                    name: "".to_string(),
+                    uri: "test_uri".to_string(),
+                    data: "".to_string(),
+                    sender: "cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6".to_string(),
+                    recipient: "cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu".to_string(),
+                },
+            },
+        );
     }
 }

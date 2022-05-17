@@ -638,10 +638,10 @@ class ExampleInstrumentedTest {
             "0a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d120731323334353637"
 
         val parser = CosmosParserWrapper.newCryptoOrgParser()
-        val txBody = parser.parseProtoTxBody(txBodyBytes)
+        val txBody = parser.parseProtobufTxBody(txBodyBytes)
 
         val amounts = listOf(
-            SingleCoin.Other("1234567", "ucosm"),
+            CosmosCoin("1234567", "ucosm"),
         )
 
         val rawMsg = CosmosRawMsg.Normal(

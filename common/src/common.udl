@@ -157,13 +157,13 @@ interface CosmosRawMsg {
 
 [Enum]
 interface CosmosRawNormalMsg {
-  BankSend(string from_address, string to_address, sequence<SingleCoin> amount);
-  StakingBeginRedelegate(string delegator_address, string validator_src_address, string validator_dst_address, SingleCoin amount);
-  StakingDelegate(string delegator_address, string validator_address, SingleCoin amount);
-  StakingUndelegate(string delegator_address, string validator_address, SingleCoin amount);
+  BankSend(string from_address, string to_address, sequence<CosmosCoin> amount);
+  StakingBeginRedelegate(string delegator_address, string validator_src_address, string validator_dst_address, CosmosCoin amount);
+  StakingDelegate(string delegator_address, string validator_address, CosmosCoin amount);
+  StakingUndelegate(string delegator_address, string validator_address, CosmosCoin amount);
   DistributionSetWithdrawAddress(string delegator_address, string withdraw_address);
   DistributionWithdrawDelegatorReward(string delegator_address, string validator_address);
-  IbcTransfer(string sender, string receiver, string source_port, string source_channel, SingleCoin token, Height timeout_height, u64 timeout_timestamp);
+  IbcTransfer(string sender, string receiver, string source_port, string source_channel, CosmosCoin token, Height timeout_height, u64 timeout_timestamp);
 };
 
 [Enum]
@@ -252,8 +252,13 @@ dictionary CosmosAuthInfo {
     sequence<CosmosSignerInfo> signer_infos;
 };
 
+dictionary CosmosCoin {
+    string amount;
+    string denom;
+};
+
 dictionary CosmosFee {
-    sequence<SingleCoin> amount;
+    sequence<CosmosCoin> amount;
     u64 gas_limit;
     string? payer;
     string? granter;
@@ -292,14 +297,20 @@ dictionary CosmosTxBody {
 };
 
 interface CosmosParserWrapper {
+    [Name=new_base_parser]
+    constructor();
     [Name=new_crypto_org_parser]
     constructor();
     [Name=new_terra_parser]
     constructor();
     [Throws=CosmosError]
-    CosmosAuthInfo parse_proto_auto_info([ByRef] string hex_string);
+    CosmosFee parse_proto_json_fee([ByRef] string json_string);
     [Throws=CosmosError]
-    CosmosTxBody parse_proto_tx_body([ByRef] string hex_string);
+    CosmosRawMsg parse_proto_json_msg([ByRef] string json_string);
+    [Throws=CosmosError]
+    CosmosAuthInfo parse_protobuf_auto_info([ByRef] string hex_string);
+    [Throws=CosmosError]
+    CosmosTxBody parse_protobuf_tx_body([ByRef] string hex_string);
 };
 
 [Enum]
