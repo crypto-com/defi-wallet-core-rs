@@ -18,7 +18,7 @@ uniffi-binding = ["abi-contract", "uniffi", "uniffi_build", "uniffi_macros"]
 [dependencies]
 anyhow = "1"
 base64 = "0.13"
-bech32 = "0.8"
+bech32 = "0.9"
 bip39 = "1"
 cosmrs = "0.5"
 eyre = "0.6"
