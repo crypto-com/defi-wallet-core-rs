@@ -70,9 +70,8 @@ fn transform_msg(msg: &CosmosRawMsg) -> Result<CosmosRawMsg, CosmosError> {
 #[cfg(test)]
 mod cosmos_base_parsing_tests {
     use super::*;
-    use crate::transaction::cosmos_sdk::parser::structs::{
-        CosmosCoin, CosmosRawMsg, CosmosRawNormalMsg,
-    };
+    use crate::transaction::cosmos_sdk::parser::structs::{CosmosRawMsg, CosmosRawNormalMsg};
+    use crate::transaction::cosmos_sdk::SingleCoin;
 
     #[test]
     fn test_proto_json_msg_parsing() {
@@ -87,7 +86,7 @@ mod cosmos_base_parsing_tests {
                 msg: CosmosRawNormalMsg::BankSend {
                     from_address: "cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6".to_string(),
                     to_address: "cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu".to_string(),
-                    amount: vec![CosmosCoin {
+                    amount: vec![SingleCoin::Other {
                         amount: "1234567".to_string(),
                         denom: "ucosm".to_string()
                     }],
@@ -110,7 +109,7 @@ mod cosmos_base_parsing_tests {
                     msg: CosmosRawNormalMsg::BankSend {
                         from_address: "cosmos1pkptre7fdkl6gfrzlesjjvhxhlc3r4gmmk8rs6".to_string(),
                         to_address: "cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu".to_string(),
-                        amount: vec![CosmosCoin {
+                        amount: vec![SingleCoin::Other {
                             amount: "1234567".to_string(),
                             denom: "ucosm".to_string()
                         }]

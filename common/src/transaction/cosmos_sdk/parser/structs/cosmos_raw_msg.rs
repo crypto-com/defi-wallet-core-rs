@@ -1,6 +1,5 @@
 use crate::proto::chainmain;
-use crate::transaction::cosmos_sdk::parser::structs::CosmosCoin;
-use crate::transaction::cosmos_sdk::CosmosError;
+use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
 use crate::transaction::nft::{
     DenomId, DenomName, MsgBurnNft, MsgEditNft, MsgIssueDenom, MsgMintNft, MsgTransferNft, TokenId,
     TokenUri,
@@ -238,7 +237,7 @@ pub enum CosmosRawNormalMsg {
         /// recipient address in bech32
         to_address: String,
         /// amount to send
-        amount: Vec<CosmosCoin>,
+        amount: Vec<SingleCoin>,
     },
     /// MsgBeginRedelegate
     #[serde(rename = "/cosmos.staking.v1beta1.MsgBeginRedelegate")]
@@ -250,7 +249,7 @@ pub enum CosmosRawNormalMsg {
         /// destination validator address in bech32
         validator_dst_address: String,
         /// amount to redelegate
-        amount: CosmosCoin,
+        amount: SingleCoin,
     },
     /// MsgDelegate
     #[serde(rename = "/cosmos.staking.v1beta1.MsgDelegate")]
@@ -260,7 +259,7 @@ pub enum CosmosRawNormalMsg {
         /// validator address in bech32
         validator_address: String,
         /// amount to delegate
-        amount: CosmosCoin,
+        amount: SingleCoin,
     },
     /// MsgUndelegate
     #[serde(rename = "/cosmos.staking.v1beta1.MsgUndelegate")]
@@ -270,7 +269,7 @@ pub enum CosmosRawNormalMsg {
         /// validator address in bech32
         validator_address: String,
         /// amount to undelegate
-        amount: CosmosCoin,
+        amount: SingleCoin,
     },
     /// MsgSetWithdrawAddress
     #[serde(rename = "/cosmos.distribution.v1beta1.MsgSetWithdrawAddress")]
@@ -300,7 +299,7 @@ pub enum CosmosRawNormalMsg {
         /// the channel by which the packet will be sent
         source_channel: String,
         /// the tokens to be transferred
-        token: CosmosCoin,
+        token: SingleCoin,
         /// Timeout height relative to the current block height.
         /// The timeout is disabled when set to 0.
         timeout_height: Height,

@@ -8,7 +8,7 @@ use cosmrs::crypto::{self, secp256k1::VerifyingKey};
 use cosmrs::distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward};
 use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
 use cosmrs::tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo};
-use cosmrs::{AccountId, Any, Coin, ErrorReport};
+use cosmrs::{AccountId, Any, Coin};
 use eyre::{eyre, Context};
 use ibc::applications::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
 use ibc::core::ics24_host::identifier::{ChannelId, PortId};
@@ -103,6 +103,7 @@ impl Network {
 
 /// single coin amount
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(untagged)]
 pub enum SingleCoin {
     /// basecro
     BaseCRO { amount: u64 },
@@ -120,27 +121,27 @@ pub enum SingleCoin {
     Other { amount: String, denom: String },
 }
 
-impl TryInto<Coin> for &SingleCoin {
-    type Error = ErrorReport;
+impl TryFrom<&SingleCoin> for Coin {
+    type Error = CosmosError;
 
-    fn try_into(self) -> eyre::Result<Coin> {
-        match self {
-            SingleCoin::BaseCRO { amount } => Ok(Coin {
+    fn try_from(single_coin: &SingleCoin) -> Result<Self, Self::Error> {
+        Ok(match single_coin {
+            SingleCoin::BaseCRO { amount } => Coin {
                 amount: (*amount).into(),
                 denom: "basecro".parse()?,
-            }),
-            SingleCoin::TestnetBaseCRO { amount } => Ok(Coin {
+            },
+            SingleCoin::TestnetBaseCRO { amount } => Coin {
                 amount: (*amount).into(),
                 denom: "basetcro".parse()?,
-            }),
+            },
             SingleCoin::TestnetCRO { amount } => {
                 let base_amount = amount
                     .checked_mul(10 ^ 8)
                     .ok_or_else(|| eyre!("integer overflow"))?;
-                Ok(Coin {
+                Coin {
                     amount: base_amount.into(),
                     denom: "basetcro".parse()?,
-                })
+                }
             }
             SingleCoin::CRO { amount, network } => {
                 let decimals = match network {
@@ -151,85 +152,112 @@ impl TryInto<Coin> for &SingleCoin {
                 let base_amount = amount
                     .checked_mul(decimals)
                     .ok_or_else(|| eyre!("integer overflow"))?;
-                Ok(Coin {
+                Coin {
                     amount: base_amount.into(),
                     denom: "basecro".parse()?,
-                })
+                }
             }
-            SingleCoin::UATOM { amount } => Ok(Coin {
+            SingleCoin::UATOM { amount } => Coin {
                 amount: (*amount).into(),
                 denom: "uatom".parse()?,
-            }),
+            },
             SingleCoin::ATOM { amount } => {
                 let base_amount = amount
                     .checked_mul(1_000_000)
                     .ok_or_else(|| eyre!("integer overflow"))?;
-                Ok(Coin {
+                Coin {
                     amount: base_amount.into(),
                     denom: "uatom".parse()?,
-                })
+                }
             }
-            SingleCoin::Other { amount, denom } => Ok(Coin {
+            SingleCoin::Other { amount, denom } => Coin {
                 amount: amount.parse()?,
                 denom: denom.parse()?,
-            }),
+            },
+        })
+    }
+}
+
+impl TryFrom<&SingleCoin> for IbcCoin {
+    type Error = CosmosError;
+
+    fn try_from(single_coin: &SingleCoin) -> Result<Self, Self::Error> {
+        Ok(match single_coin {
+            SingleCoin::BaseCRO { amount } => IbcCoin {
+                amount: amount.to_string(),
+                denom: "basecro".to_owned(),
+            },
+            SingleCoin::TestnetBaseCRO { amount } => IbcCoin {
+                amount: amount.to_string(),
+                denom: "basetcro".to_owned(),
+            },
+            SingleCoin::TestnetCRO { amount } => {
+                let base_amount = amount
+                    .checked_mul(10 ^ 8)
+                    .ok_or_else(|| eyre!("integer overflow"))?;
+                IbcCoin {
+                    amount: base_amount.to_string(),
+                    denom: "basetcro".to_owned(),
+                }
+            }
+            SingleCoin::CRO { amount, network } => {
+                let decimals = match network {
+                    Network::CronosMainnet => 10 ^ 18,
+                    _ => 10 ^ 8,
+                };
+                // FIXME: convert to Decimal when it supports multiplication
+                let base_amount = amount
+                    .checked_mul(decimals)
+                    .ok_or_else(|| eyre!("integer overflow"))?;
+                IbcCoin {
+                    amount: base_amount.to_string(),
+                    denom: "basecro".to_owned(),
+                }
+            }
+            SingleCoin::UATOM { amount } => IbcCoin {
+                amount: amount.to_string(),
+                denom: "uatom".to_owned(),
+            },
+            SingleCoin::ATOM { amount } => {
+                let base_amount = amount
+                    .checked_mul(1_000_000)
+                    .ok_or_else(|| eyre!("integer overflow"))?;
+                IbcCoin {
+                    amount: base_amount.to_string(),
+                    denom: "uatom".to_owned(),
+                }
+            }
+            SingleCoin::Other { amount, denom } => IbcCoin {
+                amount: amount.to_owned(),
+                denom: denom.to_owned(),
+            },
+        })
+    }
+}
+
+impl From<Coin> for SingleCoin {
+    fn from(coin: Coin) -> Self {
+        Self::Other {
+            amount: coin.amount.to_string(),
+            denom: coin.denom.to_string(),
         }
     }
 }
 
-impl TryInto<IbcCoin> for &SingleCoin {
-    type Error = ErrorReport;
+impl From<IbcCoin> for SingleCoin {
+    fn from(coin: IbcCoin) -> Self {
+        Self::Other {
+            amount: coin.amount.to_string(),
+            denom: coin.denom.to_string(),
+        }
+    }
+}
 
-    fn try_into(self) -> eyre::Result<IbcCoin> {
-        match self {
-            SingleCoin::BaseCRO { amount } => Ok(IbcCoin {
-                amount: amount.to_string(),
-                denom: "basecro".to_owned(),
-            }),
-            SingleCoin::TestnetBaseCRO { amount } => Ok(IbcCoin {
-                amount: amount.to_string(),
-                denom: "basetcro".to_owned(),
-            }),
-            SingleCoin::TestnetCRO { amount } => {
-                let base_amount = amount
-                    .checked_mul(10 ^ 8)
-                    .ok_or_else(|| eyre!("integer overflow"))?;
-                Ok(IbcCoin {
-                    amount: base_amount.to_string(),
-                    denom: "basetcro".to_owned(),
-                })
-            }
-            SingleCoin::CRO { amount, network } => {
-                let decimals = match network {
-                    Network::CronosMainnet => 10 ^ 18,
-                    _ => 10 ^ 8,
-                };
-                // FIXME: convert to Decimal when it supports multiplication
-                let base_amount = amount
-                    .checked_mul(decimals)
-                    .ok_or_else(|| eyre!("integer overflow"))?;
-                Ok(IbcCoin {
-                    amount: base_amount.to_string(),
-                    denom: "basecro".to_owned(),
-                })
-            }
-            SingleCoin::UATOM { amount } => Ok(IbcCoin {
-                amount: amount.to_string(),
-                denom: "uatom".to_owned(),
-            }),
-            SingleCoin::ATOM { amount } => {
-                let base_amount = amount
-                    .checked_mul(1_000_000)
-                    .ok_or_else(|| eyre!("integer overflow"))?;
-                Ok(IbcCoin {
-                    amount: base_amount.to_string(),
-                    denom: "uatom".to_owned(),
-                })
-            }
-            SingleCoin::Other { amount, denom } => Ok(IbcCoin {
-                amount: amount.to_owned(),
-                denom: denom.to_owned(),
-            }),
+impl From<cosmos_sdk_proto::cosmos::base::v1beta1::Coin> for SingleCoin {
+    fn from(coin: cosmos_sdk_proto::cosmos::base::v1beta1::Coin) -> Self {
+        Self::Other {
+            amount: coin.amount.to_string(),
+            denom: coin.denom.to_string(),
         }
     }
 }
