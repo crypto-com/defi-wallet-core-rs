@@ -247,8 +247,8 @@ impl From<Coin> for SingleCoin {
 impl From<IbcCoin> for SingleCoin {
     fn from(coin: IbcCoin) -> Self {
         Self::Other {
-            amount: coin.amount.to_string(),
-            denom: coin.denom.to_string(),
+            amount: coin.amount,
+            denom: coin.denom,
         }
     }
 }
@@ -257,7 +257,7 @@ impl From<cosmos_sdk_proto::cosmos::base::v1beta1::Coin> for SingleCoin {
     fn from(coin: cosmos_sdk_proto::cosmos::base::v1beta1::Coin) -> Self {
         Self::Other {
             amount: coin.amount.to_string(),
-            denom: coin.denom.to_string(),
+            denom: coin.denom,
         }
     }
 }
