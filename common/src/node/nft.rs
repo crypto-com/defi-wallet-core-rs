@@ -1,3 +1,8 @@
+// FIXME:
+// It seems to be a `cargo-clippy` issue of Rust `1.61.0`.
+// https://github.com/influxdata/influxdb_iox/commit/b2279fae3984a29e73a7070d0b99ae24675eb606
+#![allow(clippy::await_holding_lock)]
+
 use super::error::RestError;
 use crate::proto;
 use proto::chainmain::nft::v1::{
