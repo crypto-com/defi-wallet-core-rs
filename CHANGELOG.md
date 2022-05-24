@@ -4,6 +4,8 @@
 ### Added
 - Delete duplicate C-Sytle functions for Cosmos SDK in wasm binding.
 - Add polling interval argument or function for setting the polling interval on event filters and pending transactions.
+- Add `CosmosParser` to support parsing both Protobuf and Proto3 JSON mapping of standard Cosmos and `crypto.org` messages.
+- Add Terra special messages to `proto-build`.
 
 ## [0.1.12] - 2022-04-25
 ### Added
