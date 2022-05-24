@@ -157,13 +157,13 @@ interface CosmosRawMsg {
 
 [Enum]
 interface CosmosRawNormalMsg {
-  BankSend(string from_address, string to_address, sequence<CosmosCoin> amount);
-  StakingBeginRedelegate(string delegator_address, string validator_src_address, string validator_dst_address, CosmosCoin amount);
-  StakingDelegate(string delegator_address, string validator_address, CosmosCoin amount);
-  StakingUndelegate(string delegator_address, string validator_address, CosmosCoin amount);
+  BankSend(string from_address, string to_address, sequence<SingleCoin> amount);
+  StakingBeginRedelegate(string delegator_address, string validator_src_address, string validator_dst_address, SingleCoin amount);
+  StakingDelegate(string delegator_address, string validator_address, SingleCoin amount);
+  StakingUndelegate(string delegator_address, string validator_address, SingleCoin amount);
   DistributionSetWithdrawAddress(string delegator_address, string withdraw_address);
   DistributionWithdrawDelegatorReward(string delegator_address, string validator_address);
-  IbcTransfer(string sender, string receiver, string source_port, string source_channel, CosmosCoin token, Height timeout_height, u64 timeout_timestamp);
+  IbcTransfer(string sender, string receiver, string source_port, string source_channel, SingleCoin token, Height timeout_height, u64 timeout_timestamp);
 };
 
 [Enum]
@@ -252,13 +252,8 @@ dictionary CosmosAuthInfo {
     sequence<CosmosSignerInfo> signer_infos;
 };
 
-dictionary CosmosCoin {
-    string amount;
-    string denom;
-};
-
 dictionary CosmosFee {
-    sequence<CosmosCoin> amount;
+    sequence<SingleCoin> amount;
     u64 gas_limit;
     string? payer;
     string? granter;

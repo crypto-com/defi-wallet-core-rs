@@ -2,7 +2,7 @@
 // It seems that these structs are only used for Cosmos parsing results for now. They could be
 // moved to `cosmos_sdk.rs` if reusable.
 
-use crate::transaction::cosmos_sdk::CosmosError;
+use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
 use cosmrs::crypto::{LegacyAminoMultisig, PublicKey};
 use cosmrs::tx::{mode_info, AuthInfo, Body, Fee, ModeInfo, SignerInfo, SignerPublicKey};
 use itertools::Itertools;
@@ -65,67 +65,11 @@ impl TryFrom<AuthInfo> for CosmosAuthInfo {
     }
 }
 
-/// Coin defines a token with a denomination and an amount.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct CosmosCoin {
-    /// Amount
-    pub amount: String,
-    /// Denomination
-    pub denom: String,
-}
-
-impl From<cosmrs::Coin> for CosmosCoin {
-    fn from(coin: cosmrs::Coin) -> Self {
-        Self {
-            amount: coin.amount.to_string(),
-            denom: coin.denom.to_string(),
-        }
-    }
-}
-
-impl From<cosmos_sdk_proto::cosmos::base::v1beta1::Coin> for CosmosCoin {
-    fn from(coin: cosmos_sdk_proto::cosmos::base::v1beta1::Coin) -> Self {
-        Self {
-            amount: coin.amount,
-            denom: coin.denom,
-        }
-    }
-}
-
-impl From<ibc_proto::cosmos::base::v1beta1::Coin> for CosmosCoin {
-    fn from(coin: ibc_proto::cosmos::base::v1beta1::Coin) -> Self {
-        Self {
-            amount: coin.amount,
-            denom: coin.denom,
-        }
-    }
-}
-
-impl From<&CosmosCoin> for ibc_proto::cosmos::base::v1beta1::Coin {
-    fn from(coin: &CosmosCoin) -> Self {
-        Self {
-            amount: coin.amount.clone(),
-            denom: coin.denom.clone(),
-        }
-    }
-}
-
-impl TryFrom<&CosmosCoin> for cosmrs::Coin {
-    type Error = CosmosError;
-
-    fn try_from(coin: &CosmosCoin) -> Result<Self, Self::Error> {
-        Ok(Self {
-            amount: coin.amount.parse()?,
-            denom: coin.denom.parse()?,
-        })
-    }
-}
-
 /// Fee includes the amount of coins paid in fees and the maximum gas to be used by the transaction.
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub struct CosmosFee {
     /// Amount
-    pub amount: Vec<CosmosCoin>,
+    pub amount: Vec<SingleCoin>,
     /// Gas limit
     #[serde(deserialize_with = "deserialize_from_str")]
     pub gas_limit: u64,
