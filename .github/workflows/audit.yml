@@ -26,6 +26,6 @@ jobs:
         run: cargo install cargo-audit
       # FIXME: they need to be fixed in the `siwe` crate
       - run: >
-          cargo audit --deny-warnings
+          cargo audit --deny warnings
           --ignore RUSTSEC-2020-0159
           --ignore RUSTSEC-2020-0071
