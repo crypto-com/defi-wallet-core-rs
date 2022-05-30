@@ -2,10 +2,10 @@
 mod cosmos_sdk;
 /// wrapper and helpers for ethers
 mod ethereum;
+/// wrapper and helpers for LunaClassic chain
+mod luna_classic;
 /// wrapper and helper for NFT functionality
 pub mod nft;
-/// wrapper and helpers for LunaClassic chain
-mod luna_calssic;
 /// UniFFI binding related functions
 mod uniffi_binding;
 /// wasm binding related functions
