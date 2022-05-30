@@ -3,4 +3,4 @@
 	url = https://github.com/crypto-org-chain/chain-main.git
 [submodule "third_party/terra"]
 	path = third_party/terra
-	url = https://github.com/terra-money/core.git
+	url = https://github.com/terra-money/classic-core.git
