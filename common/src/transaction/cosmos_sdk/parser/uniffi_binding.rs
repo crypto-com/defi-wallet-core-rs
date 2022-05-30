@@ -5,7 +5,7 @@ use crate::transaction::cosmos_sdk::parser::crypto_org_parser::CryptoOrgParser;
 use crate::transaction::cosmos_sdk::parser::structs::{
     CosmosAuthInfo, CosmosFee, CosmosRawMsg, CosmosTxBody,
 };
-use crate::transaction::cosmos_sdk::parser::terra_parser::TerraParser;
+use crate::transaction::cosmos_sdk::parser::luna_classic_parser::LunaClassicParser;
 use crate::transaction::cosmos_sdk::parser::CosmosParser;
 use crate::transaction::cosmos_sdk::CosmosError;
 
@@ -30,10 +30,10 @@ impl CosmosParserWrapper {
         }
     }
 
-    /// Create a Cosmos parser for `Terra` chain.
-    pub fn new_terra_parser() -> Self {
+    /// Create a Cosmos parser for `LunaClassic` chain.
+    pub fn new_luna_classic_parser() -> Self {
         Self {
-            inner: Box::new(TerraParser {
+            inner: Box::new(LunaClassicParser {
                 base: BaseParser {},
             }),
         }

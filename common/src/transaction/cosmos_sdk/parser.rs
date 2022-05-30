@@ -11,7 +11,7 @@ use prost::Message;
 mod base_parser;
 mod crypto_org_parser;
 mod structs;
-mod terra_parser;
+mod luna_classic_parser;
 mod uniffi_binding;
 
 pub use structs::*;

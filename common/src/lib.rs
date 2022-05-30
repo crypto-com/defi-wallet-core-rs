@@ -20,7 +20,7 @@ pub use cosmrs::{tx::Msg, AccountId, Coin};
 pub use eyre::{Report as ErrorReport, Result};
 pub use ibc::Height;
 pub use proto::chainmain::nft::v1::*;
-pub use proto::terra::wasm::v1beta1::*;
+pub use proto::luna_classic::wasm::v1beta1::*;
 
 #[cfg(feature = "login")]
 pub use login::*;

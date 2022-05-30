@@ -4,8 +4,8 @@ mod cosmos_sdk;
 mod ethereum;
 /// wrapper and helper for NFT functionality
 pub mod nft;
-/// wrapper and helpers for Terra chain
-mod terra_core;
+/// wrapper and helpers for LunaClassic chain
+mod luna_calssic;
 /// UniFFI binding related functions
 mod uniffi_binding;
 /// wasm binding related functions
