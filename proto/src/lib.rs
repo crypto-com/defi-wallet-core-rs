@@ -56,11 +56,11 @@ impl MsgProto for chainmain::nft::v1::MsgBurnNft {
     const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgBurnNFT";
 }
 
-/// The version (commit hash) of the Terra Core used when generating this library.
-pub const TERRA_VERSION: &str = include_str!("prost/TERRA_COMMIT");
+/// The version (commit hash) of the LunaClassic Core used when generating this library.
+pub const LUNA_CLASSIC_VERSION: &str = include_str!("prost/LUNA_CLASSIC_COMMIT");
 
-/// terra protobuf definitions.
-pub mod terra {
+/// luna_classic protobuf definitions.
+pub mod luna_classic {
     /// wasm
     pub mod wasm {
         pub mod v1beta1 {
@@ -69,6 +69,6 @@ pub mod terra {
     }
 }
 
-impl MsgProto for terra::wasm::v1beta1::MsgExecuteContract {
+impl MsgProto for luna_classic::wasm::v1beta1::MsgExecuteContract {
     const TYPE_URL: &'static str = "terra.wasm.v1beta1.MsgExecuteContract";
 }

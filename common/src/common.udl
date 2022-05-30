@@ -296,7 +296,7 @@ interface CosmosParserWrapper {
     constructor();
     [Name=new_crypto_org_parser]
     constructor();
-    [Name=new_terra_parser]
+    [Name=new_luna_classic_parser]
     constructor();
     [Throws=CosmosError]
     CosmosFee parse_proto_json_fee([ByRef] string json_string);

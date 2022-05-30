@@ -1,4 +1,4 @@
-// ! Terra wasm module support
+// ! Luna Classic wasm module support
 
 use crate::{proto, AccountId, Coin, ErrorReport, Msg, Result};
 
@@ -19,14 +19,14 @@ pub struct MsgExecuteContract {
 }
 
 impl Msg for MsgExecuteContract {
-    type Proto = proto::terra::wasm::v1beta1::MsgExecuteContract;
+    type Proto = proto::luna_classic::wasm::v1beta1::MsgExecuteContract;
 }
 
-impl TryFrom<proto::terra::wasm::v1beta1::MsgExecuteContract> for MsgExecuteContract {
+impl TryFrom<proto::luna_classic::wasm::v1beta1::MsgExecuteContract> for MsgExecuteContract {
     type Error = ErrorReport;
 
     fn try_from(
-        proto: proto::terra::wasm::v1beta1::MsgExecuteContract,
+        proto: proto::luna_classic::wasm::v1beta1::MsgExecuteContract,
     ) -> Result<MsgExecuteContract> {
         Ok(MsgExecuteContract {
             sender: proto.sender.parse()?,
@@ -41,9 +41,9 @@ impl TryFrom<proto::terra::wasm::v1beta1::MsgExecuteContract> for MsgExecuteCont
     }
 }
 
-impl From<MsgExecuteContract> for proto::terra::wasm::v1beta1::MsgExecuteContract {
-    fn from(msg: MsgExecuteContract) -> proto::terra::wasm::v1beta1::MsgExecuteContract {
-        proto::terra::wasm::v1beta1::MsgExecuteContract {
+impl From<MsgExecuteContract> for proto::luna_classic::wasm::v1beta1::MsgExecuteContract {
+    fn from(msg: MsgExecuteContract) -> proto::luna_classic::wasm::v1beta1::MsgExecuteContract {
+        proto::luna_classic::wasm::v1beta1::MsgExecuteContract {
             sender: msg.sender.to_string(),
             contract: msg.contract.to_string(),
             execute_msg: msg.execute_msg,

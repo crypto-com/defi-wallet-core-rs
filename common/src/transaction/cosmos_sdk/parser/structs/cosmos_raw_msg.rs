@@ -31,7 +31,7 @@ pub enum CosmosRawMsg {
     Normal { msg: CosmosRawNormalMsg },
     /// `crypto.org` special message
     CryptoOrg { msg: CosmosRawCryptoOrgMsg },
-    // TODO: Add messages of `Terra` chain here.
+    // TODO: Add messages of `LunaClassic` chain here.
     /// Any message
     /// It is only used for messages which has not been supported.
     Any { type_url: String, value: Vec<u8> },
