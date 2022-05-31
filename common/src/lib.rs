@@ -22,6 +22,8 @@ pub use ibc::Height;
 pub use proto::chainmain::nft::v1::*;
 pub use proto::luna_classic::wasm::v1beta1::*;
 
+pub use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
+
 #[cfg(feature = "login")]
 pub use login::*;
 pub use node::*;

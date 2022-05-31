@@ -11,7 +11,7 @@ use proto::chainmain::nft::v1::{
     QueryOwnerRequest, QuerySupplyRequest,
 };
 
-use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
+use crate::PageRequest;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::RwLock;
