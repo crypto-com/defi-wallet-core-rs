@@ -373,8 +373,8 @@ dictionary PageRequest {
     sequence<u8> key;
     u64 offset;
     u64 limit;
-    bool count_total;
-    bool reverse;
+    boolean count_total;
+    boolean reverse;
 };
 
 [Error]
