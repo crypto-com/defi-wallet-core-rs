@@ -261,15 +261,15 @@ impl From<&ffi::Pagination>
         d: &ffi::Pagination,
     ) -> Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest> {
         if d.get_enable() {
-                Some(
-                    cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest {
-                        key: d.get_key(),
-                        offset: d.get_offset(),
-                        limit: d.get_limit(),
-                        count_total: d.get_count_total(),
-                        reverse: d.get_reverse(),
-                    },
-                )
+            Some(
+                cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest {
+                    key: d.get_key(),
+                    offset: d.get_offset(),
+                    limit: d.get_limit(),
+                    count_total: d.get_count_total(),
+                    reverse: d.get_reverse(),
+                },
+            )
         } else {
             None
         }
