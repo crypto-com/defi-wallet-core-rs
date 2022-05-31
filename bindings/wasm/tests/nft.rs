@@ -4,6 +4,7 @@
 
 mod test_helper;
 
+use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
 use defi_wallet_core_proto::chainmain::nft::v1::{BaseNft, Collection, Denom, Owner};
 use defi_wallet_core_wasm::{CosmosClient, CosmosMsg, CosmosTx, PrivateKey};
 use tendermint_rpc::endpoint::broadcast::tx_sync::Response;
@@ -192,14 +193,14 @@ async fn validate_issue() {
     assert_eq!(supply, 0);
 
     let res = grpc_client
-        .owner(denom1.id.clone(), SIGNER1.to_owned())
+        .owner(denom1.id.clone(), SIGNER1.to_owned(), None)
         .await;
     assert!(res.is_ok());
     let owner = res.unwrap().into_serde::<Owner>().unwrap();
     assert_eq!(owner.address, SIGNER1.to_owned());
     assert_eq!(owner.id_collections, vec![]);
 
-    let res = grpc_client.collection(denom2.id.clone()).await;
+    let res = grpc_client.collection(denom2.id.clone(), None).await;
     assert!(res.is_ok());
     let collection = res.unwrap().into_serde::<Collection>().unwrap();
     assert_eq!(collection.denom, Some(denom2.clone()));
@@ -215,12 +216,19 @@ async fn validate_issue() {
     let denom = res.unwrap().into_serde::<Denom>().unwrap();
     assert_eq!(denom, denom1);
 
-    let res = grpc_client.denoms().await;
+    let pagination = PageRequest {
+        key: vec![],
+        offset: 0,
+        limit: 100,
+        count_total: false,
+        reverse: true, // test the reverse
+    };
+    let res = grpc_client.denoms(Some(pagination)).await;
     assert!(res.is_ok());
     let denoms = res.unwrap().into_serde::<Vec<Denom>>().unwrap();
     assert_eq!(denoms.len(), 2);
-    assert_eq!(denoms[0], denom1);
-    assert_eq!(denoms[1], denom2);
+    assert_eq!(denoms[0], denom2);
+    assert_eq!(denoms[1], denom1);
 }
 
 async fn validate_mint() {
@@ -236,7 +244,7 @@ async fn validate_mint() {
     assert_eq!(nft.owner, SIGNER2.to_owned());
 
     // Check collection after minting.
-    let res = grpc_client.collection(denom1.id.clone()).await;
+    let res = grpc_client.collection(denom1.id.clone(), None).await;
     assert!(res.is_ok());
     let collection = res.unwrap().into_serde::<Collection>().unwrap();
     assert_eq!(collection.denom, Some(denom1));
@@ -249,7 +257,7 @@ async fn validate_before_transfer() {
 
     // Check owner.
     let res = grpc_client
-        .owner(denom1.clone().id, SIGNER2.to_owned())
+        .owner(denom1.clone().id, SIGNER2.to_owned(), None)
         .await;
     assert!(res.is_ok());
     let owner = res.unwrap().into_serde::<Owner>().unwrap();
@@ -276,7 +284,7 @@ async fn validate_after_transfer() {
 
     // Check owner.
     let res = grpc_client
-        .owner(denom1.clone().id, SIGNER2.to_owned())
+        .owner(denom1.clone().id, SIGNER2.to_owned(), None)
         .await;
     assert!(res.is_ok());
     let owner = res.unwrap().into_serde::<Owner>().unwrap();
@@ -329,7 +337,7 @@ async fn validate_after_burn() {
     assert_eq!(supply, 0);
 
     // Check collection.
-    let res = grpc_client.collection(denom1.clone().id).await;
+    let res = grpc_client.collection(denom1.clone().id, None).await;
     assert!(res.is_ok());
     let collection = res.unwrap().into_serde::<Collection>().unwrap();
     assert_eq!(collection.denom, Some(denom1));

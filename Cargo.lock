@@ -1001,6 +1001,7 @@ name = "defi-wallet-core-wasm"
 version = "0.2.0"
 dependencies = [
  "console_error_panic_hook",
+ "cosmos-sdk-proto",
  "defi-wallet-core-common",
  "defi-wallet-core-proto",
  "ethers",
