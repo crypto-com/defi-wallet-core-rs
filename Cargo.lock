@@ -970,6 +970,7 @@ name = "defi-wallet-core-cpp"
 version = "0.2.0"
 dependencies = [
  "anyhow",
+ "cosmos-sdk-proto",
  "cxx",
  "cxx-build",
  "defi-wallet-core-common",

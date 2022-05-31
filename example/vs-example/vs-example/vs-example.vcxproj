@@ -146,10 +146,11 @@
   <ItemGroup>
     <Library Include="defi_wallet_core_cpp.dll.lib" />
     <Library Include="libcxxbridge1.a" />
-    <ClCompile Include="defi-wallet-core-cpp\src\lib.rs.cc" />
-    <ClCompile Include="defi-wallet-core-cpp\src\nft.rs.cc" />
-    <ClCompile Include="defi-wallet-core-cpp\src\contract.rs.cc" />
-    <ClCompile Include="defi-wallet-core-cpp\src\uint.rs.cc" />
+    <ClCompile Include="include\nft.cc" />
+    <ClCompile Include="include\defi-wallet-core-cpp\src\lib.rs.cc" />
+    <ClCompile Include="include\defi-wallet-core-cpp\src\nft.rs.cc" />
+    <ClCompile Include="include\defi-wallet-core-cpp\src\contract.rs.cc" />
+    <ClCompile Include="include\defi-wallet-core-cpp\src\uint.rs.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

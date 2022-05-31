@@ -2,27 +2,45 @@
 import fnmatch
 import os
 import shutil
+from pathlib import Path
 
-SOURCES = [
+EXAMPLE_SOURCES = [
     "main.cc",
     "cronos.cc",
 ]
-CPP_EXAMPLE_PATH = "."
-VS_EXAMPLE_PATH = "../vs-example/vs-example"
+
+SOURCES = [
+    "../../bindings/cpp/src/nft.cc",
+    "../../bindings/cpp/include/nft.h",
+]
+
+CPP_EXAMPLE_PATH = Path(__file__).parent
+VS_EXAMPLE_PATH = Path(__file__).parent.parent / "vs-example/vs-example"
+
+INCLUDE_PATH = "include"
+LIB_PATH = "lib"
 
 INITIAL_INCLUDES = [
     '#include "defi-wallet-core-cpp/src/lib.rs.h"',
     '#include "defi-wallet-core-cpp/src/uint.rs.h"',
+    '#include "defi-wallet-core-cpp/include/nft.h"',
 ]
-FINAL_INCLUDES = ['#include "lib.rs.h"', '#include "uint.rs.h"']
+
+FINAL_INCLUDES = [
+    '#include "lib.rs.h"',
+    '#include "uint.rs.h"',
+    '#include "../../nft.h"',
+]
+
+INITIAL_SOURCES_INCLUDES = [
+    '#include "defi-wallet-core-cpp/include/nft.h"',
+]
+FINAL_SOURCES_INCLUDES = ['#include "nft.h"']
+
+
 TARGET_DIR = "../../target/release"
 
 OUT_DIR = "../../target/cxxbridge"
-
-
-def copy_to(output_path):
-    copy_cxxbridge(output_path)
-    copy_lib_files(output_path)
 
 
 # copy the generated binding files: `*.cc` and `*.h` to `output_path`
@@ -57,6 +75,7 @@ def copy_cxxbridge(output_path):
 
 # copy library files: `*.a`, `*.dylib`, and `*.dll.lib` (windows) to `output_path`
 def copy_lib_files(output_path):
+    os.makedirs(output_path, exist_ok=True)
     files = []
     files.extend(collect_files("*.a", TARGET_DIR, recursive=False))
     files.extend(collect_files("*.dylib", TARGET_DIR, recursive=False))
@@ -69,10 +88,39 @@ def copy_lib_files(output_path):
         shutil.copy(f, output_path)
 
 
-# copy `SOURCES` to `output_path`
+# copy `EXAMPLE_SOURCES` to `output_path`
 def copy_example_files(output_path):
+    for f in EXAMPLE_SOURCES:
+        shutil.copy(f, output_path)
+
+
+# copy `SOURCES` to `output_path`
+def copy_sources_files(output_path):
     for f in SOURCES:
         shutil.copy(f, output_path)
+    files = []
+    files.extend(collect_files("*.h", output_path, recursive=False))
+    files.extend(collect_files("*.cc", output_path, recursive=False))
+
+    def has_include_string(s):
+        for include in INITIAL_SOURCES_INCLUDES:
+            if include in s:
+                return True
+        return False
+
+    # replace string
+    for filename in files:
+        # Safely read the input filename using 'with'
+        with open(filename) as f:
+            s = f.read()
+            if not has_include_string(s):
+                continue
+
+        # Safely write the changed content, if found in the file
+        with open(filename, "w") as f:
+            for i, include in enumerate(INITIAL_SOURCES_INCLUDES):
+                s = s.replace(include, FINAL_SOURCES_INCLUDES[i])
+            f.write(s)
 
 
 # collect files with `pattern` in `search path`, and return the matched files
@@ -104,6 +152,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     TARGET_DIR = args.target_dir
     print("TARGET_DIR= ", TARGET_DIR)
-    copy_to(CPP_EXAMPLE_PATH)
-    copy_to(VS_EXAMPLE_PATH)
+    copy_cxxbridge(CPP_EXAMPLE_PATH / INCLUDE_PATH)
+    copy_lib_files(CPP_EXAMPLE_PATH / LIB_PATH)
+    copy_sources_files(CPP_EXAMPLE_PATH / INCLUDE_PATH)
+
+    copy_cxxbridge(VS_EXAMPLE_PATH / INCLUDE_PATH)
+    copy_lib_files(VS_EXAMPLE_PATH / LIB_PATH)
+    copy_sources_files(VS_EXAMPLE_PATH / INCLUDE_PATH)
+
     copy_example_files(VS_EXAMPLE_PATH)

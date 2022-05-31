@@ -1,6 +1,6 @@
-#include "defi-wallet-core-cpp/src/lib.rs.h"
-#include "defi-wallet-core-cpp/src/nft.rs.h"
-#include "rust/cxx.h"
+#include "include/defi-wallet-core-cpp/src/lib.rs.h"
+#include "include/defi-wallet-core-cpp/src/nft.rs.h"
+#include "include/rust/cxx.h"
 #include <cassert>
 #include <chrono>
 #include <iostream>
@@ -13,6 +13,7 @@ using namespace std;
 using namespace org::defi_wallet_core;
 using namespace std::this_thread; // sleep_for, sleep_until
 using namespace std::chrono;      // nanoseconds, system_clock, seconds
+using namespace rust;
 CosmosSDKTxInfoRaw build_txinfo() {
   CosmosSDKTxInfoRaw ret;
   ret.account_number = 0;
@@ -27,18 +28,17 @@ CosmosSDKTxInfoRaw build_txinfo() {
   ret.bech32hrp = "cro";
   return ret;
 }
-string getEnv(string key) {
-  string ret;
+String getEnv(String key) {
+  String ret;
   if (getenv(key.c_str()) != nullptr) {
     ret = getenv(key.c_str());
   }
   return ret;
 }
-rust::cxxbridge1::Box<Wallet>
-createWallet(rust::cxxbridge1::String mymnemonics) {
+Box<Wallet> createWallet(String mymnemonics) {
 
   try {
-    rust::cxxbridge1::Box<Wallet> mywallet = restore_wallet(mymnemonics, "");
+    Box<Wallet> mywallet = restore_wallet(mymnemonics, "");
     return mywallet;
   } catch (const rust::cxxbridge1::Error &e) {
     cout << "invalid mnemonics" << endl;
@@ -48,7 +48,6 @@ createWallet(rust::cxxbridge1::String mymnemonics) {
 }
 
 void test_chainmain_nft() {
-  using namespace rust::cxxbridge1;
 
   CosmosSDKTxInfoRaw tx_info = build_txinfo();
 
@@ -131,7 +130,14 @@ void test_chainmain_nft() {
   sleep_for(seconds(3));
   Box<GrpcClient> grpc_client = new_grpc_client(mygrpc);
 
-  Vec<Denom> denoms = grpc_client->denoms();
+  Pagination pagination;
+  assert(pagination.enable == false);
+  assert(pagination.key.size() == 0);
+  assert(pagination.offset == 0);
+  assert(pagination.limit == 100);
+  assert(pagination.count_total == false);
+  assert(pagination.reverse == false);
+  Vec<Denom> denoms = grpc_client->denoms(pagination);
   assert(denoms.size() == 1);
   assert(denoms[0].id == denom_id);
   assert(denoms[0].name == denom_name);
@@ -146,9 +152,9 @@ void test_chainmain_nft() {
   assert(nft.data == token_data);
   assert(nft.owner == myto);
 
-  Collection collection = grpc_client->collection(denom_id);
+  Collection collection = grpc_client->collection(denom_id, pagination);
   cout << "collection: " << collection.to_string() << endl;
-  Owner owner = grpc_client->owner(denom_id, myto);
+  Owner owner = grpc_client->owner(denom_id, myto, pagination);
   cout << "owner: " << owner.to_string() << endl;
   assert(owner.address == myto);
   assert(owner.id_collections.size() == 1);
@@ -171,7 +177,7 @@ void test_chainmain_nft() {
   assert(nft.uri == token_uri);
   assert(nft.data == token_data);
   assert(nft.owner == myfrom);
-  owner = grpc_client->owner(denom_id, myfrom);
+  owner = grpc_client->owner(denom_id, myfrom, pagination);
   cout << "owner: " << owner.to_string() << endl;
   assert(owner.address == myfrom);
   assert(owner.id_collections.size() == 1);
@@ -226,25 +232,23 @@ void process() {
   cout << "export MYTO=cro1yourreceiveraddress" << endl;
   cout << "------------------------------------------------------" << endl;
 
-  rust::cxxbridge1::String mymnemonics = getEnv("MYMNEMONICS");
-  string mychainid = getEnv("MYCHAINID");
-  string myfrom = getEnv("MYFROM");
-  string myto = getEnv("MYTO");
-  string myamount = getEnv("MYAMOUNT");
-  string myservercosmos = getEnv("MYCOSMOSRPC");         /* 1317 port */
-  string myservertendermint = getEnv("MYTENDERMINTRPC"); /* 26657 port */
-  string mygrpc = getEnv("MYGRPC");                      /* 9091 port */
-  rust::cxxbridge1::Box<Wallet> mywallet = createWallet(mymnemonics);
+  String mymnemonics = getEnv("MYMNEMONICS");
+  String mychainid = getEnv("MYCHAINID");
+  String myfrom = getEnv("MYFROM");
+  String myto = getEnv("MYTO");
+  String myamount = getEnv("MYAMOUNT");
+  String myservercosmos = getEnv("MYCOSMOSRPC");         /* 1317 port */
+  String myservertendermint = getEnv("MYTENDERMINTRPC"); /* 26657 port */
+  String mygrpc = getEnv("MYGRPC");                      /* 9091 port */
+  Box<Wallet> mywallet = createWallet(mymnemonics);
   cout << "transfer from " << myfrom << " to " << myto << " amount " << myamount
        << endl;
-  rust::cxxbridge1::String success, fail;
-  rust::cxxbridge1::String result =
-      mywallet->get_default_address(CoinType::CryptoOrgMainnet);
-  rust::cxxbridge1::String balance =
+  String success, fail;
+  String result = mywallet->get_default_address(CoinType::CryptoOrgMainnet);
+  String balance =
       query_account_balance(myservercosmos, myfrom, tx_info.fee_denom, 1);
   cout << "balance=" << balance.c_str() << endl;
-  rust::cxxbridge1::String detailjson =
-      query_account_details(myservercosmos, myfrom);
+  String detailjson = query_account_details(myservercosmos, myfrom);
   cout << "detailjson=" << detailjson.c_str() << endl;
   CosmosAccountInfoRaw detailinfo =
       query_account_details_info(myservercosmos, myfrom);
@@ -253,10 +257,10 @@ void process() {
   tx_info.chain_id = mychainid;
   char hdpath[100];
   snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", tx_info.coin_type);
-  rust::cxxbridge1::Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
-  rust::cxxbridge1::Vec<uint8_t> signedtx =
+  Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
+  Vec<uint8_t> signedtx =
       get_single_bank_send_signed_tx(tx_info, *privatekey, myto, 1, "basecro");
-  rust::cxxbridge1::String resp = broadcast_tx(myservertendermint, signedtx).tx_hash_hex;
+  String resp = broadcast_tx(myservertendermint, signedtx).tx_hash_hex;
 }
 
 void test_login() {
@@ -277,31 +281,30 @@ void test_login() {
       "Resources:\n"
       "- ipfs://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq/\n"
       "- https://example.com/my-web2-claim.json";
-  rust::cxxbridge1::Box<CppLoginInfo> logininfo = new_logininfo(info);
+  Box<CppLoginInfo> logininfo = new_logininfo(info);
 
-  rust::cxxbridge1::String mymnemonics = getEnv("MYMNEMONICS");
-  rust::cxxbridge1::Box<Wallet> mywallet = createWallet(mymnemonics);
+  String mymnemonics = getEnv("MYMNEMONICS");
+  Box<Wallet> mywallet = createWallet(mymnemonics);
 
   char hdpath[100];
   int coin_type = 60; // eth cointype
   snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", coin_type);
-  rust::cxxbridge1::Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
+  Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
 
-  rust::cxxbridge1::String default_address =
+  String default_address =
       mywallet->get_default_address(CoinType::CronosMainnet);
-  rust::cxxbridge1::Vec<uint8_t> signature =
-      logininfo->sign_logininfo(*privatekey);
+  Vec<uint8_t> signature = logininfo->sign_logininfo(*privatekey);
   assert(signature.size() == 65);
-  rust::Slice<const uint8_t> slice{signature.data(), signature.size()};
+  Slice<const uint8_t> slice{signature.data(), signature.size()};
   logininfo->verify_logininfo(slice);
 }
 
 int main() {
   try {
-    process();            // chain-main
-    test_chainmain_nft(); // chainmain nft tests
-    test_login();         // decentralized login
-    cronos_process();     // cronos
+    process();             // chain-main
+    test_chainmain_nft();  // chainmain nft tests
+    test_login();          // decentralized login
+    cronos_process();      // cronos
     test_cronos_testnet(); // cronos testnet
   } catch (const rust::cxxbridge1::Error &e) {
     // Use `Assertion failed`, the same as `assert` function

@@ -51,6 +51,18 @@ mod ffi {
         type PrivateKey = crate::PrivateKey;
     }
 
+    unsafe extern "C++" {
+        include!("defi-wallet-core-cpp/include/nft.h");
+        type Pagination;
+        fn get_enable(&self) -> bool;
+        fn get_key(&self) -> Vec<u8>;
+        fn get_offset(&self) -> u64;
+        fn get_limit(&self) -> u64;
+        fn get_count_total(&self) -> bool;
+        fn get_reverse(&self) -> bool;
+
+    }
+
     extern "Rust" {
         /// creates the signed transaction
         /// for `MsgIssueDenom` from the Chainmain nft module
@@ -110,15 +122,24 @@ mod ffi {
         /// Supply queries the total supply of a given denom or owner
         fn supply(self: &GrpcClient, denom_id: String, owner: String) -> Result<u64>;
         /// Owner queries the NFTs of the specified owner
-        fn owner(self: &GrpcClient, denom_id: String, owner: String) -> Result<Owner>;
+        fn owner(
+            self: &GrpcClient,
+            denom_id: String,
+            owner: String,
+            pagination: &Pagination,
+        ) -> Result<Owner>;
         /// Collection queries the NFTs of the specified denom
-        fn collection(self: &GrpcClient, denom_id: String) -> Result<Collection>;
+        fn collection(
+            self: &GrpcClient,
+            denom_id: String,
+            pagination: &Pagination,
+        ) -> Result<Collection>;
         /// Denom queries the definition of a given denom
         fn denom(self: &GrpcClient, denom_id: String) -> Result<Denom>;
         /// DenomByName queries the definition of a given denom by name
         fn denom_by_name(self: &GrpcClient, denom_name: String) -> Result<Denom>;
         /// Denoms queries all the denoms
-        fn denoms(self: &GrpcClient) -> Result<Vec<Denom>>;
+        fn denoms(self: &GrpcClient, pagination: &Pagination) -> Result<Vec<Denom>>;
         /// NFT queries the NFT for the given denom and token ID
         fn nft(self: &GrpcClient, denom_id: String, token_id: String) -> Result<BaseNft>;
 
@@ -232,6 +253,29 @@ impl fmt::Display for ffi::Collection {
         )
     }
 }
+
+impl From<&ffi::Pagination>
+    for Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest>
+{
+    fn from(
+        d: &ffi::Pagination,
+    ) -> Option<cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest> {
+        if d.get_enable() == false {
+            None
+        } else {
+            Some(
+                cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest {
+                    key: d.get_key(),
+                    offset: d.get_offset(),
+                    limit: d.get_limit(),
+                    count_total: d.get_count_total(),
+                    reverse: d.get_reverse(),
+                },
+            )
+        }
+    }
+}
+
 /// Wrapper of `Client`
 /// It is a rust opaque type, internals can not be seen in C++
 pub struct GrpcClient(Client);
@@ -251,19 +295,28 @@ impl GrpcClient {
     }
 
     /// Owner queries the NFTs of the specified owner
-    pub fn owner(&self, denom_id: String, owner: String) -> Result<ffi::Owner> {
+    pub fn owner(
+        &self,
+        denom_id: String,
+        owner: String,
+        pagination: &ffi::Pagination,
+    ) -> Result<ffi::Owner> {
         let owner = self
             .0
-            .owner_blocking(denom_id, owner)?
+            .owner_blocking(denom_id, owner, pagination.into())?
             .ok_or_else(|| anyhow!("No Owner"))?;
         Ok(owner.into())
     }
 
     /// Collection queries the NFTs of the specified denom
-    pub fn collection(&self, denom_id: String) -> Result<ffi::Collection> {
+    pub fn collection(
+        &self,
+        denom_id: String,
+        pagination: &ffi::Pagination,
+    ) -> Result<ffi::Collection> {
         let collection = self
             .0
-            .collection_blocking(denom_id)?
+            .collection_blocking(denom_id, pagination.into())?
             .ok_or_else(|| anyhow!("No Collection"))?;
         Ok(collection.into())
     }
@@ -287,8 +340,8 @@ impl GrpcClient {
     }
 
     /// Denoms queries all the denoms
-    pub fn denoms(&self) -> Result<Vec<ffi::Denom>> {
-        let denoms = self.0.denoms_blocking()?;
+    pub fn denoms(&self, pagination: &ffi::Pagination) -> Result<Vec<ffi::Denom>> {
+        let denoms = self.0.denoms_blocking(pagination.into())?;
         Ok(denoms.into_iter().map(|v| v.into()).collect())
     }
 
