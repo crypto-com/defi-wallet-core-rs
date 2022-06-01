@@ -44,6 +44,9 @@ url = "2"
 # grpc-web-client would be replaced if tonic has native grpc-web support.
 # Check https://github.com/hyperium/tonic/issues/645
 grpc-web-client = { git = "https://github.com/titanous/grpc-web-client"}
+ed25519-dalek = "1.0"
+bs58 = "0.4"
+hex = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 cosmos-sdk-proto = { version = "0.10", default-features = false, features = ["cosmwasm"] }
@@ -59,7 +62,7 @@ cosmos-sdk-proto = { version = "0.10", features = ["grpc"] }
 defi-wallet-core-proto = { version = "0.1", path = "../proto", features = ["transport"] }
 # NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
 # FIXME: https://github.com/rust-bitcoin/rust-bip39/issues/14
-rand = "0.6"
+rand = { version = "0.6", features = ["std"] }
 tokio = { version = "1", features = ["rt"] }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
 
