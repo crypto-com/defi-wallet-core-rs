@@ -1,4 +1,5 @@
 use crate::{format_to_js_error, PrivateKey};
+use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
 use defi_wallet_core_common::{
     broadcast_tx_sync, build_signed_msg_tx, get_account_balance, get_account_details, node,
     BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, Height, Network, SingleCoin,
@@ -421,13 +422,22 @@ impl GrpcWebClient {
         JsValue::from_serde(&supply).map_err(format_to_js_error)
     }
 
-    pub async fn owner(&mut self, denom_id: String, owner: String) -> Result<JsValue, JsValue> {
-        let owner = self.0.owner(denom_id, owner).await?;
+    pub async fn owner(
+        &mut self,
+        denom_id: String,
+        owner: String,
+        pagination: Option<PageRequest>,
+    ) -> Result<JsValue, JsValue> {
+        let owner = self.0.owner(denom_id, owner, pagination).await?;
         JsValue::from_serde(&owner).map_err(format_to_js_error)
     }
 
-    pub async fn collection(&mut self, denom_id: String) -> Result<JsValue, JsValue> {
-        let collection = self.0.collection(denom_id).await?;
+    pub async fn collection(
+        &mut self,
+        denom_id: String,
+        pagination: Option<PageRequest>,
+    ) -> Result<JsValue, JsValue> {
+        let collection = self.0.collection(denom_id, pagination).await?;
         JsValue::from_serde(&collection).map_err(format_to_js_error)
     }
 
@@ -441,8 +451,8 @@ impl GrpcWebClient {
         JsValue::from_serde(&denom).map_err(format_to_js_error)
     }
 
-    pub async fn denoms(&mut self) -> Result<JsValue, JsValue> {
-        let denoms = self.0.denoms().await?;
+    pub async fn denoms(&mut self, pagination: Option<PageRequest>) -> Result<JsValue, JsValue> {
+        let denoms = self.0.denoms(pagination).await?;
         JsValue::from_serde(&denoms).map_err(format_to_js_error)
     }
 

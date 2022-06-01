@@ -11,6 +11,8 @@ use proto::chainmain::nft::v1::{
     QueryOwnerRequest, QuerySupplyRequest,
 };
 
+use crate::PageRequest;
+
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::RwLock;
 
@@ -79,11 +81,12 @@ impl Client {
         &mut self,
         denom_id: String,
         owner: String,
+        pagination: Option<PageRequest>,
     ) -> Result<Option<Owner>, RestError> {
         let request = QueryOwnerRequest {
             denom_id,
             owner,
-            pagination: None,
+            pagination,
         };
         let res = self
             .client
@@ -100,13 +103,14 @@ impl Client {
         &self,
         denom_id: String,
         owner: String,
+        pagination: Option<PageRequest>,
     ) -> Result<Option<Owner>, RestError> {
         self.rt.block_on(async move {
             let mut client = self.client.write().unwrap();
             let request = QueryOwnerRequest {
                 denom_id,
                 owner,
-                pagination: None,
+                pagination,
             };
             let res = (*client)
                 .owner(request)
@@ -119,10 +123,14 @@ impl Client {
 
     #[cfg(target_arch = "wasm32")]
     /// Collection queries the NFTs of the specified denom
-    pub async fn collection(&mut self, denom_id: String) -> Result<Option<Collection>, RestError> {
+    pub async fn collection(
+        &mut self,
+        denom_id: String,
+        pagination: Option<PageRequest>,
+    ) -> Result<Option<Collection>, RestError> {
         let request = QueryCollectionRequest {
             denom_id,
-            pagination: None,
+            pagination,
         };
         let res = self
             .client
@@ -135,12 +143,16 @@ impl Client {
 
     #[cfg(not(target_arch = "wasm32"))]
     /// Collection queries the NFTs of the specified denom
-    pub fn collection_blocking(&self, denom_id: String) -> Result<Option<Collection>, RestError> {
+    pub fn collection_blocking(
+        &self,
+        denom_id: String,
+        pagination: Option<PageRequest>,
+    ) -> Result<Option<Collection>, RestError> {
         self.rt.block_on(async move {
             let mut client = self.client.write().unwrap();
             let request = QueryCollectionRequest {
                 denom_id,
-                pagination: None,
+                pagination,
             };
             let res = (*client)
                 .collection(request)
@@ -209,8 +221,11 @@ impl Client {
 
     #[cfg(target_arch = "wasm32")]
     /// Denoms queries all the denoms
-    pub async fn denoms(&mut self) -> Result<Vec<Denom>, RestError> {
-        let request = QueryDenomsRequest { pagination: None };
+    pub async fn denoms(
+        &mut self,
+        pagination: Option<PageRequest>,
+    ) -> Result<Vec<Denom>, RestError> {
+        let request = QueryDenomsRequest { pagination };
         let res = self
             .client
             .denoms(request)
@@ -222,10 +237,13 @@ impl Client {
 
     #[cfg(not(target_arch = "wasm32"))]
     /// Denoms queries all the denoms
-    pub fn denoms_blocking(&self) -> Result<Vec<Denom>, RestError> {
+    pub fn denoms_blocking(
+        &self,
+        pagination: Option<PageRequest>,
+    ) -> Result<Vec<Denom>, RestError> {
         self.rt.block_on(async move {
             let mut client = self.client.write().unwrap();
-            let request = QueryDenomsRequest { pagination: None };
+            let request = QueryDenomsRequest { pagination };
             let res = (*client)
                 .denoms(request)
                 .await

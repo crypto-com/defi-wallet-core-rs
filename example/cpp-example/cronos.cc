@@ -1,7 +1,7 @@
-#include "defi-wallet-core-cpp/src/contract.rs.h"
-#include "defi-wallet-core-cpp/src/lib.rs.h"
-#include "defi-wallet-core-cpp/src/uint.rs.h"
-#include "rust/cxx.h"
+#include "include/defi-wallet-core-cpp/src/contract.rs.h"
+#include "include/defi-wallet-core-cpp/src/lib.rs.h"
+#include "include/defi-wallet-core-cpp/src/uint.rs.h"
+#include "include/rust/cxx.h"
 #include <cassert>
 #include <chrono>
 #include <cstring>
@@ -16,9 +16,9 @@ timepoint measure_time(timepoint t1, std::string label);
 
 using namespace std;
 using namespace org::defi_wallet_core;
-using namespace rust::cxxbridge1;
+using namespace rust;
 
-std::string getEnv(std::string key);
+String getEnv(String key);
 
 Box<Wallet> createWallet(String mymnemonics);
 
@@ -51,7 +51,7 @@ void cronos_process() {
   eth_tx_info.amount = "1";
   eth_tx_info.amount_unit = EthAmount::EthDecimal;
   begin = measure_time(begin, "new_eth_tx_info");
-  rust::Vec<uint8_t> signedtx =
+  Vec<uint8_t> signedtx =
       build_eth_signed_tx(eth_tx_info, chainid, true, *privatekey);
   begin = measure_time(begin, "build_eth_signed_tx");
   U256 balance = get_eth_balance(myaddress1.c_str(), mycronosrpc);
@@ -167,7 +167,7 @@ void cronos_process() {
   begin = measure_time(begin, "erc721.owner_of");
 
   // safe transfer erc1155 from signer1 to signer2
-  rust::Vec<uint8_t> erc1155_data;
+  Vec<uint8_t> erc1155_data;
   status = erc1155.interval(3000)
                .safe_transfer_from(myaddress1, signer2_address, "0", "150",
                                    erc1155_data, *privatekey)
@@ -178,7 +178,7 @@ void cronos_process() {
   begin = measure_time(begin, "erc1155.balance_of");
 
   // safe batch transfer erc1155 from signer1 to signer2
-  rust::Vec<String> token_ids, amounts;
+  Vec<String> token_ids, amounts;
   token_ids.push_back("1");
   token_ids.push_back("2");
   token_ids.push_back("3");
@@ -337,8 +337,8 @@ void test_approval() {
   begin = measure_time(begin, "erc1155.set_approval_for_all");
   assert(erc1155.is_approved_for_all(signer1_address, signer2_address) == 1);
   begin = measure_time(begin, "erc1155.is_approved_for_all");
-  rust::Vec<String> token_ids, amounts;
-  rust::Vec<uint8_t> erc1155_data;
+  Vec<String> token_ids, amounts;
+  Vec<uint8_t> erc1155_data;
   token_ids.push_back("1");
   token_ids.push_back("3");
   token_ids.push_back("4");

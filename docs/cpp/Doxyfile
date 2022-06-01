@@ -874,7 +874,9 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = ../../example/cpp-example/rust ../../example/cpp-example/defi-wallet-core-cpp/src
+INPUT                  = ../../example/cpp-example/include/rust \
+                         ../../example/cpp-example/include/defi-wallet-core-cpp/src \
+                         ../../example/cpp-example/include/ \
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

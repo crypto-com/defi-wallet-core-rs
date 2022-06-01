@@ -369,6 +369,14 @@ dictionary Collection {
     sequence<BaseNft> nfts;
 };
 
+dictionary PageRequest {
+    sequence<u8> key;
+    u64 offset;
+    u64 limit;
+    boolean count_total;
+    boolean reverse;
+};
+
 [Error]
 enum EthError {
   "Overflow",
@@ -475,10 +483,10 @@ interface Client {
     u64 supply_blocking(string denom_id, string owner);
 
     [Throws=RestError]
-    Owner? owner_blocking(string denom_id, string owner);
+    Owner? owner_blocking(string denom_id, string owner, PageRequest? pagination);
 
     [Throws=RestError]
-    Collection? collection_blocking(string denom_id);
+    Collection? collection_blocking(string denom_id, PageRequest? pagination);
 
     [Throws=RestError]
     Denom? denom_blocking(string denom_id);
@@ -487,7 +495,7 @@ interface Client {
     Denom? denom_by_name_blocking(string denom_name);
 
     [Throws=RestError]
-    sequence<Denom> denoms_blocking();
+    sequence<Denom> denoms_blocking(PageRequest? pagination);
 
     [Throws=RestError]
     BaseNft? nft_blocking(string denom_id, string token_id);
