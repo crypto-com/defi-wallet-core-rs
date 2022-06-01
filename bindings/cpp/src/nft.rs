@@ -53,7 +53,10 @@ mod ffi {
 
     unsafe extern "C++" {
         include!("defi-wallet-core-cpp/include/nft.h");
+        // could be changed to Rust share type if https://github.com/dtolnay/cxx/issues/716 is
+        // fixed
         type Pagination;
+        // could be changed to Option if https://github.com/dtolnay/cxx/issues/87 is fixed
         fn get_enable(&self) -> bool;
         fn get_key(&self) -> Vec<u8>;
         fn get_offset(&self) -> u64;

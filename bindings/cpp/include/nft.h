@@ -10,6 +10,9 @@ using namespace rust;
 /// struct for efficient pagination
 struct Pagination {
   /// Set true to enable the pagination
+  ///
+  /// A workaround filed to for enabling pagination or not. It could be changed to
+  /// std::optional<Pagination> if https://github.com/dtolnay/cxx/issues/87 fixed
   bool enable;
   /// key is a value returned in PageResponse.next_key to begin
   /// querying the next page most efficiently. Only one of offset or key
