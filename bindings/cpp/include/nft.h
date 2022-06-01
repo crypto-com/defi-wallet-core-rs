@@ -11,7 +11,7 @@ using namespace rust;
 struct Pagination {
   /// Set true to enable the pagination
   ///
-  /// A workaround filed to for enabling pagination or not. It could be changed to
+  /// A workaround filed for enabling pagination. It could be changed to
   /// std::optional<Pagination> if https://github.com/dtolnay/cxx/issues/87 fixed
   bool enable;
   /// key is a value returned in PageResponse.next_key to begin
