@@ -5,19 +5,18 @@
 namespace org {
 namespace defi_wallet_core {
 
-using namespace rust;
-
 /// struct for efficient pagination
 struct Pagination {
   /// Set true to enable the pagination
   ///
   /// A workaround filed for enabling pagination. It could be changed to
-  /// std::optional<Pagination> if https://github.com/dtolnay/cxx/issues/87 fixed
+  /// std::optional<Pagination> if https://github.com/dtolnay/cxx/issues/87
+  /// fixed
   bool enable;
   /// key is a value returned in PageResponse.next_key to begin
   /// querying the next page most efficiently. Only one of offset or key
   /// should be set.
-  Vec<uint8_t> key;
+  rust::Vec<uint8_t> key;
   /// offset is a numeric offset that can be used when key is
   /// unavailable. It is less efficient than using key. Only
   /// one of offset or key should be set.
@@ -40,7 +39,7 @@ struct Pagination {
   Pagination();
 
   bool get_enable() const;
-  Vec<uint8_t> get_key() const;
+  rust::Vec<uint8_t> get_key() const;
   uint64_t get_offset() const;
   uint64_t get_limit() const;
   bool get_count_total() const;
