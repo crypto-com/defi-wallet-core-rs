@@ -113,7 +113,7 @@ cpp-cronos-play-docs: build_cpp
 		&& cd cronos-play-docs && gitbook build"
 ifeq ($(UNAME), Darwin)
 	@nix-shell ./docs/cpp/shell.nix --run "\
-		cd $(cpp_docs)/cronos-play-docs/src && gitbook serve --open"
+		cd $(cpp_docs)/cronos-play-docs && gitbook serve --open"
 endif
 
 cpp-docs-gitbook: build_cpp
