@@ -4,3 +4,6 @@
 [submodule "third_party/luna_classic"]
 	path = third_party/luna_classic
 	url = https://github.com/terra-money/classic-core.git
+[submodule "docs/cpp/cronos-play-docs"]
+	path = docs/cpp/cronos-play-docs
+	url = git@github.com:crypto-org-chain/cronos-play-docs.git

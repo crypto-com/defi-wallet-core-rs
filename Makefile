@@ -52,7 +52,7 @@ cpp: build_cpp
 	# to fix link error on macos
 	. ./checkmac.sh && . ./scripts/.env && cd $(cpp_example) && make run
 
-cppx86_64: 
+cppx86_64:
 	. ./checkmac.sh && rustup target add x86_64-apple-darwin
 	. ./checkmac.sh && cargo build --package defi-wallet-core-cpp --release --target x86_64-apple-darwin
 	. ./checkmac.sh && cd $(cpp_example) && make x86_64_build
@@ -88,7 +88,7 @@ cpp-ci-tests: build_cpp
 cpp-tests: python-tests
 
 # Choose the defualt cpp docs engine
-cpp-docs: cpp-docs-gitbook
+cpp-docs: cpp-cronos-play-docs
 
 cpp-docs-doxygen: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen"
@@ -100,6 +100,20 @@ cpp-docs-sphinx: build_cpp
 	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen && cd sphinx && make html"
 ifeq ($(UNAME), Darwin)
 	open $(cpp_docs)/sphinx/_build/html/index.html
+endif
+
+cpp-cronos-play-docs: build_cpp
+	@nix-shell ./docs/cpp/shell.nix --run "\
+	cd $(cpp_docs) && doxygen && doxybook2 \
+		--input doxygen/xml \
+		--output cronos-play-docs \
+		--config config.json \
+		--summary-input SUMMARY.md.tmpl \
+		--summary-output cronos-play-docs/SUMMARY.md \
+		&& cd cronos-play-docs && gitbook build"
+ifeq ($(UNAME), Darwin)
+	@nix-shell ./docs/cpp/shell.nix --run "\
+		cd $(cpp_docs)/cronos-play-docs/src && gitbook serve --open"
 endif
 
 cpp-docs-gitbook: build_cpp

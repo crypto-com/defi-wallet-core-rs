@@ -38,3 +38,5 @@ jobs:
         run: make cpp-docs-gitbook
       - name: Generate mdbook
         run: make cpp-docs-mdbook
+      - name: Generate cronos-play-docs
+        run: make cpp-cronos-play-docs
