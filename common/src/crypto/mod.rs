@@ -94,13 +94,13 @@ fn split_key_string(value: &str) -> Result<(KeyType, EncodeType, &str), errors::
 }
 
 /// uniffi don't support enum method 
-pub struct SecretKey {
+pub struct PrivateKey {
     key_type: KeyType,
     key_data: [u8; 32]
 }
 
-impl SecretKey {
-    /// generates a random secret key
+impl PrivateKey {
+    /// generates a random private key
     pub fn new(key_type: KeyType) -> Self {
         match key_type {
             KeyType::ED25519 => {
@@ -242,7 +242,7 @@ impl SecretKey {
 
 }
 
-impl Default for SecretKey {
+impl Default for PrivateKey {
     fn default() -> Self {
         Self::new(KeyType::SECP256K1)
     }
@@ -281,4 +281,11 @@ impl PublicKey {
 pub struct Signature {
     key_type: KeyType,
     sig_data: Vec<u8> 
+}
+
+
+
+#[cfg(test)]
+mod tests {
+
 }

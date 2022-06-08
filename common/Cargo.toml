@@ -62,7 +62,7 @@ cosmos-sdk-proto = { version = "0.10", features = ["grpc"] }
 defi-wallet-core-proto = { version = "0.1", path = "../proto", features = ["transport"] }
 # NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
 # FIXME: https://github.com/rust-bitcoin/rust-bip39/issues/14
-rand = { version = "0.6", features = ["std"] }
+rand = "0.6"
 tokio = { version = "1", features = ["rt"] }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
 

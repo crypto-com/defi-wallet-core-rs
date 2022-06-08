@@ -14,7 +14,7 @@ mod login;
 /// Utility functions
 mod utils;
 
-pub mod crypto;
+mod crypto;
 
 pub use defi_wallet_core_proto as proto;
 // expose all proto related types (e.g. for uniffi)
@@ -28,6 +28,9 @@ pub use login::*;
 pub use node::*;
 pub use transaction::*;
 pub use wallet::*;
+pub use crypto::*;
+
+
 #[cfg(feature = "uniffi-binding")]
 uniffi_macros::include_scaffolding!("common");
 
