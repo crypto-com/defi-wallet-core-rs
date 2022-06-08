@@ -18,14 +18,6 @@ fn new_erc20(contract_address: String, web3api_url: String, chain_id: u64) -> ff
 }
 impl ffi::Erc20 {
     /// Returns the decimal amount of tokens owned by `account_address`.
-    /// # Examples
-    /// ```
-    /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
-    ///    "https://cronos-testnet-3.crypto.org:8545", 383)
-    ///  .legacy();
-    /// U256 = erc20.balance_of("0xf0307093f23311FE6776a7742dB619EB3df62969");
-    /// cout << balance.to_string() << endl;
-    /// ```
     fn balance_of(&self, account_address: String) -> Result<ffi::U256> {
         // TODO Reuse runtime on blocking function
         let rt = tokio::runtime::Runtime::new()?;
@@ -638,6 +630,14 @@ mod ffi {
         /// ```
         fn new_erc20(address: String, web3api_url: String, chian_id: u64) -> Erc20;
         /// Returns the decimal amount of tokens owned by `account_address`.
+        /// # Examples
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383)
+        ///  .legacy();
+        /// U256 = erc20.balance_of("0xf0307093f23311FE6776a7742dB619EB3df62969");
+        /// cout << balance.to_string() << endl;
+        /// ```
         fn balance_of(self: &Erc20, account_address: String) -> Result<U256>;
         /// Returns the name of the token
         /// ```
