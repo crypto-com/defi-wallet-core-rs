@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cc" />
+    <ClCompile Include="chainmain.cc" />
     <ClCompile Include="cronos.cc" />
   </ItemGroup>
   <ItemGroup>
