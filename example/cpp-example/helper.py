@@ -6,7 +6,10 @@ from pathlib import Path
 
 EXAMPLE_SOURCES = [
     "main.cc",
+    "chainmain.cc",
     "cronos.cc",
+    "chainmain.h",
+    "cronos.h",
 ]
 
 SOURCES = [

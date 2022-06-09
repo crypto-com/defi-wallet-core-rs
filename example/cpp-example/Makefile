@@ -19,11 +19,18 @@ prepare_x86_64:
 	python3 helper.py --target_dir ../../target/x86_64-apple-darwin/release
 
 static:
-	g++ -o cppexamplestatic main.cc cronos.cc lib/libdefi_wallet_core_cpp.a -std=c++11 $(FLAGS)
+	g++ -o cppexamplestatic \
+		main.cc \
+		chainmain.cc \
+		cronos.cc \
+		lib/libdefi_wallet_core_cpp.a \
+		-std=c++11 \
+		$(FLAGS)
 
 dynamic:
 	g++ -o cppexample \
 		main.cc \
+		chainmain.cc \
 		cronos.cc \
 		include/*.cc \
 		include/defi-wallet-core-cpp/src/*.cc \
@@ -34,11 +41,18 @@ dynamic:
 		-L lib \
 
 x86_64_static:
-	arch -x86_64 g++ -o cppexamplestatic main.cc cronos.cc lib/libdefi_wallet_core_cpp.a -std=c++11 $(FLAGS)
+	arch -x86_64 g++ -o cppexamplestatic \
+		main.cc \
+		chainmain.cc \
+		cronos.cc \
+		lib/libdefi_wallet_core_cpp.a \
+		-std=c++11 \
+		$(FLAGS)
 
 x86_64_dynamic:
 	arch -x86_64 g++ -o cppexample \
 		main.cc \
+		chainmain.cc \
 		cronos.cc \
 		include/*.cc \
 		include/defi-wallet-core-cpp/src/*.cc \
@@ -49,7 +63,7 @@ x86_64_dynamic:
 		-L lib \
 
 x86_64_build: prepare_x86_64 x86_64_static x86_64_dynamic
-	
+
 run_static:
 	./cppexamplestatic
 

@@ -7,7 +7,6 @@
 #include <cstring>
 #include <iostream>
 
-void cronos_process();
 void test_uint();
 void test_approval();
 
