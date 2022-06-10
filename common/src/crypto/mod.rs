@@ -10,6 +10,9 @@ use tendermint::signature::Signer;
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
+pub use errors::ParseKeyError;
+
+
 #[derive(Debug, Copy, Clone)]
 pub enum KeyType {
     SECP256K1 = 0,
@@ -117,16 +120,16 @@ impl PrivateKey {
     }
 
     /// constructs secret key from bytes &[u8]
-    pub fn from_bytes(key_type: KeyType, data: &[u8]) -> Result<Self, errors::ParseKeyError> {
+    pub fn from_bytes(key_type: KeyType, data: &Vec<u8>) -> Result<Self, errors::ParseKeyError> {
         match key_type {
             KeyType::SECP256K1 => {
-                let sk = secp256k1::SigningKey::from_bytes(&data).map_err(|e| {
+                let sk = secp256k1::SigningKey::from_bytes(data).map_err(|e| {
                     errors::ParseKeyError::InvalidKeyBytes { key_type: key_type, msg: e.to_string()}
                 })?;
                 Ok(Self{ key_type: key_type, key_data: sk.to_bytes().into() })
             }
             KeyType::ED25519 => {
-                let sk = ed25519::SecretKey::from_bytes(data.as_ref()).map_err(|e| {
+                let sk = ed25519::SecretKey::from_bytes(data).map_err(|e| {
                     errors::ParseKeyError::InvalidKeyBytes { key_type: key_type, msg: e.to_string()}
                 })?;
                 Ok(Self{ key_type: key_type, key_data: sk.to_bytes() })
@@ -135,8 +138,8 @@ impl PrivateKey {
     }
 
     /// constructs secret key from str, the format is "keytype:encodetype:xxxxxxxxx"
-    pub fn from_str(s: &str) -> Result<Self, errors::ParseKeyError> {
-        let (key_type, encode_type, key_data) = split_key_string(s)?;
+    pub fn from_str(string: &String) -> Result<Self, errors::ParseKeyError> {
+        let (key_type, encode_type, key_data) = split_key_string(string)?;
         match key_type {
             KeyType::SECP256K1 => {
                 match encode_type {

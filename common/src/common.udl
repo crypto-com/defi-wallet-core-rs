@@ -50,6 +50,41 @@ interface SecretKey {
     string to_hex();
 };
 
+enum KeyType {
+    "SECP256K1",
+    "ED25519",
+};
+
+enum EncodeType {
+    "Hex",
+    "Base58",
+};
+
+[Error]
+enum ParseKeyError {
+    "InvalidKeyBytes",
+    "InvalidStringFormat",
+    "UnknownKeyType",
+    "UnknownEncodeType",
+    "InvalidEncodeFormat",
+    "InvalidLength",
+    "InvalidData",
+};
+
+interface PrivateKey {
+    constructor(KeyType key_type);
+
+    [Throws=ParseKeyError,Name=from_bytes]
+    constructor(KeyType key_type, [ByRef] sequence<u8> bytes);
+
+    [Throws=ParseKeyError,Name=from_str]
+    constructor([ByRef] string str);
+
+    sequence<u8> to_bytes();
+
+    string to_string(EncodeType encode_type);
+};
+
 [Error]
 enum HdWrapError {
     "InvalidLength",
@@ -77,6 +112,9 @@ interface HDWallet {
 
     [Throws=HdWrapError]
     SecretKey get_key(string derivation_path);
+
+    [Throws=HdWrapError]
+    PrivateKey get_private_key([ByRef] string derivation_path, KeyType key_type);
 
     [Throws=HdWrapError]
     SecretKey get_key_from_index(WalletCoin coin, u32 index);
