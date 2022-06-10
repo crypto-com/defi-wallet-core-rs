@@ -1,7 +1,9 @@
 use crate::{EthNetwork, Network};
+use crate::crypto::{KeyType, PrivateKey};
+
 use bip39::{Language, Mnemonic};
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
-use cosmrs::bip32::{self, DerivationPath, PrivateKey, Seed, XPrv};
+use cosmrs::bip32::{self, DerivationPath, Seed, XPrv};
 use cosmrs::crypto::PublicKey;
 use ethers::core::k256::ecdsa;
 use ethers::prelude::{LocalWallet, Signature, Signer};
@@ -58,6 +60,7 @@ impl WalletCoinFunc {
     pub fn derive_address(&self, private_key: &SecretKey) -> Result<String, HdWrapError> {
         match &self.coin {
             WalletCoin::CosmosSDK { network } => {
+                use cosmrs::bip32::PrivateKey;
                 let bech32_hrp = network.get_bech32_hrp();
                 let pubkey = PublicKey::from(private_key.get_signing_key().public_key());
                 pubkey
@@ -219,6 +222,21 @@ impl HDWallet {
         Ok(Arc::new(SecretKey(child_xprv.private_key().clone())))
     }
 
+    /// return the specified type of private key for a given derivation path
+    pub fn get_private_key(&self, derivation_path: &String, key_type: KeyType) -> Result<Arc<PrivateKey>, HdWrapError> {
+
+        let derivation_path: DerivationPath = derivation_path
+            .parse()
+            .map_err(|e: bip32::Error| HdWrapError::HDError(e.into()))?;
+        let child_xprv = XPrv::derive_from_path(&self.seed, &derivation_path)
+            .map_err(|e| HdWrapError::HDError(e.into()))?;
+        let key_bytes = SecretKey(child_xprv.private_key().clone()).to_bytes();
+        let pk = PrivateKey::from_bytes(key_type, &key_bytes).map_err(|_e|{
+            HdWrapError::InvalidLength
+        })?;
+        Ok(Arc::new(pk))
+    }
+
     /// return the secret key for a given coin and index
     pub fn get_key_from_index(
         &self,
@@ -283,11 +301,15 @@ impl SecretKey {
 
     /// gets public key to byte array
     pub fn get_public_key_bytes(&self) -> Vec<u8> {
+        use cosmrs::bip32::PrivateKey;
+
         self.0.clone().public_key().to_bytes().to_vec()
     }
 
     /// gets public key to a hex string without the 0x prefix
     pub fn get_public_key_hex(&self) -> String {
+        use cosmrs::bip32::PrivateKey;
+
         hex::encode(self.0.clone().public_key().to_bytes())
     }
 
