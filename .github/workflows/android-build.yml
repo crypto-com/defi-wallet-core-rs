@@ -14,8 +14,8 @@ jobs:
       - run: |
           export JAVA_HOME=$JAVA_HOME_8_X64
           $ANDROID_SDK_ROOT/tools/bin/sdkmanager --list
-          echo y | $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-30;google_apis;x86_64"
-          echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-30;google_apis;x86_64"
+          echo y | $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-31;google_apis;x86_64"
+          echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-31;google_apis;x86_64"
           $ANDROID_SDK_ROOT/tools/emulator @testavd &
       - name: NDK cache
         uses: actions/cache@v2
