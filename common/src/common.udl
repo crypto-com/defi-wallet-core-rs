@@ -78,7 +78,7 @@ interface PublicKey {
     [Throws=ParseKeyError,Name=from_bytes]
     constructor(KeyType key_type, [ByRef] sequence<u8> bytes);
 
-    [Throws=ParseKeyError, Name=from_str]
+    [Throws=ParseKeyError, Name=from_string]
     constructor([ByRef] string str);
 
     sequence<u8> to_bytes();
@@ -92,7 +92,7 @@ interface PrivateKey {
     [Throws=ParseKeyError,Name=from_bytes]
     constructor(KeyType key_type, [ByRef] sequence<u8> bytes);
 
-    [Throws=ParseKeyError,Name=from_str]
+    [Throws=ParseKeyError,Name=from_string]
     constructor([ByRef] string str);
 
     sequence<u8> to_bytes();

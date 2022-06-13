@@ -97,7 +97,7 @@ impl FromStr for EncodeType {
 
 // example: ed25519:base58:4Dn2jqzgvwxPyMwunTmszbs89igFb5bFPomkZMxmK6aSUnZkwDGUF9VapE6vp8PUf2DFxxxxxxxxxxxxxxxxxxxx
 fn split_key_string(value: &str) -> Result<(KeyType, EncodeType, &str), errors::ParseKeyError> {
-    let str_vec: Vec<_> = value.split(":").collect();
+    let str_vec: Vec<_> = value.split(':').collect();
     if str_vec.len() != 3 {
         return Err(errors::ParseKeyError::InvalidStringFormat {
             colon_number: str_vec.len() as u8,
@@ -123,7 +123,7 @@ impl PrivateKey {
             KeyType::SECP256K1 => {
                 let sk = secp256k1::SigningKey::random(&mut OsRng);
                 Self {
-                    key_type: key_type,
+                    key_type,
                     key_data: sk.to_bytes().into(),
                 }
             }
@@ -132,7 +132,7 @@ impl PrivateKey {
                 OsRng.fill_bytes(&mut array);
                 let sk = ed25519::SecretKey::from_bytes(&array).unwrap();
                 Self {
-                    key_type: key_type,
+                    key_type,
                     key_data: sk.to_bytes(),
                 }
             }
@@ -140,29 +140,30 @@ impl PrivateKey {
     }
 
     /// constructs secret key from bytes &[u8]
+    #[allow(clippy::ptr_arg)]
     pub fn from_bytes(key_type: KeyType, data: &Vec<u8>) -> Result<Self, errors::ParseKeyError> {
         match key_type {
             KeyType::SECP256K1 => {
                 let sk = secp256k1::SigningKey::from_bytes(data).map_err(|e| {
                     errors::ParseKeyError::InvalidKeyBytes {
-                        key_type: key_type,
+                        key_type,
                         msg: e.to_string(),
                     }
                 })?;
                 Ok(Self {
-                    key_type: key_type,
+                    key_type,
                     key_data: sk.to_bytes().into(),
                 })
             }
             KeyType::ED25519 => {
                 let sk = ed25519::SecretKey::from_bytes(data).map_err(|e| {
                     errors::ParseKeyError::InvalidKeyBytes {
-                        key_type: key_type,
+                        key_type,
                         msg: e.to_string(),
                     }
                 })?;
                 Ok(Self {
-                    key_type: key_type,
+                    key_type,
                     key_data: sk.to_bytes(),
                 })
             }
@@ -170,51 +171,52 @@ impl PrivateKey {
     }
 
     /// constructs secret key from str, the format is "keytype:encodetype:xxxxxxxxx"
-    pub fn from_str(string: &String) -> Result<Self, errors::ParseKeyError> {
+    #[allow(clippy::ptr_arg)]
+    pub fn from_string(string: &String) -> Result<Self, errors::ParseKeyError> {
         let (key_type, encode_type, key_data) = split_key_string(string)?;
         match key_type {
             KeyType::SECP256K1 => match encode_type {
                 EncodeType::Hex => {
                     let bytes = hex::decode(key_data).map_err(|e| {
                         errors::ParseKeyError::InvalidEncodeFormat {
-                            key_type: key_type,
-                            encode_type: encode_type,
+                            key_type,
+                            encode_type,
                             cause: e.to_string(),
                         }
                     })?;
-                    return Self::from_bytes(key_type, bytes.as_ref());
+                    Self::from_bytes(key_type, bytes.as_ref())
                 }
                 EncodeType::Base58 => {
                     let key_vec = bs58::decode(key_data).into_vec().map_err(|e| {
                         errors::ParseKeyError::InvalidEncodeFormat {
-                            key_type: key_type,
-                            encode_type: encode_type,
+                            key_type,
+                            encode_type,
                             cause: e.to_string(),
                         }
                     })?;
-                    return Self::from_bytes(key_type, key_vec.as_ref());
+                    Self::from_bytes(key_type, key_vec.as_ref())
                 }
             },
             KeyType::ED25519 => match encode_type {
                 EncodeType::Hex => {
                     let bytes = hex::decode(key_data).map_err(|e| {
                         errors::ParseKeyError::InvalidEncodeFormat {
-                            key_type: key_type,
-                            encode_type: encode_type,
+                            key_type,
+                            encode_type,
                             cause: e.to_string(),
                         }
                     })?;
-                    return Self::from_bytes(key_type, bytes.as_ref());
+                    Self::from_bytes(key_type, bytes.as_ref())
                 }
                 EncodeType::Base58 => {
                     let key_vec = bs58::decode(key_data).into_vec().map_err(|e| {
                         errors::ParseKeyError::InvalidEncodeFormat {
-                            key_type: key_type,
-                            encode_type: encode_type,
+                            key_type,
+                            encode_type,
                             cause: e.to_string(),
                         }
                     })?;
-                    return Self::from_bytes(key_type, key_vec.as_ref());
+                    Self::from_bytes(key_type, key_vec.as_ref())
                 }
             },
         }
@@ -320,27 +322,27 @@ impl PublicKey {
     pub fn from_bytes(key_type: KeyType, data: &Vec<u8>) -> Result<Self, errors::ParseKeyError> {
         match key_type {
             KeyType::SECP256K1 => {
-                let pk = secp256k1::VerifyingKey::from_sec1_bytes(&data).map_err(|e| {
+                let pk = secp256k1::VerifyingKey::from_sec1_bytes(data).map_err(|e| {
                     errors::ParseKeyError::InvalidKeyBytes {
-                        key_type: key_type,
+                        key_type,
                         msg: e.to_string(),
                     }
                 })?;
                 let pk_bytes = &*pk.to_bytes();
                 Ok(Self {
-                    key_type: key_type,
+                    key_type,
                     key_data: pk_bytes.to_vec(),
                 })
             }
             KeyType::ED25519 => {
                 let pk = ed25519::PublicKey::from_bytes(data.as_ref()).map_err(|e| {
                     errors::ParseKeyError::InvalidKeyBytes {
-                        key_type: key_type,
+                        key_type,
                         msg: e.to_string(),
                     }
                 })?;
                 Ok(Self {
-                    key_type: key_type,
+                    key_type,
                     key_data: pk.to_bytes().to_vec(),
                 })
             }
@@ -348,51 +350,52 @@ impl PublicKey {
     }
 
     /// constructs secret key from str, the format is "keytype:encodetype:xxxxxxxxx"
-    pub fn from_str(string: &String) -> Result<Self, errors::ParseKeyError> {
+    #[allow(clippy::ptr_arg)]
+    pub fn from_string(string: &String) -> Result<Self, errors::ParseKeyError> {
         let (key_type, encode_type, key_data) = split_key_string(string)?;
         match key_type {
             KeyType::SECP256K1 => match encode_type {
                 EncodeType::Hex => {
                     let vec = hex::decode(key_data).map_err(|e| {
                         errors::ParseKeyError::InvalidEncodeFormat {
-                            key_type: key_type,
-                            encode_type: encode_type,
+                            key_type,
+                            encode_type,
                             cause: e.to_string(),
                         }
                     })?;
-                    return Self::from_bytes(key_type, &vec);
+                    Self::from_bytes(key_type, &vec)
                 }
                 EncodeType::Base58 => {
                     let vec = bs58::decode(key_data).into_vec().map_err(|e| {
                         errors::ParseKeyError::InvalidEncodeFormat {
-                            key_type: key_type,
-                            encode_type: encode_type,
+                            key_type,
+                            encode_type,
                             cause: e.to_string(),
                         }
                     })?;
-                    return Self::from_bytes(key_type, &vec);
+                    Self::from_bytes(key_type, &vec)
                 }
             },
             KeyType::ED25519 => match encode_type {
                 EncodeType::Hex => {
                     let vec = hex::decode(key_data).map_err(|e| {
                         errors::ParseKeyError::InvalidEncodeFormat {
-                            key_type: key_type,
-                            encode_type: encode_type,
+                            key_type,
+                            encode_type,
                             cause: e.to_string(),
                         }
                     })?;
-                    return Self::from_bytes(key_type, &vec);
+                    Self::from_bytes(key_type, &vec)
                 }
                 EncodeType::Base58 => {
                     let vec = bs58::decode(key_data).into_vec().map_err(|e| {
                         errors::ParseKeyError::InvalidEncodeFormat {
-                            key_type: key_type,
-                            encode_type: encode_type,
+                            key_type,
+                            encode_type,
                             cause: e.to_string(),
                         }
                     })?;
-                    return Self::from_bytes(key_type, &vec);
+                    Self::from_bytes(key_type, &vec)
                 }
             },
         }
@@ -429,6 +432,7 @@ pub struct Signature {
 }
 
 impl Signature {
+    #[allow(clippy::ptr_arg)]
     pub fn from_bytes(key_type: KeyType, bytes: &Vec<u8>) -> Result<Self, String> {
         match key_type {
             KeyType::SECP256K1 => {
@@ -436,7 +440,7 @@ impl Signature {
                     <secp256k1::Signature as secp256k1::signature::Signature>::from_bytes(bytes)
                         .map_err(|e| format!("key_type: {}: {}", key_type, e))?;
                 Ok(Self {
-                    key_type: key_type,
+                    key_type,
                     sig_data: sig.as_ref().to_vec(),
                 })
             }
@@ -444,7 +448,7 @@ impl Signature {
                 let sig = ed25519::Signature::from_bytes(bytes)
                     .map_err(|e| format!("key_type: {}: {}", key_type, e))?;
                 Ok(Self {
-                    key_type: key_type,
+                    key_type,
                     sig_data: sig.to_bytes().to_vec(),
                 })
             }
