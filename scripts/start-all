@@ -19,4 +19,16 @@ sleep 15
 ./hermes-ctl clear
 ./hermes-ctl start
 
+for i in {1..60}; do
+   hermes_status=$(curl -s -X GET 'http://127.0.0.1:3000/state' | jq ".status")
+   success="\"success\""
+   echo $hermes_status
+   if [ "$hermes_status" = "$success" ]; then
+       break
+   else
+       echo "Waiting hermes..."
+       sleep 1
+   fi
+done
+
 cd ../

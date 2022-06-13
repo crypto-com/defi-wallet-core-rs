@@ -4,6 +4,7 @@ with pkgs;
 
 mkShell {
   buildInputs = [
+    pkgs.jq
     pkgs.pystarport
     pkgs.poetry
     pkgs.test-env

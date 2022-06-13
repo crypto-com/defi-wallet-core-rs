@@ -2,10 +2,15 @@ UNAME := $(shell uname)
 
 cpp_example = ./example/cpp-example
 
-.PHONY: wasm wasmweb android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests
+cpp_docs = ./docs/cpp
+.PHONY: wasm js wasmweb android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests mobile-release
 
 wasm:
 	wasm-pack build --scope crypto-com bindings/wasm
+
+js:
+	wasm-pack build --scope crypto-com bindings/wasm
+	./js_build.sh
 
 wasmweb:
 	wasm-pack build -d target/wasmweb --scope crypto-com bindings/wasm --target web
@@ -28,6 +33,10 @@ cleanall:
 	rm -rf NDK
 	./clean.sh
 
+mobile-release:
+	cp mobile_modules/android_module/dwclib/build/outputs/aar/dwclib-release.aar target/release/
+	zip -q -r target/release/dwclib-framework-iphoneos.zip mobile_modules/ios_module/dwclib/build/Release-iphoneos/dwclib.framework
+	zip -q -r target/release/dwclib-framework-iphonesimulator.zip mobile_modules/ios_module/dwclib/build/Release-iphonesimulator/dwclib.framework
 
 mac_install:
 	cargo install uniffi_bindgen
@@ -36,16 +45,17 @@ mac_install:
 
 
 build_cpp:
-	cargo build --package defi-wallet-core-cpp --release
+	. ./checkmac.sh && cargo build --package defi-wallet-core-cpp --release
 	cd $(cpp_example) && make build
 
 cpp: build_cpp
-	. ./scripts/.env && cd $(cpp_example) && make run
+	# to fix link error on macos
+	. ./checkmac.sh && . ./scripts/.env && cd $(cpp_example) && make run
 
-cppx86_64:
-	rustup target add x86_64-apple-darwin
-	cargo build --package defi-wallet-core-cpp --release --target x86_64-apple-darwin
-	cd $(cpp_example) && make x86_64_build
+cppx86_64: 
+	. ./checkmac.sh && rustup target add x86_64-apple-darwin
+	. ./checkmac.sh && cargo build --package defi-wallet-core-cpp --release --target x86_64-apple-darwin
+	. ./checkmac.sh && cd $(cpp_example) && make x86_64_build
 
 
 proto:
@@ -61,7 +71,7 @@ wasm-ci-tests:
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/start-all"
-	cd bindings/wasm/ && wasm-pack test --chrome --headless -- --features ibc-test --test ibc && cd ../..
+	cd bindings/wasm/ && wasm-pack test --chrome --headless -- --features cronos-test,ibc-test --test ibc --test ethereum && cd ../..
 	@nix-shell ./integration_tests/shell.nix --run "scripts/stop-all"
 
 # No ibc test
@@ -77,19 +87,49 @@ cpp-ci-tests: build_cpp
 
 cpp-tests: python-tests
 
-# TODO or use other docs engine
-cpp-docs: build_cpp
-	grep -h -R -E "//" -A 1 -R --include "$(cpp_example)/defi-wallet-core-cpp/src/*.h" > cpp_docs.md
-# add break line
-	sed -i '' 's/--/---\n/g' cpp_docs.md
-# add more spaces in beginning of line
-	sed -i '' 's/  /    /g' cpp_docs.md
-	sed -i '' "s/^\/\//    \/\//g" cpp_docs.md
-	sed -i '' "s/^::/    ::/g" cpp_docs.md
-# remove #endif lines
-	sed -i '' 's/^#endif.*//g' cpp_docs.md
-# remove } // lines
-	sed -i '' 's/^} \/\/.*//g' cpp_docs.md
+# Choose the defualt cpp docs engine
+cpp-docs: cpp-docs-gitbook
+
+cpp-docs-doxygen: build_cpp
+	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen"
+ifeq ($(UNAME), Darwin)
+	open $(cpp_docs)/doxygen/html/index.html
+endif
+
+cpp-docs-sphinx: build_cpp
+	@nix-shell ./docs/cpp/shell.nix --run "cd $(cpp_docs) && doxygen && cd sphinx && make html"
+ifeq ($(UNAME), Darwin)
+	open $(cpp_docs)/sphinx/_build/html/index.html
+endif
+
+cpp-docs-gitbook: build_cpp
+	@nix-shell ./docs/cpp/shell.nix --run "\
+	cd $(cpp_docs) && doxygen && doxybook2 \
+		--input doxygen/xml \
+		--output gitbook/src \
+		--config config.json \
+		--summary-input SUMMARY.md.tmpl \
+		--summary-output gitbook/src/SUMMARY.md \
+		&& cd gitbook/src && gitbook build"
+ifeq ($(UNAME), Darwin)
+	@nix-shell ./docs/cpp/shell.nix --run "\
+		cd $(cpp_docs)/gitbook/src && gitbook serve --open"
+endif
+
+cpp-docs-mdbook: build_cpp
+	@nix-shell ./docs/cpp/shell.nix --run "\
+		cd $(cpp_docs) && doxygen && doxybook2 \
+		--input doxygen/xml \
+		--output mdbook/src \
+		--config config.json \
+		--summary-input SUMMARY.md.tmpl \
+		--summary-output mdbook/src/SUMMARY.md \
+		&& cd mdbook && mdbook build"
+ifeq ($(UNAME), Darwin)
+	@nix-shell ./docs/cpp/shell.nix --run "\
+		cd $(cpp_docs)/mdbook && mdbook serve --open"
+endif
+
 
 
 lint-py:

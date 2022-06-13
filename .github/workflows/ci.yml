@@ -20,21 +20,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: rustup target add wasm32-unknown-unknown
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --all-features
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: -p defi-wallet-core-cpp --all-features
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: -p defi-wallet-core-wasm --target wasm32-unknown-unknown --all-features
   test:
     name: cargo test
     runs-on: ubuntu-latest
@@ -45,17 +49,15 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/cargo@v1
         with:
           command: test
           args: --all-features
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: -p defi-wallet-core-cpp --all-features
   fmt:
     name: cargo fmt
     runs-on: ubuntu-latest
@@ -67,13 +69,7 @@ jobs:
           toolchain: stable
           components: rustfmt
           override: true
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
@@ -83,20 +79,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: rustup target add wasm32-unknown-unknown
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           components: clippy
           override: true
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features -- -D warnings
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: -p defi-wallet-core-cpp --all-features -- -D warnings
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: -p defi-wallet-core-wasm --target wasm32-unknown-unknown --all-features -- -D warnings

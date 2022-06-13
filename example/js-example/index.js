@@ -19,7 +19,8 @@ testPrivateKey();
 testCosmosSignDirect();
 testEthSign();
 testEip199PersonalSign();
-testEip712TypedDataSign();
+testEip712SimpleTypedDataSign();
+testEip712RecursivelyNestedTypedDataSign();
 testBuildEthereumContractBatchTransfer();
 const txData = testBuildAndSignCosmosTx();
 testCosmosClient(txData);
@@ -27,22 +28,22 @@ testCosmosClient(txData);
 const wallet = new wasm.Wallet();
 logWalletAddresses(wallet);
 
-const pubkey = new Uint8Array([3, 127, 12, 203, 79, 3, 211, 37, 157, 178, 152, 47, 245, 142, 167, 89, 207, 9, 218, 144, 20, 147, 186, 114, 170, 114, 137, 201, 226, 149, 141, 113, 14]);
-const account_number = BigInt(1);
-const sequence_number = BigInt(1);
-const gas_limit = BigInt(100000);
-const fee_amount = BigInt(1000000);
-const fee_denom = "uatom";
-const timeout_height = 9001;
-const memo_note = "example memo";
-const chain_id = "cosmoshub-4";
-const bech32hrp = "cosmos";
-const coin_type = 118;
+// const pubkey = new Uint8Array([3, 127, 12, 203, 79, 3, 211, 37, 157, 178, 152, 47, 245, 142, 167, 89, 207, 9, 218, 144, 20, 147, 186, 114, 170, 114, 137, 201, 226, 149, 141, 113, 14]);
+// const account_number = BigInt(1);
+// const sequence_number = BigInt(1);
+// const gas_limit = BigInt(100000);
+// const fee_amount = BigInt(1000000);
+// const fee_denom = "uatom";
+// const timeout_height = 9001;
+// const memo_note = "example memo";
+// const chain_id = "cosmoshub-4";
+// const bech32hrp = "cosmos";
+// const coin_type = 118;
 
-const tx_info = new wasm.CosmosSDKTxInfoRaw(account_number, sequence_number, gas_limit, fee_amount, fee_denom, timeout_height, memo_note, chain_id, bech32hrp, coin_type);
-const signed_tx = wasm.get_single_bank_send_signed_tx(tx_info, new wasm.PrivateKey(), "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
-BigInt(1000000), "uatom");
-console.log(signed_tx);
+// const tx_info = new wasm.CosmosSDKTxInfoRaw(account_number, sequence_number, gas_limit, fee_amount, fee_denom, timeout_height, memo_note, chain_id, bech32hrp, coin_type);
+// const signed_tx = wasm.get_single_bank_send_signed_tx(tx_info, new wasm.PrivateKey(), "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z",
+// BigInt(1000000), "uatom");
+// console.log(signed_tx);
 
 // const account = await wasm.query_account_details("https://testnet-croeseid-4.crypto.org:1317", "tcro1y6493k3smakl2wf09u7ds4amztx8ks7leyrtmy");
 // console.log(account);
@@ -86,7 +87,7 @@ function testCosmosSignDirect() {
 
   const privateKey = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
   const signature = wasm.cosmos_signDirect(privateKey, "chaintest", "1", authInfoBytes, bodyBytes);
-  console.log(`Cosmos signDirect signature: ${signature}`);
+  console.log(`cosmos_signDirect signature: ${signature}`);
 }
 
 function testEthSign() {
@@ -94,13 +95,14 @@ function testEthSign() {
   const signature = wasm.eth_sign(privateKey, "01020304050607085152535455565758a1a2a3a4a5a6a7a8f1f2f3f4f5f6f7f8");
   console.log(`eth_sign signature: ${signature}`);
 }
+
 function testEip199PersonalSign() {
   const privateKey = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
   const signature = wasm.personal_sign(privateKey, "0xdeadbeaf");
   console.log(`EIP-199 personal_sign signature: ${signature}`);
 }
 
-function testEip712TypedDataSign() {
+function testEip712SimpleTypedDataSign() {
   const params = {
     types: {
       EIP712Domain: [
@@ -129,7 +131,51 @@ function testEip712TypedDataSign() {
 
   const privateKey = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
   const signature = wasm.eth_signTypedData(privateKey, JSON.stringify(params));
-  console.log(`EIP-712 eth_signTypedData signature: ${signature}`);
+  console.log(`EIP-712 eth_signTypedData signature of simple typed data: ${signature}`);
+}
+
+function testEip712RecursivelyNestedTypedDataSign() {
+  const params = {
+    types: {
+      EIP712Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'version', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' },
+      ],
+      Mail: [
+        { name: 'from', type: 'Person' },
+        { name: 'to', type: 'Person' },
+        { name: 'contents', type: 'string' },
+      ],
+      Person: [
+        { name: 'name', type: 'string' },
+        { name: 'wallet', type: 'address' },
+      ],
+    },
+    primaryType: 'Mail',
+    domain: {
+      name: 'Ether Mail',
+      version: '1',
+      chainId: 1,
+      verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+    },
+    message: {
+      from: {
+        name: 'Cow',
+        wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+      },
+      to: {
+        name: 'Bob',
+        wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+      },
+      contents: 'Hello, Bob!',
+    },
+  };
+
+  const privateKey = wasm.PrivateKey.from_hex("af6f293f2621bfb5a70d7cf123596bd14827f73769c24edf2688b3ce2c86d747");
+  const signature = wasm.eth_signTypedData(privateKey, JSON.stringify(params));
+  console.log(`EIP-712 eth_signTypedData signature of recursively nested typed data: ${signature}`);
 }
 
 function testPrivateKey() {

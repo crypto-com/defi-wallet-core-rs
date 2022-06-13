@@ -1,6 +1,6 @@
 [package]
 name = "defi-wallet-core-wasm"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.57"
 
@@ -14,6 +14,7 @@ default = ["console_error_panic_hook"]
 # Since both `--skip` (cargo test) and `#[ignore]` attribute have no effect for
 # `wasm-pack test`. So use this feature as an alternative.
 ibc-test = []
+cronos-test = []
 
 [dependencies]
 defi-wallet-core-common = { path = "../../common", features = ["abi-contract"] }
@@ -26,6 +27,7 @@ wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
 console_error_panic_hook = { version = "0.1", optional = true }
+cosmos-sdk-proto = { version = "0.10", default-features = false, features = ["cosmwasm"] }
 
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
 # compared to the default allocator's ~10K. It is slower than the default
@@ -37,7 +39,7 @@ tendermint = "0.23"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.30"
-ethers = { git = "https://github.com/gakonst/ethers-rs", rev="de275db56a1be948cf4a543e1837f5add6f4750c" }
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev="0a031417d8ec9e8696229eb5d172f7155ec3c79c" }
 wasm-timer = "0.2.5"
 tendermint-rpc = "0.23"
 reqwest = { version = "0.11", features = ["blocking", "json"] }

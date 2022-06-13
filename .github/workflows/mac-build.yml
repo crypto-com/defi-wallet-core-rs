@@ -2,7 +2,7 @@ name: Mac Build CI
 
 on:
   push:
-    branches: 
+    branches:
       - main
     paths-ignore:
       - README.md
@@ -17,4 +17,4 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Compile Cpp
-        run: make cpp 
+        run: make build_cpp

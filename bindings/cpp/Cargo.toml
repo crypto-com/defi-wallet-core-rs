@@ -1,23 +1,25 @@
 [package]
 name = "defi-wallet-core-cpp"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.57"
 
 [dependencies]
 defi-wallet-core-common = { path = "../../common" , features=["login"]}
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
+cosmos-sdk-proto = { version = "0.10" }
 cxx = "1"
 anyhow = "1"
 serde="1"
 serde_json="1"
 siwe = { version = "0.2" }
-ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "de275db56a1be948cf4a543e1837f5add6f4750c" }
-hex = "0.4" 
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "0a031417d8ec9e8696229eb5d172f7155ec3c79c" }
+hex = "0.4"
+tokio = { version = "1", features = ["rt"] }
 
 [build-dependencies]
-cxx-build = "1"
-
+# Wait until https://github.com/dtolnay/cxx/pull/1048 is merged or similar solution is found
+cxx-build = { git = "https://github.com/crypto-com/cxx.git", rev = "42b011184b6d5a593cd7513edb1d554e0f086a0f", features=["doxygen"] }
 
 [lib]
-crate-type = ["staticlib", "cdylib"]
+crate-type = ["staticlib", "cdylib", "rlib"]

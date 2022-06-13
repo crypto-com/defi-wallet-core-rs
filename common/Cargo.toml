@@ -1,6 +1,6 @@
 [package]
 name = "defi-wallet-core-common"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.57"
 
@@ -13,18 +13,19 @@ default = []
 # error-prone and less security for the end user.
 abi-contract = []
 login = ["siwe"]
-uniffi-binding = ["uniffi", "uniffi_build", "uniffi_macros"]
+uniffi-binding = ["abi-contract", "uniffi", "uniffi_build", "uniffi_macros"]
 
 [dependencies]
 anyhow = "1"
-bech32 = "0.8"
+base64 = "0.13"
+bech32 = "0.9"
 bip39 = "1"
 cosmrs = "0.5"
 eyre = "0.6"
-# NOTE: add `features = ["legacy"]` if non-EIP-1559 network support is required
-ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "de275db56a1be948cf4a543e1837f5add6f4750c" }
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "0a031417d8ec9e8696229eb5d172f7155ec3c79c" }
 ibc = { version = "0.13", default-features = false }
 ibc-proto = { version = "0.17", default-features = false }
+itertools = "0.10"
 lazy_static = "1"
 prost = "0.9"
 rand_core = { version = "0.6", features = ["std"] }
@@ -36,10 +37,11 @@ serde_json = "1"
 serde_with = "1"
 siwe = { version = "0.2", optional = true }
 tendermint = "0.23"
+tendermint-proto = "0.23"
 tendermint-rpc = "0.23"
 thiserror = "1"
-uniffi = { version = "^0.17", optional = true }
-uniffi_macros = { version = "^0.17", optional = true }
+uniffi = { version = "^0.18", optional = true }
+uniffi_macros = { version = "^0.18", optional = true }
 url = "2"
 # grpc-web-client would be replaced if tonic has native grpc-web support.
 # Check https://github.com/hyperium/tonic/issues/645
@@ -67,4 +69,4 @@ tokio = { version = "1", features = ["rt"] }
 tonic = { version = "0.6", default-features = false, features = ["codegen", "prost", "tls", "tls-roots", "transport"] }
 
 [build-dependencies]
-uniffi_build = { version = "^0.17", features=["builtin-bindgen"], optional = true }
+uniffi_build = { version = "^0.18", features=["builtin-bindgen"], optional = true }

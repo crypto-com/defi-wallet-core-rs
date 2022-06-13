@@ -19,13 +19,50 @@ prepare_x86_64:
 	python3 helper.py --target_dir ../../target/x86_64-apple-darwin/release
 
 static:
-	g++ -o cppexamplestatic main.cc cronos.cc libdefi_wallet_core_cpp.a -std=c++11 $(FLAGS)
+	g++ -o cppexamplestatic \
+		main.cc \
+		chainmain.cc \
+		cronos.cc \
+		lib/libdefi_wallet_core_cpp.a \
+		-std=c++11 \
+		$(FLAGS)
 
 dynamic:
-	g++ -o cppexample main.cc cronos.cc defi-wallet-core-cpp/src/*.cc libcxxbridge1.a -ldefi_wallet_core_cpp -std=c++11 $(FLAGS)  -L .
+	g++ -o cppexample \
+		main.cc \
+		chainmain.cc \
+		cronos.cc \
+		include/*.cc \
+		include/defi-wallet-core-cpp/src/*.cc \
+		lib/libcxxbridge1.a \
+		-ldefi_wallet_core_cpp \
+		-std=c++11 \
+		$(FLAGS)  \
+		-L lib \
 
-x86_64_build: prepare_x86_64
-	arch -x86_64 g++ -o cppexample main.cc cronos.cc libdefi_wallet_core_cpp.a -std=c++11 $(FLAGS)
+x86_64_static:
+	arch -x86_64 g++ -o cppexamplestatic \
+		main.cc \
+		chainmain.cc \
+		cronos.cc \
+		lib/libdefi_wallet_core_cpp.a \
+		-std=c++11 \
+		$(FLAGS)
+
+x86_64_dynamic:
+	arch -x86_64 g++ -o cppexample \
+		main.cc \
+		chainmain.cc \
+		cronos.cc \
+		include/*.cc \
+		include/defi-wallet-core-cpp/src/*.cc \
+		lib/libcxxbridge1.a \
+		-ldefi_wallet_core_cpp \
+		-std=c++11 \
+		$(FLAGS)  \
+		-L lib \
+
+x86_64_build: prepare_x86_64 x86_64_static x86_64_dynamic
 
 run_static:
 	./cppexamplestatic

@@ -1,3 +1,4 @@
+use ethers::abi::ethereum_types::{FromDecStrErr, FromStrRadixErr};
 use ethers::contract::ContractError;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::signer::SignerMiddlewareError;
@@ -7,14 +8,22 @@ use ethers::prelude::{
 use ethers::types::transaction::eip712;
 use ethers::utils::ConversionError;
 
+use crate::HdWrapError;
+
 /// Possible errors from Ethereum transaction construction and broadcasting
 #[derive(Debug, thiserror::Error)]
 pub enum EthError {
-    #[error("Converting from decimal failed")]
-    DecConversion,
-    #[error("Converting from hexadecimal failed")]
+    #[error("Arithmetic operation overflow")]
+    Overflow,
+    #[error("wrapper around HD Wallet errors")]
+    HdWrapError(HdWrapError),
+    #[error("Converting from hex failed")]
     HexConversion,
+    #[error("Converting from string with radix failed: {0}")]
+    StrRadixConversion(FromStrRadixErr),
     #[error("Converting from decimal failed: {0}")]
+    DecConversion(FromDecStrErr),
+    #[error("Conversion failed: {0}")]
     ParseError(ConversionError),
     #[error("Invalid node Web3 connection URL: {0}")]
     NodeUrl(url::ParseError),
@@ -57,4 +66,6 @@ pub enum Eip712Error {
     MissingTypeError(String),
     #[error("SerdeJson error: {0}")]
     SerdeJsonError(#[from] serde_json::Error),
+    #[error("Unsupported error: {0}")]
+    UnsupportedError(String),
 }

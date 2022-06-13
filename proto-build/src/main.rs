@@ -21,6 +21,9 @@ const PROTO_DIR: &str = "../proto/src/prost/";
 const CHAIN_MAIN_REV: &str = "v3.3.3";
 const CHAIN_MAIN_DIR: &str = "../third_party/chain-main";
 
+const LUNA_CLASSIC_REV: &str = "v0.5.18";
+const LUNA_CLASSIC_DIR: &str = "../third_party/luna_classic";
+
 /// A temporary directory for proto building
 const TMP_BUILD_DIR: &str = "/tmp/tmp-protobuf/";
 
@@ -70,6 +73,7 @@ fn main() {
     update_submodules();
     output_commit_versions(&tmp_build_dir);
     compile_chain_main_protos_and_services(&tmp_build_dir);
+    compile_luna_classic_protos_and_services(&tmp_build_dir);
     copy_generated_files(&tmp_build_dir, &proto_dir);
 }
 
@@ -117,11 +121,26 @@ fn update_submodules() {
     ]);
     run_git(&["-C", CHAIN_MAIN_DIR, "fetch"]);
     run_git(&["-C", CHAIN_MAIN_DIR, "reset", "--hard", CHAIN_MAIN_REV]);
+
+    info!("Updating luna_classic submodule...");
+    run_git(&[
+        "-C",
+        LUNA_CLASSIC_DIR,
+        "submodule",
+        "update",
+        "--init",
+        "--recursive",
+    ]);
+    run_git(&["-C", LUNA_CLASSIC_DIR, "fetch"]);
+    run_git(&["-C", LUNA_CLASSIC_DIR, "reset", "--hard", LUNA_CLASSIC_REV]);
 }
 
 fn output_commit_versions(out_dir: &Path) {
     let path = out_dir.join("CHAIN_MAIN_COMMIT");
     fs::write(path, CHAIN_MAIN_REV).unwrap();
+
+    let path = out_dir.join("LUNA_CLASSIC_COMMIT");
+    fs::write(path, LUNA_CLASSIC_REV).unwrap();
 }
 
 fn compile_chain_main_protos_and_services(out_dir: &Path) {
@@ -176,6 +195,53 @@ fn compile_chain_main_protos_and_services(out_dir: &Path) {
 
     info!("=> Done!");
 }
+
+fn compile_luna_classic_protos_and_services(out_dir: &Path) {
+    info!(
+        "Compiling luna_classic .proto files to Rust into '{}'...",
+        out_dir.display()
+    );
+
+    let root = env!("CARGO_MANIFEST_DIR");
+    let sdk_dir = Path::new(LUNA_CLASSIC_DIR);
+
+    let proto_includes_paths = [
+        format!("{}/../proto", root),
+        format!("{}/proto", sdk_dir.display()),
+        format!("{}/third_party/proto", sdk_dir.display()),
+    ];
+
+    // Paths
+    let proto_paths = [
+        format!("{}/../proto/definitions/mock", root),
+        format!("{}/proto/terra/market", sdk_dir.display()),
+        format!("{}/proto/terra/oracle", sdk_dir.display()),
+        format!("{}/proto/terra/treasury", sdk_dir.display()),
+        format!("{}/proto/terra/tx", sdk_dir.display()),
+        format!("{}/proto/terra/vesting", sdk_dir.display()),
+        format!("{}/proto/terra/wasm", sdk_dir.display()),
+    ];
+
+    // List available proto files
+    let mut protos: Vec<PathBuf> = vec![];
+    collect_protos(&proto_paths, &mut protos);
+
+    // List available paths for dependencies
+    let includes: Vec<PathBuf> = proto_includes_paths.iter().map(PathBuf::from).collect();
+
+    // Compile all of the proto files, along with grpc service clients
+    info!("Compiling proto definitions and clients for GRPC services!");
+    tonic_build::configure()
+        .build_client(true)
+        .build_server(false)
+        .format(true)
+        .out_dir(out_dir)
+        .compile(&protos, &includes)
+        .unwrap();
+
+    info!("=> Done!");
+}
+
 /// collect_protos walks every path in `proto_paths` and recursively locates all .proto
 /// files in each path's subdirectories, adding the full path of each file to `protos`
 ///

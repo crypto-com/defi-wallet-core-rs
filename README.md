@@ -3,13 +3,13 @@
 ## Pre-requisites
 
 - https://rustup.rs
-- `uniffi_bindgen` 0.17.0 or newer
+- `uniffi_bindgen` 0.18.0 or newer
 
 ```
 curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
 cargo install uniffi_bindgen
-uniffi-bindgen --version # check the version is 0.17.0 or newer
+uniffi-bindgen --version # check the version is 0.18.0 or newer
 brew install ktlint
 brew install swiftformat
 ```
@@ -18,12 +18,12 @@ brew install swiftformat
 
 ### Android
 ```bash
-uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language kotlin --out-dir bindings/android
+uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language kotlin --out-dir bindings/android
 ```
 
 ### iOS
 ```bash
-uniffi-bindgen generate common/src/common.udl --config-path common/uniffi.toml --language swift --out-dir bindings/ios
+uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language swift --out-dir bindings/ios
 ```
 
 ### WASM
@@ -156,3 +156,12 @@ Please install `nix` before running this test.
 ``` bash
 make python-tests
 ```
+
+
+## Documents
+### C++
+``` bash
+make cpp-docs
+```
+
+For more detailed setup, check [Defi Wallet Core Cpp Documents Generation Guide](./docs/cpp/README.md)

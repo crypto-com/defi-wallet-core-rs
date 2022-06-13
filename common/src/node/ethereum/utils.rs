@@ -1,20 +1,19 @@
-use std::{str::FromStr, sync::Arc};
+use std::{str::FromStr, sync::Arc, time::Duration};
 
 use crate::{
     construct_simple_eth_transfer_tx, EthAmount, EthError, EthNetwork, SecretKey, WalletCoin,
     WalletCoinFunc,
 };
-use ethers::prelude::{
-    Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware, U256,
-};
+use ethers::prelude::{Address, Http, LocalWallet, Middleware, Provider, Signer, SignerMiddleware};
 
-use ethers::utils::format_units;
 #[cfg(not(target_arch = "wasm32"))]
 use ethers::utils::hex::ToHex;
 
 use crate::contract::{Contract, ContractCall};
 
 use ethers::prelude::TransactionReceipt as EthersTransactionReceipt;
+
+use ethers::types::U256;
 
 /// a subset of `ethers::prelude::::TransactionReceipt` for non-wasm
 #[cfg(not(target_arch = "wasm32"))]
@@ -181,14 +180,14 @@ pub enum ContractBatchTransfer {
 }
 
 /// given the account address, it returns the amount of native token it owns
-pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<String, EthError> {
+pub async fn get_eth_balance(address: &str, web3api_url: &str) -> Result<U256, EthError> {
     let to = address_from_str(address)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
     let result = provider
         .get_balance(to, None)
         .await
         .map_err(|_| EthError::BalanceFail)?;
-    format_units(result, "ether").map_err(EthError::ParseError)
+    Ok(result)
 }
 
 /// given the account address, it returns the nonce / number of transactions sent from the account
@@ -242,10 +241,12 @@ pub async fn broadcast_contract_approval_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let provider = provider.interval(Duration::from_millis(polling_interval_ms));
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match approval_details {
@@ -302,10 +303,12 @@ pub async fn broadcast_contract_transfer_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let provider = provider.interval(Duration::from_millis(polling_interval_ms));
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match transfer_details {
@@ -412,10 +415,12 @@ pub async fn broadcast_contract_batch_transfer_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let provider = provider.interval(Duration::from_millis(polling_interval_ms));
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     match details {
@@ -461,6 +466,7 @@ pub async fn broadcast_sign_eth_tx(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
@@ -470,9 +476,10 @@ pub async fn broadcast_sign_eth_tx(
         },
     }
     .derive_address(secret_key.as_ref())
-    .map_err(|_| EthError::HexConversion)?;
+    .map_err(EthError::HdWrapError)?;
     let tx = construct_simple_eth_transfer_tx(&from_address, to_hex, amount, legacy, chain_id)?;
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let provider = provider.interval(Duration::from_millis(polling_interval_ms));
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
 
@@ -492,8 +499,10 @@ pub async fn broadcast_sign_eth_tx(
 pub async fn broadcast_eth_signed_raw_tx(
     raw_tx: Vec<u8>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
     let provider = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let provider = provider.interval(Duration::from_millis(polling_interval_ms));
     let pending_tx = provider
         .send_raw_transaction(raw_tx.into())
         .await
@@ -506,12 +515,12 @@ pub async fn broadcast_eth_signed_raw_tx(
 }
 
 /// Returns the corresponding account's native token balance
-/// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
-/// (blocking; not compiled to wasm).
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_eth_balance_blocking(address: &str, web3api_url: &str) -> Result<String, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    rt.block_on(get_eth_balance(address, web3api_url))
+    Ok(rt
+        .block_on(get_eth_balance(address, web3api_url))?
+        .to_string())
 }
 
 /// Returns the corresponding account's nonce / number of transactions
@@ -555,6 +564,7 @@ pub fn broadcast_sign_eth_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_sign_eth_tx(
@@ -563,6 +573,7 @@ pub fn broadcast_sign_eth_tx_blocking(
         network,
         secret_key,
         web3api_url,
+        polling_interval_ms,
     ))?;
     Ok(result.into())
 }
@@ -577,6 +588,7 @@ pub fn broadcast_contract_approval_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_contract_approval_tx(
@@ -584,6 +596,7 @@ pub fn broadcast_contract_approval_tx_blocking(
         network,
         secret_key,
         web3api_url,
+        polling_interval_ms,
     ))?;
     Ok(result.into())
 }
@@ -598,6 +611,7 @@ pub fn broadcast_contract_transfer_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_contract_transfer_tx(
@@ -605,6 +619,7 @@ pub fn broadcast_contract_transfer_tx_blocking(
         network,
         secret_key,
         web3api_url,
+        polling_interval_ms,
     ))?;
     Ok(result.into())
 }
@@ -619,6 +634,7 @@ pub fn broadcast_contract_batch_transfer_tx_blocking(
     network: EthNetwork,
     secret_key: Arc<SecretKey>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     let result = rt.block_on(broadcast_contract_batch_transfer_tx(
@@ -626,6 +642,7 @@ pub fn broadcast_contract_batch_transfer_tx_blocking(
         network,
         secret_key,
         web3api_url,
+        polling_interval_ms,
     ))?;
     Ok(result.into())
 }
@@ -637,9 +654,14 @@ pub fn broadcast_contract_batch_transfer_tx_blocking(
 pub fn broadcast_eth_signed_raw_tx_blocking(
     raw_tx: Vec<u8>,
     web3api_url: &str,
+    polling_interval_ms: u64,
 ) -> Result<TransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    let result = rt.block_on(broadcast_eth_signed_raw_tx(raw_tx, web3api_url))?;
+    let result = rt.block_on(broadcast_eth_signed_raw_tx(
+        raw_tx,
+        web3api_url,
+        polling_interval_ms,
+    ))?;
     Ok(result.into())
 }
 
@@ -655,5 +677,5 @@ pub fn u256_from_str(u256_str: &str) -> Result<U256, EthError> {
 
 #[inline]
 pub fn u256_from_dec_str(u256_str: &str) -> Result<U256, EthError> {
-    U256::from_dec_str(u256_str).map_err(|_| EthError::DecConversion)
+    U256::from_dec_str(u256_str).map_err(EthError::DecConversion)
 }

@@ -1,9 +1,10 @@
 use crate::PrivateKey;
 use anyhow::Result;
-use common::get_contract_balance_blocking;
+use common::get_contract_balance;
 use common::node::ethereum;
 use common::EthNetwork;
 use defi_wallet_core_common as common;
+use ethers::providers::DEFAULT_POLL_INTERVAL;
 
 /// Construct an Erc20 struct
 fn new_erc20(contract_address: String, web3api_url: String, chain_id: u64) -> ffi::Erc20 {
@@ -11,20 +12,23 @@ fn new_erc20(contract_address: String, web3api_url: String, chain_id: u64) -> ff
         contract_address,
         web3api_url,
         inner_legacy: false,
+        inner_polling_interval_ms: DEFAULT_POLL_INTERVAL.as_millis() as u64,
         chain_id,
     }
 }
 impl ffi::Erc20 {
     /// Returns the decimal amount of tokens owned by `account_address`.
-    fn balance_of(&self, account_address: String) -> Result<String> {
-        let balance = get_contract_balance_blocking(
+    fn balance_of(&self, account_address: String) -> Result<ffi::U256> {
+        // TODO Reuse runtime on blocking function
+        let rt = tokio::runtime::Runtime::new()?;
+        let balance = rt.block_on(get_contract_balance(
             &account_address,
             common::ContractBalance::Erc20 {
                 contract_address: self.contract_address.clone(),
             },
             &self.web3api_url,
-        )?;
-        Ok(balance)
+        ))?;
+        Ok(balance.into())
     }
 
     /// Returns the name of the token
@@ -53,6 +57,12 @@ impl ffi::Erc20 {
         self.clone()
     }
 
+    /// Sets the default polling interval for event filters and pending transactions
+    fn interval(&mut self, polling_interval_ms: u64) -> Self {
+        self.inner_polling_interval_ms = polling_interval_ms;
+        self.clone()
+    }
+
     /// Moves `amount` tokens from the caller’s account to `to_address`.
     fn transfer(
         &self,
@@ -72,6 +82,7 @@ impl ffi::Erc20 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -97,6 +108,7 @@ impl ffi::Erc20 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -121,6 +133,7 @@ impl ffi::Erc20 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -137,10 +150,10 @@ impl ffi::Erc20 {
     }
 
     /// Returns the amount of tokens in existence.
-    fn total_supply(&self) -> Result<String> {
+    fn total_supply(&self) -> Result<ffi::U256> {
         let supply =
             ethereum::erc20::get_total_supply_blocking(&self.contract_address, &self.web3api_url)?;
-        Ok(supply.to_string())
+        Ok(supply.into())
     }
 }
 
@@ -150,20 +163,23 @@ fn new_erc721(contract_address: String, web3api_url: String, chain_id: u64) -> f
         contract_address,
         web3api_url,
         inner_legacy: false,
+        inner_polling_interval_ms: DEFAULT_POLL_INTERVAL.as_millis() as u64,
         chain_id,
     }
 }
 impl ffi::Erc721 {
     /// Returns the number of tokens in owner's `account_address`.
-    fn balance_of(&self, account_address: String) -> Result<String> {
-        let balance = get_contract_balance_blocking(
+    fn balance_of(&self, account_address: String) -> Result<ffi::U256> {
+        // TODO Reuse runtime on blocking function
+        let rt = tokio::runtime::Runtime::new()?;
+        let balance = rt.block_on(get_contract_balance(
             &account_address,
             common::ContractBalance::Erc721 {
                 contract_address: self.contract_address.clone(),
             },
             &self.web3api_url,
-        )?;
-        Ok(balance)
+        ))?;
+        Ok(balance.into())
     }
     /// Returns the owner of the `token_id` token.
     fn owner_of(&self, token_id: String) -> Result<String> {
@@ -204,6 +220,12 @@ impl ffi::Erc721 {
         self.clone()
     }
 
+    /// Sets the default polling interval for event filters and pending transactions
+    fn interval(&mut self, polling_interval_ms: u64) -> Self {
+        self.inner_polling_interval_ms = polling_interval_ms;
+        self.clone()
+    }
+
     /// Transfers `token_id` token from `from_address` to `to_address`.
     fn transfer_from(
         &self,
@@ -225,6 +247,7 @@ impl ffi::Erc721 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -250,6 +273,7 @@ impl ffi::Erc721 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -278,6 +302,7 @@ impl ffi::Erc721 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -303,6 +328,7 @@ impl ffi::Erc721 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -327,6 +353,7 @@ impl ffi::Erc721 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -355,10 +382,10 @@ impl ffi::Erc721 {
     /// Returns the total amount of tokens stored by the contract.
     ///
     /// From IERC721Enumerable, an optional extension of the standard ERC721
-    fn total_supply(&self) -> Result<String> {
+    fn total_supply(&self) -> Result<ffi::U256> {
         let supply =
             ethereum::erc721::get_total_supply_blocking(&self.contract_address, &self.web3api_url)?;
-        Ok(supply.to_string())
+        Ok(supply.into())
     }
 
     /// Returns a token ID at a given index of all the tokens stored by the contract. Use along
@@ -394,21 +421,24 @@ fn new_erc1155(contract_address: String, web3api_url: String, chain_id: u64) -> 
         contract_address,
         web3api_url,
         inner_legacy: false,
+        inner_polling_interval_ms: DEFAULT_POLL_INTERVAL.as_millis() as u64,
         chain_id,
     }
 }
 impl ffi::Erc1155 {
     /// Returns the amount of tokens of `token_id` owned by `account_address`.
-    fn balance_of(&self, account_address: String, token_id: String) -> Result<String> {
-        let balance = get_contract_balance_blocking(
+    fn balance_of(&self, account_address: String, token_id: String) -> Result<ffi::U256> {
+        // TODO Reuse runtime on blocking function
+        let rt = tokio::runtime::Runtime::new()?;
+        let balance = rt.block_on(get_contract_balance(
             &account_address,
             common::ContractBalance::Erc1155 {
                 contract_address: self.contract_address.clone(),
                 token_id,
             },
             &self.web3api_url,
-        )?;
-        Ok(balance)
+        ))?;
+        Ok(balance.into())
     }
 
     /// Batched version of balance_of.
@@ -449,6 +479,12 @@ impl ffi::Erc1155 {
         self.clone()
     }
 
+    /// Sets the default polling interval for event filters and pending transactions
+    fn interval(&mut self, polling_interval_ms: u64) -> Self {
+        self.inner_polling_interval_ms = polling_interval_ms;
+        self.clone()
+    }
+
     /// Transfers `amount` tokens of `token_id` from `from_address` to `to_address` with
     /// `additional_data`.
     fn safe_transfer_from(
@@ -475,6 +511,7 @@ impl ffi::Erc1155 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -504,6 +541,7 @@ impl ffi::Erc1155 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -528,6 +566,7 @@ impl ffi::Erc1155 {
             },
             private_key.key.clone(),
             &self.web3api_url,
+            self.inner_polling_interval_ms,
         )?;
         Ok(receipt.into())
     }
@@ -553,6 +592,7 @@ mod ffi {
         contract_address: String,
         web3api_url: String,
         inner_legacy: bool,
+        inner_polling_interval_ms: u64,
         chain_id: u64,
     }
 
@@ -561,6 +601,7 @@ mod ffi {
         contract_address: String,
         web3api_url: String,
         inner_legacy: bool,
+        inner_polling_interval_ms: u64,
         chain_id: u64,
     }
 
@@ -569,6 +610,7 @@ mod ffi {
         contract_address: String,
         web3api_url: String,
         inner_legacy: bool,
+        inner_polling_interval_ms: u64,
         chain_id: u64,
     }
 
@@ -576,22 +618,90 @@ mod ffi {
         include!("defi-wallet-core-cpp/src/lib.rs.h");
         type PrivateKey = crate::PrivateKey;
         type CronosTransactionReceiptRaw = crate::ffi::CronosTransactionReceiptRaw;
+        include!("defi-wallet-core-cpp/src/uint.rs.h");
+        type U256 = crate::uint::ffi::U256;
     }
 
     extern "Rust" {
         /// Construct an Erc20 struct
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383);
+        /// ```
         fn new_erc20(address: String, web3api_url: String, chian_id: u64) -> Erc20;
         /// Returns the decimal amount of tokens owned by `account_address`.
-        fn balance_of(self: &Erc20, account_address: String) -> Result<String>;
+        /// # Examples
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383)
+        ///  .legacy();
+        /// U256 = erc20.balance_of("0xf0307093f23311FE6776a7742dB619EB3df62969");
+        /// cout << balance.to_string() << endl;
+        /// ```
+        fn balance_of(self: &Erc20, account_address: String) -> Result<U256>;
         /// Returns the name of the token
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383);
+        /// String name = erc20.name();
+        /// assert(name == "USDC");
+        /// ```
         fn name(self: &Erc20) -> Result<String>;
         /// Returns the symbol of the token
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383);
+        /// String symbol = erc20.symbol();
+        /// assert(symbol == "USDC");
+        /// ```
         fn symbol(self: &Erc20) -> Result<String>;
         /// Returns the number of decimals the token uses
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383)
+        ///  .legacy();
+        /// uint8_t decimals = erc20.decimals();
+        /// assert(decimals == 6);
+        /// ```
         fn decimals(self: &Erc20) -> Result<u8>;
         /// Makes a legacy transaction instead of an EIP-1559 one
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383);
+        /// erc20 = erc20.legacy();
+        /// ```
         fn legacy(self: &mut Erc20) -> Erc20;
+        /// Sets the default polling interval for event filters and pending transactions
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///    "https://cronos-testnet-3.crypto.org:8545", 383);
+        /// erc20 = erc20.interval(3000);
+        /// ```
+        fn interval(self: &mut Erc20, polling_interval_ms: u64) -> Erc20;
         /// Moves `amount` tokens from the caller’s account to `to_address`.
+        /// # Transfer 100 tokens (devnet)
+        /// ```
+        /// String mycronosrpc = getEnv("MYCRONOSRPC");
+        /// char hdpath[100];
+        /// int cointype = 60;
+        /// int chainid = 777;
+        /// snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+        ///
+        /// String signer1_mnemonics = getEnv("SIGNER1_MNEMONIC");
+        /// Box<Wallet> signer1_wallet = createWallet(signer1_mnemonics);
+        /// String signer1_address = signer1_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer1_privatekey = signer1_wallet->get_key(hdpath);
+        ///
+        /// String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
+        /// Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
+        /// String signer2_address = signer2_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer2_privatekey = signer2_wallet->get_key(hdpath);
+        ///
+        /// Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
+        ///                         mycronosrpc, chainid)
+        ///                 .legacy();
+        /// erc20.transfer(signer2_address, "100", *privatekey);
+        /// ```
         fn transfer(
             self: &Erc20,
             to_address: String,
@@ -599,6 +709,30 @@ mod ffi {
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
         /// Moves `amount` tokens from `from_address` to `to_address` using the allowance mechanism.
+        /// # Transfer from signer1 to validator1 using the allowance mechanism (devnet)
+        /// ```
+        /// String mycronosrpc = getEnv("MYCRONOSRPC");
+        /// char hdpath[100];
+        /// int cointype = 60;
+        /// int chainid = 777;
+        /// snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+        ///
+        /// String signer1_mnemonics = getEnv("SIGNER1_MNEMONIC");
+        /// Box<Wallet> signer1_wallet = createWallet(signer1_mnemonics);
+        /// String signer1_address = signer1_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer1_privatekey = signer1_wallet->get_key(hdpath);
+        ///
+        /// String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
+        /// Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
+        /// String signer2_address = signer2_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer2_privatekey = signer2_wallet->get_key(hdpath);
+        ///
+        /// Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
+        ///                         mycronosrpc, chainid)
+        ///                 .legacy();
+        /// erc20.transfer_from(signer1_address, validator1_address, "100",
+        ///                 *signer2_privatekey);
+        /// ```
         fn transfer_from(
             self: &Erc20,
             from_address: String,
@@ -608,6 +742,29 @@ mod ffi {
         ) -> Result<CronosTransactionReceiptRaw>;
         /// Allows `approved_address` to withdraw from your account multiple times, up to the
         /// `amount` amount.
+        /// ## approves 1000 allowance (devnet)
+        /// ```
+        /// String mycronosrpc = getEnv("MYCRONOSRPC");
+        /// char hdpath[100];
+        /// int cointype = 60;
+        /// int chainid = 777;
+        /// snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+        ///
+        /// String signer1_mnemonics = getEnv("SIGNER1_MNEMONIC");
+        /// Box<Wallet> signer1_wallet = createWallet(signer1_mnemonics);
+        /// String signer1_address = signer1_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer1_privatekey = signer1_wallet->get_key(hdpath);
+        ///
+        /// String signer2_mnemonics = getEnv("SIGNER2_MNEMONIC");
+        /// Box<Wallet> signer2_wallet = createWallet(signer2_mnemonics);
+        /// String signer2_address = signer2_wallet->get_eth_address(0);
+        /// Box<PrivateKey> signer2_privatekey = signer2_wallet->get_key(hdpath);
+        ///
+        /// Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
+        ///                         mycronosrpc, chainid)
+        ///                 .legacy();
+        /// erc20.interval(3000).approve(signer2_address, "1000", *signer1_privatekey);
+        /// ```
         fn approve(
             self: &Erc20,
             approved_address: String,
@@ -615,14 +772,26 @@ mod ffi {
             private_key: &PrivateKey,
         ) -> Result<CronosTransactionReceiptRaw>;
         /// Returns the amount which `spender` is still allowed to withdraw from `owner`.
+        /// ```
+        /// Erc20 erc20 = new_erc20("0x5003c1fcc043D2d81fF970266bf3fa6e8C5a1F3A",
+        ///                         mycronosrpc, chainid)
+        ///                 .legacy();
+        /// erc20.allowance(owner, spender);
+        /// ```
         fn allowance(self: &Erc20, owner: String, spender: String) -> Result<String>;
         /// Returns the amount of tokens in existence.
-        fn total_supply(self: &Erc20) -> Result<String>;
+        /// ```
+        /// Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
+        ///                         "https://cronos-testnet-3.crypto.org:8545", 383)
+        ///                 .legacy();
+        /// U256 total_supply = erc20.total_supply();
+        /// ```
+        fn total_supply(self: &Erc20) -> Result<U256>;
 
         /// Construct an Erc721 struct
         fn new_erc721(address: String, web3api_url: String, chian_id: u64) -> Erc721;
         /// Returns the number of tokens in owner's `account_address`.
-        fn balance_of(self: &Erc721, account_address: String) -> Result<String>;
+        fn balance_of(self: &Erc721, account_address: String) -> Result<U256>;
         /// Returns the owner of the `token_id` token.
         fn owner_of(self: &Erc721, token_id: String) -> Result<String>;
         /// Get the descriptive name for a collection of NFTs in this contract
@@ -633,6 +802,8 @@ mod ffi {
         fn token_uri(self: &Erc721, token_id: String) -> Result<String>;
         /// Makes a legacy transaction instead of an EIP-1559 one
         fn legacy(self: &mut Erc721) -> Erc721;
+        /// Sets the default polling interval for event filters and pending transactions
+        fn interval(self: &mut Erc721, polling_interval_ms: u64) -> Erc721;
         /// Transfers `token_id` token from `from_address` to `to_address`.
         fn transfer_from(
             self: &Erc721,
@@ -687,7 +858,7 @@ mod ffi {
         /// Returns the total amount of tokens stored by the contract.
         ///
         /// From IERC721Enumerable, an optional extension of the standard ERC721
-        fn total_supply(self: &Erc721) -> Result<String>;
+        fn total_supply(self: &Erc721) -> Result<U256>;
         /// Returns a token ID at a given index of all the tokens stored by the contract. Use along
         /// with totalSupply to enumerate all tokens.
         ///
@@ -702,7 +873,7 @@ mod ffi {
         /// Construct an Erc1155 struct
         fn new_erc1155(address: String, web3api_url: String, chian_id: u64) -> Erc1155;
         /// Returns the amount of tokens of `token_id` owned by `account_address`.
-        fn balance_of(self: &Erc1155, account_address: String, token_id: String) -> Result<String>;
+        fn balance_of(self: &Erc1155, account_address: String, token_id: String) -> Result<U256>;
         /// Batched version of balance_of.
         /// Get the balance of multiple account/token pairs
         fn balance_of_batch(
@@ -714,6 +885,8 @@ mod ffi {
         fn uri(self: &Erc1155, token_id: String) -> Result<String>;
         /// Makes a legacy transaction instead of an EIP-1559 one
         fn legacy(self: &mut Erc1155) -> Erc1155;
+        /// Sets the default polling interval for event filters and pending transactions
+        fn interval(self: &mut Erc1155, polling_interval_ms: u64) -> Erc1155;
         /// Transfers `amount` tokens of `token_id` from `from_address` to `to_address` with
         /// `additional_data`.
         fn safe_transfer_from(

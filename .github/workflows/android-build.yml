@@ -23,15 +23,16 @@ jobs:
           path: |
             NDK/
           key: ${{ runner.os }}-ndk-${{ hashFiles('android_build.sh') }}
-      - name: Build cache
+          restore-keys: |
+            ${{ runner.os }}-ndk-
+      - name: Android module cache
         uses: actions/cache@v2
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/git/db/
-            target/
             mobile_modules/android_module/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-android-${{ hashFiles('android_build.sh') }}
+          key: ${{ runner.os }}-android-${{ hashFiles('**/Cargo.lock', '**/*.kt', 'android_build.sh') }}
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v1
       - name: Gradle cache
         uses: actions/cache@v2
         with:
@@ -41,7 +42,7 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen --version 0.17.0
+      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen --version 0.18.0
       - run: |
           export NDK_HOME=$ANDROID_NDK_ROOT
           export JAVA_HOME=$JAVA_HOME_11_X64

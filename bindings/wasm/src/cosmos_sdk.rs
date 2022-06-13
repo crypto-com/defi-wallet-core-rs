@@ -1,9 +1,8 @@
 use crate::{format_to_js_error, PrivateKey};
+use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
 use defi_wallet_core_common::{
-    broadcast_tx_sync, build_signed_msg_tx, build_signed_single_msg_tx, get_account_balance,
-    get_account_details, get_single_msg_sign_payload, BalanceApiVersion, CosmosSDKMsg,
-    CosmosSDKTxInfo, Height, Network, PublicKeyBytesWrapper, SingleCoin,
-    COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    broadcast_tx_sync, build_signed_msg_tx, get_account_balance, get_account_details, node,
+    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, Height, Network, SingleCoin,
 };
 use js_sys::Promise;
 use serde::{Deserialize, Serialize};
@@ -41,7 +40,14 @@ impl CosmosClient {
     ) -> Promise {
         let api_url = self.config.api_url.to_owned();
         future_to_promise(async move {
-            query_account_balance(api_url, address, denom, api_version).await
+            let api_version = if api_version == 0 {
+                BalanceApiVersion::Old
+            } else {
+                BalanceApiVersion::New
+            };
+            let account_details =
+                get_account_balance(&api_url, &address, &denom, api_version).await?;
+            JsValue::from_serde(&account_details).map_err(format_to_js_error)
         })
     }
 
@@ -49,14 +55,28 @@ impl CosmosClient {
     /// TODO: switch to grpc-web
     pub fn query_account_details(&self, address: String) -> Promise {
         let api_url = self.config.api_url.to_owned();
-        future_to_promise(async move { query_account_details(api_url, address).await })
+        future_to_promise(async move {
+            let account_details = get_account_details(&api_url, &address).await?;
+            JsValue::from_serde(&account_details).map_err(format_to_js_error)
+        })
     }
 
     /// Broadcast a signed transaction.
     #[wasm_bindgen]
     pub fn broadcast_tx(&self, raw_signed_tx: Vec<u8>) -> Promise {
         let tendermint_rpc_url = self.config.tendermint_rpc_url.to_owned();
-        future_to_promise(async move { broadcast_tx(tendermint_rpc_url, raw_signed_tx).await })
+        future_to_promise(async move {
+            let resp = broadcast_tx_sync(&tendermint_rpc_url, raw_signed_tx)
+                .await?
+                .into_result()
+                .map_err(format_to_js_error)?;
+
+            if let tendermint::abci::Code::Err(_) = resp.code {
+                return Err(JsValue::from_serde(&resp).map_err(format_to_js_error)?);
+            }
+
+            JsValue::from_serde(&resp).map_err(format_to_js_error)
+        })
     }
 }
 
@@ -106,11 +126,7 @@ impl CosmosMsg {
     #[wasm_bindgen]
     pub fn build_nft_issue_denom_msg(id: String, name: String, schema: String) -> Self {
         Self {
-            msg: CosmosSDKMsg::NftIssueDenom {
-                id: id,
-                name: name,
-                schema: schema,
-            },
+            msg: CosmosSDKMsg::NftIssueDenom { id, name, schema },
         }
     }
 
@@ -242,6 +258,7 @@ impl CosmosMsg {
     }
 
     /// construct IbcTransfer message
+    #[allow(clippy::too_many_arguments)]
     pub fn build_ibc_transfer_msg(
         receiver: String,
         source_port: String,
@@ -281,6 +298,7 @@ pub struct CosmosTx {
 impl CosmosTx {
     /// Create a Cosmos transaction
     #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self { msgs: vec![] }
     }
@@ -391,280 +409,55 @@ impl From<CosmosSDKTxInfoRaw> for CosmosSDKTxInfo {
     }
 }
 
-/// creates the transaction signing payload (`SignDoc`)
-/// for `MsgSend` from the Cosmos SDK bank module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
+/// Grpc Web Client wrapper for Wasm
 #[wasm_bindgen]
-pub fn get_single_bank_send_signdoc(
-    tx_info: CosmosSDKTxInfoRaw,
-    sender_pubkey: Vec<u8>,
-    recipient_address: String,
-    amount: u64,
-    denom: String,
-) -> Result<Vec<u8>, JsValue> {
-    if sender_pubkey.len() != COMPRESSED_SECP256K1_PUBKEY_SIZE {
-        return Err(JsValue::from_str("invalid public key length"));
+pub struct GrpcWebClient(node::nft::Client);
+
+impl GrpcWebClient {
+    pub fn new(grpc_web_url: String) -> Self {
+        Self(node::nft::Client::new(grpc_web_url))
     }
-    let pubkey = PublicKeyBytesWrapper(sender_pubkey);
-    Ok(get_single_msg_sign_payload(
-        tx_info.into(),
-        CosmosSDKMsg::BankSend {
-            recipient_address,
-            amount: SingleCoin::Other {
-                amount: format!("{}", amount),
-                denom,
-            },
-        },
-        pubkey,
-    )?)
-}
-
-/// creates the signed transaction
-/// for MsgSend from the Cosmos SDK bank module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
-#[wasm_bindgen]
-pub fn get_single_bank_send_signed_tx(
-    tx_info: CosmosSDKTxInfoRaw,
-    private_key: PrivateKey,
-    recipient_address: String,
-    amount: u64,
-    denom: String,
-) -> Result<Vec<u8>, JsValue> {
-    Ok(build_signed_single_msg_tx(
-        tx_info.into(),
-        CosmosSDKMsg::BankSend {
-            recipient_address,
-            amount: SingleCoin::Other {
-                amount: format!("{}", amount),
-                denom,
-            },
-        },
-        private_key.key,
-    )?)
-}
-
-/// creates the signed transaction
-/// for `StakingDelegate` from the Chainmain staking module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
-#[wasm_bindgen]
-pub fn get_staking_delegate_signed_tx(
-    tx_info: CosmosSDKTxInfoRaw,
-    private_key: PrivateKey,
-    validator_address: String,
-    amount: u64,
-    denom: String,
-    with_reward_withdrawal: bool,
-) -> Result<Vec<u8>, JsValue> {
-    let mut messages = vec![CosmosSDKMsg::StakingDelegate {
-        validator_address: validator_address.clone(),
-        amount: SingleCoin::Other {
-            amount: format!("{}", amount),
-            denom,
-        },
-    }];
-
-    if with_reward_withdrawal {
-        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address });
+    pub async fn supply(&mut self, denom_id: String, owner: String) -> Result<JsValue, JsValue> {
+        let supply = self.0.supply(denom_id, owner).await?;
+        JsValue::from_serde(&supply).map_err(format_to_js_error)
     }
 
-    Ok(build_signed_msg_tx(
-        tx_info.into(),
-        messages,
-        private_key.key,
-    )?)
-}
-
-/// creates the signed transaction
-/// for `StakingBeginRedelegate` from the Chainmain staking module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
-#[wasm_bindgen]
-pub fn get_staking_redelegate_signed_tx(
-    tx_info: CosmosSDKTxInfoRaw,
-    private_key: PrivateKey,
-    validator_src_address: String,
-    validator_dst_address: String,
-    amount: u64,
-    denom: String,
-    with_reward_withdrawal: bool,
-) -> Result<Vec<u8>, JsValue> {
-    let mut messages = vec![CosmosSDKMsg::StakingBeginRedelegate {
-        validator_src_address: validator_src_address.clone(),
-        validator_dst_address: validator_dst_address.clone(),
-        amount: SingleCoin::Other {
-            amount: format!("{}", amount),
-            denom,
-        },
-    }];
-
-    if with_reward_withdrawal {
-        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward {
-            validator_address: validator_src_address,
-        });
-        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward {
-            validator_address: validator_dst_address,
-        });
+    pub async fn owner(
+        &mut self,
+        denom_id: String,
+        owner: String,
+        pagination: Option<PageRequest>,
+    ) -> Result<JsValue, JsValue> {
+        let owner = self.0.owner(denom_id, owner, pagination).await?;
+        JsValue::from_serde(&owner).map_err(format_to_js_error)
     }
 
-    Ok(build_signed_msg_tx(
-        tx_info.into(),
-        messages,
-        private_key.key,
-    )?)
-}
-
-/// creates the signed transaction
-/// for `StakingUndelegate` from the Chainmain staking module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
-#[wasm_bindgen]
-pub fn get_staking_unbond_signed_tx(
-    tx_info: CosmosSDKTxInfoRaw,
-    private_key: PrivateKey,
-    validator_address: String,
-    amount: u64,
-    denom: String,
-    with_reward_withdrawal: bool,
-) -> Result<Vec<u8>, JsValue> {
-    let mut messages = vec![CosmosSDKMsg::StakingUndelegate {
-        validator_address: validator_address.clone(),
-        amount: SingleCoin::Other {
-            amount: format!("{}", amount),
-            denom,
-        },
-    }];
-
-    if with_reward_withdrawal {
-        messages.push(CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address });
+    pub async fn collection(
+        &mut self,
+        denom_id: String,
+        pagination: Option<PageRequest>,
+    ) -> Result<JsValue, JsValue> {
+        let collection = self.0.collection(denom_id, pagination).await?;
+        JsValue::from_serde(&collection).map_err(format_to_js_error)
     }
 
-    Ok(build_signed_msg_tx(
-        tx_info.into(),
-        messages,
-        private_key.key,
-    )?)
-}
-
-/// creates the signed transaction
-/// for `DistributionSetWithdrawAddress` from the Chainmain distribution module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
-#[wasm_bindgen]
-pub fn get_distribution_set_withdraw_address_signed_tx(
-    tx_info: CosmosSDKTxInfoRaw,
-    private_key: PrivateKey,
-    withdraw_address: String,
-) -> Result<Vec<u8>, JsValue> {
-    Ok(build_signed_single_msg_tx(
-        tx_info.into(),
-        CosmosSDKMsg::DistributionSetWithdrawAddress { withdraw_address },
-        private_key.key,
-    )?)
-}
-
-/// creates the signed transaction
-/// for `DistributionWithdrawDelegatorReward` from the Chainmain distribution module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
-#[wasm_bindgen]
-pub fn get_distribution_withdraw_reward_signed_tx(
-    tx_info: CosmosSDKTxInfoRaw,
-    private_key: PrivateKey,
-    validator_address: String,
-) -> Result<Vec<u8>, JsValue> {
-    Ok(build_signed_single_msg_tx(
-        tx_info.into(),
-        CosmosSDKMsg::DistributionWithdrawDelegatorReward { validator_address },
-        private_key.key,
-    )?)
-}
-
-/// creates the signed transaction
-/// for `IbcTransfer` from the Chainmain ibc module
-/// wasm-bindgen only supports the C-style enums,
-/// hences this duplicate function
-#[wasm_bindgen]
-pub fn get_ibc_transfer_signed_tx(
-    tx_info: CosmosSDKTxInfoRaw,
-    private_key: PrivateKey,
-    receiver: String,
-    source_port: String,
-    source_channel: String,
-    denom: String,
-    token: u64,
-    revision_height: u64,
-    revision_number: u64,
-    timeout_timestamp: u64,
-) -> Result<Vec<u8>, JsValue> {
-    // TODO: Need to support converting receiver from hex address to bech32 here.
-
-    Ok(build_signed_single_msg_tx(
-        tx_info.into(),
-        CosmosSDKMsg::IbcTransfer {
-            receiver,
-            source_port,
-            source_channel,
-            token: SingleCoin::Other {
-                amount: format!("{}", token),
-                denom,
-            },
-            timeout_height: Height {
-                revision_height,
-                revision_number,
-            },
-            timeout_timestamp,
-        },
-        private_key.key,
-    )?)
-}
-
-/// retrieves the account details (e.g. sequence and account number) for a given address
-/// TODO: switch to grpc-web
-#[wasm_bindgen]
-pub async fn query_account_details(api_url: String, address: String) -> Result<JsValue, JsValue> {
-    let account_details = get_account_details(&api_url, &address).await?;
-    Ok(JsValue::from_serde(&account_details).map_err(format_to_js_error)?)
-}
-
-/// retrieves the account balance for a given address and a denom
-/// api-version: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.42.11
-/// - 0 means before 0.42.11 or 0.44.4
-/// - >=1 means after 0.42.11 or 0.44.4
-/// TODO: switch to grpc-web
-#[wasm_bindgen]
-pub async fn query_account_balance(
-    api_url: String,
-    address: String,
-    denom: String,
-    api_version: u8,
-) -> Result<JsValue, JsValue> {
-    let balance_api_version = if api_version == 0 {
-        BalanceApiVersion::Old
-    } else {
-        BalanceApiVersion::New
-    };
-    let account_details =
-        get_account_balance(&api_url, &address, &denom, balance_api_version).await?;
-    Ok(JsValue::from_serde(&account_details).map_err(format_to_js_error)?)
-}
-
-/// broadcasts a signed cosmos sdk tx
-#[wasm_bindgen]
-pub async fn broadcast_tx(
-    tendermint_rpc_url: String,
-    raw_signed_tx: Vec<u8>,
-) -> Result<JsValue, JsValue> {
-    let resp = broadcast_tx_sync(&tendermint_rpc_url, raw_signed_tx)
-        .await?
-        .into_result()
-        .map_err(format_to_js_error)?;
-
-    if let tendermint::abci::Code::Err(_) = resp.code {
-        return Err(JsValue::from_serde(&resp).map_err(format_to_js_error)?);
+    pub async fn denom(&mut self, denom_id: String) -> Result<JsValue, JsValue> {
+        let denom = self.0.denom(denom_id).await?;
+        JsValue::from_serde(&denom).map_err(format_to_js_error)
     }
 
-    Ok(JsValue::from_serde(&resp).map_err(format_to_js_error)?)
+    pub async fn denom_by_name(&mut self, denom_name: String) -> Result<JsValue, JsValue> {
+        let denom = self.0.denom_by_name(denom_name).await?;
+        JsValue::from_serde(&denom).map_err(format_to_js_error)
+    }
+
+    pub async fn denoms(&mut self, pagination: Option<PageRequest>) -> Result<JsValue, JsValue> {
+        let denoms = self.0.denoms(pagination).await?;
+        JsValue::from_serde(&denoms).map_err(format_to_js_error)
+    }
+
+    pub async fn nft(&mut self, denom_id: String, token_id: String) -> Result<JsValue, JsValue> {
+        let nft = self.0.nft(denom_id, token_id).await?;
+        JsValue::from_serde(&nft).map_err(format_to_js_error)
+    }
 }

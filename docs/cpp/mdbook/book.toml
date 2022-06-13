@@ -1,0 +1,6 @@
+[book]
+authors = ["crypto.com"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Defi Wallet Core Cpp"
