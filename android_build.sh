@@ -33,7 +33,7 @@ then
         unzip -o NDK/openssl/$OPENSSLTAG.zip -d NDK/openssl/openssl-aarch64 || exit 1
         cd NDK/openssl/openssl-aarch64/openssl-$OPENSSLTAG || exit 1
         PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/aarch64-linux-android-4.9/prebuilt/$OS-x86_64/bin:$PATH ./Configure android-arm64 -D__ANDROID_API__=28 || exit 1
-        PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/aarch64-linux-android-4.9/prebuilt/$OS-x86_64/bin:$PATH make || exit 1
+        PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/aarch64-linux-android-4.9/prebuilt/$OS-x86_64/bin:$PATH make > /dev/null || exit 1
         cd -
 fi
 export AARCH64_LINUX_ANDROID_OPENSSL_LIB_DIR=`pwd`/NDK/openssl/openssl-aarch64/openssl-$OPENSSLTAG
@@ -44,7 +44,7 @@ then
         unzip -o NDK/openssl/$OPENSSLTAG.zip -d NDK/openssl/openssl-arm || exit 1
         cd NDK/openssl/openssl-arm/openssl-$OPENSSLTAG || exit 1
         PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/$OS-x86_64/bin:$PATH ./Configure android-arm -D__ANDROID_API__=28 || exit 1
-        PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/$OS-x86_64/bin:$PATH make || exit 1
+        PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/$OS-x86_64/bin:$PATH make > /dev/null || exit 1
         cd -
 fi
 export ARMV7_LINUX_ANDROIDEABI_OPENSSL_LIB_DIR=`pwd`/NDK/openssl/openssl-arm/openssl-$OPENSSLTAG
@@ -55,7 +55,7 @@ then
         unzip -o NDK/openssl/$OPENSSLTAG.zip -d NDK/openssl/openssl-x86_64 || exit 1
         cd NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG || exit 1
         PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/x86_64-4.9/prebuilt/$OS-x86_64/bin:$PATH ./Configure android-x86_64 -D__ANDROID_API__=28 || exit 1
-        PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/x86_64-4.9/prebuilt/$OS-x86_64/bin:$PATH make || exit 1
+        PATH=$NDK_HOME/toolchains/llvm/prebuilt/$OS-x86_64/bin:$NDK_HOME/toolchains/x86_64-4.9/prebuilt/$OS-x86_64/bin:$PATH make > /dev/null || exit 1
         cd -
 fi
 export X86_64_LINUX_ANDROID_OPENSSL_LIB_DIR=`pwd`/NDK/openssl/openssl-x86_64/openssl-$OPENSSLTAG
