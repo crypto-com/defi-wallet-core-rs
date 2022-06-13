@@ -1,5 +1,5 @@
-use crate::{EthNetwork, Network};
 use crate::crypto::{KeyType, PrivateKey};
+use crate::{EthNetwork, Network};
 
 use bip39::{Language, Mnemonic};
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
@@ -223,17 +223,19 @@ impl HDWallet {
     }
 
     /// return the specified type of private key for a given derivation path
-    pub fn get_private_key(&self, derivation_path: &String, key_type: KeyType) -> Result<Arc<PrivateKey>, HdWrapError> {
-
+    pub fn get_private_key(
+        &self,
+        derivation_path: &String,
+        key_type: KeyType,
+    ) -> Result<Arc<PrivateKey>, HdWrapError> {
         let derivation_path: DerivationPath = derivation_path
             .parse()
             .map_err(|e: bip32::Error| HdWrapError::HDError(e.into()))?;
         let child_xprv = XPrv::derive_from_path(&self.seed, &derivation_path)
             .map_err(|e| HdWrapError::HDError(e.into()))?;
         let key_bytes = SecretKey(child_xprv.private_key().clone()).to_bytes();
-        let pk = PrivateKey::from_bytes(key_type, &key_bytes).map_err(|_e|{
-            HdWrapError::InvalidLength
-        })?;
+        let pk = PrivateKey::from_bytes(key_type, &key_bytes)
+            .map_err(|_e| HdWrapError::InvalidLength)?;
         Ok(Arc::new(pk))
     }
 

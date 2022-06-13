@@ -26,13 +26,12 @@ pub use cosmrs::{tx::Msg, AccountId, Coin};
 pub use eyre::{Report as ErrorReport, Result};
 pub use ibc::Height;
 
+pub use crypto::*;
 #[cfg(feature = "login")]
 pub use login::*;
 pub use node::*;
 pub use transaction::*;
 pub use wallet::*;
-pub use crypto::*;
-
 
 #[cfg(feature = "uniffi-binding")]
 uniffi_macros::include_scaffolding!("common");
