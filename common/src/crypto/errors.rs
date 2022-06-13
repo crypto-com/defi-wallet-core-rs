@@ -20,13 +20,3 @@ pub enum ParseKeyError {
     #[error("invalid key data: {error_message}")]
     InvalidData { error_message: String },
 }
-
-#[derive(Debug, Clone, thiserror::Error)]
-pub enum ParseSignatureError {
-    #[error("unknown key type '{unknown_key_type}'")]
-    UnknownKeyType { unknown_key_type: String },
-    #[error("invalid signature length: expected the input of {expected_length} bytes, but {received_length} was given")]
-    InvalidLength { expected_length: usize, received_length: usize },
-    #[error("invalid signature data: {error_message}")]
-    InvalidData { error_message: String },
-}

@@ -9,6 +9,7 @@ use tendermint::signature::Signer;
 
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
+use std::sync::Arc;
 
 pub use errors::ParseKeyError;
 
@@ -194,6 +195,10 @@ impl PrivateKey {
         }
     }
 
+    pub fn key_type(&self) -> KeyType {
+        self.key_type
+    }
+
     /// signs a data [`u8`]
     pub fn sign(&self, data: &[u8]) -> Result<Signature, String> {
         match self.key_type {
@@ -213,22 +218,23 @@ impl PrivateKey {
     }
 
     /// gets public key to byte array
-    pub fn to_public_key(&self) -> PublicKey {
+    pub fn to_public_key(&self) -> Arc<PublicKey> {
         match self.key_type {
             KeyType::SECP256K1 => {
                 let sk = self.unwrap_as_secp256k1();
-                let pk = sk.verifying_key();
-                let pk_bytes = &*pk.to_bytes();
-                PublicKey::from_bytes(self.key_type, pk_bytes).unwrap()
+                let vk = sk.verifying_key();
+                let vk_bytes = &*vk.to_bytes();
+                let pk = PublicKey::from_bytes(self.key_type, &vk_bytes.to_vec()).unwrap();
+                Arc::new(pk)
             }
             KeyType::ED25519 => {
                 let sk = self.unwrap_as_ed25519();
                 let pk: ed25519::PublicKey = (&sk).into();
-                PublicKey::from_bytes(self.key_type, pk.to_bytes().as_ref()).unwrap()
+                let pk_new = PublicKey::from_bytes(self.key_type, &pk.as_bytes().to_vec()).unwrap();
+                Arc::new(pk_new)
             }
         }
     }
-
 
     fn unwrap_as_secp256k1(&self) -> secp256k1::SigningKey {
         match self.key_type {
@@ -259,14 +265,8 @@ pub struct PublicKey {
 
 impl PublicKey {
 
-    pub fn from_bytes(key_type: KeyType, data: &[u8]) -> Result<Self, errors::ParseKeyError> {
+    pub fn from_bytes(key_type: KeyType, data: &Vec<u8>) -> Result<Self, errors::ParseKeyError> {
         match key_type {
-            KeyType::ED25519 => {
-                let pk = ed25519::PublicKey::from_bytes(data.as_ref()).map_err(|e| {
-                    errors::ParseKeyError::InvalidKeyBytes { key_type: key_type, msg: e.to_string()}
-                })?;
-                Ok(Self{ key_type: key_type, key_data: pk.to_bytes().to_vec()})
-            }
             KeyType::SECP256K1 => {
                 let pk = secp256k1::VerifyingKey::from_sec1_bytes(&data).map_err(|e| {
                     errors::ParseKeyError::InvalidKeyBytes { key_type: key_type, msg: e.to_string()}
@@ -274,7 +274,74 @@ impl PublicKey {
                 let pk_bytes = &*pk.to_bytes();
                 Ok(Self{ key_type: key_type, key_data: pk_bytes.to_vec()})
             }
+            KeyType::ED25519 => {
+                let pk = ed25519::PublicKey::from_bytes(data.as_ref()).map_err(|e| {
+                    errors::ParseKeyError::InvalidKeyBytes { key_type: key_type, msg: e.to_string()}
+                })?;
+                Ok(Self{ key_type: key_type, key_data: pk.to_bytes().to_vec()})
+            }
         }
+    }
+
+    /// constructs secret key from str, the format is "keytype:encodetype:xxxxxxxxx"
+    pub fn from_str(string: &String) -> Result<Self, errors::ParseKeyError> {
+        let (key_type, encode_type, key_data) = split_key_string(string)?;
+        match key_type {
+            KeyType::SECP256K1 => {
+                match encode_type {
+                    EncodeType::Hex => {
+                        let vec = hex::decode(key_data).map_err(|e|{
+                            errors::ParseKeyError::InvalidEncodeFormat { key_type: key_type, encode_type: encode_type, cause: e.to_string()}
+                        })?;
+                        return Self::from_bytes(key_type, &vec);
+                    }
+                    EncodeType::Base58 => {
+                        let vec = bs58::decode(key_data).into_vec().map_err(|e| {
+                            errors::ParseKeyError::InvalidEncodeFormat { key_type: key_type, encode_type: encode_type, cause: e.to_string()}
+                        })?;
+                        return Self::from_bytes(key_type, &vec);
+                    }
+                }
+            }
+            KeyType::ED25519 => {
+                match encode_type {
+                    EncodeType::Hex => {
+                        let vec = hex::decode(key_data).map_err(|e|{
+                            errors::ParseKeyError::InvalidEncodeFormat { key_type: key_type, encode_type: encode_type, cause: e.to_string()}
+                        })?;
+                        return Self::from_bytes(key_type, &vec);
+                    }
+                    EncodeType::Base58 => {
+                        let vec = bs58::decode(key_data).into_vec().map_err(|e| {
+                            errors::ParseKeyError::InvalidEncodeFormat { key_type: key_type, encode_type: encode_type, cause: e.to_string()}
+                        })?;
+                        return Self::from_bytes(key_type, &vec);
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.key_data.clone()
+    }
+
+    /// format: key_type:encode_type:xxxx
+    pub fn to_string(&self, encode_type: EncodeType) -> String {
+        match encode_type {
+            EncodeType::Hex => {
+                let s = hex::encode(&self.key_data);
+                format!("{}:{}:{}", self.key_type, encode_type, s)
+            }
+            EncodeType::Base58 => {
+                let s = bs58::encode(&self.key_data).into_string();
+                format!("{}:{}:{}", self.key_type, encode_type, s)
+            }
+        }
+    }
+
+    pub fn key_type(&self) -> KeyType {
+        self.key_type
     }
 
     pub fn verify(&self) {
@@ -285,6 +352,33 @@ impl PublicKey {
 pub struct Signature {
     key_type: KeyType,
     sig_data: Vec<u8> 
+}
+
+impl Signature {
+    pub fn from_bytes(key_type: KeyType, bytes: &Vec<u8>) -> Result<Self, String> {
+        match key_type {
+            KeyType::SECP256K1 => {
+                let sig = <secp256k1::Signature as secp256k1::signature::Signature>::from_bytes(bytes).map_err(|e| {
+                    format!("key_type: {}: {}", key_type, e)
+                })?;
+                Ok(Self{key_type: key_type, sig_data: sig.as_ref().to_vec()})
+            }
+            KeyType::ED25519 => {
+                let sig = ed25519::Signature::from_bytes(bytes).map_err(|e|{
+                    format!("key_type: {}: {}", key_type, e)
+                })?;
+                Ok(Self{key_type: key_type, sig_data: sig.to_bytes().to_vec()})
+            }
+        }
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.sig_data.clone()
+    }
+
+    pub fn key_type(&self) -> KeyType {
+        self.key_type
+    }
 }
 
 

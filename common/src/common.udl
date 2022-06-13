@@ -71,6 +71,18 @@ enum ParseKeyError {
     "InvalidData",
 };
 
+interface PublicKey {
+    [Throws=ParseKeyError,Name=from_bytes]
+    constructor(KeyType key_type, [ByRef] sequence<u8> bytes);
+
+    [Throws=ParseKeyError, Name=from_str]
+    constructor([ByRef] string str);
+
+    sequence<u8> to_bytes();
+
+    string to_string(EncodeType encode_type);
+};
+
 interface PrivateKey {
     constructor(KeyType key_type);
 
@@ -83,6 +95,10 @@ interface PrivateKey {
     sequence<u8> to_bytes();
 
     string to_string(EncodeType encode_type);
+
+    KeyType key_type();
+
+    PublicKey to_public_key();
 };
 
 [Error]
