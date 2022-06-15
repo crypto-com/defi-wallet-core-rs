@@ -276,13 +276,13 @@ impl PrivateKey {
                 let sk = self.unwrap_as_secp256k1();
                 let vk = sk.verifying_key();
                 let vk_bytes = &*vk.to_bytes();
-                let pk = PublicKey::from_bytes(self.key_type, &vk_bytes.to_vec()).unwrap();
+                let pk = PublicKey::from_bytes(self.key_type, vk_bytes).unwrap();
                 Arc::new(pk)
             }
             KeyType::ED25519 => {
                 let sk = self.unwrap_as_ed25519();
                 let pk: ed25519::PublicKey = (&sk).into();
-                let pk_new = PublicKey::from_bytes(self.key_type, &pk.as_bytes().to_vec()).unwrap();
+                let pk_new = PublicKey::from_bytes(self.key_type, pk.as_bytes()).unwrap();
                 Arc::new(pk_new)
             }
         }
@@ -317,7 +317,7 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
-    pub fn from_bytes(key_type: KeyType, data: &Vec<u8>) -> Result<Self, errors::ParseKeyError> {
+    pub fn from_bytes(key_type: KeyType, data: &[u8]) -> Result<Self, errors::ParseKeyError> {
         match key_type {
             KeyType::SECP256K1 => {
                 let pk = secp256k1::VerifyingKey::from_sec1_bytes(data).map_err(|e| {
@@ -333,7 +333,7 @@ impl PublicKey {
                 })
             }
             KeyType::ED25519 => {
-                let pk = ed25519::PublicKey::from_bytes(data.as_ref()).map_err(|e| {
+                let pk = ed25519::PublicKey::from_bytes(data).map_err(|e| {
                     errors::ParseKeyError::InvalidKeyBytes {
                         key_type,
                         msg: e.to_string(),
@@ -360,7 +360,7 @@ impl PublicKey {
                             cause: e.to_string(),
                         }
                     })?;
-                    Self::from_bytes(key_type, &vec)
+                    Self::from_bytes(key_type, vec.as_ref())
                 }
                 EncodeType::Base58 => {
                     let vec = bs58::decode(key_data).into_vec().map_err(|e| {
@@ -370,7 +370,7 @@ impl PublicKey {
                             cause: e.to_string(),
                         }
                     })?;
-                    Self::from_bytes(key_type, &vec)
+                    Self::from_bytes(key_type, vec.as_ref())
                 }
             },
             KeyType::ED25519 => match encode_type {
@@ -382,7 +382,7 @@ impl PublicKey {
                             cause: e.to_string(),
                         }
                     })?;
-                    Self::from_bytes(key_type, &vec)
+                    Self::from_bytes(key_type, vec.as_ref())
                 }
                 EncodeType::Base58 => {
                     let vec = bs58::decode(key_data).into_vec().map_err(|e| {
@@ -392,7 +392,7 @@ impl PublicKey {
                             cause: e.to_string(),
                         }
                     })?;
-                    Self::from_bytes(key_type, &vec)
+                    Self::from_bytes(key_type, vec.as_ref())
                 }
             },
         }
