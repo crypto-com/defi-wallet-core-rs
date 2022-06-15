@@ -41,9 +41,11 @@ INITIAL_SOURCES_INCLUDES = [
 FINAL_SOURCES_INCLUDES = ['#include "nft.h"']
 
 
-TARGET_DIR = "../../target/release"
+# the path of output target, defined by --target_dir
+TARGET_DIR = None
 
-OUT_DIR = "../../target/cxxbridge"
+# the path of cxxbridge artifacts
+OUT_DIR = None
 
 
 # copy the generated binding files: `*.cc` and `*.h` to `output_path`
@@ -154,7 +156,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     TARGET_DIR = args.target_dir
+    OUT_DIR = Path(TARGET_DIR).parent / "cxxbridge"
     print("TARGET_DIR= ", TARGET_DIR)
+    print("OUT_DIR= ", OUT_DIR)
     copy_cxxbridge(CPP_EXAMPLE_PATH / INCLUDE_PATH)
     copy_lib_files(CPP_EXAMPLE_PATH / LIB_PATH)
     copy_sources_files(CPP_EXAMPLE_PATH / INCLUDE_PATH)
