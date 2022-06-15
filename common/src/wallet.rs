@@ -223,10 +223,9 @@ impl HDWallet {
     }
 
     /// return the specified type of private key for a given derivation path
-    #[allow(clippy::ptr_arg)]
     pub fn get_private_key(
         &self,
-        derivation_path: &String,
+        derivation_path: &str,
         key_type: KeyType,
     ) -> Result<Arc<PrivateKey>, HdWrapError> {
         let derivation_path: DerivationPath = derivation_path

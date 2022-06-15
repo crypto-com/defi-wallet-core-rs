@@ -140,8 +140,7 @@ impl PrivateKey {
     }
 
     /// constructs secret key from bytes &[u8]
-    #[allow(clippy::ptr_arg)]
-    pub fn from_bytes(key_type: KeyType, data: &Vec<u8>) -> Result<Self, errors::ParseKeyError> {
+    pub fn from_bytes(key_type: KeyType, data: &[u8]) -> Result<Self, errors::ParseKeyError> {
         match key_type {
             KeyType::SECP256K1 => {
                 let sk = secp256k1::SigningKey::from_bytes(data).map_err(|e| {
@@ -171,8 +170,7 @@ impl PrivateKey {
     }
 
     /// constructs secret key from str, the format is "keytype:encodetype:xxxxxxxxx"
-    #[allow(clippy::ptr_arg)]
-    pub fn from_string(string: &String) -> Result<Self, errors::ParseKeyError> {
+    pub fn from_string(string: &str) -> Result<Self, errors::ParseKeyError> {
         let (key_type, encode_type, key_data) = split_key_string(string)?;
         match key_type {
             KeyType::SECP256K1 => match encode_type {
@@ -350,8 +348,7 @@ impl PublicKey {
     }
 
     /// constructs secret key from str, the format is "keytype:encodetype:xxxxxxxxx"
-    #[allow(clippy::ptr_arg)]
-    pub fn from_string(string: &String) -> Result<Self, errors::ParseKeyError> {
+    pub fn from_string(string: &str) -> Result<Self, errors::ParseKeyError> {
         let (key_type, encode_type, key_data) = split_key_string(string)?;
         match key_type {
             KeyType::SECP256K1 => match encode_type {
@@ -432,8 +429,7 @@ pub struct Signature {
 }
 
 impl Signature {
-    #[allow(clippy::ptr_arg)]
-    pub fn from_bytes(key_type: KeyType, bytes: &Vec<u8>) -> Result<Self, String> {
+    pub fn from_bytes(key_type: KeyType, bytes: &[u8]) -> Result<Self, String> {
         match key_type {
             KeyType::SECP256K1 => {
                 let sig =
