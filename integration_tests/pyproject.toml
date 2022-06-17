@@ -2,7 +2,7 @@
 name = "integration_tests"
 version = "0.1.0"
 description = ""
-authors = ["crypto.com"]
+authors = ["DeFi Labs"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
