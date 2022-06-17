@@ -1,0 +1,21 @@
+DeFi Wallet Core
+Copyright 2022, DeFi Labs ("Crypto.com"). 
+
+This project contains portions of code derived from the following libraries:
+
+* Cosmos Rust
+ * Copyright: Copyright (c) 2020-2022 Cosmos Rust authors
+ * License: Apache License 2.0
+ * Repository: https://github.com/cosmos/cosmos-rust
+
+The sample demo code bundles resources from the corresponding platform SDK:
+
+* Material Icons / Material Symbols (from Android SDK)
+ * Copyright: Copyright (c) 2016-2022 Google Inc.
+ * License: Apache 2.0
+ * Repository: https://github.com/google/material-design-icons
+
+* Gradle build scripts
+ * Copyright: Copyright (c) 2007-2019 Gradle, Inc.
+ * License: Apache 2.0
+ * Repository: https://github.com/gradle/

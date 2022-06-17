@@ -1,10 +1,3 @@
-//
-//  dwclib.h
-//  dwclib
-//
-//  Created by Hao Zhang on 2022/2/10.
-//
-
 #import <Foundation/Foundation.h>
 
 //! Project version number for dwclib.
