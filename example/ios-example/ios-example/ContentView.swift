@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  ios-example
-//
-//  Created by Hao Zhang on 2021/12/15.
-//
-
 import SwiftUI
 import dwclib
 

@@ -18,8 +18,8 @@
 # -- Project information -----------------------------------------------------
 
 project = "Defi Wallet Core Cpp"
-copyright = "Crypto.com"
-author = "Crypto.com"
+copyright = "DeFi Labs"
+author = "DeFi Labs"
 
 # The full version, including alpha/beta/rc tags
 release = "0.1.12"

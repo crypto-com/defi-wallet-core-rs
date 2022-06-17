@@ -1,10 +1,3 @@
-//
-//  ios_exampleTests.swift
-//  ios-exampleTests
-//
-//  Created by Hao Zhang on 2021/12/15.
-//
-
 import XCTest
 import dwclib
 

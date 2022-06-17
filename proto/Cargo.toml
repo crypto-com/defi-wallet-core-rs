@@ -6,7 +6,7 @@ repository = "https://github.com/crypto-com/defi-wallet-core-rs/tree/main/proto"
 description = "Protobuf stuct defintions for interacting Cosmos SDK powered blockchains"
 readme = "README.md"
 categories = ["cryptography", "cryptography::cryptocurrencies", "database"]
-keywords = ["blockchain", "cosmos", "tendermint", "proto", "crypto.com"]
+keywords = ["blockchain", "cosmos", "tendermint", "proto", "defi"]
 edition = "2021"
 rust-version = "1.57"
 

@@ -1,10 +1,3 @@
-//
-//  ios_exampleUITests.swift
-//  ios-exampleUITests
-//
-//  Created by Hao Zhang on 2021/12/15.
-//
-
 import XCTest
 
 class ios_exampleUITests: XCTestCase {

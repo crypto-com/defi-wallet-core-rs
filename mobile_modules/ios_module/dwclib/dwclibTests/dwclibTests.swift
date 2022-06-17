@@ -1,10 +1,3 @@
-//
-//  dwclibTests.swift
-//  dwclibTests
-//
-//  Created by Hao Zhang on 2022/2/10.
-//
-
 import XCTest
 @testable import dwclib
 
