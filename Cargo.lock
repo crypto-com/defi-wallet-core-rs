@@ -421,9 +421,9 @@ dependencies = [
 
 [[package]]
 name = "camino"
-version = "1.0.7"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f3132262930b0522068049f5870a856ab8affc80c70d08b6ecb785771a6fc23"
+checksum = "869119e97797867fd90f5e22af7d0bd274bd4635ebb9eb68c04f3f513ae6c412"
 dependencies = [
  "serde",
 ]
@@ -4500,13 +4500,14 @@ checksum = "957e51f3646910546462e67d5f7599b9e4fb8acdd304b087a6494730f9eebf04"
 
 [[package]]
 name = "uniffi"
-version = "0.18.0"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0fe14882ae6ea89f31ac922ad8e6f76b3f346f07965791a60ade60cc3bcdd60"
+checksum = "aa1b1632740724d1bbc9b54ae4925b02d6585a55a62b72f5b3811d819f018a59"
 dependencies = [
  "anyhow",
  "bytes",
- "cargo_metadata 0.13.1",
+ "camino",
+ "cargo_metadata 0.14.2",
  "lazy_static",
  "log",
  "paste",
