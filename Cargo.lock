@@ -421,9 +421,9 @@ dependencies = [
 
 [[package]]
 name = "camino"
-version = "1.0.7"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f3132262930b0522068049f5870a856ab8affc80c70d08b6ecb785771a6fc23"
+checksum = "869119e97797867fd90f5e22af7d0bd274bd4635ebb9eb68c04f3f513ae6c412"
 dependencies = [
  "serde",
 ]
@@ -959,7 +959,7 @@ dependencies = [
  "tokio",
  "tonic",
  "uniffi",
- "uniffi_build",
+ "uniffi_build 0.18.0",
  "uniffi_macros",
  "url",
  "wasm-bindgen",
@@ -4541,16 +4541,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "uniffi_macros"
-version = "0.18.0"
+name = "uniffi_build"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e7b60ccb030ef51b0c85eb9ca55f28ff68b82c1a29d2bc0c7053777010af0d3"
+checksum = "9e508063de69a1b0270a63e1b5461ad366879fe7740e9eae849045aa2809a157"
 dependencies = [
+ "anyhow",
+ "camino",
+]
+
+[[package]]
+name = "uniffi_macros"
+version = "0.19.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf89aefbeb956e98b52f0e8037b29833774c365f561fbf85a2b2f3148b91b7a5"
+dependencies = [
+ "camino",
  "glob",
  "proc-macro2",
  "quote",
  "syn",
- "uniffi_build",
+ "uniffi_build 0.19.1",
 ]
 
 [[package]]
