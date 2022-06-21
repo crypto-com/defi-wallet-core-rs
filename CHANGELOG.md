@@ -1,10 +1,27 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0] - 2022-06-21
 ### Added
 - Add polling interval argument or function for setting the polling interval on event filters and pending transactions.
 - Add `CosmosParser` to support parsing both Protobuf and Proto3 JSON mapping of standard Cosmos and `crypto.org` messages.
 - Add Luna Classic special messages to `proto-build`.
+- Add pagination parameter for nft query: collection, denoms, owner
+- Add cpp bindings documentation for developers
+- Add js package build script
+- Add iOS and Android tests and interfaces
+- Add abi contract binding
+- Add uniffi-binding feature for EthAbiTokenBind
+- Add support for Luna Classic message
+- Add crate type: rlib
+
+### Changed
+- Replace `CosmosCoin` with `SingleCoin`.
+- Upgrade ethers to support eip1559 transaction requests on Cronos mainnet
+- Replace Github action cache with Rust smart cache.
+- Upgrade python dependencies
+- Improve cpp integration test to support play-cpp-sdk
+- Fix Android CI build error
+
 ### Removed
 - Delete duplicate C-Sytle functions for Cosmos SDK in wasm binding.
 
