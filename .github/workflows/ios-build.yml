@@ -19,6 +19,6 @@ jobs:
           key: ${{ runner.os }}-ios-${{ hashFiles('**/Cargo.lock', '**/*.swift', 'ios_build.sh') }}
       - name: Rust cache
         uses: Swatinem/rust-cache@v1
-      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen --version 0.18.0
+      - run: command -v uniffi-bindgen || cargo install uniffi_bindgen --version 0.19.1
       - run: |
           make ios
