@@ -38,7 +38,7 @@ wee_alloc = { version = "0.4", optional = true }
 tendermint = "0.23"
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.30"
+wasm-bindgen-test = "0.3.31"
 ethers = { git = "https://github.com/gakonst/ethers-rs", rev="0a031417d8ec9e8696229eb5d172f7155ec3c79c" }
 wasm-timer = "0.2.5"
 tendermint-rpc = "0.23"
