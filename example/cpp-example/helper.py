@@ -20,8 +20,8 @@ SOURCES = [
 CPP_EXAMPLE_PATH = Path(__file__).parent
 VS_EXAMPLE_PATH = Path(__file__).parent.parent / "vs-example/vs-example"
 
-INCLUDE_PATH = "include"
-LIB_PATH = "lib"
+INCLUDE_PATH = "sdk/include"
+LIB_PATH = "sdk/lib"
 
 INITIAL_INCLUDES = [
     '#include "defi-wallet-core-cpp/src/lib.rs.h"',
@@ -76,6 +76,7 @@ def copy_cxxbridge(output_path):
 
     # copy the bindings, need python 3.8+
     shutil.copytree(OUT_DIR, output_path, dirs_exist_ok=True)
+    print("Copied", OUT_DIR, "to", output_path)
 
 
 # copy library files: `*.a`, `*.dylib`, and `*.dll.lib` (windows) to `output_path`
@@ -91,6 +92,7 @@ def copy_lib_files(output_path):
     # copy the libraries, need python 3.8+
     for f in files:
         shutil.copy(f, output_path)
+        print("Copied", f, "to", output_path)
 
 
 # copy `EXAMPLE_SOURCES` to `output_path`

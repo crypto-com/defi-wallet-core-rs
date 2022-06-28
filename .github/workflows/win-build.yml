@@ -6,6 +6,8 @@ on:
       - main
     paths-ignore:
       - README.md
+    tags:
+      - "v*.*.*"
   pull_request:
     paths-ignore:
       - README.md
