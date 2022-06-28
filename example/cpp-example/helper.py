@@ -79,14 +79,15 @@ def copy_cxxbridge(output_path):
     print("Copied", OUT_DIR, "to", output_path)
 
 
-# copy library files: `*.a`, `*.dylib`, `*.dll.lib` (windows), and `*.so` (linux), to
+# copy library files: `*.a`, `*.dylib`, `*.lib` (windows), `*.dll` (windows), `*.so` (linux) to
 # `output_path`
 def copy_lib_files(output_path):
     os.makedirs(output_path, exist_ok=True)
     files = []
     files.extend(collect_files("*.a", TARGET_DIR, recursive=False))
     files.extend(collect_files("*.dylib", TARGET_DIR, recursive=False))
-    files.extend(collect_files("*.dll.lib", TARGET_DIR, recursive=False))
+    files.extend(collect_files("*.lib", TARGET_DIR, recursive=False))
+    files.extend(collect_files("*.dll", TARGET_DIR, recursive=False))
     files.extend(collect_files("*.so", TARGET_DIR, recursive=False))
     # workaround: search libcxxbridge1.a and push the first one
     files.append(collect_files("libcxxbridge1.a", TARGET_DIR)[0])
