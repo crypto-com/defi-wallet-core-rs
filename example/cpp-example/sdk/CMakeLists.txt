@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQURIED ON)
 
-project(defi_wallet_core_cpp VERSION 0.0.1)
+project(defi_wallet_core_cpp VERSION 0.2.0)
 
 # Find bindings source files
 file(GLOB_RECURSE DEFI_WALLET_CORE_CPP_BINDINGS include/defi-wallet-core-cpp/src/*.cc)
