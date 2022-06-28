@@ -79,8 +79,8 @@ def copy_cxxbridge(output_path):
     print("Copied", OUT_DIR, "to", output_path)
 
 
-# copy library files: `*.a`, `*.dylib`, `*.lib` (windows), `*.dll` (windows), `*.so` (linux) to
-# `output_path`
+# copy library files: `*.a`, `*.dylib`, `*.lib` (windows), `*.dll` (windows), `*.so`
+# (linux) to `output_path`
 def copy_lib_files(output_path):
     os.makedirs(output_path, exist_ok=True)
     files = []
