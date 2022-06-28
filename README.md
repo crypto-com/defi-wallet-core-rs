@@ -16,11 +16,11 @@ The codebase is primarily in Rust and provides cross-language bindings using mul
 ## Pre-requisites
 
 Naturally, you will need the [Rust toolchain] installed.
-Besides that, for [UniFFI] language bindings, you will need  `uniffi_bindgen` 0.18.0 or newer installed as well as corresponding language formatters:
+Besides that, for [UniFFI] language bindings, you will need  `uniffi_bindgen` 0.19.1 or newer installed as well as corresponding language formatters:
 
 ```bash
 cargo install uniffi_bindgen
-uniffi-bindgen --version # check the version is 0.18.0 or newer
+uniffi-bindgen --version # check the version is 0.19.1 or newer
 brew install ktlint
 brew install swiftformat
 ```
