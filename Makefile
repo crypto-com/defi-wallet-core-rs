@@ -45,14 +45,14 @@ mac_install:
 
 
 build_cpp:
-	. ./checkmac.sh && cargo build --package defi-wallet-core-cpp --release
+# to fix link error on macos
+	./checkmac.sh && cargo build --package defi-wallet-core-cpp --release
 	cd $(cpp_example) && make build
 
 cpp: build_cpp
-	# to fix link error on macos
-	. ./checkmac.sh && . ./scripts/.env && cd $(cpp_example) && make run
+	. ./scripts/.env && cd $(cpp_example) && make run
 
-cppx86_64: 
+cppx86_64:
 	. ./checkmac.sh && rustup target add x86_64-apple-darwin
 	. ./checkmac.sh && cargo build --package defi-wallet-core-cpp --release --target x86_64-apple-darwin
 	. ./checkmac.sh && cd $(cpp_example) && make x86_64_build

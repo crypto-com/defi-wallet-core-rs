@@ -4,9 +4,6 @@ set(CMAKE_CXX_STANDARD_REQURIED ON)
 if (APPLE)
   set(CMAKE_CXX_FLAGS "-framework Security -framework CoreFoundation")
 endif()
-if (UNIX AND NOT APPLE)
-  set(CMAKE_CXX_FLAGS "-lpthread -lssl -lcrypto -ldl")
-endif()
 
 project(cppexample VERSION 1.0)
 
@@ -14,7 +11,11 @@ add_subdirectory(sdk)
 
 # static cppexample
 add_executable(cppexamplestatic main.cc chainmain.cc cronos.cc)
-target_link_libraries(cppexamplestatic PUBLIC ${DEFI_WALLET_CORE_CPP_LIB})
+if (UNIX AND NOT APPLE)
+  target_link_libraries(cppexamplestatic PUBLIC ${DEFI_WALLET_CORE_CPP_LIB} ssl crypto)
+else()
+  target_link_libraries(cppexamplestatic PUBLIC ${DEFI_WALLET_CORE_CPP_LIB})
+endif()
 
 # dynamic cppexample
 add_executable(cppexample main.cc chainmain.cc cronos.cc)
