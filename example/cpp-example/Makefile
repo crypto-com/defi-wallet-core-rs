@@ -36,10 +36,10 @@ dynamic:
 		$(sdk_dir)/include/*.cc \
 		$(sdk_dir)/include/defi-wallet-core-cpp/src/*.cc \
 		$(sdk_dir)/lib/libcxxbridge1.a \
-		-ldefi_wallet_core_cpp \
 		-std=c++11 \
-		$(FLAGS)  \
-		-L $(sdk_dir)/lib \
+		-L$(sdk_dir)/lib -Wl,-rpath=$(sdk_dir)/lib -Wall \
+		-ldefi_wallet_core_cpp \
+		$(FLAGS)
 
 x86_64_static:
 	arch -x86_64 g++ -o cppexamplestatic \
