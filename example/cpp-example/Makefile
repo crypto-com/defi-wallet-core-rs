@@ -76,5 +76,5 @@ run_dynamic:
 	export LD_LIBRARY_PATH=$(PWD) && ./cppexample
 
 clean:
-	rm cppexample cppexamplestatic
+	rm -f cppexample cppexamplestatic
 	rm -rf build
