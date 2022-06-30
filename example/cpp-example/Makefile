@@ -82,3 +82,5 @@ run_dynamic:
 clean:
 	rm -f cppexample cppexamplestatic
 	rm -rf build
+	rm -rf $(sdk_dir)/lib
+	rm -rf $(sdk_dir)/include
