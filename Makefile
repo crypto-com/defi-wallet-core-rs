@@ -43,20 +43,18 @@ mac_install:
 	brew install ktlint
 	brew install swiftformat
 
-
 build_cpp:
-# to fix link error on macos
+ifeq ($(shell uname -m), x86_64)
 	./checkmac.sh && cargo build --package defi-wallet-core-cpp --release
+endif
+ifeq ($(shell uname -m), amd64)
+	rustup target add x86_64-apple-darwin
+	./checkmac.sh && cargo build --package defi-wallet-core-cpp --release --target x86_64-apple-darwin
+else
 	cd $(cpp_example) && make build
 
 cpp: build_cpp
 	. ./scripts/.env && cd $(cpp_example) && make run
-
-cppx86_64:
-	. ./checkmac.sh && rustup target add x86_64-apple-darwin
-	. ./checkmac.sh && cargo build --package defi-wallet-core-cpp --release --target x86_64-apple-darwin
-	. ./checkmac.sh && cd $(cpp_example) && make x86_64_build
-
 
 proto:
 	cd proto-build && cargo run

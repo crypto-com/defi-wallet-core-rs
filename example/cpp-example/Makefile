@@ -1,5 +1,16 @@
 UNAME := $(shell uname)
 sdk_dir = ./sdk
+ifeq ($(shell uname -m), x86_64)
+	CXX = g++
+	TARGET_DIR = ../target/release
+endif
+
+ifeq ($(shell uname -m), amd64)
+	CXX = arch -x86_64 g++
+	TARGET_DIR = ../target/x86_64-apple-darwin/release
+else
+
+endif
 
 ifeq ($(UNAME), Darwin)
 	FLAGS=-framework Security -framework CoreFoundation
@@ -14,13 +25,15 @@ build: prepare static dynamic cmake
 run: run_static run_dynamic
 
 prepare:
-	python3 helper.py --target_dir ../../target/release
+	python3 helper.py --target_dir  $(TARGET_DIR)
 
-prepare_x86_64:
-	python3 helper.py --target_dir ../../target/x86_64-apple-darwin/release
+libdefi_wallet_core_cpp.dylib:
+ifeq ($(UNAME), Darwin)
+	install_name_tool -id @rpath/libdefi_wallet_core_cpp.dylib.dylib $(sdk_dir)/lib/libdefi_wallet_core_cpp.dylib.dylib
+endif
 
 static:
-	g++ -o cppexamplestatic \
+	$(CXX) -o cppexamplestatic \
 		main.cc \
 		chainmain.cc \
 		cronos.cc \
@@ -28,8 +41,9 @@ static:
 		-std=c++11 \
 		$(FLAGS)
 
-dynamic:
-	g++ -o cppexample \
+dynamic: libdefi_wallet_core_cpp.dylib
+ifeq ($(UNAME), Linux)
+	$(CXX) -o cppexample \
 		main.cc \
 		chainmain.cc \
 		cronos.cc \
@@ -40,40 +54,30 @@ dynamic:
 		-L$(sdk_dir)/lib -Wl,-rpath=$(sdk_dir)/lib -Wall \
 		-ldefi_wallet_core_cpp \
 		$(FLAGS)
-
-x86_64_static:
-	arch -x86_64 g++ -o cppexamplestatic \
-		main.cc \
-		chainmain.cc \
-		cronos.cc \
-		$(sdk_dir)/lib/libdefi_wallet_core_cpp.a \
-		-std=c++11 \
-		$(FLAGS)
-
-x86_64_dynamic:
-	arch -x86_64 g++ -o cppexample \
+endif
+ifeq ($(UNAME), Darwin)
+	$(CXX) -o cppexample \
 		main.cc \
 		chainmain.cc \
 		cronos.cc \
 		$(sdk_dir)/include/*.cc \
 		$(sdk_dir)/include/defi-wallet-core-cpp/src/*.cc \
 		$(sdk_dir)/lib/libcxxbridge1.a \
-		-ldefi_wallet_core_cpp \
 		-std=c++11 \
-		$(FLAGS)  \
-		-L $(sdk_dir)/lib \
-
-x86_64_build: prepare_x86_64 x86_64_static x86_64_dynamic
+		$(sdk_dir)/lib/libplay_cpp_sdk.dylib \
+		-rpath $(sdk_dir)/lib \
+		$(FLAGS)
+endif
 
 cmake:
 	mkdir -p build
 	cd build && cmake .. && make
 
 run_static:
-	./cppexamplestatic
+	./cppexamplestatic && ./build/cppexamplestatic
 
 run_dynamic:
-	export LD_LIBRARY_PATH=$(PWD) && ./cppexample
+	export LD_LIBRARY_PATH=$(PWD) && ./cppexample && ./build/cppexample
 
 clean:
 	rm -f cppexample cppexamplestatic
