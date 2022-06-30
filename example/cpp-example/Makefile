@@ -2,12 +2,12 @@ UNAME := $(shell uname)
 sdk_dir = ./sdk
 ifeq ($(shell uname -m), x86_64)
 	CXX = g++
-	TARGET_DIR = ../target/release
+	TARGET_DIR = ../../target/release
 endif
 
 ifeq ($(shell uname -m), amd64)
 	CXX = arch -x86_64 g++
-	TARGET_DIR = ../target/x86_64-apple-darwin/release
+	TARGET_DIR = ../../target/x86_64-apple-darwin/release
 else
 
 endif
@@ -29,7 +29,7 @@ prepare:
 
 libdefi_wallet_core_cpp.dylib:
 ifeq ($(UNAME), Darwin)
-	install_name_tool -id @rpath/libdefi_wallet_core_cpp.dylib.dylib $(sdk_dir)/lib/libdefi_wallet_core_cpp.dylib.dylib
+	install_name_tool -id @rpath/libdefi_wallet_core_cpp.dylib.dylib $(sdk_dir)/lib/libdefi_wallet_core_cpp.dylib
 endif
 
 static:
@@ -64,7 +64,7 @@ ifeq ($(UNAME), Darwin)
 		$(sdk_dir)/include/defi-wallet-core-cpp/src/*.cc \
 		$(sdk_dir)/lib/libcxxbridge1.a \
 		-std=c++11 \
-		$(sdk_dir)/lib/libplay_cpp_sdk.dylib \
+		$(sdk_dir)/lib/libdefi_wallet_core_cpp.dylib \
 		-rpath $(sdk_dir)/lib \
 		$(FLAGS)
 endif
