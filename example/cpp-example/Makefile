@@ -29,7 +29,7 @@ prepare:
 
 libdefi_wallet_core_cpp.dylib:
 ifeq ($(UNAME), Darwin)
-	install_name_tool -id @rpath/libdefi_wallet_core_cpp.dylib.dylib $(sdk_dir)/lib/libdefi_wallet_core_cpp.dylib
+	install_name_tool -id @rpath/libdefi_wallet_core_cpp.dylib $(sdk_dir)/lib/libdefi_wallet_core_cpp.dylib
 endif
 
 static:
