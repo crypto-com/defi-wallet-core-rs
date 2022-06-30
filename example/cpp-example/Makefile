@@ -20,7 +20,7 @@ ifeq ($(UNAME), Linux)
 	FLAGS=-lpthread -lssl -lcrypto -ldl
 endif
 
-all: build run
+all: clean build
 build: prepare static dynamic cmake
 run: run_static run_dynamic
 
