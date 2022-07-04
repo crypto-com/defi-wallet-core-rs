@@ -1,11 +1,13 @@
 UNAME := $(shell uname)
 sdk_dir = ./sdk
+
+
 ifeq ($(shell uname -m), x86_64)
 	CXX = g++
 	TARGET_DIR = ../../target/release
 endif
 
-ifeq ($(shell uname -m), amd64)
+ifeq ($(shell uname -m), arm64)
 	CXX = arch -x86_64 g++
 	TARGET_DIR = ../../target/x86_64-apple-darwin/release
 else

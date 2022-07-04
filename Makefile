@@ -47,7 +47,7 @@ build_cpp:
 ifeq ($(shell uname -m), x86_64)
 	./checkmac.sh && cargo build --package defi-wallet-core-cpp --release
 endif
-ifeq ($(shell uname -m), amd64)
+ifeq ($(shell uname -m), arm64)
 	rustup target add x86_64-apple-darwin
 	./checkmac.sh && cargo build --package defi-wallet-core-cpp --release --target x86_64-apple-darwin
 endif

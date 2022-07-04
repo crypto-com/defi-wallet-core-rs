@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQURIED ON)
+set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE INTERNAL "" FORCE)
 if (APPLE)
   set(CMAKE_CXX_FLAGS "-framework Security -framework CoreFoundation")
 endif()
