@@ -1,7 +1,7 @@
-#include "include/defi-wallet-core-cpp/src/lib.rs.h"
-#include "include/defi-wallet-core-cpp/src/nft.rs.h"
-#include "include/rust/cxx.h"
 #include "chainmain.h"
+#include "sdk/include/defi-wallet-core-cpp/src/lib.rs.h"
+#include "sdk/include/defi-wallet-core-cpp/src/nft.rs.h"
+#include "sdk/include/rust/cxx.h"
 #include <cassert>
 #include <chrono>
 #include <iostream>

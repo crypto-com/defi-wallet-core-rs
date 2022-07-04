@@ -1,3 +1,4 @@
+#!/bin/bash
 # to fix link error on macosx
 # cd example/cpp-example
 # otool -l libcxxbridge1.a > out
