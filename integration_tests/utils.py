@@ -25,6 +25,8 @@ TEST_CONTRACTS = {
     "TestERC1155": "TestERC1155.sol",
 }
 
+CPP_EXAMPLE_PATH = os.getenv("CPP_EXAMPLE_PATH")
+
 
 def contract_path(name, filename):
     return (

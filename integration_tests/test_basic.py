@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-import os
 import subprocess
 import time
 from pathlib import Path
 
-from .utils import ADDRS, CONTRACTS, KEYS, Contract
+from .utils import ADDRS, CONTRACTS, CPP_EXAMPLE_PATH, KEYS, Contract
 
 
 def test_basic(chainmain, cronos):
@@ -89,18 +88,12 @@ def test_basic(chainmain, cronos):
     )
     print("URI of SHIELD:", contract.functions.uri(4).call())
 
-    # TODO Test demostatic or cppexamplestatic
+    # TODO Test `CPP_EXAMPLE_PATH` or cppexamplestatic
     # Pass input and assert output
-    #
-    # WORKAROUND We check if demostatic exists (from play-cpp-sdk), run it if it exists
-    # instead of cppexamplestatic
-    #
-    # This is because:
-    # 1. play-cpp-sdk make use of defi-wallet-core-rs's integration test environment in
-    # github CI.
-    # 2. demostatic can be considerred as the superset of cppexamplestatic
-    cmd = Path(__file__).parent / "../../demo/demostatic"
-    if not os.path.exists(cmd):
+    cmd = ""
+    if CPP_EXAMPLE_PATH != "":
+        cmd = CPP_EXAMPLE_PATH
+    else:
         cmd = Path(__file__).parent / "../example/cpp-example/cppexamplestatic"
 
     start = time.time()
