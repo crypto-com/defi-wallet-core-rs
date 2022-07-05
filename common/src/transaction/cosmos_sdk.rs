@@ -766,16 +766,16 @@ mod tests {
     fn signdoc_construction_works_mutimsg() {
         let sender_private_key = SigningKey::random();
         let sender_public_key = sender_private_key.public_key();
-        let mut msgs = Vec::new();
-        msgs.push(CosmosSDKMsg::BankSend {
-            recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
-            amount: SingleCoin::ATOM { amount: 1 },
-        });
-
-        msgs.push(CosmosSDKMsg::BankSend {
-            recipient_address: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx".to_string(),
-            amount: SingleCoin::ATOM { amount: 2 },
-        });
+        let msgs = vec![
+            CosmosSDKMsg::BankSend {
+                recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+                amount: SingleCoin::ATOM { amount: 1 },
+            },
+            CosmosSDKMsg::BankSend {
+                recipient_address: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx".to_string(),
+                amount: SingleCoin::ATOM { amount: 2 },
+            },
+        ];
 
         let sign_doc_raw = get_msg_sign_payload(
             TX_INFO,
@@ -809,17 +809,16 @@ mod tests {
             .get_key("m/44'/118'/0'/0/0".to_string())
             .expect("key");
 
-        let mut msgs = Vec::new();
-
-        msgs.push(CosmosSDKMsg::BankSend {
-            recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
-            amount: SingleCoin::ATOM { amount: 1 },
-        });
-
-        msgs.push(CosmosSDKMsg::BankSend {
-            recipient_address: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx".to_string(),
-            amount: SingleCoin::ATOM { amount: 2 },
-        });
+        let msgs = vec![
+            CosmosSDKMsg::BankSend {
+                recipient_address: "cosmos19dyl0uyzes4k23lscla02n06fc22h4uqsdwq6z".to_string(),
+                amount: SingleCoin::ATOM { amount: 1 },
+            },
+            CosmosSDKMsg::BankSend {
+                recipient_address: "cosmos1a83x94xww47e32rgpytttucx2vexxcn2lc2ekx".to_string(),
+                amount: SingleCoin::ATOM { amount: 2 },
+            },
+        ];
 
         let tx_raw = build_signed_msg_tx(TX_INFO, msgs, private_key).expect("ok signed tx");
         assert_eq!(

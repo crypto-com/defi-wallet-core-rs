@@ -350,8 +350,8 @@ mod hd_wallet_tests {
         let mnemonic_phrase = wallet
             .get_backup_mnemonic_phrase()
             .expect("Failed to get backup mnemonic phrase");
-        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
-        assert_eq!(words.len(), 24);
+        let words = mnemonic_phrase.split(' ');
+        assert_eq!(words.count(), 24);
     }
 
     #[test]
@@ -361,8 +361,8 @@ mod hd_wallet_tests {
         let mnemonic_phrase = wallet
             .get_backup_mnemonic_phrase()
             .expect("Failed to get backup mnemonic phrase");
-        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
-        assert_eq!(words.len(), 12);
+        let words = mnemonic_phrase.split(' ');
+        assert_eq!(words.count(), 12);
     }
 
     #[test]
@@ -372,8 +372,8 @@ mod hd_wallet_tests {
         let mnemonic_phrase = wallet
             .get_backup_mnemonic_phrase()
             .expect("Failed to get backup mnemonic phrase");
-        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
-        assert_eq!(words.len(), 18);
+        let words = mnemonic_phrase.split(' ');
+        assert_eq!(words.count(), 18);
     }
 
     #[test]
@@ -383,8 +383,8 @@ mod hd_wallet_tests {
         let mnemonic_phrase = wallet
             .get_backup_mnemonic_phrase()
             .expect("Failed to get backup mnemonic phrase");
-        let words: Vec<&str> = mnemonic_phrase.split(' ').collect();
-        assert_eq!(words.len(), 24);
+        let words = mnemonic_phrase.split(' ');
+        assert_eq!(words.count(), 24);
     }
 
     #[test]
