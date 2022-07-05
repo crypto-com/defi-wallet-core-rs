@@ -384,7 +384,7 @@ mod tests {
         assert_eq!(hex::encode(tx_raw),"02f87082053980018477359401825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080c001a0caa0df6665a08e4fae0839395387aabeeef4064134dd09a771eed6e41d6c258da07817000d01107a554e8e885c872a672df50e2dc25ed5068b83a93e2a27982bce");
 
         let json_str = r#"{"from":"0x68418d0fdb846e8736aa613159035a9d9fde11f0","to":"0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d","gas":"0x5208","value":"0xde0b6b3a7640000","data":"0x","nonce":"0x0","accessList":[{"address":"0x0000000000000000000000000000000000000000","storageKeys":["0x0000000000000000000000000000000000000000000000000000000000000000"]}],"maxPriorityFeePerGas":"0x1","maxFeePerGas":"0x77359401","chainId":"0x0539"}"#;
-        let tx_raw = eth_sign_transaction(json_str, secret_key.clone()).unwrap();
+        let tx_raw = eth_sign_transaction(json_str, secret_key).unwrap();
         assert_eq!(hex::encode(tx_raw),"02f8a982053980018477359401825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080f838f7940000000000000000000000000000000000000000e1a0000000000000000000000000000000000000000000000000000000000000000080a0462c27c0ae0a8a2fd448ab299d519823c7016c280881c38747dcda913dc1c4caa0685acccb1f37f87250e9688e805725f2eb0e9f63b53fe311f9ed485f07987cf4");
     }
 
@@ -404,7 +404,7 @@ mod tests {
             .expect("get_key_from_index error");
 
         let json_str = r#"{"from":"0x68418d0fdb846e8736aa613159035a9d9fde11f0","to":"0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d","gas":"0x5208","gasPrice":"0x5f5e100","value":"0xde0b6b3a7640000","data":"0x","nonce":"0x0","accessList":[{"address":"0x0000000000000000000000000000000000000000","storageKeys":["0x0000000000000000000000000000000000000000000000000000000000000000"]}],"chainId":"0x0539"}"#;
-        let tx_raw = eth_sign_transaction_with_chainid(json_str, secret_key.clone(), 1337).unwrap();
+        let tx_raw = eth_sign_transaction_with_chainid(json_str, secret_key, 1337).unwrap();
         assert_eq!(hex::encode(tx_raw),"01f8a8820539808405f5e100825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080f838f7940000000000000000000000000000000000000000e1a0000000000000000000000000000000000000000000000000000000000000000080a024117c04934ced6c3d272447816f0ebc00e97dd012f8d3872d661a48152c0e5ca0601c21637bad2f399da6a7e314a6119956f4bb8c2d7dd2df6905786e56a35c47");
     }
 
@@ -424,7 +424,7 @@ mod tests {
             .expect("get_key_from_index error");
 
         let json_str = r#"{"from":"0x68418d0fdb846e8736aa613159035a9d9fde11f0","to":"0x4592d8f8d7b001e72cb26a73e4fa1806a51ac79d","gas":"0x5208","gasPrice":"0x5f5e100","value":"0xde0b6b3a7640000","data":"0x","nonce":"0x0","chainId":"0x0539"}"#;
-        let tx_raw = eth_sign_transaction_with_chainid(json_str, secret_key.clone(), 1337).unwrap();
+        let tx_raw = eth_sign_transaction_with_chainid(json_str, secret_key, 1337).unwrap();
         assert_eq!(hex::encode(tx_raw),"f86d808405f5e100825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080820a96a0dd110c3396ac52d7a23db8e5cca23b42983636192190baeec2178d5b33b02369a057ace20b2e326e7e24b0e1ca57d312b19a29a8353301d2280e5a829fa7866f10");
     }
 

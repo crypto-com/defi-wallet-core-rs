@@ -65,7 +65,7 @@ mod tests {
                 .derive_address(wallet)
                 .expect("address string")
             })
-            .unwrap_or("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".to_string());
+            .unwrap_or_else(|| "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".to_string());
         let msg = Message {
             address: Address::from_str(&address).unwrap().into(),
             domain: "service.org".parse().unwrap(),
