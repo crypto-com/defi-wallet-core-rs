@@ -15,8 +15,8 @@ env:
   RUSTFLAGS: -Dwarnings
 
 jobs:
-  check:
-    name: cargo check
+  clippy:
+    name: cargo clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,6 +30,10 @@ jobs:
       - uses: Swatinem/rust-cache@v1
       - name: Check with clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Check with clippy for defi-wallet-core-cpp
+        run: cargo clippy -p defi-wallet-core-cpp --all-features -- -D warnings
+      - name: Check with clippy for defi-wallet-core-wasm
+        run: cargo clippy -p defi-wallet-core-wasm --target wasm32-unknown-unknown --all-features -- -D warnings
   test:
     name: cargo test
     runs-on: ubuntu-latest
