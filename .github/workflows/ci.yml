@@ -15,8 +15,8 @@ env:
   RUSTFLAGS: -Dwarnings
 
 jobs:
-  check:
-    name: cargo check
+  clippy:
+    name: cargo clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
