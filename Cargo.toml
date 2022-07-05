@@ -24,6 +24,6 @@ lto = "thin"
 # codegen-units = 1
 
 [patch.crates-io]
-ethers-core = { git = "https://github.com/gakonst/ethers-rs", rev="0a031417d8ec9e8696229eb5d172f7155ec3c79c" }
-ethers = { git = "https://github.com/gakonst/ethers-rs", rev="0a031417d8ec9e8696229eb5d172f7155ec3c79c" }
+ethers-core = { git = "https://github.com/gakonst/ethers-rs", rev="b287fcca4dd392824f7f0643a51f759b0f5e5fd7"}
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev="b287fcca4dd392824f7f0643a51f759b0f5e5fd7"}
 siwe= { git = "https://github.com/crypto-com/siwe-rs.git", rev="ead288bc6de086046ce8d15188e167a391079d11"}

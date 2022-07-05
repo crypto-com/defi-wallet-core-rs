@@ -22,7 +22,8 @@ bech32 = "0.9"
 bip39 = "1"
 cosmrs = "0.5"
 eyre = "0.6"
-ethers = { version = "0.13", features = ["rustls"] }
+# ethers = { version = "0.13", features = ["rustls"] }
+ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "b287fcca4dd392824f7f0643a51f759b0f5e5fd7", features = ["rustls"] }
 ibc = { version = "0.13", default-features = false }
 ibc-proto = { version = "0.17", default-features = false }
 itertools = "0.10"
