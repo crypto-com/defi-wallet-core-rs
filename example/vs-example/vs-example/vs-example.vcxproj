@@ -142,16 +142,13 @@
     <ClCompile Include="cronos.cc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bindings.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="lib\defi_wallet_core_cpp.dll.lib" />
-    <Library Include="lib\libcxxbridge1.a" />
-    <ClCompile Include="include\nft.cc" />
-    <ClCompile Include="include\defi-wallet-core-cpp\src\lib.rs.cc" />
-    <ClCompile Include="include\defi-wallet-core-cpp\src\nft.rs.cc" />
-    <ClCompile Include="include\defi-wallet-core-cpp\src\contract.rs.cc" />
-    <ClCompile Include="include\defi-wallet-core-cpp\src\uint.rs.cc" />
+    <Library Include="sdk\lib\defi_wallet_core_cpp.dll.lib" />
+    <Library Include="sdk\lib\libcxxbridge1.a" />
+    <ClCompile Include="sdk\include\nft.cc" />
+    <ClCompile Include="sdk\include\defi-wallet-core-cpp\src\lib.rs.cc" />
+    <ClCompile Include="sdk\include\defi-wallet-core-cpp\src\nft.rs.cc" />
+    <ClCompile Include="sdk\include\defi-wallet-core-cpp\src\contract.rs.cc" />
+    <ClCompile Include="sdk\include\defi-wallet-core-cpp\src\uint.rs.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

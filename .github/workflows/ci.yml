@@ -25,20 +25,11 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
+          components: clippy
           override: true
       - uses: Swatinem/rust-cache@v1
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all-features
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: -p defi-wallet-core-cpp --all-features
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: -p defi-wallet-core-wasm --target wasm32-unknown-unknown --all-features
+      - name: Check with clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
   test:
     name: cargo test
     runs-on: ubuntu-latest
@@ -74,28 +65,3 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
-  clippy:
-    name: cargo clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - run: rustup target add wasm32-unknown-unknown
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          components: clippy
-          override: true
-      - uses: Swatinem/rust-cache@v1
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features -- -D warnings
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: -p defi-wallet-core-cpp --all-features -- -D warnings
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: -p defi-wallet-core-wasm --target wasm32-unknown-unknown --all-features -- -D warnings

@@ -1,5 +1,4 @@
-name: Mac Build CI
-
+name: Linux Build CI
 on:
   push:
     branches:
@@ -13,8 +12,8 @@ on:
       - README.md
 
 jobs:
-  mac-build:
-    runs-on: macos-11
+  build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 

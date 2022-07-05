@@ -539,12 +539,12 @@ mod test {
 
         let name = " a   b    c   ";
         let result = name.parse::<DenomName>();
-        assert_eq!(result.is_ok(), true);
+        assert!(result.is_ok());
         assert_eq!(result.unwrap().as_ref(), "abc");
 
         let name = "testdenomname";
         let result = name.parse::<DenomName>();
-        assert_eq!(result.is_ok(), true);
+        assert!(result.is_ok());
         assert_eq!(result.unwrap().as_ref(), "testdenomname");
     }
 
@@ -636,12 +636,12 @@ mod test {
 
         let uri = "";
         let result = uri.parse::<TokenUri>();
-        assert_eq!(result.is_ok(), true);
+        assert!(result.is_ok());
         assert_eq!(result.unwrap().as_ref(), "");
 
         let uri = "testuri";
         let result = uri.parse::<TokenUri>();
-        assert_eq!(result.is_ok(), true);
+        assert!(result.is_ok());
         assert_eq!(result.unwrap().as_ref(), "testuri");
     }
 
@@ -705,13 +705,13 @@ mod test {
             id: "testtokenid".parse::<TokenId>().unwrap(),
             denom_id: "testdenomid".parse::<DenomId>().unwrap(),
             sender: sender_account_id.clone(),
-            recipient: recipient_account_id.clone(),
+            recipient: recipient_account_id,
         };
 
         let msg_burn_nft = MsgBurnNft {
             id: "testtokenid".parse::<TokenId>().unwrap(),
             denom_id: "testdenomid".parse::<DenomId>().unwrap(),
-            sender: sender_account_id.clone(),
+            sender: sender_account_id,
         };
 
         create_nft_msg(&sender_private_key, msg_issue_denom).unwrap();
@@ -759,7 +759,7 @@ mod test {
         let sign_doc = SignDoc::new(&tx_body, &auth_info, &chain_id, account_number)?;
 
         // Sign the "sign doc" with the sender's private key, producing a signed raw transaction.
-        let tx_signed = sign_doc.sign(&private_key)?;
+        let tx_signed = sign_doc.sign(private_key)?;
 
         // Serialize the raw transaction as bytes (i.e. `Vec<u8>`).
         let tx_bytes = tx_signed.to_bytes()?;
