@@ -301,7 +301,7 @@ mod test {
             "ethereum:0xfb6916095ca1df60bb79ce92ce3ea74c37c5d359?value=2.014e18",
         )
         .unwrap();
-        assert_eq!(request.has_pay_tag, false);
+        assert!(!request.has_pay_tag);
         assert_eq!(
             request.target_address,
             NameOrAddress::Address(
@@ -318,7 +318,7 @@ mod test {
             })
         );
         let request2 = EIP681Request::from_str("ethereum:0x89205a3a3b2a69de6dbf7f01ed13b2108b2c43e7/transfer?address=0x8e23ee67d1332ad560396262c48ffbb01f93d052&uint256=1").unwrap();
-        assert_eq!(request2.has_pay_tag, false);
+        assert!(!request2.has_pay_tag);
         assert_eq!(
             request2.target_address,
             NameOrAddress::Address(
