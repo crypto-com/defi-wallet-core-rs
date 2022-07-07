@@ -14,6 +14,7 @@ default = []
 abi-contract = []
 login = ["siwe"]
 uniffi-binding = ["abi-contract", "uniffi", "uniffi_build", "uniffi_macros"]
+qr-code = ["abi-contract", "rustc-hex"]
 
 [dependencies]
 anyhow = "1"
@@ -32,6 +33,7 @@ prost = "0.9"
 rand_core = { version = "0.6", features = ["std"] }
 regex = "1"
 reqwest = { version = "0.11", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+rustc-hex = { version = "2", optional = true }
 secrecy = "0.8"
 serde = "1"
 serde_json = "1"
