@@ -1039,7 +1039,7 @@ dependencies = [
  "ibc-proto",
  "itertools",
  "lazy_static",
- "prost 0.9.0",
+ "prost 0.10.4",
  "rand 0.6.5",
  "rand_core 0.6.3",
  "regex",
@@ -1087,7 +1087,7 @@ version = "0.1.0"
 dependencies = [
  "cosmos-sdk-proto",
  "cosmrs",
- "prost 0.9.0",
+ "prost 0.10.4",
  "prost-types 0.10.1",
  "serde",
  "tendermint-proto",
@@ -3258,7 +3258,7 @@ dependencies = [
 name = "proto-build"
 version = "0.1.0"
 dependencies = [
- "prost 0.9.0",
+ "prost 0.10.4",
  "prost-build 0.10.4",
  "regex",
  "tonic",
