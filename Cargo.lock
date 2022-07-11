@@ -1044,6 +1044,7 @@ dependencies = [
  "rand_core 0.6.3",
  "regex",
  "reqwest",
+ "rustc-hex",
  "secrecy",
  "serde",
  "serde_json",

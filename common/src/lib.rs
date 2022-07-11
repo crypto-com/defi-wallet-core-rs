@@ -11,6 +11,10 @@ mod wallet;
 #[cfg(feature = "login")]
 mod login;
 
+/// QR code module: encoding and decoding of EIP-681 strings
+#[cfg(feature = "qr-code")]
+mod qr_code;
+
 /// Utility functions
 mod utils;
 
@@ -27,6 +31,8 @@ pub use ibc::Height;
 #[cfg(feature = "login")]
 pub use login::*;
 pub use node::*;
+#[cfg(feature = "qr-code")]
+pub use qr_code::EIP681Request;
 pub use transaction::*;
 pub use wallet::*;
 #[cfg(feature = "uniffi-binding")]
