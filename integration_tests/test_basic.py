@@ -98,9 +98,13 @@ def test_basic(chainmain, cronos):
 
     start = time.time()
 
+    print("Testing", cmd)
     output = subprocess.getoutput(str(cmd))
     print(output)
     if "Assertion failed" in output:
+        assert False
+
+    if "rust::cxxbridge1::Error" in output:
         assert False
 
     end = time.time()
