@@ -7,7 +7,7 @@ rust-version = "1.57"
 [dependencies]
 defi-wallet-core-common = { path = "../../common" , features=["login"]}
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
-cosmos-sdk-proto = { version = "0.10" }
+cosmos-sdk-proto = { version = "0.12" }
 cxx = "1"
 anyhow = "1"
 serde="1"

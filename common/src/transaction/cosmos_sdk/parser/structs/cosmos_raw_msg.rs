@@ -10,12 +10,12 @@ use cosmrs::distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward};
 use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
 use cosmrs::tx::Msg;
 use cosmrs::{AccountId, Any};
-use ibc::applications::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
+use ibc::applications::transfer::msgs::transfer::MsgTransfer;
+use ibc::core::ics04_channel::timeout::TimeoutHeight;
 use ibc::core::ics24_host::identifier::{ChannelId, PortId};
 use ibc::signer::Signer;
 use ibc::timestamp::Timestamp;
 use ibc::tx_msg::Msg as IbcMsg;
-use ibc::Height;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -140,9 +140,7 @@ impl TryFrom<MsgTransfer> for CosmosRawMsg {
     type Error = CosmosError;
 
     fn try_from(msg: MsgTransfer) -> Result<Self, Self::Error> {
-        let coin = msg
-            .token
-            .ok_or_else(|| eyre::eyre!("Missing token of MsgTransfer"))?;
+        let coin = msg.token;
         Ok(Self::Normal {
             msg: CosmosRawNormalMsg::IbcTransfer {
                 sender: msg.sender.to_string(),
@@ -151,7 +149,7 @@ impl TryFrom<MsgTransfer> for CosmosRawMsg {
                 source_channel: msg.source_channel.to_string(),
                 token: coin.into(),
                 timeout_height: msg.timeout_height,
-                timeout_timestamp: msg.timeout_timestamp.nanoseconds(),
+                timeout_timestamp: msg.timeout_timestamp,
             },
         })
     }
@@ -301,11 +299,11 @@ pub enum CosmosRawNormalMsg {
         /// the tokens to be transferred
         token: SingleCoin,
         /// Timeout height relative to the current block height.
-        /// The timeout is disabled when set to 0.
-        timeout_height: Height,
+        /// The timeout is disabled when set to Never.
+        timeout_height: TimeoutHeight,
         /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
-        /// The timeout is disabled when set to 0.
-        timeout_timestamp: u64,
+        /// The timeout is disabled when set to None.
+        timeout_timestamp: Timestamp,
     },
 }
 
@@ -383,14 +381,14 @@ impl CosmosRawNormalMsg {
                 timeout_timestamp,
             } => {
                 let any = MsgTransfer {
-                    sender: Signer::new(sender),
-                    receiver: Signer::new(receiver),
+                    sender: Signer::from_str(sender)?,
+                    receiver: Signer::from_str(receiver)?,
                     source_port: PortId::from_str(source_port)?,
                     source_channel: ChannelId::from_str(source_channel)?,
-                    token: Some(token.try_into()?),
+                    token: token.try_into()?,
                     // TODO: timeout_height and timeout_timestamp cannot both be 0.
                     timeout_height: *timeout_height,
-                    timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
+                    timeout_timestamp: *timeout_timestamp,
                 }
                 .to_any();
                 // FIXME:

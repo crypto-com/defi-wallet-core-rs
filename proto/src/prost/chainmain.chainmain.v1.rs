@@ -3,4 +3,5 @@
 /// later, it may include fields needed for custom capabilities
 /// (subscriptions, vaultable accounts, ...)
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct GenesisState {}
+pub struct GenesisState {
+}

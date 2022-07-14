@@ -10,13 +10,14 @@ use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
 use cosmrs::tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo};
 use cosmrs::{AccountId, Any, Coin};
 use eyre::{eyre, Context};
-use ibc::applications::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
+use ibc::applications::transfer::msgs::transfer::MsgTransfer;
+use ibc::core::ics04_channel::timeout::TimeoutHeight;
 use ibc::core::ics24_host::identifier::{ChannelId, PortId};
 use ibc::signer::Signer;
 use ibc::timestamp::Timestamp;
 use ibc::tx_msg::Msg as IbcMsg;
-use ibc::Height;
 use ibc_proto::cosmos::base::v1beta1::Coin as IbcCoin;
+use ibc_proto::ibc::core::client::v1::Height;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -589,13 +590,13 @@ impl CosmosSDKMsg {
                 timeout_timestamp,
             } => {
                 let any = MsgTransfer {
-                    sender: Signer::new(sender_address),
-                    receiver: Signer::new(receiver),
+                    sender: Signer::from_str(&sender_address.to_string())?,
+                    receiver: Signer::from_str(receiver)?,
                     source_port: PortId::from_str(source_port)?,
                     source_channel: ChannelId::from_str(source_channel)?,
-                    token: Some(token.try_into()?),
+                    token: token.try_into()?,
                     // TODO: timeout_height and timeout_timestamp cannot both be 0.
-                    timeout_height: *timeout_height,
+                    timeout_height: TimeoutHeight::try_from(timeout_height.clone())?,
                     timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
                 }
                 .to_any();

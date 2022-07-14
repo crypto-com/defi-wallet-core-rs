@@ -18,7 +18,7 @@ use std::sync::RwLock;
 
 pub struct Client {
     #[cfg(target_arch = "wasm32")]
-    pub client: QueryClient<grpc_web_client::Client>,
+    pub client: QueryClient<tonic_web_wasm_client::Client>,
     #[cfg(not(target_arch = "wasm32"))]
     // uniffi does not support mutable reference, that's why RwLock here
     pub client: RwLock<QueryClient<tonic::transport::Channel>>,
@@ -29,7 +29,7 @@ pub struct Client {
 impl Client {
     #[cfg(target_arch = "wasm32")]
     pub fn new(grpc_web_url: String) -> Self {
-        let client = QueryClient::new(grpc_web_client::Client::new(grpc_web_url));
+        let client = QueryClient::new(tonic_web_wasm_client::Client::new(grpc_web_url));
         Self { client }
     }
     #[cfg(not(target_arch = "wasm32"))]
