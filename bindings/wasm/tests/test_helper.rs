@@ -19,7 +19,7 @@ pub(crate) const CHAINMAIN_API_URL: &str = "http://127.0.0.1:26804";
 pub(crate) const CRONOS_RPC_URL: &str = "http://127.0.0.1:26651";
 pub(crate) const CRONOS_API_URL: &str = "http://127.0.0.1:26654";
 pub(crate) const TENDERMINT_RPC_URL: &str = "http://127.0.0.1:26807";
-pub(crate) const GRPC_WEB_URL: &str = "http://127.0.0.1:26808";
+pub(crate) const GRPC_WEB_URL: &str = "http://localhost:26808";
 
 pub(crate) const COMMUNITY: &str = "cro1qj4u2y23hx7plrztswrel2hgf8mh2m22k80fet";
 pub(crate) const DELEGATOR1: &str = "cro1ykec6vralvrh5vcvpf7w7u02gj728u4wp738kz";
