@@ -153,7 +153,7 @@ impl TryFrom<MsgTransfer> for CosmosRawMsg {
                     TimeoutHeight::Never => Height::default(),
                     TimeoutHeight::At(height) => height.into(),
                 },
-                timeout_timestamp: msg.timeout_timestamp,
+                timeout_timestamp: msg.timeout_timestamp.nanoseconds(),
             },
         })
     }
@@ -306,8 +306,8 @@ pub enum CosmosRawNormalMsg {
         /// The timeout is disabled when set to Never.
         timeout_height: Height,
         /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
-        /// The timeout is disabled when set to None.
-        timeout_timestamp: Timestamp,
+        /// The timeout is disabled when set to 0.
+        timeout_timestamp: u64,
     },
 }
 
@@ -392,7 +392,7 @@ impl CosmosRawNormalMsg {
                     token: token.try_into()?,
                     // TODO: timeout_height and timeout_timestamp cannot both be 0.
                     timeout_height: TimeoutHeight::try_from(timeout_height.clone())?,
-                    timeout_timestamp: *timeout_timestamp,
+                    timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
                 }
                 .to_any();
                 // FIXME:
