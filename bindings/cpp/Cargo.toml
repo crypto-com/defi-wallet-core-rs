@@ -7,12 +7,12 @@ rust-version = "1.57"
 [dependencies]
 defi-wallet-core-common = { path = "../../common" , features=["login"]}
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
-cosmos-sdk-proto = { version = "0.10" }
+cosmos-sdk-proto = { version = "0.12" }
 cxx = "1"
 anyhow = "1"
 serde="1"
 serde_json="1"
-siwe = { version = "0.2" }
+siwe = { version = "0.3" }
 ethers = { git = "https://github.com/gakonst/ethers-rs", rev = "b287fcca4dd392824f7f0643a51f759b0f5e5fd7", features = ["rustls"] }
 hex = "0.4"
 tokio = { version = "1", features = ["rt"] }

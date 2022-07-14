@@ -184,7 +184,6 @@ fn compile_chain_main_protos_and_services(out_dir: &Path) {
     tonic_build::configure()
         .build_client(true)
         .build_server(false)
-        .format(true)
         .out_dir(out_dir)
         .extern_path(".tendermint", "::tendermint_proto")
         .type_attribute("BaseNFT", "#[derive(Serialize, Deserialize)]")
@@ -236,7 +235,6 @@ fn compile_luna_classic_protos_and_services(out_dir: &Path) {
     tonic_build::configure()
         .build_client(true)
         .build_server(false)
-        .format(true)
         .out_dir(out_dir)
         .compile(&protos, &includes)
         .unwrap();

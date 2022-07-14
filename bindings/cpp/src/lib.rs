@@ -1051,7 +1051,8 @@ impl CppLoginInfo {
         let sig: [u8; 65] = signature
             .try_into()
             .map_err(|_e| EthError::SignatureError)?;
-        let result = self.logininfo.msg.verify(sig)?;
+        // FIXME: domain, nonce, timestamp
+        let result = self.logininfo.msg.verify(sig, None, None, None)?;
         Ok(result)
     }
 }

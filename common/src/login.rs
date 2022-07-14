@@ -36,7 +36,8 @@ impl LoginInfo {
         let sig: [u8; 65] = signature
             .try_into()
             .map_err(|_e| EthError::SignatureError)?;
-        let result = self.msg.verify(sig);
+        // FIXME: domain, nonce, timestamp to be passed
+        let result = self.msg.verify(sig, None, None, None);
         result.map_err(|_e| EthError::SignatureError).map(|_| ())
     }
 }
