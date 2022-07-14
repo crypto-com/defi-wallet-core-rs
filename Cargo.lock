@@ -4663,8 +4663,7 @@ dependencies = [
 [[package]]
 name = "tonic-web-wasm-client"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6280c14ac8c6fadf55057b74a56a360781b95e2bc4941b85077c2d896968791e"
+source = "git+https://github.com/devashishdxt/tonic-web-wasm-client?branch=tonic-web-test#4b60af91098032bc5befd77e37a5ec9a1cf9dc7d"
 dependencies = [
  "base64 0.13.0",
  "bytes",
