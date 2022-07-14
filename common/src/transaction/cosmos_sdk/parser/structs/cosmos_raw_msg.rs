@@ -16,6 +16,7 @@ use ibc::core::ics24_host::identifier::{ChannelId, PortId};
 use ibc::signer::Signer;
 use ibc::timestamp::Timestamp;
 use ibc::tx_msg::Msg as IbcMsg;
+use ibc_proto::ibc::core::client::v1::Height;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -148,7 +149,10 @@ impl TryFrom<MsgTransfer> for CosmosRawMsg {
                 source_port: msg.source_port.to_string(),
                 source_channel: msg.source_channel.to_string(),
                 token: coin.into(),
-                timeout_height: msg.timeout_height,
+                timeout_height: match msg.timeout_height {
+                    TimeoutHeight::Never => Height::default(),
+                    TimeoutHeight::At(height) => height.into(),
+                },
                 timeout_timestamp: msg.timeout_timestamp,
             },
         })
@@ -300,7 +304,7 @@ pub enum CosmosRawNormalMsg {
         token: SingleCoin,
         /// Timeout height relative to the current block height.
         /// The timeout is disabled when set to Never.
-        timeout_height: TimeoutHeight,
+        timeout_height: Height,
         /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
         /// The timeout is disabled when set to None.
         timeout_timestamp: Timestamp,
@@ -387,7 +391,7 @@ impl CosmosRawNormalMsg {
                     source_channel: ChannelId::from_str(source_channel)?,
                     token: token.try_into()?,
                     // TODO: timeout_height and timeout_timestamp cannot both be 0.
-                    timeout_height: *timeout_height,
+                    timeout_height: TimeoutHeight::try_from(timeout_height.clone())?,
                     timeout_timestamp: *timeout_timestamp,
                 }
                 .to_any();
