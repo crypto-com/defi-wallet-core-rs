@@ -171,8 +171,13 @@ impl HDWallet {
         password: SecretString,
         word_count: MnemonicWordCount,
     ) -> Result<Self, HdWrapError> {
-        let mut rng = rand::rngs::OsRng::new().map_err(|e| HdWrapError::HDError(e.into()))?;
-        let mnemonic = Mnemonic::generate_in_with(&mut rng, Language::English, word_count.into())
+        let mut rng = OsRng;
+        let word_count_usize: usize = word_count.into();
+        let entropy_bytes = (word_count_usize / 3) * 4;
+        const MAX_NB_WORDS: usize = 24;
+        let mut entropy = [0u8; (MAX_NB_WORDS / 3) * 4];
+        rand_core::RngCore::fill_bytes(&mut rng, &mut entropy[0..entropy_bytes]);
+        let mnemonic = Mnemonic::from_entropy_in(Language::English, &entropy[0..entropy_bytes])
             .map_err(|e| HdWrapError::HDError(e.into()))?;
         let seed = mnemonic.to_seed_normalized(password.expose_secret());
         let seed = Seed::new(seed);

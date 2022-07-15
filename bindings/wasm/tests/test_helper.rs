@@ -82,7 +82,7 @@ pub(crate) fn get_private_key(mnemonic: &str) -> PrivateKey {
     wallet.get_key("m/44'/394'/0'/0/0".to_owned()).unwrap()
 }
 
-pub(crate) fn grpc_web_client() -> GrpcWebClient {
+pub(crate) fn tonic_web_wasm_client() -> GrpcWebClient {
     GrpcWebClient::new(GRPC_WEB_URL.to_owned())
 }
 
