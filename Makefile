@@ -3,7 +3,11 @@ UNAME := $(shell uname)
 cpp_example = ./example/cpp-example
 
 cpp_docs = ./docs/cpp
-.PHONY: wasm js wasmweb android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests mobile-release
+.PHONY: install-uniffi-bindgen wasm js wasmweb android ios test clean cleanall mac_install cpp python-tests lint-fix lint-py wasm-tests wasm-ci-tests proto cpp-ci-tests cpp-tests mobile-release
+
+install-uniffi-bindgen:
+	cargo install uniffi_bindgen --version \
+		$(shell cargo tree --no-default-features --features uniffi-binding | grep "uniffi v" | sed "s/.*uniffi v\([0-9.]*\).*/\1/g")
 
 wasm:
 	wasm-pack build --scope crypto-com bindings/wasm
