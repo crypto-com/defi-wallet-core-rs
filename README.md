@@ -51,6 +51,11 @@ uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --lang
 wasm-pack build --scope crypto-com bindings/wasm
 ```
 
+### Python
+```bash
+uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language python --out-dir bindings/python
+```
+
 ## Building
 
 ## Building Proto files from source
