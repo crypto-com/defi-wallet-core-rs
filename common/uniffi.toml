@@ -6,3 +6,6 @@ cdylib_name = "dwc-common"
 ffi_module_name = "DefiWalletCore"
 ffi_module_filename = "dwc_commonFFI"
 generate_module_map = false
+
+[bindings.python]
+cdylib_name = "defi_wallet_core_common"
