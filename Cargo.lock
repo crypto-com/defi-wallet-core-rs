@@ -1054,7 +1054,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-common"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "base64 0.13.0",
@@ -1097,7 +1097,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-cpp"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "cosmos-sdk-proto",
@@ -1128,7 +1128,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-wasm"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "console_error_panic_hook",
  "cosmos-sdk-proto",
@@ -4215,9 +4215,9 @@ dependencies = [
 
 [[package]]
 name = "tendermint-config"
-version = "0.23.5"
+version = "0.23.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5a5c41141b56f1e0463182d910b8ccb84fd4abe61a4290a89794d44ad3e15a9"
+checksum = "f6c56ee93f4e9b7e7daba86d171f44572e91b741084384d0ae00df7991873dfd"
 dependencies = [
  "flex-error",
  "serde",
@@ -4260,9 +4260,9 @@ dependencies = [
 
 [[package]]
 name = "tendermint-rpc"
-version = "0.23.5"
+version = "0.23.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c4a92790ed1f844984ce78436c9bdd0931034b387ee6158f0f0731956285d6f"
+checksum = "a13e63f57ee05a1e927887191c76d1b139de9fa40c180b9f8727ee44377242a6"
 dependencies = [
  "bytes",
  "flex-error",
