@@ -1,4 +1,7 @@
 # Changelog
+## [0.x.x] - unreleased
+### Added
+- Add denomination query support to UniFFI bindings
 
 ## [0.2.1] - 2022-07-18
 ### Added

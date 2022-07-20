@@ -1,6 +1,11 @@
 use super::error::RestError;
 #[cfg(not(target_arch = "wasm32"))]
-use cosmos_sdk_proto::cosmos::tx::v1beta1::{service_client::ServiceClient, SimulateRequest};
+use cosmos_sdk_proto::cosmos::{
+    bank::v1beta1::{query_client::QueryClient, Metadata, QueryDenomMetadataRequest},
+    tx::v1beta1::{service_client::ServiceClient, SimulateRequest},
+};
+#[cfg(not(target_arch = "wasm32"))]
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use tendermint_rpc::{endpoint::broadcast::tx_sync, request, response};
 
@@ -161,6 +166,73 @@ pub fn simulate_blocking(grpc_url: &str, tx: Vec<u8>) -> Result<u64, RestError> 
     Ok(result.gas_used)
 }
 
+/// Metadata about a coin denomination
+#[cfg(not(target_arch = "wasm32"))]
+#[derive(Debug)]
+pub struct DenomMetadata {
+    /// "base represents the base denom (should be the DenomUnit with exponent = 0)."
+    pub base: String,
+    /// "name defines the name of the token (eg: Cosmos Atom)"
+    pub name: String,
+    /// description of the denomination
+    pub description: String,
+    /// "display indicates the suggested denom that should be displayed in clients."
+    pub display: String,
+    /// "symbol is the token symbol usually shown on exchanges (eg: ATOM). This can be the same as the display."
+    pub symbol: String,
+    /// known unit measures with aliases, formatted in json
+    pub denom_units: String,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl From<Metadata> for DenomMetadata {
+    fn from(md: Metadata) -> Self {
+        let denom_units = format!(
+            "[{}]",
+            md.denom_units
+                .iter()
+                .map(|unit| {
+                    let aliases = unit.aliases.iter().map(|x| format!("\"{}\"", x)).join(",");
+
+                    format!(
+                        "{{\"denom\":\"{}\",\"exponent\":{},\"aliases\":[{}]}}",
+                        unit.denom, unit.exponent, aliases
+                    )
+                })
+                .join(",")
+        );
+        Self {
+            base: md.base,
+            name: md.name,
+            description: md.description,
+            display: md.display,
+            symbol: md.symbol,
+            denom_units,
+        }
+    }
+}
+
+/// given the gRPC endpoint and the denomination,
+/// it'll return the denomination metadata
+#[cfg(not(target_arch = "wasm32"))]
+fn get_denom_metadata_blocking(grpc_url: &str, denom: String) -> Result<DenomMetadata, RestError> {
+    // TODO: pass-in runtime (constructed inside the client?)
+    // as part of this refactoring: https://github.com/crypto-com/defi-wallet-core-rs/issues/511 ?
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
+    let result = rt.block_on(async move {
+        let mut client = QueryClient::connect(grpc_url.to_owned())
+            .await
+            .map_err(RestError::GRPCTransportError)?;
+        let request = QueryDenomMetadataRequest { denom };
+        let res = client
+            .denom_metadata(request)
+            .await
+            .map_err(RestError::GRPCError)?;
+        res.into_inner().metadata.ok_or(RestError::MissingResult)
+    })?;
+    Ok(result.into())
+}
+
 /// return the balance (async for JS/WASM)
 pub async fn get_account_balance(
     api_url: &str,
@@ -300,6 +372,11 @@ impl CosmosSDKClient {
     /// return the account details (blocking)
     pub fn get_account_details(&self, address: &str) -> Result<RawRpcAccountResponse, RestError> {
         get_account_details_blocking(&self.rest_api_url, address)
+    }
+
+    /// return the denomination metadata (blocking)
+    pub fn get_denom_metadata(&self, denom: &str) -> Result<DenomMetadata, RestError> {
+        get_denom_metadata_blocking(&self.grpc_url, denom.to_owned())
     }
 
     /// it'll submit the transaction for simulating its execution and return the used gas.
