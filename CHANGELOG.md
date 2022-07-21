@@ -3,6 +3,9 @@
 ### Added
 - Add denomination query support to UniFFI bindings
 
+### Changed
+- Extend UniFFI broadcast transaction binding to take an optional argument to specify the broadcast mode
+
 ## [0.2.1] - 2022-07-18
 ### Added
 - Add CMake Support

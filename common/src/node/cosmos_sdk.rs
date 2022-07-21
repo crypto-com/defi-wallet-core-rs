@@ -7,7 +7,10 @@ use cosmos_sdk_proto::cosmos::{
 #[cfg(not(target_arch = "wasm32"))]
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use tendermint_rpc::{endpoint::broadcast::tx_sync, request, response};
+use tendermint_rpc::{
+    endpoint::broadcast::{tx_async, tx_commit, tx_sync},
+    request, response,
+};
 
 /// Response from the balance API
 #[derive(Serialize, Deserialize)]
@@ -287,6 +290,50 @@ pub async fn broadcast_tx_sync(
         .map_err(RestError::RequestError)
 }
 
+/// The choice for Tendermint JSON-RPC transaction broadcast endpoint
+pub enum TxBroadcastMode {
+    /// returns the checkTx result
+    Sync,
+    /// returns immediately
+    Async,
+    /// returns the checkTx + deliverTx results or times out
+    /// (mainly for development)
+    Commit,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+macro_rules! broadcast_tx {
+    ($mode:ident, $raw_signed_tx:expr, $tendermint_rpc_url:expr) => {{
+        let request = request::Wrapper::new($mode::Request {
+            tx: $raw_signed_tx.into(),
+        });
+        let rpc_result = reqwest::blocking::Client::new()
+            .post($tendermint_rpc_url)
+            .json(&request)
+            .send()
+            .map_err(RestError::RequestError)?
+            .json::<response::Wrapper<$mode::Response>>()
+            .map_err(RestError::RequestError)?
+            .into_result()
+            .map_err(|_e| RestError::MissingResult)?;
+
+        Ok(rpc_result.into())
+    }};
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn broadcast_tx_blocking(
+    tendermint_rpc_url: &str,
+    raw_signed_tx: Vec<u8>,
+    mode: TxBroadcastMode,
+) -> Result<TxBroadcastResult, RestError> {
+    match mode {
+        TxBroadcastMode::Sync => broadcast_tx!(tx_sync, raw_signed_tx, tendermint_rpc_url),
+        TxBroadcastMode::Async => broadcast_tx!(tx_async, raw_signed_tx, tendermint_rpc_url),
+        TxBroadcastMode::Commit => broadcast_tx!(tx_commit, raw_signed_tx, tendermint_rpc_url),
+    }
+}
+
 /// a subset of `tx_sync::Response` for UniFFI
 #[derive(serde::Serialize, Debug)]
 pub struct TxBroadcastResult {
@@ -298,6 +345,36 @@ pub struct TxBroadcastResult {
     pub log: String,
 }
 
+impl From<tx_sync::Response> for TxBroadcastResult {
+    fn from(resp: tx_sync::Response) -> Self {
+        TxBroadcastResult {
+            code: resp.code.value(),
+            log: resp.log.to_string(),
+            tx_hash_hex: resp.hash.to_string(),
+        }
+    }
+}
+
+impl From<tx_async::Response> for TxBroadcastResult {
+    fn from(resp: tx_async::Response) -> Self {
+        TxBroadcastResult {
+            code: resp.code.value(),
+            log: resp.log.to_string(),
+            tx_hash_hex: resp.hash.to_string(),
+        }
+    }
+}
+
+impl From<tx_commit::Response> for TxBroadcastResult {
+    fn from(resp: tx_commit::Response) -> Self {
+        TxBroadcastResult {
+            code: resp.deliver_tx.code.value(),
+            log: resp.deliver_tx.log.to_string(),
+            tx_hash_hex: resp.hash.to_string(),
+        }
+    }
+}
+
 /// broadcast the tx (blocking for other platforms;
 /// platform-guarded as JS/WASM doesn't support the reqwest blocking)
 #[cfg(not(target_arch = "wasm32"))]
@@ -305,24 +382,7 @@ pub fn broadcast_tx_sync_blocking(
     tendermint_rpc_url: &str,
     raw_signed_tx: Vec<u8>,
 ) -> Result<TxBroadcastResult, RestError> {
-    let request = request::Wrapper::new(tx_sync::Request {
-        tx: raw_signed_tx.into(),
-    });
-    let rpc_result = reqwest::blocking::Client::new()
-        .post(tendermint_rpc_url)
-        .json(&request)
-        .send()
-        .map_err(RestError::RequestError)?
-        .json::<response::Wrapper<tx_sync::Response>>()
-        .map_err(RestError::RequestError)?
-        .into_result()
-        .map_err(|_e| RestError::MissingResult)?;
-
-    Ok(TxBroadcastResult {
-        tx_hash_hex: rpc_result.hash.to_string(),
-        code: rpc_result.code.value(),
-        log: rpc_result.log.to_string(),
-    })
+    broadcast_tx_blocking(tendermint_rpc_url, raw_signed_tx, TxBroadcastMode::Sync)
 }
 
 /// the client facade for communication with a Cosmos SDK-based node
@@ -356,8 +416,14 @@ impl CosmosSDKClient {
     }
 
     /// broadcast the tx (blocking)
-    pub fn broadcast_tx(&self, raw_signed_tx: Vec<u8>) -> Result<TxBroadcastResult, RestError> {
-        broadcast_tx_sync_blocking(&self.tendermint_rpc_url, raw_signed_tx)
+    /// default mode is "sync"
+    pub fn broadcast_tx(
+        &self,
+        raw_signed_tx: Vec<u8>,
+        mode: Option<TxBroadcastMode>,
+    ) -> Result<TxBroadcastResult, RestError> {
+        let txmode = mode.unwrap_or(TxBroadcastMode::Sync);
+        broadcast_tx_blocking(&self.tendermint_rpc_url, raw_signed_tx, txmode)
     }
 
     /// return the balance (blocking)
