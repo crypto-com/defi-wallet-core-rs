@@ -226,6 +226,13 @@ dictionary TxBroadcastResult {
     string log;
 };
 
+[Enum]
+interface TxBroadcastMode {
+    Sync();
+    Async();
+    Commit();
+};
+
 dictionary DenomMetadata {
     string base;
     string name;
@@ -239,7 +246,7 @@ interface CosmosSDKClient {
     constructor(string tendermint_rpc_url, string rest_api_url, BalanceApiVersion balance_api_version, string grpc_url);
 
     [Throws=RestError]
-    TxBroadcastResult broadcast_tx(sequence<u8> raw_signed_tx);
+    TxBroadcastResult broadcast_tx(sequence<u8> raw_signed_tx, TxBroadcastMode? mode);
 
     [Throws=RestError]
     RawRpcBalance get_account_balance([ByRef] string address, [ByRef] string denom);
