@@ -417,6 +417,8 @@ enum EthError {
   "AbiError",
   "Eip712Error",
   "JsonError",
+  "ClientError",
+  "HttpAgentError",
 };
 
 [Enum]

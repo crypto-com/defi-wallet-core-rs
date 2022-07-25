@@ -53,3 +53,7 @@ example/cpp-example/libdefi_wallet_core_cpp.a
 
 # python stuff
 __pycache__
+
+example/cpp-example/sdk/*
+example/vs-example/vs-example/*
+example/cpp-example/cppexamplestatic

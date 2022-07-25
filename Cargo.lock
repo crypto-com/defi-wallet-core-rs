@@ -1066,6 +1066,7 @@ dependencies = [
  "ibc-proto",
  "itertools",
  "lazy_static",
+ "once_cell",
  "prost",
  "rand 0.6.5",
  "rand 0.7.3",

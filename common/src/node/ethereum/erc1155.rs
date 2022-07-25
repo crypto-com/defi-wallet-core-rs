@@ -1,14 +1,14 @@
 use super::address_from_str;
 use crate::contract::{Contract, ContractCall};
+use crate::provider::get_ethers_provider;
 use crate::{u256_from_str, EthError};
-use ethers::prelude::{Address, Http, Provider, U256};
-
+use ethers::prelude::{Address, U256};
 pub async fn get_uri(
     contract_address: &str,
     token_id: &str,
     web3api_url: &str,
 ) -> Result<String, EthError> {
-    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let client = get_ethers_provider(web3api_url).await?;
     let contract = Contract::new_erc1155(contract_address, client)?;
     let token_id = u256_from_str(token_id)?;
     let call = contract.uri(token_id);
@@ -31,7 +31,7 @@ pub async fn get_is_approved_for_all(
     operator: &str,
     web3api_url: &str,
 ) -> Result<bool, EthError> {
-    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let client = get_ethers_provider(web3api_url).await?;
     let contract = Contract::new_erc1155(contract_address, client)?;
     let owner = address_from_str(owner)?;
     let operator = address_from_str(operator)?;
@@ -61,7 +61,7 @@ pub async fn get_balance_of_batch(
     token_ids: Vec<&str>,
     web3api_url: &str,
 ) -> Result<Vec<U256>, EthError> {
-    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let client = get_ethers_provider(web3api_url).await?;
     let contract = Contract::new_erc1155(contract_address, client)?;
     let account_addresses = account_addresses
         .iter()

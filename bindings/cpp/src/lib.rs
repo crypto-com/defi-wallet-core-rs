@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use cxx::{type_id, ExternType};
+use defi_wallet_core_common::node::ethereum::provider::set_ethers_httpagent;
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx,
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
@@ -560,6 +561,9 @@ pub mod ffi {
             web3api_url: &str,
             polling_interval_ms: u64,
         ) -> Result<CronosTransactionReceiptRaw>;
+
+        /// set cronos http-agent name
+        pub fn set_cronos_httpagent(agent: &str) -> Result<()>;
 
     } // end of RUST block
 } // end of ffi block
@@ -1162,4 +1166,9 @@ pub fn new_eth_tx_info() -> ffi::EthTxInfoRaw {
         gas_price_unit: ffi::EthAmount::WeiDecimal,
         data: vec![],
     }
+}
+
+pub fn set_cronos_httpagent(agent: &str) -> Result<()> {
+    set_ethers_httpagent(agent)?;
+    Ok(())
 }
