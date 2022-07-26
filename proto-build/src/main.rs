@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2022, Cosmos Rust authors (licensed under the Apache License Version 2.0)
-// Modifications Copyright (c) 2022, DeFi Labs (licensed under the Apache License Version 2.0)
+// Modifications Copyright (c) 2022-present, Crypto.com (licensed under the Apache License Version 2.0)
 
 use regex::Regex;
 use std::{
