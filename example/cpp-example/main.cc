@@ -14,6 +14,7 @@
 
 int main(int argc, char *argv[]) {
   try {
+    org::defi_wallet_core::set_cronos_httpagent("cronos-wallet-cpp-example");
     chainmain_process();   // chain-main
     test_chainmain_nft();  // chainmain nft tests
     test_login();          // decentralized login

@@ -1,24 +1,24 @@
 use super::address_from_str;
 use crate::contract::{Contract, ContractCall};
+use crate::provider::get_ethers_provider;
 use crate::EthError;
-use ethers::prelude::{Http, Provider, U256};
-
+use ethers::prelude::U256;
 pub async fn get_name(contract_address: &str, web3api_url: &str) -> Result<String, EthError> {
-    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let client = get_ethers_provider(web3api_url).await?;
     let contract = Contract::new_erc20(contract_address, client)?;
     let call = contract.name();
     ContractCall::from(call).call().await
 }
 
 pub async fn get_symbol(contract_address: &str, web3api_url: &str) -> Result<String, EthError> {
-    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let client = get_ethers_provider(web3api_url).await?;
     let contract = Contract::new_erc20(contract_address, client)?;
     let call = contract.symbol();
     ContractCall::from(call).call().await
 }
 
 pub async fn get_decimals(contract_address: &str, web3api_url: &str) -> Result<u8, EthError> {
-    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let client = get_ethers_provider(web3api_url).await?;
     let contract = Contract::new_erc20(contract_address, client)?;
     let call = contract.decimals();
     ContractCall::from(call).call().await
@@ -30,7 +30,7 @@ pub async fn get_allowance(
     spender: &str,
     web3api_url: &str,
 ) -> Result<U256, EthError> {
-    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let client = get_ethers_provider(web3api_url).await?;
     let contract = Contract::new_erc20(contract_address, client)?;
     let owner = address_from_str(owner)?;
     let spender = address_from_str(spender)?;
@@ -39,7 +39,7 @@ pub async fn get_allowance(
 }
 
 pub async fn get_total_supply(contract_address: &str, web3api_url: &str) -> Result<U256, EthError> {
-    let client = Provider::<Http>::try_from(web3api_url).map_err(EthError::NodeUrl)?;
+    let client = get_ethers_provider(web3api_url).await?;
     let contract = Contract::new_erc20(contract_address, client)?;
     let call = contract.total_supply();
     ContractCall::from(call).call().await
