@@ -6,7 +6,7 @@ use cosmos_sdk_proto::cosmos::distribution::v1beta1::{
     MsgSetWithdrawAddress, MsgWithdrawDelegatorReward,
 };
 use cosmos_sdk_proto::cosmos::staking::v1beta1::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
-use cosmrs::tx::MsgProto;
+use cosmos_sdk_proto::traits::TypeUrl;
 use eyre::WrapErr;
 use ibc::applications::transfer::msgs::transfer;
 use prost::Message;
