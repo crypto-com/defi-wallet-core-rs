@@ -7,7 +7,7 @@ use crate::transaction::cosmos_sdk::parser::structs::{
 };
 use crate::transaction::cosmos_sdk::parser::CosmosParser;
 use crate::transaction::cosmos_sdk::CosmosError;
-use cosmrs::tx::MsgProto;
+use cosmos_sdk_proto::traits::TypeUrl;
 use eyre::WrapErr;
 use prost::Message;
 
