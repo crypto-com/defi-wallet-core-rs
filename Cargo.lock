@@ -951,8 +951,8 @@ dependencies = [
 
 [[package]]
 name = "cxx-build"
-version = "1.0.67"
-source = "git+https://github.com/crypto-com/cxx.git?rev=42b011184b6d5a593cd7513edb1d554e0f086a0f#42b011184b6d5a593cd7513edb1d554e0f086a0f"
+version = "1.0.72"
+source = "git+https://github.com/crypto-com/cxx.git?rev=0cbae78a33dadbc601448c3b9cb955df568793ef#0cbae78a33dadbc601448c3b9cb955df568793ef"
 dependencies = [
  "cc",
  "codespan-reporting",
