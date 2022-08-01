@@ -56,7 +56,7 @@ tonic = { version = "0.7", default-features = false, features = ["codegen", "pro
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 # tonic-web-wasm-client would be replaced if tonic has native grpc-web support.
 # Check https://github.com/hyperium/tonic/issues/645
-tonic-web-wasm-client = "0.1"
+tonic-web-wasm-client = "0.2"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 cosmos-sdk-proto = { version = "0.13", features = ["grpc"] }
