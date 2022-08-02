@@ -23,7 +23,7 @@ bech32 = "0.9"
 bip39 = "1"
 cosmrs = "0.8"
 eyre = "0.6"
-ethers = { version = "0.15", features = ["rustls", "abigen"] }
+ethers = { version = "0.17", features = ["rustls", "abigen"] }
 ibc = { version = "0.17", default-features = false }
 ibc-proto = { version = "0.19", default-features = false }
 itertools = "0.10"
