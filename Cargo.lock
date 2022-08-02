@@ -790,7 +790,7 @@ dependencies = [
  "prost 0.10.4",
  "prost-types 0.10.1",
  "tendermint-proto",
- "tonic",
+ "tonic 0.7.2",
 ]
 
 [[package]]
@@ -1041,7 +1041,7 @@ dependencies = [
  "tendermint-rpc",
  "thiserror",
  "tokio",
- "tonic",
+ "tonic 0.8.0",
  "tonic-web-wasm-client",
  "uniffi",
  "uniffi_build",
@@ -1078,7 +1078,7 @@ dependencies = [
  "prost-types 0.11.0",
  "serde",
  "tendermint-proto",
- "tonic",
+ "tonic 0.8.0",
 ]
 
 [[package]]
@@ -3042,7 +3042,7 @@ dependencies = [
  "prost 0.10.4",
  "prost-build",
  "regex",
- "tonic",
+ "tonic 0.8.0",
  "tonic-build",
  "walkdir",
 ]
@@ -4413,6 +4413,38 @@ dependencies = [
  "pin-project",
  "prost 0.10.4",
  "prost-derive 0.10.1",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tower",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
+name = "tonic"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "498f271adc46acce75d66f639e4d35b31b2394c295c82496727dafa16d465dd2"
+dependencies = [
+ "async-stream",
+ "async-trait",
+ "axum",
+ "base64 0.13.0",
+ "bytes",
+ "futures-core",
+ "futures-util",
+ "h2",
+ "http",
+ "http-body",
+ "hyper",
+ "hyper-timeout",
+ "percent-encoding",
+ "pin-project",
+ "prost 0.11.0",
+ "prost-derive 0.11.0",
  "rustls-native-certs",
  "rustls-pemfile",
  "tokio",
@@ -4454,7 +4486,7 @@ dependencies = [
  "httparse",
  "reqwest",
  "thiserror",
- "tonic",
+ "tonic 0.7.2",
  "tower",
 ]
 

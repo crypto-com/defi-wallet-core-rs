@@ -52,7 +52,7 @@ defi-wallet-core-proto = { version = "0.1", path = "../proto" }
 # NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
 # FIXME: https://github.com/rust-bitcoin/rust-bip39/issues/14
 rand = { version = "0.7", default-features = false, features = ["wasm-bindgen"] }
-tonic = { version = "0.7", default-features = false, features = ["codegen", "prost"] }
+tonic = { version = "0.8", default-features = false, features = ["codegen", "prost"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 # tonic-web-wasm-client would be replaced if tonic has native grpc-web support.
 # Check https://github.com/hyperium/tonic/issues/645
