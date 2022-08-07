@@ -44,6 +44,9 @@ jobs:
             ${{ runner.os }}-gradle-
       - run: make install-uniffi-bindgen
       - run: |
+          export ANDROID_HOME=$HOME/Library/Android/sdk
+          export SDKMANAGER=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
+          echo y | $SDKMANAGER "ndk;21.4.7075529"
           export NDK_HOME=/Users/runner/Library/Android/sdk/ndk/21.4.7075529
           export JAVA_HOME=$JAVA_HOME_11_X64
           make android

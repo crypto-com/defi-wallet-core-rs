@@ -435,6 +435,12 @@ pub mod ffi {
         /// generates the HD wallet with a BIP39 backup phrase (English words) and password
         fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wallet>>;
 
+        /// get backup mnemonic phrase
+        fn get_backup_mnemonic_phrase(self: &Wallet) -> Result<String>;
+
+        /// generate mnemonics
+        fn generate_mnemonics(password: String, word_count: MnemonicWordCount) -> Result<String>;
+
         /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
         fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>>;
         /// returns the default address of the wallet
@@ -694,6 +700,14 @@ fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wal
     Ok(Box::new(Wallet { wallet }))
 }
 
+/// generate mnemonics
+fn generate_mnemonics(password: String, word_count: MnemonicWordCount) -> Result<String> {
+    let wallet = HDWallet::generate_wallet(Some(password), Some(word_count.into()))?;
+    wallet
+        .get_backup_mnemonic_phrase()
+        .ok_or_else(|| anyhow!("Cannot generate new mnemonics"))
+}
+
 /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
 fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>> {
     let wallet = HDWallet::recover_wallet(mnemonic, Some(password))?;
@@ -701,6 +715,13 @@ fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>> {
 }
 
 impl Wallet {
+    /// get backup mnemonic phrase
+    fn get_backup_mnemonic_phrase(self: &Wallet) -> Result<String> {
+        self.wallet
+            .get_backup_mnemonic_phrase()
+            .ok_or_else(|| anyhow!("No backup mnemonic phrase"))
+    }
+
     /// returns the default address of the wallet
     pub fn get_default_address(&self, coin: CoinType) -> Result<String> {
         self.get_address(coin, 0)

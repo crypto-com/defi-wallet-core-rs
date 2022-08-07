@@ -140,6 +140,7 @@
     <ClCompile Include="main.cc" />
     <ClCompile Include="chainmain.cc" />
     <ClCompile Include="cronos.cc" />
+    <ClCompile Include="wallet.cc" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="sdk\lib\defi_wallet_core_cpp.dll.lib" />

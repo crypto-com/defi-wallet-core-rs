@@ -39,6 +39,7 @@ static:
 		main.cc \
 		chainmain.cc \
 		cronos.cc \
+		wallet.cc \
 		$(sdk_dir)/lib/libdefi_wallet_core_cpp.a \
 		-std=c++11 \
 		$(FLAGS)
@@ -48,6 +49,7 @@ ifeq ($(UNAME), Linux)
 	$(CXX) -o cppexample \
 		main.cc \
 		chainmain.cc \
+		wallet.cc \
 		cronos.cc \
 		$(sdk_dir)/include/*.cc \
 		$(sdk_dir)/include/defi-wallet-core-cpp/src/*.cc \
@@ -61,6 +63,7 @@ ifeq ($(UNAME), Darwin)
 	$(CXX) -o cppexample \
 		main.cc \
 		chainmain.cc \
+		wallet.cc \
 		cronos.cc \
 		$(sdk_dir)/include/*.cc \
 		$(sdk_dir)/include/defi-wallet-core-cpp/src/*.cc \
