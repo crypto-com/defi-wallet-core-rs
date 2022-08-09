@@ -10,6 +10,8 @@ EXAMPLE_SOURCES = [
     "cronos.cc",
     "chainmain.h",
     "cronos.h",
+    "wallet.cc",
+    "wallet.h",
 ]
 
 SOURCES = [
