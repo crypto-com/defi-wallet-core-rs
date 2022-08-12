@@ -590,7 +590,7 @@ impl CosmosSDKMsg {
                 timeout_timestamp,
             } => {
                 let any = MsgTransfer {
-                    sender: Signer::from_str(&sender_address.to_string())?,
+                    sender: Signer::from_str(sender_address.as_ref())?,
                     receiver: Signer::from_str(receiver)?,
                     source_port: PortId::from_str(source_port)?,
                     source_channel: ChannelId::from_str(source_channel)?,
