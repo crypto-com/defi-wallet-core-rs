@@ -20,7 +20,7 @@
     "rust",
     "webpack"
   ],
-  "author": "DeFi Labs",
+  "author": "Crypto.com",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/rustwasm/create-wasm-app/issues"

@@ -1,11 +1,12 @@
 use anyhow::{anyhow, Result};
 use cxx::{type_id, ExternType};
+use defi_wallet_core_common::node::ethereum::provider::set_ethers_httpagent;
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx,
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
     BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, EthError, EthNetwork, EthTxInfo, HDWallet,
-    Height, LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey,
-    SingleCoin, TransactionReceipt, TxBroadcastResult, WalletCoin,
+    LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey, SingleCoin,
+    TimeoutHeight, TransactionReceipt, TxBroadcastResult, WalletCoin,
     COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 
@@ -264,7 +265,7 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
                     amount: format!("{}", token),
                     denom: denom.to_owned(),
                 },
-                timeout_height: Height {
+                timeout_height: TimeoutHeight {
                     revision_height: *revision_height,
                     revision_number: *revision_number,
                 },
@@ -434,6 +435,12 @@ pub mod ffi {
         /// generates the HD wallet with a BIP39 backup phrase (English words) and password
         fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wallet>>;
 
+        /// get backup mnemonic phrase
+        fn get_backup_mnemonic_phrase(self: &Wallet) -> Result<String>;
+
+        /// generate mnemonics
+        fn generate_mnemonics(password: String, word_count: MnemonicWordCount) -> Result<String>;
+
         /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
         fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>>;
         /// returns the default address of the wallet
@@ -560,6 +567,9 @@ pub mod ffi {
             web3api_url: &str,
             polling_interval_ms: u64,
         ) -> Result<CronosTransactionReceiptRaw>;
+
+        /// set cronos http-agent name
+        pub fn set_cronos_httpagent(agent: &str) -> Result<()>;
 
     } // end of RUST block
 } // end of ffi block
@@ -690,6 +700,14 @@ fn new_wallet(password: String, word_count: MnemonicWordCount) -> Result<Box<Wal
     Ok(Box::new(Wallet { wallet }))
 }
 
+/// generate mnemonics
+fn generate_mnemonics(password: String, word_count: MnemonicWordCount) -> Result<String> {
+    let wallet = HDWallet::generate_wallet(Some(password), Some(word_count.into()))?;
+    wallet
+        .get_backup_mnemonic_phrase()
+        .ok_or_else(|| anyhow!("Cannot generate new mnemonics"))
+}
+
 /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
 fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>> {
     let wallet = HDWallet::recover_wallet(mnemonic, Some(password))?;
@@ -697,6 +715,13 @@ fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>> {
 }
 
 impl Wallet {
+    /// get backup mnemonic phrase
+    fn get_backup_mnemonic_phrase(self: &Wallet) -> Result<String> {
+        self.wallet
+            .get_backup_mnemonic_phrase()
+            .ok_or_else(|| anyhow!("No backup mnemonic phrase"))
+    }
+
     /// returns the default address of the wallet
     pub fn get_default_address(&self, coin: CoinType) -> Result<String> {
         self.get_address(coin, 0)
@@ -935,7 +960,7 @@ pub fn get_ibc_transfer_signed_tx(
                 amount: format!("{}", token),
                 denom,
             },
-            timeout_height: Height {
+            timeout_height: TimeoutHeight {
                 revision_height,
                 revision_number,
             },
@@ -1051,7 +1076,8 @@ impl CppLoginInfo {
         let sig: [u8; 65] = signature
             .try_into()
             .map_err(|_e| EthError::SignatureError)?;
-        let result = self.logininfo.msg.verify(sig)?;
+        // FIXME: domain, nonce, timestamp
+        let result = self.logininfo.msg.verify(sig, None, None, None)?;
         Ok(result)
     }
 }
@@ -1161,4 +1187,9 @@ pub fn new_eth_tx_info() -> ffi::EthTxInfoRaw {
         gas_price_unit: ffi::EthAmount::WeiDecimal,
         data: vec![],
     }
+}
+
+pub fn set_cronos_httpagent(agent: &str) -> Result<()> {
+    set_ethers_httpagent(agent)?;
+    Ok(())
 }

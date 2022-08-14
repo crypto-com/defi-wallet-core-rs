@@ -1,6 +1,6 @@
 [package]
 name = "defi-wallet-core-wasm"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 rust-version = "1.57"
 
@@ -19,7 +19,7 @@ cronos-test = []
 [dependencies]
 defi-wallet-core-common = { path = "../../common", features = ["abi-contract"] }
 js-sys = "0.3"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
 wasm-bindgen-futures = "0.4"
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 # The `console_error_panic_hook` crate provides better debugging of panics by
@@ -38,10 +38,10 @@ wee_alloc = { version = "0.4", optional = true }
 tendermint = "0.23"
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.31"
+wasm-bindgen-test = "0.3"
 ethers = { version = "0.17", features = ["rustls"] }
-wasm-timer = "0.2.5"
+wasm-timer = "0.2"
 tendermint-rpc = "0.23"
 reqwest = { version = "0.11", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
-grpc-web-client = { git = "https://github.com/titanous/grpc-web-client"}
+tonic-web-wasm-client = "0.2"

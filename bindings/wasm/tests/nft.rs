@@ -183,7 +183,7 @@ fn test_denom2() -> Denom {
 async fn validate_issue() {
     let denom1 = test_denom1();
     let denom2 = test_denom2();
-    let mut grpc_client = grpc_web_client();
+    let mut grpc_client = tonic_web_wasm_client();
 
     let res = grpc_client
         .supply(denom1.id.clone(), SIGNER1.to_owned())
@@ -233,7 +233,7 @@ async fn validate_issue() {
 
 async fn validate_mint() {
     let denom1 = test_denom1();
-    let mut grpc_client = grpc_web_client();
+    let mut grpc_client = tonic_web_wasm_client();
 
     // Check nft after minting.
     let res = grpc_client
@@ -253,7 +253,7 @@ async fn validate_mint() {
 
 async fn validate_before_transfer() {
     let denom1 = test_denom1();
-    let mut grpc_client = grpc_web_client();
+    let mut grpc_client = tonic_web_wasm_client();
 
     // Check owner.
     let res = grpc_client
@@ -273,7 +273,7 @@ async fn validate_before_transfer() {
 
 async fn validate_after_transfer() {
     let denom1 = test_denom1();
-    let mut grpc_client = grpc_web_client();
+    let mut grpc_client = tonic_web_wasm_client();
 
     let res = grpc_client
         .nft(denom1.clone().id, TEST_TOKEN_ID.to_owned())
@@ -294,7 +294,7 @@ async fn validate_after_transfer() {
 
 async fn validate_edit() {
     let denom1 = test_denom1();
-    let mut grpc_client = grpc_web_client();
+    let mut grpc_client = tonic_web_wasm_client();
 
     let res = grpc_client
         .nft(denom1.id.clone(), TEST_TOKEN_ID.to_owned())
@@ -308,7 +308,7 @@ async fn validate_edit() {
 
 async fn validate_before_burn() {
     let denom1 = test_denom1();
-    let mut grpc_client = grpc_web_client();
+    let mut grpc_client = tonic_web_wasm_client();
 
     // Check supply.
     let res = grpc_client
@@ -321,7 +321,7 @@ async fn validate_before_burn() {
 
 async fn validate_after_burn() {
     let denom1 = test_denom1();
-    let mut grpc_client = grpc_web_client();
+    let mut grpc_client = tonic_web_wasm_client();
 
     let res = grpc_client
         .nft(denom1.clone().id, TEST_TOKEN_ID.to_owned())

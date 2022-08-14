@@ -26,7 +26,7 @@ pub use proto::luna_classic::wasm::v1beta1::*;
 
 pub use cosmrs::{tx::Msg, AccountId, Coin};
 pub use eyre::{Report as ErrorReport, Result};
-pub use ibc::Height;
+pub use ibc_proto::ibc::core::client::v1::Height;
 
 #[cfg(feature = "login")]
 pub use login::*;

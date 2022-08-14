@@ -2,7 +2,7 @@ use crate::{format_to_js_error, PrivateKey};
 use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
 use defi_wallet_core_common::{
     broadcast_tx_sync, build_signed_msg_tx, get_account_balance, get_account_details, node,
-    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, Height, Network, SingleCoin,
+    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, Network, SingleCoin, TimeoutHeight,
 };
 use js_sys::Promise;
 use serde::{Deserialize, Serialize};
@@ -278,7 +278,7 @@ impl CosmosMsg {
                     amount: token.to_string(),
                     denom,
                 },
-                timeout_height: Height {
+                timeout_height: TimeoutHeight {
                     revision_height,
                     revision_number,
                 },

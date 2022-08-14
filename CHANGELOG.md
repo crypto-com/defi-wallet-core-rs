@@ -1,4 +1,24 @@
 # Changelog
+## [0.x.x] - unreleased
+### Added
+- Add denomination query support to UniFFI bindings
+
+### Changed
+- Extend UniFFI broadcast transaction binding to take an optional argument to specify the broadcast mode
+
+## [0.2.1] - 2022-07-18
+### Added
+- Add CMake Support
+- Add env `CPP_EXAMPLE_PATH` for cpp integration test
+- Add a basic generation parser for EIP681
+- Add a Make command `install-uniffi-bindgen`
+
+### Changed
+- Replaced the GH action with manual `cargo clippy` call and removed the duplicate clippy steps/flow
+- Replace openssl with rustls
+- Change the cargo test executions to use `cargo llvm-cov`
+- Improve cpp integration test and assert rust::cxxbridge1::Error
+- Replace `grpc-web-client` with `tonic-web-wasm-client`
 
 ## [0.2.0] - 2022-06-21
 ### Added

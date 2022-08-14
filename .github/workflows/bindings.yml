@@ -14,10 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-      - run: cargo install uniffi_bindgen --version 0.19.1
+      - run: make install-uniffi-bindgen
       - run: wasm-pack build --scope crypto-com bindings/wasm
       - run: uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language kotlin --out-dir bindings/android
       - run: uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language swift --out-dir bindings/ios

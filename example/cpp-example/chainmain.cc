@@ -267,7 +267,7 @@ void test_login() {
   // no \n in end of string
   std::string info =
       "service.org wants you to sign in with your Ethereum account:\n"
-      "0xD09F7C8C4529CB5D387AA17E33D707C529A6F694\n"
+      "0xD09f7c8C4529cB5D387Aa17E33d707C529a6f694\n"
       "\n"
       "I accept the ServiceOrg Terms of Service: https://service.org/tos\n"
       "\n"

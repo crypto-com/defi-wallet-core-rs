@@ -11,7 +11,7 @@ project(cppexample VERSION 1.0)
 add_subdirectory(sdk)
 
 # static cppexample
-add_executable(cppexamplestatic main.cc chainmain.cc cronos.cc)
+add_executable(cppexamplestatic main.cc chainmain.cc cronos.cc wallet.cc)
 if (UNIX AND NOT APPLE)
   target_link_libraries(cppexamplestatic PUBLIC ${DEFI_WALLET_CORE_CPP_LIB} pthread dl)
 else()
@@ -19,5 +19,5 @@ else()
 endif()
 
 # dynamic cppexample
-add_executable(cppexample main.cc chainmain.cc cronos.cc)
+add_executable(cppexample main.cc chainmain.cc cronos.cc wallet.cc)
 target_link_libraries(cppexample PUBLIC ${RUST_LIB} ${DEFI_WALLET_CORE_CPP_DYLIB} defi_wallet_core_cpp)

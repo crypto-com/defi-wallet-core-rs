@@ -172,7 +172,7 @@ impl TryFrom<&SingleCoin> for Coin {
                 }
             }
             SingleCoin::Other { amount, denom } => Coin {
-                amount: amount.parse().map_err(|_| eyre!("not an amount"))?,
+                amount: amount.parse().wrap_err("amount parse error")?,
                 denom: denom.parse()?,
             },
         })

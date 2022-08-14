@@ -1,8 +1,16 @@
 use super::error::RestError;
 #[cfg(not(target_arch = "wasm32"))]
-use cosmos_sdk_proto::cosmos::tx::v1beta1::{service_client::ServiceClient, SimulateRequest};
+use cosmos_sdk_proto::cosmos::{
+    bank::v1beta1::{query_client::QueryClient, Metadata, QueryDenomMetadataRequest},
+    tx::v1beta1::{service_client::ServiceClient, SimulateRequest},
+};
+#[cfg(not(target_arch = "wasm32"))]
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use tendermint_rpc::{endpoint::broadcast::tx_sync, request, response};
+use tendermint_rpc::{
+    endpoint::broadcast::{tx_async, tx_commit, tx_sync},
+    request, response,
+};
 
 /// Response from the balance API
 #[derive(Serialize, Deserialize)]
@@ -161,6 +169,73 @@ pub fn simulate_blocking(grpc_url: &str, tx: Vec<u8>) -> Result<u64, RestError> 
     Ok(result.gas_used)
 }
 
+/// Metadata about a coin denomination
+#[cfg(not(target_arch = "wasm32"))]
+#[derive(Debug)]
+pub struct DenomMetadata {
+    /// "base represents the base denom (should be the DenomUnit with exponent = 0)."
+    pub base: String,
+    /// "name defines the name of the token (eg: Cosmos Atom)"
+    pub name: String,
+    /// description of the denomination
+    pub description: String,
+    /// "display indicates the suggested denom that should be displayed in clients."
+    pub display: String,
+    /// "symbol is the token symbol usually shown on exchanges (eg: ATOM). This can be the same as the display."
+    pub symbol: String,
+    /// known unit measures with aliases, formatted in json
+    pub denom_units: String,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl From<Metadata> for DenomMetadata {
+    fn from(md: Metadata) -> Self {
+        let denom_units = format!(
+            "[{}]",
+            md.denom_units
+                .iter()
+                .map(|unit| {
+                    let aliases = unit.aliases.iter().map(|x| format!("\"{}\"", x)).join(",");
+
+                    format!(
+                        "{{\"denom\":\"{}\",\"exponent\":{},\"aliases\":[{}]}}",
+                        unit.denom, unit.exponent, aliases
+                    )
+                })
+                .join(",")
+        );
+        Self {
+            base: md.base,
+            name: md.name,
+            description: md.description,
+            display: md.display,
+            symbol: md.symbol,
+            denom_units,
+        }
+    }
+}
+
+/// given the gRPC endpoint and the denomination,
+/// it'll return the denomination metadata
+#[cfg(not(target_arch = "wasm32"))]
+fn get_denom_metadata_blocking(grpc_url: &str, denom: String) -> Result<DenomMetadata, RestError> {
+    // TODO: pass-in runtime (constructed inside the client?)
+    // as part of this refactoring: https://github.com/crypto-com/defi-wallet-core-rs/issues/511 ?
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| RestError::AsyncRuntimeError)?;
+    let result = rt.block_on(async move {
+        let mut client = QueryClient::connect(grpc_url.to_owned())
+            .await
+            .map_err(RestError::GRPCTransportError)?;
+        let request = QueryDenomMetadataRequest { denom };
+        let res = client
+            .denom_metadata(request)
+            .await
+            .map_err(RestError::GRPCError)?;
+        res.into_inner().metadata.ok_or(RestError::MissingResult)
+    })?;
+    Ok(result.into())
+}
+
 /// return the balance (async for JS/WASM)
 pub async fn get_account_balance(
     api_url: &str,
@@ -215,6 +290,50 @@ pub async fn broadcast_tx_sync(
         .map_err(RestError::RequestError)
 }
 
+/// The choice for Tendermint JSON-RPC transaction broadcast endpoint
+pub enum TxBroadcastMode {
+    /// returns the checkTx result
+    Sync,
+    /// returns immediately
+    Async,
+    /// returns the checkTx + deliverTx results or times out
+    /// (mainly for development)
+    Commit,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+macro_rules! broadcast_tx {
+    ($mode:ident, $raw_signed_tx:expr, $tendermint_rpc_url:expr) => {{
+        let request = request::Wrapper::new($mode::Request {
+            tx: $raw_signed_tx.into(),
+        });
+        let rpc_result = reqwest::blocking::Client::new()
+            .post($tendermint_rpc_url)
+            .json(&request)
+            .send()
+            .map_err(RestError::RequestError)?
+            .json::<response::Wrapper<$mode::Response>>()
+            .map_err(RestError::RequestError)?
+            .into_result()
+            .map_err(|_e| RestError::MissingResult)?;
+
+        Ok(rpc_result.into())
+    }};
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn broadcast_tx_blocking(
+    tendermint_rpc_url: &str,
+    raw_signed_tx: Vec<u8>,
+    mode: TxBroadcastMode,
+) -> Result<TxBroadcastResult, RestError> {
+    match mode {
+        TxBroadcastMode::Sync => broadcast_tx!(tx_sync, raw_signed_tx, tendermint_rpc_url),
+        TxBroadcastMode::Async => broadcast_tx!(tx_async, raw_signed_tx, tendermint_rpc_url),
+        TxBroadcastMode::Commit => broadcast_tx!(tx_commit, raw_signed_tx, tendermint_rpc_url),
+    }
+}
+
 /// a subset of `tx_sync::Response` for UniFFI
 #[derive(serde::Serialize, Debug)]
 pub struct TxBroadcastResult {
@@ -226,6 +345,36 @@ pub struct TxBroadcastResult {
     pub log: String,
 }
 
+impl From<tx_sync::Response> for TxBroadcastResult {
+    fn from(resp: tx_sync::Response) -> Self {
+        TxBroadcastResult {
+            code: resp.code.value(),
+            log: resp.log.to_string(),
+            tx_hash_hex: resp.hash.to_string(),
+        }
+    }
+}
+
+impl From<tx_async::Response> for TxBroadcastResult {
+    fn from(resp: tx_async::Response) -> Self {
+        TxBroadcastResult {
+            code: resp.code.value(),
+            log: resp.log.to_string(),
+            tx_hash_hex: resp.hash.to_string(),
+        }
+    }
+}
+
+impl From<tx_commit::Response> for TxBroadcastResult {
+    fn from(resp: tx_commit::Response) -> Self {
+        TxBroadcastResult {
+            code: resp.deliver_tx.code.value(),
+            log: resp.deliver_tx.log.to_string(),
+            tx_hash_hex: resp.hash.to_string(),
+        }
+    }
+}
+
 /// broadcast the tx (blocking for other platforms;
 /// platform-guarded as JS/WASM doesn't support the reqwest blocking)
 #[cfg(not(target_arch = "wasm32"))]
@@ -233,24 +382,7 @@ pub fn broadcast_tx_sync_blocking(
     tendermint_rpc_url: &str,
     raw_signed_tx: Vec<u8>,
 ) -> Result<TxBroadcastResult, RestError> {
-    let request = request::Wrapper::new(tx_sync::Request {
-        tx: raw_signed_tx.into(),
-    });
-    let rpc_result = reqwest::blocking::Client::new()
-        .post(tendermint_rpc_url)
-        .json(&request)
-        .send()
-        .map_err(RestError::RequestError)?
-        .json::<response::Wrapper<tx_sync::Response>>()
-        .map_err(RestError::RequestError)?
-        .into_result()
-        .map_err(|_e| RestError::MissingResult)?;
-
-    Ok(TxBroadcastResult {
-        tx_hash_hex: rpc_result.hash.to_string(),
-        code: rpc_result.code.value(),
-        log: rpc_result.log.to_string(),
-    })
+    broadcast_tx_blocking(tendermint_rpc_url, raw_signed_tx, TxBroadcastMode::Sync)
 }
 
 /// the client facade for communication with a Cosmos SDK-based node
@@ -284,8 +416,14 @@ impl CosmosSDKClient {
     }
 
     /// broadcast the tx (blocking)
-    pub fn broadcast_tx(&self, raw_signed_tx: Vec<u8>) -> Result<TxBroadcastResult, RestError> {
-        broadcast_tx_sync_blocking(&self.tendermint_rpc_url, raw_signed_tx)
+    /// default mode is "sync"
+    pub fn broadcast_tx(
+        &self,
+        raw_signed_tx: Vec<u8>,
+        mode: Option<TxBroadcastMode>,
+    ) -> Result<TxBroadcastResult, RestError> {
+        let txmode = mode.unwrap_or(TxBroadcastMode::Sync);
+        broadcast_tx_blocking(&self.tendermint_rpc_url, raw_signed_tx, txmode)
     }
 
     /// return the balance (blocking)
@@ -300,6 +438,11 @@ impl CosmosSDKClient {
     /// return the account details (blocking)
     pub fn get_account_details(&self, address: &str) -> Result<RawRpcAccountResponse, RestError> {
         get_account_details_blocking(&self.rest_api_url, address)
+    }
+
+    /// return the denomination metadata (blocking)
+    pub fn get_denom_metadata(&self, denom: &str) -> Result<DenomMetadata, RestError> {
+        get_denom_metadata_blocking(&self.grpc_url, denom.to_owned())
     }
 
     /// it'll submit the transaction for simulating its execution and return the used gas.
