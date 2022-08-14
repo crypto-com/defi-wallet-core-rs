@@ -6,10 +6,9 @@ use cosmos_sdk_proto::cosmos::distribution::v1beta1::{
     MsgSetWithdrawAddress, MsgWithdrawDelegatorReward,
 };
 use cosmos_sdk_proto::cosmos::staking::v1beta1::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
-use cosmrs::tx::MsgProto;
+use cosmos_sdk_proto::traits::{Message, TypeUrl};
 use eyre::WrapErr;
-use ibc::applications::ics20_fungible_token_transfer::msgs::transfer;
-use prost::Message;
+use ibc::applications::transfer::msgs::transfer;
 use tendermint_proto::Protobuf;
 
 /// Base parser for standard Cosmos messages

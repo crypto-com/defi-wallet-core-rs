@@ -4,9 +4,9 @@
 
 use crate::transaction::cosmos_sdk::CosmosError;
 use crate::utils::hex_decode;
+use cosmos_sdk_proto::traits::Message;
 use cosmrs::tx::{AuthInfo, Body};
 use eyre::WrapErr;
-use prost::Message;
 
 mod base_parser;
 mod crypto_org_parser;

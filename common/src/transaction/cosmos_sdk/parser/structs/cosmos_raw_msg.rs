@@ -1,5 +1,5 @@
 use crate::proto::chainmain;
-use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
+use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin, TimeoutHeight};
 use crate::transaction::nft::{
     DenomId, DenomName, MsgBurnNft, MsgEditNft, MsgIssueDenom, MsgMintNft, MsgTransferNft, TokenId,
     TokenUri,
@@ -10,12 +10,11 @@ use cosmrs::distribution::{MsgSetWithdrawAddress, MsgWithdrawDelegatorReward};
 use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
 use cosmrs::tx::Msg;
 use cosmrs::{AccountId, Any};
-use ibc::applications::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
+use ibc::applications::transfer::msgs::transfer::MsgTransfer;
 use ibc::core::ics24_host::identifier::{ChannelId, PortId};
 use ibc::signer::Signer;
 use ibc::timestamp::Timestamp;
 use ibc::tx_msg::Msg as IbcMsg;
-use ibc::Height;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -25,7 +24,7 @@ use std::str::FromStr;
 /// address. `CosmosRawMsg` is parsed directly from Protobuf or JSON, it should have the all fields
 /// of original message.
 #[non_exhaustive]
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum CosmosRawMsg {
     /// Normal message
     Normal { msg: CosmosRawNormalMsg },
@@ -140,17 +139,14 @@ impl TryFrom<MsgTransfer> for CosmosRawMsg {
     type Error = CosmosError;
 
     fn try_from(msg: MsgTransfer) -> Result<Self, Self::Error> {
-        let coin = msg
-            .token
-            .ok_or_else(|| eyre::eyre!("Missing token of MsgTransfer"))?;
         Ok(Self::Normal {
             msg: CosmosRawNormalMsg::IbcTransfer {
                 sender: msg.sender.to_string(),
                 receiver: msg.receiver.to_string(),
                 source_port: msg.source_port.to_string(),
                 source_channel: msg.source_channel.to_string(),
-                token: coin.into(),
-                timeout_height: msg.timeout_height,
+                token: msg.token.into(),
+                timeout_height: msg.timeout_height.into(),
                 timeout_timestamp: msg.timeout_timestamp.nanoseconds(),
             },
         })
@@ -226,7 +222,7 @@ impl From<chainmain::nft::v1::MsgBurnNft> for CosmosRawMsg {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "@type")]
 pub enum CosmosRawNormalMsg {
     /// MsgSend
@@ -302,7 +298,7 @@ pub enum CosmosRawNormalMsg {
         token: SingleCoin,
         /// Timeout height relative to the current block height.
         /// The timeout is disabled when set to 0.
-        timeout_height: Height,
+        timeout_height: TimeoutHeight,
         /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
         /// The timeout is disabled when set to 0.
         timeout_timestamp: u64,
@@ -383,13 +379,12 @@ impl CosmosRawNormalMsg {
                 timeout_timestamp,
             } => {
                 let any = MsgTransfer {
-                    sender: Signer::new(sender),
-                    receiver: Signer::new(receiver),
+                    sender: Signer::from_str(sender)?,
+                    receiver: Signer::from_str(receiver)?,
                     source_port: PortId::from_str(source_port)?,
                     source_channel: ChannelId::from_str(source_channel)?,
-                    token: Some(token.try_into()?),
-                    // TODO: timeout_height and timeout_timestamp cannot both be 0.
-                    timeout_height: *timeout_height,
+                    token: token.try_into()?,
+                    timeout_height: timeout_height.try_into()?,
                     timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
                 }
                 .to_any();
@@ -408,7 +403,7 @@ impl CosmosRawNormalMsg {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "@type")]
 pub enum CosmosRawCryptoOrgMsg {
     /// MsgIssueDenom

@@ -27,7 +27,7 @@ wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
 console_error_panic_hook = { version = "0.1", optional = true }
-cosmos-sdk-proto = { version = "0.10", default-features = false, features = ["cosmwasm"] }
+cosmos-sdk-proto = { version = "0.14", default-features = false, features = ["cosmwasm"] }
 
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
 # compared to the default allocator's ~10K. It is slower than the default
@@ -39,7 +39,7 @@ tendermint = "0.23"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.31"
-ethers = { git = "https://github.com/gakonst/ethers-rs", rev="b287fcca4dd392824f7f0643a51f759b0f5e5fd7", features = ["rustls"] }
+ethers = { version = "0.17", features = ["rustls"] }
 wasm-timer = "0.2.5"
 tendermint-rpc = "0.23"
 reqwest = { version = "0.11", default-features = false, features = ["blocking", "json", "rustls-tls"] }

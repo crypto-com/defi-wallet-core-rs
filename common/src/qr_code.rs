@@ -10,7 +10,7 @@ use crate::{abi::EthAbiParamType, EthAmount, EthError};
 
 /// Parameter value types in EIP681 requests
 /// TODO: negative/signed numbers?
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Value {
     Address(NameOrAddress),
     String(String),

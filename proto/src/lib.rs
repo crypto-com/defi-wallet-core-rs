@@ -1,3 +1,4 @@
+#![allow(clippy::derive_partial_eq_without_eq)]
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
@@ -6,7 +7,7 @@
 use cosmos_sdk_proto::cosmos;
 pub use tendermint_proto as tendermint;
 
-use cosmrs::tx::MsgProto;
+use cosmos_sdk_proto::traits::TypeUrl;
 
 /// The version (commit hash) of the Cosmos SDK used when generating this library.
 pub const CHAIN_MAIN_VERSION: &str = include_str!("prost/CHAIN_MAIN_COMMIT");
@@ -37,22 +38,22 @@ pub mod chainmain {
     }
 }
 
-impl MsgProto for chainmain::nft::v1::MsgIssueDenom {
+impl TypeUrl for chainmain::nft::v1::MsgIssueDenom {
     const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgIssueDenom";
 }
 
-impl MsgProto for chainmain::nft::v1::MsgMintNft {
+impl TypeUrl for chainmain::nft::v1::MsgMintNft {
     const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgMintNFT";
 }
 
-impl MsgProto for chainmain::nft::v1::MsgEditNft {
+impl TypeUrl for chainmain::nft::v1::MsgEditNft {
     const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgEditNFT";
 }
-impl MsgProto for chainmain::nft::v1::MsgTransferNft {
+impl TypeUrl for chainmain::nft::v1::MsgTransferNft {
     const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgTransferNFT";
 }
 
-impl MsgProto for chainmain::nft::v1::MsgBurnNft {
+impl TypeUrl for chainmain::nft::v1::MsgBurnNft {
     const TYPE_URL: &'static str = "/chainmain.nft.v1.MsgBurnNFT";
 }
 
@@ -69,6 +70,6 @@ pub mod luna_classic {
     }
 }
 
-impl MsgProto for luna_classic::wasm::v1beta1::MsgExecuteContract {
+impl TypeUrl for luna_classic::wasm::v1beta1::MsgExecuteContract {
     const TYPE_URL: &'static str = "terra.wasm.v1beta1.MsgExecuteContract";
 }

@@ -3,8 +3,9 @@ use ethers::abi::Detokenize;
 use ethers::contract::builders;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::prelude::{
-    abigen, Http, Middleware, Provider, SignerMiddleware, TransactionReceipt, Wallet, U256,
+    Http, Middleware, Provider, SignerMiddleware, TransactionReceipt, Wallet, U256,
 };
+use ethers_contract::abigen;
 use std::sync::Arc;
 
 abigen!(

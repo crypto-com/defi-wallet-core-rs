@@ -10,12 +10,13 @@ use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
 use cosmrs::tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo};
 use cosmrs::{AccountId, Any, Coin};
 use eyre::{eyre, Context};
-use ibc::applications::ics20_fungible_token_transfer::msgs::transfer::MsgTransfer;
+use ibc::applications::transfer::msgs::transfer::MsgTransfer;
+use ibc::core::ics02_client::height::Height;
+use ibc::core::ics04_channel::timeout::TimeoutHeight as IbcTimeoutHeight;
 use ibc::core::ics24_host::identifier::{ChannelId, PortId};
 use ibc::signer::Signer;
 use ibc::timestamp::Timestamp;
 use ibc::tx_msg::Msg as IbcMsg;
-use ibc::Height;
 use ibc_proto::cosmos::base::v1beta1::Coin as IbcCoin;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -45,7 +46,7 @@ pub const CRONOS_CHAIN_ID: &str = "cronosmainnet_25-1";
 pub const COSMOS_CHAIN_ID: &str = "cosmoshub-4";
 
 /// Network to work with
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub enum Network {
     /// Crypto.org Chain mainnet
     CryptoOrgMainnet,
@@ -102,7 +103,7 @@ impl Network {
 }
 
 /// single coin amount
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(untagged)]
 pub enum SingleCoin {
     /// basecro
@@ -171,7 +172,7 @@ impl TryFrom<&SingleCoin> for Coin {
                 }
             }
             SingleCoin::Other { amount, denom } => Coin {
-                amount: amount.parse()?,
+                amount: amount.parse().map_err(|_| eyre!("not an amount"))?,
                 denom: denom.parse()?,
             },
         })
@@ -258,6 +259,41 @@ impl From<cosmos_sdk_proto::cosmos::base::v1beta1::Coin> for SingleCoin {
         Self::Other {
             amount: coin.amount.to_string(),
             denom: coin.denom,
+        }
+    }
+}
+
+/// Timeout height
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
+pub struct TimeoutHeight {
+    /// revision number
+    pub revision_number: u64,
+    /// revision height
+    pub revision_height: u64,
+}
+
+impl TryFrom<&TimeoutHeight> for IbcTimeoutHeight {
+    type Error = CosmosError;
+
+    fn try_from(height: &TimeoutHeight) -> Result<Self, Self::Error> {
+        // IBC Height is invalid if revision height == 0.
+        // https://docs.rs/ibc/0.18.0/src/ibc/core/ics02_client/height.rs.html#26
+        if height.revision_height == 0 {
+            Ok(IbcTimeoutHeight::Never)
+        } else {
+            Ok(IbcTimeoutHeight::At(
+                Height::new(height.revision_number, height.revision_height)
+                    .map_err(|_| eyre!("failed to initialize an IBC Height"))?,
+            ))
+        }
+    }
+}
+
+impl From<IbcTimeoutHeight> for TimeoutHeight {
+    fn from(height: IbcTimeoutHeight) -> Self {
+        Self {
+            revision_number: height.commitment_revision_number(),
+            revision_height: height.commitment_revision_height(),
         }
     }
 }
@@ -411,7 +447,7 @@ pub enum CosmosSDKMsg {
         token: SingleCoin,
         /// Timeout height relative to the current block height.
         /// The timeout is disabled when set to 0.
-        timeout_height: Height,
+        timeout_height: TimeoutHeight,
         /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
         /// The timeout is disabled when set to 0.
         timeout_timestamp: u64,
@@ -589,13 +625,12 @@ impl CosmosSDKMsg {
                 timeout_timestamp,
             } => {
                 let any = MsgTransfer {
-                    sender: Signer::new(sender_address),
-                    receiver: Signer::new(receiver),
+                    sender: Signer::from_str(sender_address.as_ref())?,
+                    receiver: Signer::from_str(receiver)?,
                     source_port: PortId::from_str(source_port)?,
                     source_channel: ChannelId::from_str(source_channel)?,
-                    token: Some(token.try_into()?),
-                    // TODO: timeout_height and timeout_timestamp cannot both be 0.
-                    timeout_height: *timeout_height,
+                    token: token.try_into()?,
+                    timeout_height: timeout_height.try_into()?,
                     timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
                 }
                 .to_any();
@@ -726,12 +761,12 @@ mod tests {
     use std::sync::Arc;
 
     use crate::*;
+    use cosmos_sdk_proto::traits::Message;
     use cosmrs::bank::MsgSend;
     use cosmrs::crypto::secp256k1::SigningKey;
     use cosmrs::proto;
     use cosmrs::Coin;
     use cosmrs::Tx;
-    use prost::Message;
 
     const TX_INFO: CosmosSDKTxInfo = CosmosSDKTxInfo {
         account_number: 1,
@@ -1328,7 +1363,7 @@ mod tests {
                     amount: "100000000".to_string(),
                     denom: "basetcro".to_string(),
                 },
-                timeout_height: Height {
+                timeout_height: TimeoutHeight {
                     revision_number: 0,
                     revision_height: 0,
                 },
@@ -1353,7 +1388,7 @@ mod tests {
                     amount: "100000000".to_string(),
                     denom: "basetcro".to_string(),
                 },
-                timeout_height: Height {
+                timeout_height: TimeoutHeight {
                     revision_number: 0,
                     revision_height: 0,
                 },
