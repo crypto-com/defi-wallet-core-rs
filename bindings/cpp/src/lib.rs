@@ -5,8 +5,8 @@ use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx,
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
     BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, EthError, EthNetwork, EthTxInfo, HDWallet,
-    LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey, SingleCoin,
-    TimeoutHeight, TransactionReceipt, TxBroadcastResult, WalletCoin,
+    Height, LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey,
+    SingleCoin, TransactionReceipt, TxBroadcastResult, WalletCoin,
     COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 
@@ -265,7 +265,7 @@ impl From<&CosmosSDKMsgRaw> for CosmosSDKMsg {
                     amount: format!("{}", token),
                     denom: denom.to_owned(),
                 },
-                timeout_height: TimeoutHeight {
+                timeout_height: Height {
                     revision_height: *revision_height,
                     revision_number: *revision_number,
                 },
@@ -960,7 +960,7 @@ pub fn get_ibc_transfer_signed_tx(
                 amount: format!("{}", token),
                 denom,
             },
-            timeout_height: TimeoutHeight {
+            timeout_height: Height {
                 revision_height,
                 revision_number,
             },

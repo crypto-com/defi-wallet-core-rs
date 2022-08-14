@@ -1,5 +1,5 @@
 use crate::proto::chainmain;
-use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin, TimeoutHeight};
+use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
 use crate::transaction::nft::{
     DenomId, DenomName, MsgBurnNft, MsgEditNft, MsgIssueDenom, MsgMintNft, MsgTransferNft, TokenId,
     TokenUri,
@@ -11,10 +11,12 @@ use cosmrs::staking::{MsgBeginRedelegate, MsgDelegate, MsgUndelegate};
 use cosmrs::tx::Msg;
 use cosmrs::{AccountId, Any};
 use ibc::applications::transfer::msgs::transfer::MsgTransfer;
+use ibc::core::ics04_channel::timeout::TimeoutHeight;
 use ibc::core::ics24_host::identifier::{ChannelId, PortId};
 use ibc::signer::Signer;
 use ibc::timestamp::Timestamp;
 use ibc::tx_msg::Msg as IbcMsg;
+use ibc_proto::ibc::core::client::v1::Height;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -146,7 +148,10 @@ impl TryFrom<MsgTransfer> for CosmosRawMsg {
                 source_port: msg.source_port.to_string(),
                 source_channel: msg.source_channel.to_string(),
                 token: msg.token.into(),
-                timeout_height: msg.timeout_height.into(),
+                timeout_height: match msg.timeout_height {
+                    TimeoutHeight::Never => Height::default(),
+                    TimeoutHeight::At(height) => height.into(),
+                },
                 timeout_timestamp: msg.timeout_timestamp.nanoseconds(),
             },
         })
@@ -298,7 +303,7 @@ pub enum CosmosRawNormalMsg {
         token: SingleCoin,
         /// Timeout height relative to the current block height.
         /// The timeout is disabled when set to 0.
-        timeout_height: TimeoutHeight,
+        timeout_height: Height,
         /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
         /// The timeout is disabled when set to 0.
         timeout_timestamp: u64,
@@ -384,7 +389,8 @@ impl CosmosRawNormalMsg {
                     source_port: PortId::from_str(source_port)?,
                     source_channel: ChannelId::from_str(source_channel)?,
                     token: token.try_into()?,
-                    timeout_height: timeout_height.try_into()?,
+                    // TODO: timeout_height and timeout_timestamp cannot both be 0.
+                    timeout_height: TimeoutHeight::try_from(timeout_height.clone())?,
                     timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
                 }
                 .to_any();

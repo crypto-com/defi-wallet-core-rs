@@ -11,13 +11,13 @@ use cosmrs::tx::{self, Fee, Msg, Raw, SignDoc, SignerInfo};
 use cosmrs::{AccountId, Any, Coin};
 use eyre::{eyre, Context};
 use ibc::applications::transfer::msgs::transfer::MsgTransfer;
-use ibc::core::ics02_client::height::Height;
-use ibc::core::ics04_channel::timeout::TimeoutHeight as IbcTimeoutHeight;
+use ibc::core::ics04_channel::timeout::TimeoutHeight;
 use ibc::core::ics24_host::identifier::{ChannelId, PortId};
 use ibc::signer::Signer;
 use ibc::timestamp::Timestamp;
 use ibc::tx_msg::Msg as IbcMsg;
 use ibc_proto::cosmos::base::v1beta1::Coin as IbcCoin;
+use ibc_proto::ibc::core::client::v1::Height;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -263,41 +263,6 @@ impl From<cosmos_sdk_proto::cosmos::base::v1beta1::Coin> for SingleCoin {
     }
 }
 
-/// Timeout height
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
-pub struct TimeoutHeight {
-    /// revision number
-    pub revision_number: u64,
-    /// revision height
-    pub revision_height: u64,
-}
-
-impl TryFrom<&TimeoutHeight> for IbcTimeoutHeight {
-    type Error = CosmosError;
-
-    fn try_from(height: &TimeoutHeight) -> Result<Self, Self::Error> {
-        // IBC Height is invalid if revision height == 0.
-        // https://docs.rs/ibc/0.18.0/src/ibc/core/ics02_client/height.rs.html#26
-        if height.revision_height == 0 {
-            Ok(IbcTimeoutHeight::Never)
-        } else {
-            Ok(IbcTimeoutHeight::At(
-                Height::new(height.revision_number, height.revision_height)
-                    .map_err(|_| eyre!("failed to initialize an IBC Height"))?,
-            ))
-        }
-    }
-}
-
-impl From<IbcTimeoutHeight> for TimeoutHeight {
-    fn from(height: IbcTimeoutHeight) -> Self {
-        Self {
-            revision_number: height.commitment_revision_number(),
-            revision_height: height.commitment_revision_height(),
-        }
-    }
-}
-
 /// wrapper around 33-byte secp256k1 public key
 /// FIXME: investigate wrapping directly `cosmrs::crypto::PublicKey`
 pub struct PublicKeyBytesWrapper(pub Vec<u8>);
@@ -447,7 +412,7 @@ pub enum CosmosSDKMsg {
         token: SingleCoin,
         /// Timeout height relative to the current block height.
         /// The timeout is disabled when set to 0.
-        timeout_height: TimeoutHeight,
+        timeout_height: Height,
         /// Timeout timestamp (in nanoseconds) relative to the current block timestamp.
         /// The timeout is disabled when set to 0.
         timeout_timestamp: u64,
@@ -630,7 +595,8 @@ impl CosmosSDKMsg {
                     source_port: PortId::from_str(source_port)?,
                     source_channel: ChannelId::from_str(source_channel)?,
                     token: token.try_into()?,
-                    timeout_height: timeout_height.try_into()?,
+                    // TODO: timeout_height and timeout_timestamp cannot both be 0.
+                    timeout_height: TimeoutHeight::try_from(timeout_height.clone())?,
                     timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
                 }
                 .to_any();
@@ -1363,7 +1329,7 @@ mod tests {
                     amount: "100000000".to_string(),
                     denom: "basetcro".to_string(),
                 },
-                timeout_height: TimeoutHeight {
+                timeout_height: Height {
                     revision_number: 0,
                     revision_height: 0,
                 },
@@ -1388,7 +1354,7 @@ mod tests {
                     amount: "100000000".to_string(),
                     denom: "basetcro".to_string(),
                 },
-                timeout_height: TimeoutHeight {
+                timeout_height: Height {
                     revision_number: 0,
                     revision_height: 0,
                 },

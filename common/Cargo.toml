@@ -23,8 +23,7 @@ bech32 = "0.9"
 bip39 = "1"
 cosmrs = "0.9"
 eyre = "0.6"
-ethers = { version = "0.17", features = ["rustls"] }
-ethers-contract = { version = "0.17", features = ["abigen"] }
+ethers = { version = "0.17", features = ["rustls", "abigen"] }
 ibc = { version = "0.18", default-features = false }
 ibc-proto = { version = "0.20", default-features = false }
 itertools = "0.10"
@@ -52,7 +51,7 @@ cosmos-sdk-proto = { version = "0.14", default-features = false, features = ["co
 defi-wallet-core-proto = { version = "0.1", path = "../proto" }
 # NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
 # FIXME: https://github.com/rust-bitcoin/rust-bip39/issues/14
-rand = { version = "0.6", default-features = false, features = ["wasm-bindgen"] }
+rand = { version = "0.7", default-features = false, features = ["wasm-bindgen"] }
 tonic = { version = "0.8", default-features = false, features = ["codegen", "prost"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 # tonic-web-wasm-client would be replaced if tonic has native grpc-web support.

@@ -1,3 +1,4 @@
+// Ignore this clippy issue for generated `prost` code.
 #![allow(clippy::derive_partial_eq_without_eq)]
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
