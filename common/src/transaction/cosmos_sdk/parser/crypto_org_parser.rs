@@ -7,9 +7,8 @@ use crate::transaction::cosmos_sdk::parser::structs::{
 };
 use crate::transaction::cosmos_sdk::parser::CosmosParser;
 use crate::transaction::cosmos_sdk::CosmosError;
-use cosmos_sdk_proto::traits::TypeUrl;
+use cosmos_sdk_proto::traits::{Message, TypeUrl};
 use eyre::WrapErr;
-use prost::Message;
 
 /// Cosmos parser for `crypto.org` chain
 pub(crate) struct CryptoOrgParser {

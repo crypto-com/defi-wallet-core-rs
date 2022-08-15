@@ -1,5 +1,3 @@
-#![allow(clippy::derive_partial_eq_without_eq)] // FIXME: derive `Eq` on types
-
 /// Eth contract types generated from ABI
 pub mod contract;
 /// interactions with remote node RPC / API (querying, broadcast etc.)

@@ -19,7 +19,7 @@ pub struct BalanceResponse {
 }
 
 /// The raw balance data from the balance API
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct RawRpcBalance {
     /// denomination
     pub denom: String,
@@ -28,7 +28,7 @@ pub struct RawRpcBalance {
 }
 
 /// The raw response from the account API
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum RawRpcAccountResponse {
     /// the account was found
@@ -49,7 +49,7 @@ pub enum RawRpcAccountResponse {
 }
 
 /// the raw account status data from the account API
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct RawRpcAccountStatus {
     /// the protobuf type
     #[serde(rename = "@type")]
@@ -67,7 +67,7 @@ pub struct RawRpcAccountStatus {
 }
 
 /// the raw pubkey data returned from the account API
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct RawRpcPubKey {
     /// the protobuf type
     #[serde(rename = "@type")]

@@ -27,7 +27,7 @@ wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
 console_error_panic_hook = { version = "0.1", optional = true }
-cosmos-sdk-proto = { version = "0.13", default-features = false, features = ["cosmwasm"] }
+cosmos-sdk-proto = { version = "0.14", default-features = false, features = ["cosmwasm"] }
 
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
 # compared to the default allocator's ~10K. It is slower than the default
@@ -44,4 +44,4 @@ wasm-timer = "0.2"
 tendermint-rpc = "0.23"
 reqwest = { version = "0.11", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
-tonic-web-wasm-client = "0.1"
+tonic-web-wasm-client = "0.2"

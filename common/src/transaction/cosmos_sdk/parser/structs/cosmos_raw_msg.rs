@@ -26,7 +26,7 @@ use std::str::FromStr;
 /// address. `CosmosRawMsg` is parsed directly from Protobuf or JSON, it should have the all fields
 /// of original message.
 #[non_exhaustive]
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum CosmosRawMsg {
     /// Normal message
     Normal { msg: CosmosRawNormalMsg },
@@ -141,14 +141,13 @@ impl TryFrom<MsgTransfer> for CosmosRawMsg {
     type Error = CosmosError;
 
     fn try_from(msg: MsgTransfer) -> Result<Self, Self::Error> {
-        let coin = msg.token;
         Ok(Self::Normal {
             msg: CosmosRawNormalMsg::IbcTransfer {
                 sender: msg.sender.to_string(),
                 receiver: msg.receiver.to_string(),
                 source_port: msg.source_port.to_string(),
                 source_channel: msg.source_channel.to_string(),
-                token: coin.into(),
+                token: msg.token.into(),
                 timeout_height: match msg.timeout_height {
                     TimeoutHeight::Never => Height::default(),
                     TimeoutHeight::At(height) => height.into(),
@@ -228,7 +227,7 @@ impl From<chainmain::nft::v1::MsgBurnNft> for CosmosRawMsg {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "@type")]
 pub enum CosmosRawNormalMsg {
     /// MsgSend
@@ -410,7 +409,7 @@ impl CosmosRawNormalMsg {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "@type")]
 pub enum CosmosRawCryptoOrgMsg {
     /// MsgIssueDenom

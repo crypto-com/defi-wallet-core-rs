@@ -38,7 +38,7 @@ trait Validate {
 }
 
 /// NFT metadata parse errors
-#[derive(Clone, Debug, Error, PartialEq)]
+#[derive(Clone, Debug, Error, PartialEq, Eq)]
 pub enum Error {
     /// Invalid DenomId
     #[error("invalid DenomId: {id:?}")]
