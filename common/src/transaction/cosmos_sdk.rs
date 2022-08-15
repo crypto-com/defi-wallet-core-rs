@@ -46,7 +46,7 @@ pub const CRONOS_CHAIN_ID: &str = "cronosmainnet_25-1";
 pub const COSMOS_CHAIN_ID: &str = "cosmoshub-4";
 
 /// Network to work with
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub enum Network {
     /// Crypto.org Chain mainnet
     CryptoOrgMainnet,
@@ -103,7 +103,7 @@ impl Network {
 }
 
 /// single coin amount
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(untagged)]
 pub enum SingleCoin {
     /// basecro
@@ -590,7 +590,7 @@ impl CosmosSDKMsg {
                 timeout_timestamp,
             } => {
                 let any = MsgTransfer {
-                    sender: Signer::from_str(&sender_address.to_string())?,
+                    sender: Signer::from_str(sender_address.as_ref())?,
                     receiver: Signer::from_str(receiver)?,
                     source_port: PortId::from_str(source_port)?,
                     source_channel: ChannelId::from_str(source_channel)?,
@@ -727,12 +727,12 @@ mod tests {
     use std::sync::Arc;
 
     use crate::*;
+    use cosmos_sdk_proto::traits::Message;
     use cosmrs::bank::MsgSend;
     use cosmrs::crypto::secp256k1::SigningKey;
     use cosmrs::proto;
     use cosmrs::Coin;
     use cosmrs::Tx;
-    use prost::Message;
 
     const TX_INFO: CosmosSDKTxInfo = CosmosSDKTxInfo {
         account_number: 1,

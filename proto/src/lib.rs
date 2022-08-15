@@ -1,7 +1,10 @@
+// Ignore this clippy issue for generated `prost` code.
+#![allow(clippy::derive_partial_eq_without_eq)]
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![warn(trivial_casts, trivial_numeric_casts, unused_import_braces)]
+#![allow(clippy::derive_partial_eq_without_eq)] // FIXME: generate types with `Eq`
 
 use cosmos_sdk_proto::cosmos;
 pub use tendermint_proto as tendermint;

@@ -78,7 +78,7 @@ impl TryFrom<EthNetwork> for Chain {
 
 /// The gas/native token amount
 /// in decimal notation
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EthAmount {
     /// 10^-18 ETH
     WeiDecimal {
