@@ -1,10 +1,7 @@
 use ethers::abi::ethereum_types::{FromDecStrErr, FromStrRadixErr};
-use ethers::contract::ContractError;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::signer::SignerMiddlewareError;
-use ethers::prelude::{
-    abi, Http, ParseChainError, Provider, ProviderError, SignerMiddleware, Wallet,
-};
+use ethers::prelude::{abi, Http, ParseChainError, Provider, ProviderError, Wallet};
 use ethers::types::transaction::eip712;
 use ethers::utils::ConversionError;
 
@@ -38,9 +35,9 @@ pub enum EthError {
     #[error("Async Runtime error")]
     AsyncRuntimeError,
     #[error("Contract Send Error: {0}")]
-    ContractSendError(ContractError<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>),
+    ContractSendError(String),
     #[error("Contract Call Error: {0}")]
-    ContractCallError(ContractError<Provider<Http>>),
+    ContractCallError(String),
     #[error("Signature error")]
     SignatureError,
     #[error("Chainid error: {0}")]

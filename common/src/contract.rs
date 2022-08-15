@@ -1,10 +1,8 @@
 use crate::EthError;
 use ethers::abi::Detokenize;
 use ethers::contract::builders;
-use ethers::core::k256::ecdsa::SigningKey;
-use ethers::prelude::{
-    abigen, Http, Middleware, Provider, SignerMiddleware, TransactionReceipt, Wallet, U256,
-};
+use ethers::prelude::{abigen, Middleware, TransactionReceipt, U256};
+use ethers::types::transaction::eip2718::TypedTransaction;
 use std::sync::Arc;
 
 abigen!(
@@ -64,8 +62,10 @@ where
     contract_call: builders::ContractCall<M, D>,
 }
 
-impl<D> ContractCall<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>, D>
+impl<M, D> ContractCall<M, D>
 where
+    // S: Signer,
+    M: Middleware,
     D: Detokenize,
 {
     /// Uses a Legacy transaction instead of an EIP-1559 one to execute the call. If legacy is
@@ -80,25 +80,40 @@ where
         }
         self
     }
+
+    /// Returns the raw transaction request
+    pub fn get_tx(&self) -> TypedTransaction {
+        self.contract_call.tx.clone()
+    }
+
     /// Signs and broadcasts the provided transaction
     pub async fn send(&self) -> Result<TransactionReceipt, EthError> {
         let pending_tx = self
             .contract_call
             .send()
             .await
-            .map_err(EthError::ContractSendError)?
+            .map_err(|e| EthError::ContractSendError(e.to_string()))?
             .await;
         let tx_receipt = pending_tx
             .map_err(EthError::BroadcastTxFail)?
             .ok_or(EthError::MempoolDrop)?;
         Ok(tx_receipt)
     }
+
     // TODO Returns the estimated gas cost for the underlying transaction to be executed
     pub async fn estimate_gas(&self) -> Result<U256, EthError> {
         self.contract_call
             .estimate_gas()
             .await
-            .map_err(EthError::ContractSendError)
+            .map_err(|e| EthError::ContractSendError(e.to_string()))
+    }
+
+    /// Queries the blockchain via an eth_call for the provided transaction.
+    pub async fn call(&self) -> Result<D, EthError> {
+        self.contract_call
+            .call()
+            .await
+            .map_err(|e| EthError::ContractCallError(e.to_string()))
     }
 }
 
@@ -109,25 +124,5 @@ where
 {
     fn from(contract_call: builders::ContractCall<M, D>) -> Self {
         Self { contract_call }
-    }
-}
-
-impl<D> ContractCall<Provider<Http>, D>
-where
-    D: Detokenize,
-{
-    /// Queries the blockchain via an eth_call for the provided transaction.
-    pub async fn call(&self) -> Result<D, EthError> {
-        self.contract_call
-            .call()
-            .await
-            .map_err(EthError::ContractCallError)
-    }
-    // TODO Returns the estimated gas cost for the underlying transaction to be executed
-    pub async fn estimate_gas(&self) -> Result<U256, EthError> {
-        self.contract_call
-            .estimate_gas()
-            .await
-            .map_err(EthError::ContractCallError)
     }
 }
