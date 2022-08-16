@@ -7,6 +7,7 @@ use cosmos_sdk_proto::cosmos::{
 #[cfg(not(target_arch = "wasm32"))]
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, DisplayFromStr};
 use tendermint_rpc::{
     endpoint::broadcast::{tx_async, tx_commit, tx_sync},
     request, response,
@@ -49,6 +50,7 @@ pub enum RawRpcAccountResponse {
 }
 
 /// the raw account status data from the account API
+#[serde_as]
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct RawRpcAccountStatus {
     /// the protobuf type
@@ -59,10 +61,10 @@ pub struct RawRpcAccountStatus {
     /// the associated public key
     pub pub_key: Option<RawRpcPubKey>,
     /// the global account number
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub account_number: u64,
     /// the sequence number / nonce
-    #[serde(with = "serde_with::rust::display_fromstr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub sequence: u64,
 }
 
