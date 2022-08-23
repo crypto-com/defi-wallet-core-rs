@@ -2133,14 +2133,13 @@ dependencies = [
 
 [[package]]
 name = "ibc-proto"
-version = "0.20.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e031bfb42dea291f45e17b8a547f3b8490e1aad15c0279134dd2ed08d15cf18"
+checksum = "cf27ba26c12fa0e270a32f8e54a9d9768e19d0f2e6f36b83a1f274f7fa1c2755"
 dependencies = [
  "base64 0.13.0",
  "bytes",
  "prost 0.11.0",
- "prost-types",
  "serde",
  "tendermint-proto",
 ]
