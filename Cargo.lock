@@ -2104,9 +2104,9 @@ dependencies = [
 
 [[package]]
 name = "ibc"
-version = "0.18.0"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ab02a177672699b494b7dd8396b633224614100cb216c41bc0f7175e2ff13cc"
+checksum = "7722640fa8af358a2875080301a76cb7642cd9f1e7c2827692d1087f973634ca"
 dependencies = [
  "bytes",
  "derive_more",
@@ -2116,7 +2116,6 @@ dependencies = [
  "num-traits",
  "primitive-types",
  "prost 0.11.0",
- "prost-types",
  "safe-regex",
  "serde",
  "serde_derive",
