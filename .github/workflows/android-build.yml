@@ -14,7 +14,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            ANDROID_SDK_ROOT/system-images/
+            $ANDROID_SDK_ROOT/system-images/
           key: ${{ runner.os }}-system-images-${{ hashFiles('android_build.sh') }}
           restore-keys: |
             ${{ runner.os }}-system-images-
