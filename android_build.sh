@@ -35,7 +35,10 @@ fi
 
 uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language kotlin --out-dir bindings/android || exit 1
 
-rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android || exit 1
+if [ "$1" != "x86" ]; then
+        rustup target add aarch64-linux-android armv7-linux-androideabi || exit 1
+fi
+rustup target add x86_64-linux-android || exit 1
 
 type python || exit 1
 
