@@ -8,6 +8,20 @@ if [ ! -n "$NDK_HOME" ]; then
         echo "Env NDK_HOME is empty"
         exit 1
 fi
+
+NDK_VERSION=`cat $NDK_HOME/source.properties | grep Pkg.Revision | awk '{print $3}' | awk -F. '{print $1}'`
+echo "NDK_VERSION is $NDK_VERSION"
+
+
+if [ $NDK_VERSION -lt 23 ];then
+        echo "Requires Android ndk version >= 23"
+        exit 1
+else
+        RUSTFLAGS+=" -L`pwd`/env/android"
+fi
+
+API=24
+
 export ANDROID_NDK_ROOT=$NDK_HOME
 
 OS=`uname | tr 'A-Z' 'a-z'`
@@ -17,20 +31,18 @@ then
         exit 1
 fi
 
+if [ "$OS" == "darwin" ];then
+	TOOLCHAIN=$NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64
+fi
+if [ "$OS" == "linux" ];then
+	TOOLCHAIN=$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
+fi
+
 mkdir -p NDK/libs
 
 if [ ! -f "NDK/libs/jna.aar" ]
 then
         wget https://github.com/java-native-access/jna/raw/5.10.0/dist/jna.aar -P NDK/libs/ || exit 1
-fi
-
-MAKETOOL="$NDK_HOME/build/tools/make_standalone_toolchain.py"
-#echo $MAKETOOL
-
-if [ ! -x "$MAKETOOL" ]
-then
-        echo "Android NDK is not installed."
-        exit 1
 fi
 
 uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language kotlin --out-dir bindings/android || exit 1
@@ -40,36 +52,28 @@ if [ "$1" != "x86" ]; then
 fi
 rustup target add x86_64-linux-android || exit 1
 
-type python || exit 1
-
 if [ "$1" != "x86" ]; then
-        if [ ! -d "NDK/arm64" ]
-        then
-                "$MAKETOOL" --api 28 --arch arm64 --install-dir NDK/arm64 2> /dev/null || exit 1
-        else
-                echo "arm64 ndk installed."
-        fi
+        PATH=$PATH:$TOOLCHAIN/bin \
+	TARGET_CC=aarch64-linux-android$API-clang \
+	CXX=aarch64-linux-android$API-clang++ \
+	TARGET_AR=llvm-ar \
+	CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=aarch64-linux-android$API-clang \
+	RUSTFLAGS=$RUSTFLAGS cargo build --features uniffi-binding --target aarch64-linux-android -p defi-wallet-core-common --release || exit 1
 
-        if [ ! -d "NDK/arm" ]
-        then
-                "$MAKETOOL" --api 28 --arch arm --install-dir NDK/arm 2> /dev/null || exit 1
-        else
-                echo "arm ndk installed."
-        fi
+        PATH=$PATH:$TOOLCHAIN/bin \
+	TARGET_CC=armv7a-linux-androideabi$API-clang \
+	CXX=armv7a-linux-androideabi$API-clang++ \
+	TARGET_AR=llvm-ar \
+	CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER=armv7a-linux-androideabi$API-clang \
+	RUSTFLAGS=$RUSTFLAGS cargo build --features uniffi-binding --target armv7-linux-androideabi -p defi-wallet-core-common --release || exit 1
 fi
 
-if [ ! -d "NDK/x86_64" ]
-then
-        "$MAKETOOL" --api 28 --arch x86_64 --install-dir NDK/x86_64 2> /dev/null || exit 1
-else
-        echo "x86_64 ndk installed."
-fi
-
-if [ "$1" != "x86" ]; then
-        PATH=$PATH:`pwd`/NDK/arm64/bin cargo build --features uniffi-binding --target aarch64-linux-android -p defi-wallet-core-common --release || exit 1
-        PATH=$PATH:`pwd`/NDK/arm/bin cargo build --features uniffi-binding --target armv7-linux-androideabi -p defi-wallet-core-common --release || exit 1
-fi
-PATH=$PATH:`pwd`/NDK/x86_64/bin cargo build --features uniffi-binding --target x86_64-linux-android -p defi-wallet-core-common --release || exit 1
+PATH=$PATH:$TOOLCHAIN/bin \
+TARGET_CC=x86_64-linux-android$API-clang \
+CXX=x86_64-linux-android$API-clang++ \
+TARGET_AR=llvm-ar \
+CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER=x86_64-linux-android$API-clang \
+RUSTFLAGS=$RUSTFLAGS cargo build --features uniffi-binding --target x86_64-linux-android -p defi-wallet-core-common --release || exit 1
 
 type strip || exit 1
 mkdir -p mobile_modules/android_module/dwclib/libs
