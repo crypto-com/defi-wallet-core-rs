@@ -20,4 +20,4 @@ jobs:
       - name: Rust cache
         uses: Swatinem/rust-cache@v1
       - run: make install-uniffi-bindgen
-      - run: make ios
+      - run: ./ios_build.sh x86
