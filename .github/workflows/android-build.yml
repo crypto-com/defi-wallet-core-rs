@@ -10,6 +10,14 @@ jobs:
   android-build:
     runs-on: macos-11
     steps:
+      - name: system-images cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ANDROID_SDK_ROOT/system-images/
+          key: ${{ runner.os }}-system-images-${{ hashFiles('android_build.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-system-images-
       - uses: actions/checkout@v2
       - run: |
           export JAVA_HOME=$JAVA_HOME_8_X64
