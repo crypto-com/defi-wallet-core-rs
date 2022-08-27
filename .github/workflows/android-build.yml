@@ -22,6 +22,8 @@ jobs:
       - run: |
           export JAVA_HOME=$JAVA_HOME_8_X64
           export ANDROID_VERSION=`$ANDROID_SDK_ROOT/tools/bin/sdkmanager --list 2> /dev/null | tail -n 5 | grep platform-tools | awk '{print $3}' | awk -F. '{print $1}'`
+          echo $ANDROID_VERSION
+          ls $ANDROID_SDK_ROOT/system-images/
           echo y | $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-$ANDROID_VERSION;google_apis;x86_64"
           echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-$ANDROID_VERSION;google_apis;x86_64"
           $ANDROID_SDK_ROOT/tools/emulator @testavd &
