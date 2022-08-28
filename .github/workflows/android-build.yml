@@ -25,8 +25,8 @@ jobs:
           echo $ANDROID_VERSION
           echo y | $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-$ANDROID_VERSION;google_apis;x86_64"
           echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-$ANDROID_VERSION;google_apis;x86_64"
-          ls $ANDROID_SDK_ROOT/system-images/
           $ANDROID_SDK_ROOT/tools/emulator @testavd &
+          ls $ANDROID_SDK_ROOT/system-images/
       - name: NDK cache
         uses: actions/cache@v2
         with:
