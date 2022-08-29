@@ -24,10 +24,8 @@ jobs:
           # export ANDROID_VERSION=`$ANDROID_SDK_ROOT/tools/bin/sdkmanager --list 2> /dev/null | tail -n 5 | grep platform-tools | awk '{print $3}' | awk -F. '{print $1}'`
           # echo $ANDROID_VERSION
           echo y | $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-31;google_apis;x86_64"
-          echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-31;google_apis;x86_64"
+          echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -c 4096M -k "system-images;android-31;google_apis;x86_64"
           $ANDROID_SDK_ROOT/tools/emulator @testavd &
-          echo "android: system-images"
-          ls $ANDROID_SDK_ROOT/system-images/
       - name: NDK cache
         uses: actions/cache@v2
         with:
