@@ -22,9 +22,10 @@ jobs:
       - run: |
           export JAVA_HOME=$JAVA_HOME_8_X64
           export ANDROID_VERSION=`$ANDROID_SDK_ROOT/tools/bin/sdkmanager --list 2> /dev/null | tail -n 5 | grep platform-tools | awk '{print $3}' | awk -F. '{print $1}'`
+          echo $ANDROID_VERSION
           echo y | $ANDROID_SDK_ROOT/tools/bin/sdkmanager "system-images;android-$ANDROID_VERSION;google_apis;x86_64"
-          echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -k "system-images;android-$ANDROID_VERSION;google_apis;x86_64"
-          $ANDROID_SDK_ROOT/tools/emulator @testavd &
+          echo no | $ANDROID_SDK_ROOT/tools/bin/avdmanager create avd -n testavd -c 2048M -k "system-images;android-$ANDROID_VERSION;google_apis;x86_64"
+          $ANDROID_SDK_ROOT/tools/emulator @testavd -partition-size 2048 -wipe-data &
       - name: NDK cache
         uses: actions/cache@v2
         with:
@@ -53,8 +54,6 @@ jobs:
       - run: make install-uniffi-bindgen
       - run: |
           export ANDROID_HOME=$HOME/Library/Android/sdk
-          export SDKMANAGER=$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager
-          echo y | $SDKMANAGER "ndk;21.4.7075529"
-          export NDK_HOME=/Users/runner/Library/Android/sdk/ndk/21.4.7075529
+          export NDK_HOME=$ANDROID_NDK_HOME
           export JAVA_HOME=$JAVA_HOME_11_X64
           ./android_build.sh x86
