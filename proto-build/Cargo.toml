@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 rust-version = "1.57"
+license = "Apache-2.0"
 
 [dependencies]
 prost = "0.11"
