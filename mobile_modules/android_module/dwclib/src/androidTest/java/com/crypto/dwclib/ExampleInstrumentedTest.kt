@@ -657,16 +657,16 @@ class ExampleInstrumentedTest {
         Assert.assertEquals(txBody, txBodyBuild)
     }
 
-    @Test
-    fun getAccountBalanceWorkTest() {
-        val rb = getAccountBalanceBlocking(
-            "https://mainnet.crypto.org:1317",
-            "cro1yjjlx5qsrj5rxn5xtd5rkm6dcqzlchxkrvsmg6",
-            "basecro",
-            BalanceApiVersion.NEW
-        )
-        println("Balance:" + rb)
-    }
+//    @Test
+//    fun getAccountBalanceWorkTest() {
+//        val rb = getAccountBalanceBlocking(
+//            "https://mainnet.crypto.org:1317",
+//            "cro1yjjlx5qsrj5rxn5xtd5rkm6dcqzlchxkrvsmg6",
+//            "basecro",
+//            BalanceApiVersion.NEW
+//        )
+//        println("Balance:" + rb)
+//    }
 
 
 }
