@@ -657,7 +657,6 @@ class ExampleInstrumentedTest {
         Assert.assertEquals(txBody, txBodyBuild)
     }
 
-    @Test
     fun getAccountBalanceWorkTest() {
         val rb = getAccountBalanceBlocking(
             "https://mainnet.crypto.org:1317",
