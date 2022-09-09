@@ -16,16 +16,8 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-          profile: minimal
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
       - name: Install cargo audit
         run: cargo install cargo-audit
-      # FIXME: they need to be fixed in the `siwe` crate
-      - run: >
-          cargo audit --deny warnings
-          --ignore RUSTSEC-2020-0159
-          --ignore RUSTSEC-2020-0071
+      - run: cargo audit --deny warnings

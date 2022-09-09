@@ -14,7 +14,7 @@ jobs:
     env:
       WASM_BINDGEN_TEST_TIMEOUT: 60
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v15
       - uses: cachix/cachix-action@v10
         with:
