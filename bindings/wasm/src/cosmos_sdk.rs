@@ -47,7 +47,7 @@ impl CosmosClient {
             };
             let account_details =
                 get_account_balance(&api_url, &address, &denom, api_version).await?;
-            JsValue::from_serde(&account_details).map_err(format_to_js_error)
+            serde_wasm_bindgen::to_value(&account_details).map_err(format_to_js_error)
         })
     }
 
@@ -57,7 +57,7 @@ impl CosmosClient {
         let api_url = self.config.api_url.to_owned();
         future_to_promise(async move {
             let account_details = get_account_details(&api_url, &address).await?;
-            JsValue::from_serde(&account_details).map_err(format_to_js_error)
+            serde_wasm_bindgen::to_value(&account_details).map_err(format_to_js_error)
         })
     }
 
@@ -72,10 +72,10 @@ impl CosmosClient {
                 .map_err(format_to_js_error)?;
 
             if let tendermint::abci::Code::Err(_) = resp.code {
-                return Err(JsValue::from_serde(&resp).map_err(format_to_js_error)?);
+                return Err(serde_wasm_bindgen::to_value(&resp).map_err(format_to_js_error)?);
             }
 
-            JsValue::from_serde(&resp).map_err(format_to_js_error)
+            serde_wasm_bindgen::to_value(&resp).map_err(format_to_js_error)
         })
     }
 }
@@ -419,7 +419,7 @@ impl GrpcWebClient {
     }
     pub async fn supply(&mut self, denom_id: String, owner: String) -> Result<JsValue, JsValue> {
         let supply = self.0.supply(denom_id, owner).await?;
-        JsValue::from_serde(&supply).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&supply).map_err(format_to_js_error)
     }
 
     pub async fn owner(
@@ -429,7 +429,7 @@ impl GrpcWebClient {
         pagination: Option<PageRequest>,
     ) -> Result<JsValue, JsValue> {
         let owner = self.0.owner(denom_id, owner, pagination).await?;
-        JsValue::from_serde(&owner).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&owner).map_err(format_to_js_error)
     }
 
     pub async fn collection(
@@ -438,26 +438,26 @@ impl GrpcWebClient {
         pagination: Option<PageRequest>,
     ) -> Result<JsValue, JsValue> {
         let collection = self.0.collection(denom_id, pagination).await?;
-        JsValue::from_serde(&collection).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&collection).map_err(format_to_js_error)
     }
 
     pub async fn denom(&mut self, denom_id: String) -> Result<JsValue, JsValue> {
         let denom = self.0.denom(denom_id).await?;
-        JsValue::from_serde(&denom).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&denom).map_err(format_to_js_error)
     }
 
     pub async fn denom_by_name(&mut self, denom_name: String) -> Result<JsValue, JsValue> {
         let denom = self.0.denom_by_name(denom_name).await?;
-        JsValue::from_serde(&denom).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&denom).map_err(format_to_js_error)
     }
 
     pub async fn denoms(&mut self, pagination: Option<PageRequest>) -> Result<JsValue, JsValue> {
         let denoms = self.0.denoms(pagination).await?;
-        JsValue::from_serde(&denoms).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&denoms).map_err(format_to_js_error)
     }
 
     pub async fn nft(&mut self, denom_id: String, token_id: String) -> Result<JsValue, JsValue> {
         let nft = self.0.nft(denom_id, token_id).await?;
-        JsValue::from_serde(&nft).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&nft).map_err(format_to_js_error)
     }
 }

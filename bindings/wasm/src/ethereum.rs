@@ -58,12 +58,12 @@ impl EthContractFunctionArg {
     #[wasm_bindgen]
     pub fn build_address(address_str: &str) -> Result<JsValue, JsValue> {
         let token = EthAbiToken::from_address_str(address_str)?;
-        JsValue::from_serde(&Self { token }).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&Self { token }).map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
     pub fn build_fixed_bytes(bytes: Vec<u8>) -> Result<JsValue, JsValue> {
-        JsValue::from_serde(&Self {
+        serde_wasm_bindgen::to_value(&Self {
             token: EthAbiToken::FixedBytes(bytes),
         })
         .map_err(format_to_js_error)
@@ -71,7 +71,7 @@ impl EthContractFunctionArg {
 
     #[wasm_bindgen]
     pub fn build_bytes(bytes: Vec<u8>) -> Result<JsValue, JsValue> {
-        JsValue::from_serde(&Self {
+        serde_wasm_bindgen::to_value(&Self {
             token: EthAbiToken::Bytes(bytes),
         })
         .map_err(format_to_js_error)
@@ -80,18 +80,18 @@ impl EthContractFunctionArg {
     #[wasm_bindgen]
     pub fn build_int(int_str: &str) -> Result<JsValue, JsValue> {
         let token = EthAbiToken::from_int_str(int_str)?;
-        JsValue::from_serde(&Self { token }).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&Self { token }).map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
     pub fn build_uint(uint_str: &str) -> Result<JsValue, JsValue> {
         let token = EthAbiToken::from_uint_str(uint_str)?;
-        JsValue::from_serde(&Self { token }).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&Self { token }).map_err(format_to_js_error)
     }
 
     #[wasm_bindgen]
     pub fn build_bool(value: bool) -> Result<JsValue, JsValue> {
-        JsValue::from_serde(&Self {
+        serde_wasm_bindgen::to_value(&Self {
             token: EthAbiToken::Bool(value),
         })
         .map_err(format_to_js_error)
@@ -99,7 +99,7 @@ impl EthContractFunctionArg {
 
     #[wasm_bindgen]
     pub fn build_string(value: String) -> Result<JsValue, JsValue> {
-        JsValue::from_serde(&Self {
+        serde_wasm_bindgen::to_value(&Self {
             token: EthAbiToken::String(value),
         })
         .map_err(format_to_js_error)
@@ -111,7 +111,7 @@ impl EthContractFunctionArg {
             .into_iter()
             .map(|val| val.try_into().map(|arg: EthContractFunctionArg| arg.token))
             .collect::<Result<Vec<EthAbiToken>, _>>()?;
-        JsValue::from_serde(&Self {
+        serde_wasm_bindgen::to_value(&Self {
             token: EthAbiToken::FixedArray(tokens),
         })
         .map_err(format_to_js_error)
@@ -123,7 +123,7 @@ impl EthContractFunctionArg {
             .into_iter()
             .map(|val| val.try_into().map(|arg: EthContractFunctionArg| arg.token))
             .collect::<Result<Vec<EthAbiToken>, _>>()?;
-        JsValue::from_serde(&Self {
+        serde_wasm_bindgen::to_value(&Self {
             token: EthAbiToken::Array(tokens),
         })
         .map_err(format_to_js_error)
@@ -135,7 +135,7 @@ impl EthContractFunctionArg {
             .into_iter()
             .map(|val| val.try_into().map(|arg: EthContractFunctionArg| arg.token))
             .collect::<Result<Vec<EthAbiToken>, _>>()?;
-        JsValue::from_serde(&Self {
+        serde_wasm_bindgen::to_value(&Self {
             token: EthAbiToken::Tuple(tokens),
         })
         .map_err(format_to_js_error)
@@ -146,7 +146,7 @@ impl TryFrom<JsValue> for EthContractFunctionArg {
     type Error = JsValue;
 
     fn try_from(val: JsValue) -> Result<Self, Self::Error> {
-        val.into_serde().map_err(format_to_js_error)
+        serde_wasm_bindgen::from_value(val).map_err(format_to_js_error)
     }
 }
 
@@ -265,7 +265,7 @@ pub async fn broadcast_eth_signed_raw_tx(
     let receipt =
         common::broadcast_eth_signed_raw_tx(raw_tx, &web3api_url, polling_interval_ms).await?;
 
-    JsValue::from_serde(&receipt).map_err(format_to_js_error)
+    serde_wasm_bindgen::to_value(&receipt).map_err(format_to_js_error)
 }
 
 /// Parse the json data that meets the walletconnect standard and build raw transaction
@@ -302,7 +302,7 @@ pub async fn query_account_eth_balance(
 ) -> Result<BigInt, JsValue> {
     let balance = get_eth_balance(&address, &web3_api_url).await?;
     Ok(BigInt::new(
-        &JsValue::from_serde(&balance).map_err(format_to_js_error)?,
+        &serde_wasm_bindgen::to_value(&balance).map_err(format_to_js_error)?,
     )?)
 }
 
@@ -368,7 +368,7 @@ pub async fn broadcast_transfer_eth(
     )
     .await?;
 
-    JsValue::from_serde(&receipt).map_err(format_to_js_error)
+    serde_wasm_bindgen::to_value(&receipt).map_err(format_to_js_error)
 }
 
 /// details needed for contract approval transaction
@@ -798,7 +798,7 @@ impl TokenAmount {
     #[wasm_bindgen(constructor)]
     #[allow(clippy::new_ret_no_self)]
     pub fn new(token_id: String, amount: String) -> Result<JsValue, JsValue> {
-        JsValue::from_serde(&Self { token_id, amount }).map_err(format_to_js_error)
+        serde_wasm_bindgen::to_value(&Self { token_id, amount }).map_err(format_to_js_error)
     }
 }
 
@@ -806,7 +806,7 @@ impl TryFrom<JsValue> for TokenAmount {
     type Error = JsValue;
 
     fn try_from(val: JsValue) -> Result<Self, Self::Error> {
-        val.into_serde().map_err(format_to_js_error)
+        serde_wasm_bindgen::from_value(val).map_err(format_to_js_error)
     }
 }
 
@@ -831,7 +831,7 @@ pub async fn broadcast_approval_contract(
     )
     .await?;
 
-    JsValue::from_serde(&receipt).map_err(format_to_js_error)
+    serde_wasm_bindgen::to_value(&receipt).map_err(format_to_js_error)
 }
 
 /// construct, sign and broadcast a transfer of an ERC20/ERC721/ERC1155 token
@@ -855,7 +855,7 @@ pub async fn broadcast_transfer_contract(
     )
     .await?;
 
-    JsValue::from_serde(&receipt).map_err(format_to_js_error)
+    serde_wasm_bindgen::to_value(&receipt).map_err(format_to_js_error)
 }
 
 /// construct, sign and broadcast batch-transfer of an ERC1155 token
@@ -879,7 +879,7 @@ pub async fn broadcast_batch_transfer_contract(
     )
     .await?;
 
-    JsValue::from_serde(&receipt).map_err(format_to_js_error)
+    serde_wasm_bindgen::to_value(&receipt).map_err(format_to_js_error)
 }
 
 /// construct, sign and broadcast a plain transfer of eth/native token
@@ -891,6 +891,6 @@ pub async fn get_eth_transaction_count(
     let nonce = common::get_eth_transaction_count(&address, &web3api_url).await?;
 
     Ok(BigInt::new(
-        &JsValue::from_serde(&nonce).map_err(format_to_js_error)?,
+        &serde_wasm_bindgen::to_value(&nonce).map_err(format_to_js_error)?,
     )?)
 }
