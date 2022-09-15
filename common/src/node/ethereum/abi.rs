@@ -74,6 +74,7 @@ impl From<&str> for EthAbiParamType {
             "address" => EthAbiParamType::Address,
             "bool" => EthAbiParamType::Bool,
             "bytes" => EthAbiParamType::Bytes,
+            "function" => EthAbiParamType::FixedBytes(24),
             "h160" => EthAbiParamType::FixedBytes(20),
             "h256" | "secret" | "hash" => EthAbiParamType::FixedBytes(32),
             "h512" | "public" => EthAbiParamType::FixedBytes(64),
