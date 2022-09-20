@@ -5,13 +5,64 @@ use crate::transaction::{Eip712Error, EthError};
 use ethers::prelude::{abi, U256};
 use ethers::types::transaction::eip712::encode_eip712_type;
 use ethers::utils::keccak256;
-use std::collections::{BTreeSet, HashMap};
+use std::convert::TryInto;
+use std::str::FromStr;
+use std::{
+    collections::{BTreeSet, HashMap},
+    fmt,
+};
 
 mod deserializer;
 use deserializer::Eip712TypedDataSerde;
 
 type Eip712FieldName = String;
-type Eip712FieldType = EthAbiParamType;
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct Eip712FieldType(EthAbiParamType);
+
+impl fmt::Display for Eip712FieldType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl FromStr for Eip712FieldType {
+    type Err = EthError;
+
+    fn from_str(s: &str) -> Result<Self> {
+        let param = EthAbiParamType::from_str(s)?;
+        param.try_into()
+    }
+}
+
+impl TryFrom<EthAbiParamType> for Eip712FieldType {
+    type Error = EthError;
+
+    fn try_from(value: EthAbiParamType) -> Result<Self> {
+        if value.iter().any(|t| {
+            matches!(
+                t,
+                EthAbiParamType::Tuple(_)
+                    | EthAbiParamType::IntAlias
+                    | EthAbiParamType::UintAlias
+                    | EthAbiParamType::Function
+            )
+        }) {
+            Err(EthError::Eip712Error(Eip712Error::UnsupportedError(
+                "Unsupported ABI type".to_string(),
+            )))
+        } else {
+            Ok(Eip712FieldType(value))
+        }
+    }
+}
+
+impl AsRef<EthAbiParamType> for Eip712FieldType {
+    fn as_ref(&self) -> &EthAbiParamType {
+        &self.0
+    }
+}
+
 type Eip712FieldValue = EthAbiToken;
 type Eip712StructName = String;
 type Result<T> = std::result::Result<T, EthError>;
@@ -248,24 +299,17 @@ impl Eip712Struct {
         let mut struct_names = BTreeSet::new();
         for f in &self.fields {
             match &f.r#type {
-                Eip712FieldType::Array(item_param_type) => {
-                    if let Eip712FieldType::Struct(name) = item_param_type.as_ref() {
+                Eip712FieldType(EthAbiParamType::Array(item_param_type)) => {
+                    if let EthAbiParamType::Struct(name) = item_param_type.as_ref() {
                         struct_names.insert(name.clone());
                     }
                 }
-                Eip712FieldType::FixedArray(item_param_type, _size) => {
-                    if let Eip712FieldType::Struct(name) = item_param_type.as_ref() {
+                Eip712FieldType(EthAbiParamType::FixedArray(item_param_type, _size)) => {
+                    if let EthAbiParamType::Struct(name) = item_param_type.as_ref() {
                         struct_names.insert(name.clone());
                     }
                 }
-                Eip712FieldType::Tuple(item_param_types) => {
-                    for item_param_type in item_param_types {
-                        if let Eip712FieldType::Struct(name) = item_param_type {
-                            struct_names.insert(name.clone());
-                        }
-                    }
-                }
-                Eip712FieldType::Struct(name) => {
+                Eip712FieldType(EthAbiParamType::Struct(name)) => {
                     struct_names.insert(name.clone());
                 }
                 _ => {}

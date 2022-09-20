@@ -12,7 +12,7 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 default = []
 # This feature is used to dynamically load ABI contracts. It seems to be
 # error-prone and less security for the end user.
-abi-contract = []
+abi-contract = ["pest", "pest_derive"]
 login = ["siwe"]
 uniffi-binding = ["abi-contract", "uniffi", "uniffi_build", "uniffi_macros"]
 qr-code = ["abi-contract", "rustc-hex"]
@@ -29,6 +29,8 @@ ibc = { version = "0.19", default-features = false }
 ibc-proto = { version = "0.20", default-features = false }
 itertools = "0.10"
 lazy_static = "1"
+pest = { version = "2", optional = true }
+pest_derive = { version = "2", optional = true }
 prost = "0.10"
 rand_core = { version = "0.6", features = ["std"] }
 regex = "1"
