@@ -1,6 +1,7 @@
+use crate::abi::EthAbiParamType;
 use crate::node::ethereum::eip712::{
-    Eip712Field, Eip712FieldName, Eip712FieldType, Eip712FieldValue, Eip712Struct,
-    Eip712StructName, Eip712TypedData, Result, EIP712_DOMAIN_TYPE_NAME,
+    Eip712Field, Eip712FieldName, Eip712FieldValue, Eip712Struct, Eip712StructName,
+    Eip712TypedData, Result, EIP712_DOMAIN_TYPE_NAME,
 };
 use crate::transaction::{Eip712Error, EthError};
 use crate::utils::hex_decode;
@@ -22,7 +23,7 @@ impl TryFrom<&Eip712FieldSerde> for Eip712Field {
     fn try_from(serde_field: &Eip712FieldSerde) -> Result<Self> {
         Ok(Self {
             name: serde_field.name.clone(),
-            r#type: serde_field.r#type.as_str().into(),
+            r#type: serde_field.r#type.as_str().parse()?,
         })
     }
 }
@@ -69,25 +70,28 @@ impl TryFrom<Eip712TypedDataSerde> for Eip712TypedData {
 /// Convert a JSON value to an EIP-712 field value by specified type.
 fn convert_json_by_type(
     json_value: &serde_json::Value,
-    field_type: &Eip712FieldType,
+    field_type: &EthAbiParamType,
     struct_types: &HashMap<Eip712StructName, Eip712Struct>,
 ) -> Result<Eip712FieldValue> {
     let field_value = match field_type {
-        Eip712FieldType::Address => json_to_address(json_value),
-        Eip712FieldType::Bytes => json_to_bytes(json_value),
-        Eip712FieldType::FixedBytes(fixed_len) => json_to_fixed_bytes(json_value, *fixed_len),
-        Eip712FieldType::Int(_) => json_to_int(json_value),
-        Eip712FieldType::Uint(_) => json_to_uint(json_value),
-        Eip712FieldType::Bool => json_to_bool(json_value),
-        Eip712FieldType::String => json_to_string(json_value),
-        Eip712FieldType::Array(item_type) => json_to_array(json_value, item_type, struct_types),
-        Eip712FieldType::FixedArray(item_type, fixed_len) => {
+        EthAbiParamType::Address => json_to_address(json_value),
+        EthAbiParamType::Bytes => json_to_bytes(json_value),
+        EthAbiParamType::FixedBytes(fixed_len) => json_to_fixed_bytes(json_value, *fixed_len),
+        EthAbiParamType::Int(_) => json_to_int(json_value),
+        EthAbiParamType::Uint(_) => json_to_uint(json_value),
+        EthAbiParamType::Bool => json_to_bool(json_value),
+        EthAbiParamType::String => json_to_string(json_value),
+        EthAbiParamType::Array(item_type) => json_to_array(json_value, item_type, struct_types),
+        EthAbiParamType::FixedArray(item_type, fixed_len) => {
             json_to_fixed_array(json_value, item_type, *fixed_len, struct_types)
         }
-        // Solidity type `tuple` is unsupported for EIP-712.
-        Eip712FieldType::Tuple(_) => None,
+        // Solidity type `tuple`, `function, `int`, and `uint` are unsupported for EIP-712.
+        EthAbiParamType::Tuple(_)
+        | EthAbiParamType::Function
+        | EthAbiParamType::IntAlias
+        | EthAbiParamType::UintAlias => None,
         // Convert to nested struct values.
-        Eip712FieldType::Struct(struct_name) => {
+        EthAbiParamType::Struct(struct_name) => {
             json_value.as_object().and_then(|json_field_values| {
                 let json_field_values = json_field_values.clone().into_iter().collect();
                 convert_values(struct_name, struct_types, &json_field_values)
@@ -135,7 +139,8 @@ fn convert_values(
                 .get(field_name)
                 .ok_or_else(|| Eip712Error::MissingFieldError(field_name.clone()))?;
 
-            let field_value = convert_json_by_type(json_value, &field.r#type, struct_types)?;
+            let field_value =
+                convert_json_by_type(json_value, field.r#type.as_ref(), struct_types)?;
 
             Ok((field_name.clone(), field_value))
         })
@@ -145,7 +150,7 @@ fn convert_values(
 /// Construct EIP-712 error `InvalidValueForType`.
 #[inline]
 fn invalid_value_for_type_error(
-    field_type: &Eip712FieldType,
+    field_type: &EthAbiParamType,
     json_value: &serde_json::Value,
 ) -> EthError {
     Eip712Error::InvalidValueForType {
@@ -166,7 +171,7 @@ fn json_to_address(json_value: &serde_json::Value) -> Option<Eip712FieldValue> {
 #[inline]
 fn json_to_array(
     json_value: &serde_json::Value,
-    item_type: &Eip712FieldType,
+    item_type: &EthAbiParamType,
     struct_types: &HashMap<Eip712StructName, Eip712Struct>,
 ) -> Option<Eip712FieldValue> {
     match json_value {
@@ -204,7 +209,7 @@ fn json_to_bytes(json_value: &serde_json::Value) -> Option<Eip712FieldValue> {
 #[inline]
 fn json_to_fixed_array(
     json_value: &serde_json::Value,
-    item_type: &Eip712FieldType,
+    item_type: &EthAbiParamType,
     fixed_len: usize,
     struct_types: &HashMap<Eip712StructName, Eip712Struct>,
 ) -> Option<Eip712FieldValue> {
@@ -383,23 +388,23 @@ mod eip712_deserializing_tests {
                 vec![
                     Eip712Field {
                         name: "name".to_owned(),
-                        r#type: Eip712FieldType::String,
+                        r#type: "string".parse().unwrap(),
                     },
                     Eip712Field {
                         name: "version".to_owned(),
-                        r#type: Eip712FieldType::String,
+                        r#type: "string".parse().unwrap(),
                     },
                     Eip712Field {
                         name: "chainId".to_owned(),
-                        r#type: Eip712FieldType::Uint(256),
+                        r#type: "uint256".parse().unwrap(),
                     },
                     Eip712Field {
                         name: "verifyingContract".to_owned(),
-                        r#type: Eip712FieldType::Address,
+                        r#type: "address".parse().unwrap(),
                     },
                     Eip712Field {
                         name: "salt".to_owned(),
-                        r#type: Eip712FieldType::FixedBytes(32),
+                        r#type: "bytes32".parse().unwrap(),
                     },
                 ],
             ),
@@ -412,11 +417,11 @@ mod eip712_deserializing_tests {
                 vec![
                     Eip712Field {
                         name: "name".to_owned(),
-                        r#type: Eip712FieldType::String,
+                        r#type: "string".parse().unwrap(),
                     },
                     Eip712Field {
                         name: "wallet".to_owned(),
-                        r#type: Eip712FieldType::Address,
+                        r#type: "address".parse().unwrap(),
                     },
                 ],
             ),
@@ -470,11 +475,11 @@ mod eip712_deserializing_tests {
                 vec![
                     Eip712Field {
                         name: "chainId".to_owned(),
-                        r#type: Eip712FieldType::Uint(256),
+                        r#type: "uint256".parse().unwrap(),
                     },
                     Eip712Field {
                         name: "verifyingContract".to_owned(),
-                        r#type: Eip712FieldType::Address,
+                        r#type: "address".parse().unwrap(),
                     },
                 ],
             ),
@@ -487,15 +492,15 @@ mod eip712_deserializing_tests {
                 vec![
                     Eip712Field {
                         name: "from".to_owned(),
-                        r#type: Eip712FieldType::Struct("Person".to_owned()),
+                        r#type: "Person".parse().unwrap(),
                     },
                     Eip712Field {
                         name: "to".to_owned(),
-                        r#type: Eip712FieldType::Struct("Person".to_owned()),
+                        r#type: "Person".parse().unwrap(),
                     },
                     Eip712Field {
                         name: "contents".to_owned(),
-                        r#type: Eip712FieldType::FixedBytes(4),
+                        r#type: "bytes4".parse().unwrap(),
                     },
                 ],
             ),
@@ -508,11 +513,11 @@ mod eip712_deserializing_tests {
                 vec![
                     Eip712Field {
                         name: "name".to_owned(),
-                        r#type: Eip712FieldType::String,
+                        r#type: "string".parse().unwrap(),
                     },
                     Eip712Field {
                         name: "wallet".to_owned(),
-                        r#type: Eip712FieldType::Address,
+                        r#type: "address".parse().unwrap(),
                     },
                 ],
             ),

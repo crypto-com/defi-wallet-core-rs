@@ -3,22 +3,25 @@
 use crate::EthError;
 use ethers::prelude::abi::{Error, ParamType, Token};
 use ethers::prelude::{Address, H160, U256};
-use lazy_static::lazy_static;
-use regex::Regex;
+use pest::Parser;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt;
-use std::str::FromStr;
-
+use std::{collections::HashMap, fmt, mem, num::NonZeroUsize, str::FromStr};
 type EthAbiFieldName = String;
 type EthAbiStructName = String;
 
 /// Ethereum ABI parameter type
+/// based on https://docs.soliditylang.org/en/develop/abi-spec.html#types
+/// without fixed-point decimal numbers which aren't supported by the latest
+/// Solidity compilers.
+/// Plus `Struct` for EIP-712
 #[derive(Debug, Eq, PartialEq)]
 pub enum EthAbiParamType {
     Address,
     Bytes,
+    Function,
+    IntAlias,
     Int(usize),
+    UintAlias,
     Uint(usize),
     Bool,
     String,
@@ -29,6 +32,176 @@ pub enum EthAbiParamType {
     /// Above are standard Solidity types. This struct type is used to extend for recursively
     /// nested structs.
     Struct(EthAbiStructName),
+}
+
+mod parser {
+    use crate::EthError;
+    use ethers::prelude::abi;
+    use pest::iterators::Pairs;
+    use pest_derive::Parser;
+
+    use super::EthAbiParamType;
+
+    #[derive(Parser)]
+    #[grammar_inline = r#"
+    // m should be a multiple of 8 and <= 256
+    m_param = { ASCII_NONZERO_DIGIT ~ ASCII_DIGIT{0, 2} }
+    m_short_param = { "3" ~ '0'..'2' | ("1" | "2") ~ ASCII_DIGIT | ASCII_NONZERO_DIGIT }
+    int_param = { ("u")? ~ "int" ~ m_param? }
+    alias_param = { "address" | "bool" | "function" | "string" | (ASCII_ALPHA_UPPER ~ ASCII_ALPHANUMERIC*) }
+    bytes_param = { "bytes" ~ m_short_param? }
+    array_size_no = { (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)? }
+    array_size_param = _{ "[" ~ array_size_no? ~ "]" }
+    non_recur_param = _{ (int_param | bytes_param | alias_param ) }
+    base_param = { (non_recur_param | tuple_param) ~ array_size_param* }
+    tuple_param = { "()" | "(" ~ (abi_param ~ ("," ~ abi_param)*)? ~ ")" }
+    abi_param = _{ (base_param | tuple_param ) }
+    "#]
+    pub struct AbiParser;
+
+    fn maybe_array(inner_iter: &mut Pairs<Rule>) -> Result<EthAbiParamType, EthError> {
+        let mut result = from_parse_tree(inner_iter)?;
+
+        for arrays in inner_iter.by_ref() {
+            let msize = arrays.as_str().parse::<usize>();
+            if let Ok(size) = msize {
+                result = EthAbiParamType::FixedArray(Box::new(result), size);
+            } else {
+                result = EthAbiParamType::Array(Box::new(result));
+            }
+        }
+        Ok(result)
+    }
+
+    pub(crate) fn from_parse_tree(
+        parse_tree: &mut Pairs<Rule>,
+    ) -> Result<EthAbiParamType, EthError> {
+        let first = parse_tree.next().unwrap();
+
+        match first.as_rule() {
+            // abi_param, non_recur_param, and array_size_param are silent (never appear in the parse tree)
+            // m_param, m_short_param, array_size_no are always extracted with their corresponding non-terminal
+            // (int_param, bytes, and base_param / tuple_param)
+            Rule::abi_param
+            | Rule::non_recur_param
+            | Rule::array_size_param
+            | Rule::m_param
+            | Rule::m_short_param
+            | Rule::array_size_no => Err(EthError::AbiError(abi::Error::Other(
+                "Unexpected parse tree item".into(),
+            ))),
+
+            Rule::base_param => {
+                let mut inner_iter = first.into_inner();
+                maybe_array(&mut inner_iter)
+            }
+            Rule::int_param => {
+                let uint = first.as_str().starts_with('u');
+                let inner = first.into_inner();
+                let m_param_raw = inner.as_str();
+                let m_param = m_param_raw.parse::<usize>();
+                match m_param {
+                    Ok(m) if m % 8 == 0 && m <= 256 && m > 0 => {
+                        if uint {
+                            Ok(EthAbiParamType::Uint(m))
+                        } else {
+                            Ok(EthAbiParamType::Int(m))
+                        }
+                    }
+                    Err(_) if m_param_raw.is_empty() => {
+                        if uint {
+                            Ok(EthAbiParamType::UintAlias)
+                        } else {
+                            Ok(EthAbiParamType::IntAlias)
+                        }
+                    }
+                    _ => Err(EthError::AbiError(abi::Error::InvalidData)),
+                }
+            }
+            Rule::alias_param => {
+                let alias = first.as_str();
+                Ok(match alias {
+                    "address" => EthAbiParamType::Address,
+                    "bool" => EthAbiParamType::Bool,
+                    "string" => EthAbiParamType::String,
+                    "function" => EthAbiParamType::Function,
+                    _ => EthAbiParamType::Struct(alias.to_string()),
+                })
+            }
+            Rule::bytes_param => {
+                let inner = first.into_inner();
+                let m_param = inner.as_str();
+                Ok(if let Ok(size) = m_param.parse::<usize>() {
+                    EthAbiParamType::FixedBytes(size)
+                } else {
+                    EthAbiParamType::Bytes
+                })
+            }
+
+            Rule::tuple_param => {
+                let internals = first
+                    .into_inner()
+                    .flat_map(|x| maybe_array(&mut x.into_inner()))
+                    .collect();
+                Ok(EthAbiParamType::Tuple(internals))
+            }
+        }
+    }
+}
+
+impl EthAbiParamType {
+    pub fn iter(&self) -> EthAbiParamTypeIter<'_> {
+        EthAbiParamTypeIter {
+            children: std::slice::from_ref(self),
+            parent: None,
+        }
+    }
+}
+
+/// Iterator for EthAbiParamType
+#[derive(Default)]
+pub struct EthAbiParamTypeIter<'a> {
+    children: &'a [EthAbiParamType],
+    parent: Option<Box<EthAbiParamTypeIter<'a>>>,
+}
+
+impl<'a> Iterator for EthAbiParamTypeIter<'a> {
+    type Item = &'a EthAbiParamType;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.children.get(0) {
+            None => match self.parent.take() {
+                Some(parent) => {
+                    // continue with the parent node
+                    *self = *parent;
+                    self.next()
+                }
+                None => None,
+            },
+            Some(EthAbiParamType::Tuple(children)) => {
+                self.children = &self.children[1..];
+
+                // start iterating the child trees
+                *self = EthAbiParamTypeIter {
+                    children: children.as_slice(),
+                    parent: Some(Box::new(mem::take(self))),
+                };
+                self.next()
+            }
+            Some(EthAbiParamType::Array(child)) | Some(EthAbiParamType::FixedArray(child, _)) => {
+                self.children = &self.children[1..];
+                *self = EthAbiParamTypeIter {
+                    children: std::slice::from_ref(child),
+                    parent: Some(Box::new(mem::take(self))),
+                };
+                self.next()
+            }
+            Some(l) => {
+                self.children = &self.children[1..];
+                Some(l)
+            }
+        }
+    }
 }
 
 /// Implementing Display trait is used to encode the parameter type. It is implemented for `Array`,
@@ -50,6 +223,9 @@ impl fmt::Display for EthAbiParamType {
                     .join(",");
                 write!(f, "({formatted_types})")
             }
+            Self::Function => write!(f, "function"),
+            Self::IntAlias => write!(f, "int"),
+            Self::UintAlias => write!(f, "uint"),
             _ => {
                 let param_type = ParamType::try_from(self).map_err(|_| fmt::Error)?;
                 write!(f, "{param_type}")
@@ -61,31 +237,15 @@ impl fmt::Display for EthAbiParamType {
 /// This function references code of
 /// [find_parameter_type](https://docs.rs/ethers/latest/ethers/?search=find_parameter_type)
 /// in ethers-rs.
-impl From<&str> for EthAbiParamType {
-    fn from(iden: &str) -> Self {
-        if let Some(param_type) = parse_param_type_array(iden) {
-            return param_type;
-        }
-        if let Some(param_type) = parse_param_type_fixed_array(iden) {
-            return param_type;
-        }
+impl FromStr for EthAbiParamType {
+    type Err = EthError;
 
-        match iden.trim() {
-            "address" => EthAbiParamType::Address,
-            "bool" => EthAbiParamType::Bool,
-            "bytes" => EthAbiParamType::Bytes,
-            "function" => EthAbiParamType::FixedBytes(24),
-            "h160" => EthAbiParamType::FixedBytes(20),
-            "h256" | "secret" | "hash" => EthAbiParamType::FixedBytes(32),
-            "h512" | "public" => EthAbiParamType::FixedBytes(64),
-            "int256" | "int" | "uint" | "uint256" => EthAbiParamType::Uint(256),
-            "string" => EthAbiParamType::String,
-            iden => parse_param_type_fixed_bytes(iden)
-                .or_else(|| parse_param_type_int(iden))
-                .or_else(|| parse_param_type_uint(iden))
-                .or_else(|| parse_param_type_from_abbreviated_integer(iden))
-                .unwrap_or_else(|| EthAbiParamType::Struct(iden.to_owned())),
-        }
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        pest::set_call_limit(Some(NonZeroUsize::new(1000).unwrap()));
+        let mut parse_tree = parser::AbiParser::parse(parser::Rule::abi_param, s)
+            .map_err(|_e| EthError::AbiError(Error::InvalidData))?;
+        let iden = parser::from_parse_tree(&mut parse_tree)?;
+        Ok(iden)
     }
 }
 
@@ -96,6 +256,8 @@ impl TryFrom<&EthAbiParamType> for ParamType {
         Ok(match param_type {
             EthAbiParamType::Address => ParamType::Address,
             EthAbiParamType::Bytes => ParamType::Bytes,
+            EthAbiParamType::UintAlias => ParamType::Uint(256),
+            EthAbiParamType::IntAlias => ParamType::Int(256),
             EthAbiParamType::Int(size) => ParamType::Int(*size),
             EthAbiParamType::Uint(size) => ParamType::Uint(*size),
             EthAbiParamType::Bool => ParamType::Bool,
@@ -114,6 +276,7 @@ impl TryFrom<&EthAbiParamType> for ParamType {
                     .map(TryInto::try_into)
                     .collect::<Result<_, _>>()?,
             ),
+            EthAbiParamType::Function => ParamType::FixedBytes(24),
             EthAbiParamType::Struct(struct_name) => {
                 return Err(Error::Other(
                     format!("Unsupported nested struct conversion: {struct_name}").into(),
@@ -205,95 +368,76 @@ impl TryFrom<&EthAbiToken> for Token {
     }
 }
 
-/// Parse a string to parameter type Array, return None otherwise.
-fn parse_param_type_array(iden: &str) -> Option<EthAbiParamType> {
-    lazy_static! {
-        // e.g. uint256[] or Person[]
-        static ref ARRAY_REGEX: Regex = Regex::new(r"\A(.+)\[\]\z").unwrap();
+#[cfg(test)]
+mod test {
+    use crate::abi::EthAbiParamType;
+
+    #[test]
+    pub fn test_parser() {
+        let t: EthAbiParamType = "uint256".parse().unwrap();
+        assert_eq!(t, EthAbiParamType::Uint(256));
+        let t: EthAbiParamType = "uint256[]".parse().unwrap();
+        assert_eq!(
+            t,
+            EthAbiParamType::Array(Box::new(EthAbiParamType::Uint(256)))
+        );
+        let t: EthAbiParamType = "uint256[100]".parse().unwrap();
+        assert_eq!(
+            t,
+            EthAbiParamType::FixedArray(Box::new(EthAbiParamType::Uint(256)), 100)
+        );
+        let t: EthAbiParamType = "uint256[100][]".parse().unwrap();
+        assert_eq!(
+            t,
+            EthAbiParamType::Array(Box::new(EthAbiParamType::FixedArray(
+                Box::new(EthAbiParamType::Uint(256)),
+                100
+            )))
+        );
+        let t: EthAbiParamType = "(uint256[100][100],address)".parse().unwrap();
+        assert_eq!(
+            t,
+            EthAbiParamType::Tuple(vec![
+                EthAbiParamType::FixedArray(
+                    Box::new(EthAbiParamType::FixedArray(
+                        Box::new(EthAbiParamType::Uint(256)),
+                        100
+                    )),
+                    100
+                ),
+                EthAbiParamType::Address
+            ])
+        );
+        let t: EthAbiParamType = "(uint256[100][100],address)[]".parse().unwrap();
+        assert_eq!(
+            t,
+            EthAbiParamType::Array(Box::new(EthAbiParamType::Tuple(vec![
+                EthAbiParamType::FixedArray(
+                    Box::new(EthAbiParamType::FixedArray(
+                        Box::new(EthAbiParamType::Uint(256)),
+                        100
+                    )),
+                    100
+                ),
+                EthAbiParamType::Address
+            ])))
+        );
+        let t: EthAbiParamType = "(uint[100][100],((),address))[]".parse().unwrap();
+        assert_eq!(
+            t,
+            EthAbiParamType::Array(Box::new(EthAbiParamType::Tuple(vec![
+                EthAbiParamType::FixedArray(
+                    Box::new(EthAbiParamType::FixedArray(
+                        Box::new(EthAbiParamType::UintAlias),
+                        100
+                    )),
+                    100
+                ),
+                EthAbiParamType::Tuple(vec![
+                    EthAbiParamType::Tuple(vec![]),
+                    EthAbiParamType::Address
+                ])
+            ])))
+        );
     }
-
-    let captures = ARRAY_REGEX.captures(iden.trim())?;
-    let array_type = captures.get(1)?.as_str().into();
-
-    Some(EthAbiParamType::Array(Box::new(array_type)))
-}
-
-/// Parse a string to parameter type FixedArray, return None otherwise.
-fn parse_param_type_fixed_array(iden: &str) -> Option<EthAbiParamType> {
-    lazy_static! {
-        // e.g. uint256[100] or Person[100]
-        static ref FIXED_ARRAY_REGEX: Regex = Regex::new(r"\A(.+)\[(\d+)\]\z").unwrap();
-    }
-
-    let captures = FIXED_ARRAY_REGEX.captures(iden.trim())?;
-    let array_type = captures.get(1)?.as_str().into();
-    let array_size = captures.get(2)?.as_str().parse::<usize>().ok()?;
-
-    Some(EthAbiParamType::FixedArray(
-        Box::new(array_type),
-        array_size,
-    ))
-}
-
-/// Parse a string to parameter type FixedBytes with specified size, return None otherwise.
-fn parse_param_type_fixed_bytes(iden: &str) -> Option<EthAbiParamType> {
-    let prefix = "bytes";
-    if !iden.starts_with(prefix) {
-        return None;
-    }
-    let size = iden
-        .chars()
-        .skip(prefix.len())
-        .collect::<String>()
-        .parse::<usize>()
-        .ok()?;
-    Some(EthAbiParamType::FixedBytes(size))
-}
-
-/// Parse a string to parameter type Int or Uint from abbreviated integer and specified size, return
-/// None otherwise.
-fn parse_param_type_from_abbreviated_integer(iden: &str) -> Option<EthAbiParamType> {
-    let size = iden
-        .chars()
-        .skip(1)
-        .collect::<String>()
-        .parse::<usize>()
-        .ok()?;
-    if iden.starts_with('i') {
-        Some(EthAbiParamType::Int(size))
-    } else if iden.starts_with('u') {
-        Some(EthAbiParamType::Uint(size))
-    } else {
-        None
-    }
-}
-
-/// Parse a string to parameter type Int with specified size, return None otherwise.
-fn parse_param_type_int(iden: &str) -> Option<EthAbiParamType> {
-    let prefix = "int";
-    if !iden.starts_with(prefix) {
-        return None;
-    }
-    let size = iden
-        .chars()
-        .skip(prefix.len())
-        .collect::<String>()
-        .parse::<usize>()
-        .ok()?;
-    Some(EthAbiParamType::Int(size))
-}
-
-/// Parse a string to parameter type Uint with specified size, return None otherwise.
-fn parse_param_type_uint(iden: &str) -> Option<EthAbiParamType> {
-    let prefix = "uint";
-    if !iden.starts_with(prefix) {
-        return None;
-    }
-    let size = iden
-        .chars()
-        .skip(prefix.len())
-        .collect::<String>()
-        .parse::<usize>()
-        .ok()?;
-    Some(EthAbiParamType::Uint(size))
 }

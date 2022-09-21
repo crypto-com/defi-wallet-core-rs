@@ -250,8 +250,11 @@ impl FromStr for EIP681Request {
                         parameters.push(Parameter::GasPrice(value));
                     }
                     _ => {
-                        let param_type = ParamType::try_from(&EthAbiParamType::from(key))
-                            .map_err(EIP681ParseError::InvalidKey)?;
+                        let param_type = ParamType::try_from(
+                            &EthAbiParamType::from_str(key)
+                                .map_err(EIP681ParseError::InvalidKey)?,
+                        )
+                        .map_err(EIP681ParseError::InvalidKey)?;
                         let value = match param_type {
                             ParamType::Uint(_) | ParamType::Int(_) => {
                                 let value = U256::from_dec_str(value)
