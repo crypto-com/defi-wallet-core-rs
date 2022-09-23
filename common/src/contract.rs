@@ -17,6 +17,11 @@ abigen!(
     Erc1155Contract,
     "$CARGO_MANIFEST_DIR/src/contract/erc1155-abi.json"
 );
+#[cfg(feature = "erc4907")]
+abigen!(
+    Erc4907Contract,
+    "$CARGO_MANIFEST_DIR/src/contract/erc4907-abi.json"
+);
 
 ///  Wrapper of ERC20, ERC721 and ERC1155 contracts
 ///  TODO Put utils.rs contract related functions under it
@@ -50,6 +55,16 @@ impl Contract {
     {
         let contract_address = address_from_str(contract_address)?;
         Ok(Erc1155Contract::new(contract_address, Arc::new(client)))
+    }
+
+    /// Construct an ERC907 contract
+    #[cfg(feature = "erc4907")]
+    pub fn new_erc4907<M>(contract_address: &str, client: M) -> Result<Erc4907Contract<M>, EthError>
+    where
+        M: Middleware,
+    {
+        let contract_address = address_from_str(contract_address)?;
+        Ok(Erc4907Contract::new(contract_address, Arc::new(client)))
     }
 }
 

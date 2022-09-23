@@ -16,6 +16,7 @@ abi-contract = ["pest", "pest_derive"]
 login = ["siwe"]
 uniffi-binding = ["abi-contract", "uniffi", "uniffi_build", "uniffi_macros"]
 qr-code = ["abi-contract", "rustc-hex"]
+erc4907 = []
 
 [dependencies]
 anyhow = "1"
