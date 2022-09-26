@@ -1,5 +1,9 @@
 use crate::EthError;
+#[cfg(feature = "abi-contract")]
+use crate::{abi::EthAbiToken, EthAbiTokenBind};
 use ethers::abi::Detokenize;
+#[cfg(feature = "abi-contract")]
+use ethers::abi::Token;
 use ethers::contract::builders;
 use ethers::prelude::{abigen, Middleware, TransactionReceipt, U256};
 use ethers::types::transaction::eip2718::TypedTransaction;
@@ -65,6 +69,74 @@ impl Contract {
     {
         let contract_address = address_from_str(contract_address)?;
         Ok(Erc4907Contract::new(contract_address, Arc::new(client)))
+    }
+
+    /// Construct a dynamic contract based on the provided address,
+    /// ABI string, and client middleware.
+    #[cfg(feature = "abi-contract")]
+    pub fn new_dynamic<M>(
+        contract_address: &str,
+        abi_json: &str,
+        client: M,
+    ) -> Result<DynamicContract<M>, EthError>
+    where
+        M: Middleware,
+    {
+        DynamicContract::new(contract_address, abi_json, client)
+    }
+}
+
+/// A dynamic contract that can be constructed from an ABI string
+/// (function calls are checked during runtime)
+#[cfg(feature = "abi-contract")]
+pub struct DynamicContract<M: Middleware>(ethers::contract::Contract<M>);
+
+#[cfg(feature = "abi-contract")]
+impl<M: Middleware> DynamicContract<M> {
+    /// Construct a dynamic contract
+    ///
+    /// # Arguments
+    /// * `contract_address` - The address of the contract
+    /// * `abi_json` - The raw ABI of the contract (string loaded e.g. from a file)
+    /// * `client` - The client middleware
+    pub fn new(
+        contract_address: &str,
+        abi_json: &str,
+        client: M,
+    ) -> Result<DynamicContract<M>, EthError> {
+        let contract_address = address_from_str(contract_address)?;
+        let abi: ethers::abi::Abi = serde_json::from_str(abi_json).map_err(EthError::JsonError)?;
+        let contract = ethers::contract::Contract::new(contract_address, abi, Arc::new(client));
+        Ok(Self(contract))
+    }
+
+    /// Creates a contract call builder based on the provided method name and
+    /// arguments. The method name must be present in the ABI.
+    /// The arguments are checked against the ABI at runtime
+    /// -- i.e. the caller is responsible for ensuring that the arguments
+    /// are in the correct order and that the types are correct.
+    ///
+    /// The returned contract call then be called using `send`
+    /// (if a transaction is required) or `call` (if it is a static function).
+    ///
+    /// # Arguments
+    /// * `method_name` - The name of the method to call
+    /// * `params` - The arguments to pass to the method (must be in the correct order)
+    pub fn function_call<D: Detokenize>(
+        &self,
+        method_name: &str,
+        params: Vec<EthAbiTokenBind>,
+    ) -> Result<ContractCall<M, D>, EthError> {
+        let tokens = params
+            .iter()
+            .flat_map(EthAbiToken::try_from)
+            .map(|x| Token::try_from(&x))
+            .collect::<Result<Vec<Token>, _>>()?;
+        let method = self
+            .0
+            .method::<_, D>(method_name, tokens)
+            .map_err(EthError::DynamicAbiError)?;
+        Ok(method.into())
     }
 }
 
