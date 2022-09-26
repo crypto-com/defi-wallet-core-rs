@@ -2,6 +2,8 @@ pub mod abi;
 pub mod eip712;
 pub mod erc1155;
 pub mod erc20;
+#[cfg(feature = "erc4907")]
+pub mod erc4907;
 pub mod erc721;
 pub mod provider;
 pub mod utils;
