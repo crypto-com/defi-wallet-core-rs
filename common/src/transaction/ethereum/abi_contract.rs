@@ -5,7 +5,6 @@ use crate::EthError;
 use ethers::prelude::abi::{Contract, Token};
 
 /// Ethereum ABI token to ffi bind
-#[cfg(feature = "uniffi-binding")]
 #[derive(Debug, Eq, PartialEq)]
 pub enum EthAbiTokenBind {
     Address { data: String },
@@ -20,7 +19,6 @@ pub enum EthAbiTokenBind {
     Tuple { data: Vec<EthAbiTokenBind> },
 }
 
-#[cfg(feature = "uniffi-binding")]
 impl TryFrom<&EthAbiTokenBind> for EthAbiToken {
     type Error = EthError;
     fn try_from(token: &EthAbiTokenBind) -> Result<Self, Self::Error> {

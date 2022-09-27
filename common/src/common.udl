@@ -415,6 +415,7 @@ enum EthError {
   "SignatureError",
   "ChainidError",
   "AbiError",
+  "DynamicAbiError",
   "Eip712Error",
   "JsonError",
   "ClientError",

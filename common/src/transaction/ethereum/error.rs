@@ -44,6 +44,8 @@ pub enum EthError {
     ChainidError(#[from] ParseChainError),
     #[error("ABI error: {0}")]
     AbiError(#[from] abi::Error),
+    #[error("Dynamic ABI error: {0}")]
+    DynamicAbiError(#[from] ethers::abi::AbiError),
     #[error("EIP-712 error: {0}")]
     Eip712Error(#[from] Eip712Error),
     #[error("Json parse error{0}")]
