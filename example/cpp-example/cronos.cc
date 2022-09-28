@@ -455,7 +455,7 @@ timepoint measure_time(timepoint t1, std::string label) {
 
 void test_erc20_balance_of() {
   Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
-                          "https://cronos-testnet-3.crypto.org:8545", 383)
+                          "https://evm-dev-t3.cronos.org", 338)
                     .legacy();
   U256 balance = erc20.balance_of("0xf0307093f23311FE6776a7742dB619EB3df62969");
   cout << balance.to_string() << endl;
@@ -463,7 +463,7 @@ void test_erc20_balance_of() {
 
 void test_erc20_name() {
   Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
-                          "https://cronos-testnet-3.crypto.org:8545", 383)
+                          "https://evm-dev-t3.cronos.org", 338)
                     .legacy();
   String name = erc20.name();
   assert(name == "USDC");
@@ -471,7 +471,7 @@ void test_erc20_name() {
 
 void test_erc20_symbol() {
   Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
-                          "https://cronos-testnet-3.crypto.org:8545", 383)
+                          "https://evm-dev-t3.cronos.org", 338)
                     .legacy();
   String symbol = erc20.symbol();
   assert(symbol == "USDC");
@@ -479,7 +479,7 @@ void test_erc20_symbol() {
 
 void test_erc20_decimals() {
   Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
-                          "https://cronos-testnet-3.crypto.org:8545", 383)
+                          "https://evm-dev-t3.cronos.org", 338)
                     .legacy();
   uint8_t decimals = erc20.decimals();
   assert(decimals == 6);
@@ -487,7 +487,7 @@ void test_erc20_decimals() {
 
 void test_erc20_total_supply() {
   Erc20 erc20 = new_erc20("0xf0307093f23311FE6776a7742dB619EB3df62969",
-                          "https://cronos-testnet-3.crypto.org:8545", 383)
+                          "https://evm-dev-t3.cronos.org", 338)
                     .legacy();
   U256 total_supply = erc20.total_supply();
   assert(total_supply == u256("100000000000000000000000000000000"));
