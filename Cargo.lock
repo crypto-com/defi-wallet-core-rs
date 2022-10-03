@@ -1040,7 +1040,7 @@ dependencies = [
  "tonic",
  "tonic-web-wasm-client",
  "uniffi",
- "uniffi_build",
+ "uniffi_build 0.20.0",
  "uniffi_macros",
  "url",
  "wasm-bindgen",
@@ -4728,9 +4728,9 @@ dependencies = [
 
 [[package]]
 name = "uniffi_bindgen"
-version = "0.19.6"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8849753c67126dd7e4f309d09b696378481bfe9b3f5cec0a0c2b8e27391789c8"
+checksum = "195251b1b0dbb221759ea4d79e3090e5c08a60fc4040c9e945b255def155ea90"
 dependencies = [
  "anyhow",
  "askama",
@@ -4745,7 +4745,7 @@ dependencies = [
  "serde",
  "serde_json",
  "toml",
- "uniffi_meta",
+ "uniffi_meta 0.20.0",
  "weedle2",
 ]
 
@@ -4754,6 +4754,16 @@ name = "uniffi_build"
 version = "0.19.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d6c6fedf97b345227270837fcfd8d9a799f202af7fa843298c788fb943b159f"
+dependencies = [
+ "anyhow",
+ "camino",
+]
+
+[[package]]
+name = "uniffi_build"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74b65ae1c0bac70369bb0d9df6fae578b1ca130bf4cb6203e2636e2d6969dba5"
 dependencies = [
  "anyhow",
  "camino",
@@ -4775,8 +4785,8 @@ dependencies = [
  "serde",
  "syn",
  "toml",
- "uniffi_build",
- "uniffi_meta",
+ "uniffi_build 0.19.6",
+ "uniffi_meta 0.19.6",
 ]
 
 [[package]]
@@ -4784,6 +4794,15 @@ name = "uniffi_meta"
 version = "0.19.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10d099cea0c721294ec11ae6c39d661c96d13d8994247ffadaf1576b065e38e6"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "uniffi_meta"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe1767e693cbd11fc22c37a4033d82eb9d891c3862e45329b4a891c1d8395df5"
 dependencies = [
  "serde",
 ]
