@@ -1040,8 +1040,8 @@ dependencies = [
  "tonic",
  "tonic-web-wasm-client",
  "uniffi",
- "uniffi_build",
- "uniffi_macros",
+ "uniffi_build 0.19.6",
+ "uniffi_macros 0.19.6",
  "url",
  "wasm-bindgen",
 ]
@@ -4711,9 +4711,9 @@ checksum = "957e51f3646910546462e67d5f7599b9e4fb8acdd304b087a6494730f9eebf04"
 
 [[package]]
 name = "uniffi"
-version = "0.19.6"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea179ddeb64c249977c165b1d9f94af9c0a12a4f623e5986f553276612ea8796"
+checksum = "3ff9d73a665e4e94d566f069fc0c6b92d13fc7de25ae128dd20402023884b551"
 dependencies = [
  "anyhow",
  "bytes",
@@ -4723,7 +4723,7 @@ dependencies = [
  "once_cell",
  "paste",
  "static_assertions",
- "uniffi_macros",
+ "uniffi_macros 0.20.0",
 ]
 
 [[package]]
@@ -4745,7 +4745,7 @@ dependencies = [
  "serde",
  "serde_json",
  "toml",
- "uniffi_meta",
+ "uniffi_meta 0.19.6",
  "weedle2",
 ]
 
@@ -4758,6 +4758,16 @@ dependencies = [
  "anyhow",
  "camino",
  "uniffi_bindgen",
+]
+
+[[package]]
+name = "uniffi_build"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74b65ae1c0bac70369bb0d9df6fae578b1ca130bf4cb6203e2636e2d6969dba5"
+dependencies = [
+ "anyhow",
+ "camino",
 ]
 
 [[package]]
@@ -4775,8 +4785,27 @@ dependencies = [
  "serde",
  "syn",
  "toml",
- "uniffi_build",
- "uniffi_meta",
+ "uniffi_build 0.19.6",
+ "uniffi_meta 0.19.6",
+]
+
+[[package]]
+name = "uniffi_macros"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5efddfb993c5b394a75042c0d144665388af2ad3db628401ab8f4fb6f6d07e54"
+dependencies = [
+ "bincode",
+ "camino",
+ "fs-err",
+ "once_cell",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "syn",
+ "toml",
+ "uniffi_build 0.20.0",
+ "uniffi_meta 0.20.0",
 ]
 
 [[package]]
@@ -4784,6 +4813,15 @@ name = "uniffi_meta"
 version = "0.19.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10d099cea0c721294ec11ae6c39d661c96d13d8994247ffadaf1576b065e38e6"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "uniffi_meta"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe1767e693cbd11fc22c37a4033d82eb9d891c3862e45329b4a891c1d8395df5"
 dependencies = [
  "serde",
 ]
