@@ -10,9 +10,9 @@ use defi_wallet_core_common::{
     COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 
+use ethers::types::Signature;
 use std::str::FromStr;
 use std::sync::Arc;
-
 mod nft;
 
 mod contract;
@@ -1125,6 +1125,26 @@ pub fn build_eth_signed_tx(
             name: network.into(),
         },
         private_key.key.clone(),
+    )?;
+    Ok(signedtx)
+}
+
+/// builds an signed ethereum transaction given the inputs and signature
+pub fn build_signed_eth_tx_with_signature(
+    tx_info: ffi::EthTxInfoRaw,
+    network: &str,
+    from_address: &str,
+    signature_bytes: [u8; 65], // 65 bytes
+) -> Result<Vec<u8>> {
+    let signature = Signature::try_from(&signature_bytes[..])?;
+
+    let signedtx = defi_wallet_core_common::build_signed_eth_tx_with_signature(
+        tx_info.into(),
+        EthNetwork::Known {
+            name: network.into(),
+        },
+        from_address,
+        &signature,
     )?;
     Ok(signedtx)
 }
