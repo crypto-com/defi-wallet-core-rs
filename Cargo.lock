@@ -1757,9 +1757,9 @@ dependencies = [
 
 [[package]]
 name = "futures-core"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2acedae88d38235936c3922476b10fced7b2b68136f5e3c03c2d5be348a1115"
+checksum = "4e5aa3de05362c3fb88de6531e6296e85cde7739cccad4b9dfeeb7f6ebce56bf"
 
 [[package]]
 name = "futures-executor"
@@ -2021,9 +2021,9 @@ checksum = "0bfe8eed0a9285ef776bb792479ea3834e8b94e13d615c2f66d03dd50a435a29"
 
 [[package]]
 name = "httparse"
-version = "1.7.1"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "496ce29bb5a52785b44e0f7ca2847ae0bb839c9bd28f69acac9b99d461c0c04c"
+checksum = "d897f394bad6a705d5f4104762e116a75639e470d80901eed05a860a95cb1904"
 
 [[package]]
 name = "httpdate"
@@ -4505,9 +4505,9 @@ dependencies = [
 
 [[package]]
 name = "tonic-web-wasm-client"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cf4851c22e1acfd63b537a4c41383ac65868068293e3f2b76cc8d7a836a114a"
+checksum = "48b047072b5eefde66066b37cc182bd71c98e47a297eb5b5298c84844f52c07c"
 dependencies = [
  "base64 0.13.0",
  "bytes",
