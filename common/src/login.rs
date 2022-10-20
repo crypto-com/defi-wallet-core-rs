@@ -1,5 +1,5 @@
 use crate::{EthError, SecretKey};
-use siwe::Message;
+use siwe::{Message, VerificationOpts};
 use std::fmt::Display;
 
 /// The wrapper structure that contains
@@ -32,12 +32,10 @@ impl LoginInfo {
     /// NOTE: the server may still need to do extra verifications according to its needs
     /// (e.g. verify chain-id, nonce, uri + possibly fetch additional data associated
     /// with the given Ethereum address, such as ERC-20/ERC-721/ERC-1155 asset ownership)
-    pub fn verify(&self, signature: &[u8]) -> Result<(), EthError> {
-        let sig: [u8; 65] = signature
-            .try_into()
-            .map_err(|_e| EthError::SignatureError)?;
+    pub async fn verify(&self, signature: &[u8]) -> Result<(), EthError> {
         // FIXME: domain, nonce, timestamp to be passed
-        let result = self.msg.verify(sig, None, None, None);
+        let opts = VerificationOpts::default();
+        let result = self.msg.verify(signature, &opts).await;
         result.map_err(|_e| EthError::SignatureError).map(|_| ())
     }
 }
@@ -91,15 +89,15 @@ mod tests {
         LoginInfo { msg }
     }
 
-    #[test]
-    pub fn test_sign() {
+    #[tokio::test]
+    pub async fn test_sign() {
         let wallet = SecretKey::default();
         let login_info = get_logininfo(Some(&wallet));
 
         let signature = login_info.sign(&wallet);
         assert!(signature.is_ok());
         let sig = signature.unwrap();
-        assert!(login_info.verify(&sig).is_ok());
+        assert!(login_info.verify(&sig).await.is_ok());
     }
 
     #[test]

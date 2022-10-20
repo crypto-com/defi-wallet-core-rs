@@ -535,7 +535,7 @@ pub mod ffi {
         /// NOTE: the server may still need to do extra verifications according to its needs
         /// (e.g. verify chain-id, nonce, uri + possibly fetch additional data associated
         /// with the given Ethereum address, such as ERC-20/ERC-721/ERC-1155 asset ownership)
-        fn verify_logininfo(self: &CppLoginInfo, signature: &[u8]) -> Result<Vec<u8>>;
+        fn verify_logininfo(self: &CppLoginInfo, signature: &[u8]) -> Result<()>;
 
         /// create cronos tx info to sign
         pub fn new_eth_tx_info() -> EthTxInfoRaw;
@@ -1056,12 +1056,7 @@ impl CppLoginInfo {
     /// (as per EIP-4361). The returned vector is a serialized recoverable signature
     /// (as used in Ethereum).
     pub fn sign_logininfo(&self, private_key: &PrivateKey) -> anyhow::Result<Vec<u8>> {
-        let message = self.logininfo.msg.to_string();
-        let secretkey = private_key.key.clone();
-        let ret = secretkey
-            .eth_sign(message.as_bytes(), self.logininfo.msg.chain_id)
-            .map(|x| x.to_vec())?;
-        Ok(ret)
+        Ok(self.logininfo.sign(&private_key.key)?)
     }
 
     /// Verify Login Info
@@ -1072,13 +1067,11 @@ impl CppLoginInfo {
     /// NOTE: the server may still need to do extra verifications according to its needs
     /// (e.g. verify chain-id, nonce, uri + possibly fetch additional data associated
     /// with the given Ethereum address, such as ERC-20/ERC-721/ERC-1155 asset ownership)
-    pub fn verify_logininfo(&self, signature: &[u8]) -> anyhow::Result<Vec<u8>> {
-        let sig: [u8; 65] = signature
-            .try_into()
-            .map_err(|_e| EthError::SignatureError)?;
+    pub fn verify_logininfo(&self, signature: &[u8]) -> anyhow::Result<()> {
+        // TODO Reuse runtime on blocking function
+        let rt = tokio::runtime::Runtime::new()?;
         // FIXME: domain, nonce, timestamp
-        let result = self.logininfo.msg.verify(sig, None, None, None)?;
-        Ok(result)
+        Ok(rt.block_on(self.logininfo.verify(signature))?)
     }
 }
 fn convert_amount(
