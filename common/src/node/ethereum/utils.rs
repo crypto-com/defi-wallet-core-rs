@@ -373,9 +373,11 @@ pub async fn broadcast_contract_approval_tx(
 pub async fn construct_contract_approval_tx(
     approval_details: ContractApproval,
     network: EthNetwork,
+    web3api_url: &str,
 ) -> Result<TypedTransaction, EthError> {
     let (_, tx) =
-        broadcast_contract_approval_tx_common(approval_details, network, None, "", 0).await?;
+        broadcast_contract_approval_tx_common(approval_details, network, None, web3api_url, 0)
+            .await?;
     tx.ok_or_else(|| EthError::ContractSendError("No tx".to_string()))
 }
 
@@ -588,9 +590,11 @@ pub async fn broadcast_contract_transfer_tx(
 pub async fn construct_contract_transfer_tx(
     transfer_details: ContractTransfer,
     network: EthNetwork,
+    web3api_url: &str,
 ) -> Result<TypedTransaction, EthError> {
     let (_, tx) =
-        broadcast_contract_transfer_tx_common(transfer_details, network, None, "", 0).await?;
+        broadcast_contract_transfer_tx_common(transfer_details, network, None, web3api_url, 0)
+            .await?;
     tx.ok_or_else(|| EthError::ContractSendError("No tx".to_string()))
 }
 
@@ -681,9 +685,10 @@ pub async fn broadcast_contract_batch_transfer_tx(
 pub async fn construct_contract_batch_transfer_tx(
     details: ContractBatchTransfer,
     network: EthNetwork,
+    web3api_url: &str,
 ) -> Result<TypedTransaction, EthError> {
     let (_, tx) =
-        broadcast_contract_batch_transfer_tx_common(details, network, None, "", 0).await?;
+        broadcast_contract_batch_transfer_tx_common(details, network, None, web3api_url, 0).await?;
     tx.ok_or_else(|| EthError::ContractSendError("No tx".to_string()))
 }
 
