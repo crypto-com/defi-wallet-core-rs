@@ -1,10 +1,14 @@
-use std::{str::FromStr, sync::Arc, time::Duration};
-
 use crate::{
     construct_simple_eth_transfer_tx, EthAmount, EthError, EthNetwork, SecretKey, WalletCoin,
     WalletCoinFunc,
 };
+use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use ethers::prelude::{Address, LocalWallet, Middleware, Signer, SignerMiddleware};
+use ethers::types::transaction::eip2718::TypedTransaction;
+use std::{str::FromStr, sync::Arc, time::Duration};
+// use ethers Http
+use ethers::prelude::Wallet;
+use ethers::providers::{Http, Provider};
 
 #[cfg(not(target_arch = "wasm32"))]
 use ethers::utils::hex::ToHex;
@@ -235,6 +239,113 @@ pub async fn get_contract_balance(
     ContractCall::from(call).call().await
 }
 
+fn create_localwallet_client(
+    polling_interval_ms: u64,
+    key: Arc<SecretKey>,
+    chain_id: u64,
+    client: Provider<Http>,
+) -> Result<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>, EthError> {
+    let provider = client.interval(Duration::from_millis(polling_interval_ms));
+    let wallet = LocalWallet::from(key.get_signing_key()).with_chain_id(chain_id);
+    let client = SignerMiddleware::new(provider, wallet);
+    Ok(client)
+}
+
+async fn broadcast_contract_approval_tx_common(
+    approval_details: ContractApproval,
+    network: EthNetwork,
+    secret_key: Option<Arc<SecretKey>>,
+    web3api_url: &str,
+    polling_interval_ms: u64,
+) -> Result<(Option<EthersTransactionReceipt>, Option<TypedTransaction>), EthError> {
+    let (chain_id, legacy) = network.to_chain_params()?;
+    match approval_details {
+        ContractApproval::Erc20 {
+            contract_address,
+            approved_address,
+            amount,
+        } => {
+            let approved_address = address_from_str(&approved_address)?;
+            let client = get_ethers_provider(web3api_url).await?;
+            let amount = u256_from_dec_str(&amount)?;
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
+                let contract = Contract::new_erc20(&contract_address, client)?;
+                let call = contract.approve(approved_address, amount);
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc20(&contract_address, client)?;
+                let call = contract.approve(approved_address, amount);
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
+        }
+        ContractApproval::Erc721Approve {
+            contract_address,
+            approved_address,
+            token_id,
+        } => {
+            let approved_address = address_from_str(&approved_address)?;
+            let token_id = u256_from_str(&token_id)?;
+            let client = get_ethers_provider(web3api_url).await?;
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                let call = contract.approve(approved_address, token_id);
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                let call = contract.approve(approved_address, token_id);
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
+        }
+        ContractApproval::Erc721SetApprovalForAll {
+            contract_address,
+            approved_address,
+            approved,
+        } => {
+            let approved_address = address_from_str(&approved_address)?;
+            let client = get_ethers_provider(web3api_url).await?;
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
+
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                let call = contract.set_approval_for_all(approved_address, approved);
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                let call = contract.set_approval_for_all(approved_address, approved);
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
+        }
+        ContractApproval::Erc1155 {
+            contract_address,
+            approved_address,
+            approved,
+        } => {
+            let approved_address = address_from_str(&approved_address)?;
+            let client = get_ethers_provider(web3api_url).await?;
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
+                let contract = Contract::new_erc1155(&contract_address, client)?;
+                let call = contract.set_approval_for_all(approved_address, approved);
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc1155(&contract_address, client)?;
+                let call = contract.set_approval_for_all(approved_address, approved);
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
+        }
+    }
+}
+
 /// given the contract approval details, it'll construct, sign and broadcast a
 /// corresponding approval transaction.
 /// If successful, it returns the transaction receipt.
@@ -245,54 +356,207 @@ pub async fn broadcast_contract_approval_tx(
     web3api_url: &str,
     polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
+    let (receipt, _) = broadcast_contract_approval_tx_common(
+        approval_details,
+        network,
+        Some(secret_key),
+        web3api_url,
+        polling_interval_ms,
+    )
+    .await?;
+    receipt.ok_or_else(|| EthError::ContractSendError("No receipt".to_string()))
+}
+
+/// given the contract approval details, it'll construct
+/// corresponding approval transaction.
+/// If successful, it returns typed transaction.
+pub async fn construct_contract_approval_tx(
+    approval_details: ContractApproval,
+    network: EthNetwork,
+) -> Result<TypedTransaction, EthError> {
+    let (_, tx) =
+        broadcast_contract_approval_tx_common(approval_details, network, None, "", 0).await?;
+    tx.ok_or_else(|| EthError::ContractSendError("No tx".to_string()))
+}
+
+async fn broadcast_contract_transfer_tx_common(
+    transfer_details: ContractTransfer,
+    network: EthNetwork,
+    secret_key: Option<Arc<SecretKey>>,
+    web3api_url: &str,
+    polling_interval_ms: u64,
+) -> Result<(Option<EthersTransactionReceipt>, Option<TypedTransaction>), EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
 
-    let client = get_ethers_provider(web3api_url).await?;
-    let provider = client.interval(Duration::from_millis(polling_interval_ms));
-    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
-    let client = SignerMiddleware::new(provider, wallet);
-    match approval_details {
-        ContractApproval::Erc20 {
+    match transfer_details {
+        ContractTransfer::Erc20Transfer {
             contract_address,
-            approved_address,
+            to_address,
             amount,
         } => {
-            let approved_address = address_from_str(&approved_address)?;
+            let to_address = address_from_str(&to_address)?;
             let amount = u256_from_dec_str(&amount)?;
-            let contract = Contract::new_erc20(&contract_address, client)?;
-            let call = contract.approve(approved_address, amount);
-            ContractCall::from(call).legacy(legacy).send().await
+            let client = get_ethers_provider(web3api_url).await?;
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
+
+                let contract = Contract::new_erc20(&contract_address, client)?;
+                let call = contract.transfer(to_address, amount);
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc20(&contract_address, client)?;
+                let call = contract.transfer(to_address, amount);
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
         }
-        ContractApproval::Erc721Approve {
+        ContractTransfer::Erc20TransferFrom {
             contract_address,
-            approved_address,
+            from_address,
+            to_address,
+            amount,
+        } => {
+            let from_address = address_from_str(&from_address)?;
+            let to_address = address_from_str(&to_address)?;
+            let amount = u256_from_dec_str(&amount)?;
+            let client = get_ethers_provider(web3api_url).await?;
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
+                let contract = Contract::new_erc20(&contract_address, client)?;
+                let call = contract.transfer_from(from_address, to_address, amount);
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc20(&contract_address, client)?;
+                let call = contract.transfer_from(from_address, to_address, amount);
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
+        }
+        ContractTransfer::Erc721TransferFrom {
+            contract_address,
+            from_address,
+            to_address,
             token_id,
         } => {
-            let approved_address = address_from_str(&approved_address)?;
             let token_id = u256_from_str(&token_id)?;
-            let contract = Contract::new_erc721(&contract_address, client)?;
-            let call = contract.approve(approved_address, token_id);
-            ContractCall::from(call).legacy(legacy).send().await
+            let to_address = address_from_str(&to_address)?;
+            let from_address = address_from_str(&from_address)?;
+            let client = get_ethers_provider(web3api_url).await?;
+
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
+
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                let call = contract.transfer_from(from_address, to_address, token_id);
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                let call = contract.transfer_from(from_address, to_address, token_id);
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
         }
-        ContractApproval::Erc721SetApprovalForAll {
+        ContractTransfer::Erc721SafeTransferFrom {
             contract_address,
-            approved_address,
-            approved,
+            from_address,
+            to_address,
+            token_id,
         } => {
-            let approved_address = address_from_str(&approved_address)?;
-            let contract = Contract::new_erc721(&contract_address, client)?;
-            let call = contract.set_approval_for_all(approved_address, approved);
-            ContractCall::from(call).legacy(legacy).send().await
+            let token_id = u256_from_str(&token_id)?;
+            let to_address = address_from_str(&to_address)?;
+            let from_address = address_from_str(&from_address)?;
+            let client = get_ethers_provider(web3api_url).await?;
+
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
+
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                let call = contract.safe_transfer_from(from_address, to_address, token_id);
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                let call = contract.safe_transfer_from(from_address, to_address, token_id);
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
         }
-        ContractApproval::Erc1155 {
+        ContractTransfer::Erc721SafeTransferFromWithAdditionalData {
             contract_address,
-            approved_address,
-            approved,
+            from_address,
+            to_address,
+            token_id,
+            additional_data,
         } => {
-            let approved_address = address_from_str(&approved_address)?;
-            let contract = Contract::new_erc1155(&contract_address, client)?;
-            let call = contract.set_approval_for_all(approved_address, approved);
-            ContractCall::from(call).legacy(legacy).send().await
+            let token_id = u256_from_str(&token_id)?;
+            let to_address = address_from_str(&to_address)?;
+            let from_address = address_from_str(&from_address)?;
+            let client = get_ethers_provider(web3api_url).await?;
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
+
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                let call = contract.safe_transfer_from_with_data(
+                    from_address,
+                    to_address,
+                    token_id,
+                    additional_data.into(),
+                );
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc721(&contract_address, client)?;
+                let call = contract.safe_transfer_from_with_data(
+                    from_address,
+                    to_address,
+                    token_id,
+                    additional_data.into(),
+                );
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
+        }
+        ContractTransfer::Erc1155SafeTransferFrom {
+            contract_address,
+            from_address,
+            to_address,
+            token_id,
+            amount,
+            additional_data,
+        } => {
+            let token_id = u256_from_str(&token_id)?;
+            let amount = u256_from_dec_str(&amount)?;
+            let to_address = address_from_str(&to_address)?;
+            let from_address = address_from_str(&from_address)?;
+            let client = get_ethers_provider(web3api_url).await?;
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
+
+                let contract = Contract::new_erc1155(&contract_address, client)?;
+                let call = contract.safe_transfer_from(
+                    from_address,
+                    to_address,
+                    token_id,
+                    amount,
+                    additional_data.into(),
+                );
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc1155(&contract_address, client)?;
+                let call = contract.safe_transfer_from(
+                    from_address,
+                    to_address,
+                    token_id,
+                    amount,
+                    additional_data.into(),
+                );
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
         }
     }
 }
@@ -307,124 +571,37 @@ pub async fn broadcast_contract_transfer_tx(
     web3api_url: &str,
     polling_interval_ms: u64,
 ) -> Result<EthersTransactionReceipt, EthError> {
-    let (chain_id, legacy) = network.to_chain_params()?;
-
-    let client = get_ethers_provider(web3api_url).await?;
-    let provider = client.interval(Duration::from_millis(polling_interval_ms));
-    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
-    let client = SignerMiddleware::new(provider, wallet);
-    match transfer_details {
-        ContractTransfer::Erc20Transfer {
-            contract_address,
-            to_address,
-            amount,
-        } => {
-            let to_address = address_from_str(&to_address)?;
-            let amount = u256_from_dec_str(&amount)?;
-            let contract = Contract::new_erc20(&contract_address, client)?;
-            let call = contract.transfer(to_address, amount);
-            ContractCall::from(call).legacy(legacy).send().await
-        }
-        ContractTransfer::Erc20TransferFrom {
-            contract_address,
-            from_address,
-            to_address,
-            amount,
-        } => {
-            let from_address = address_from_str(&from_address)?;
-            let to_address = address_from_str(&to_address)?;
-            let amount = u256_from_dec_str(&amount)?;
-            let contract = Contract::new_erc20(&contract_address, client)?;
-            let call = contract.transfer_from(from_address, to_address, amount);
-            ContractCall::from(call).legacy(legacy).send().await
-        }
-        ContractTransfer::Erc721TransferFrom {
-            contract_address,
-            from_address,
-            to_address,
-            token_id,
-        } => {
-            let token_id = u256_from_str(&token_id)?;
-            let to_address = address_from_str(&to_address)?;
-            let from_address = address_from_str(&from_address)?;
-            let contract = Contract::new_erc721(&contract_address, client)?;
-            let call = contract.transfer_from(from_address, to_address, token_id);
-            ContractCall::from(call).legacy(legacy).send().await
-        }
-        ContractTransfer::Erc721SafeTransferFrom {
-            contract_address,
-            from_address,
-            to_address,
-            token_id,
-        } => {
-            let token_id = u256_from_str(&token_id)?;
-            let to_address = address_from_str(&to_address)?;
-            let from_address = address_from_str(&from_address)?;
-            let contract = Contract::new_erc721(&contract_address, client)?;
-            let call = contract.safe_transfer_from(from_address, to_address, token_id);
-            ContractCall::from(call).legacy(legacy).send().await
-        }
-        ContractTransfer::Erc721SafeTransferFromWithAdditionalData {
-            contract_address,
-            from_address,
-            to_address,
-            token_id,
-            additional_data,
-        } => {
-            let token_id = u256_from_str(&token_id)?;
-            let to_address = address_from_str(&to_address)?;
-            let from_address = address_from_str(&from_address)?;
-            let contract = Contract::new_erc721(&contract_address, client)?;
-            let call = contract.safe_transfer_from_with_data(
-                from_address,
-                to_address,
-                token_id,
-                additional_data.into(),
-            );
-            ContractCall::from(call).legacy(legacy).send().await
-        }
-        ContractTransfer::Erc1155SafeTransferFrom {
-            contract_address,
-            from_address,
-            to_address,
-            token_id,
-            amount,
-            additional_data,
-        } => {
-            let token_id = u256_from_str(&token_id)?;
-            let amount = u256_from_dec_str(&amount)?;
-
-            let to_address = address_from_str(&to_address)?;
-            let from_address = address_from_str(&from_address)?;
-            let contract = Contract::new_erc1155(&contract_address, client)?;
-            let call = contract.safe_transfer_from(
-                from_address,
-                to_address,
-                token_id,
-                amount,
-                additional_data.into(),
-            );
-            ContractCall::from(call).legacy(legacy).send().await
-        }
-    }
+    let (receipt, _) = broadcast_contract_transfer_tx_common(
+        transfer_details,
+        network,
+        Some(secret_key),
+        web3api_url,
+        polling_interval_ms,
+    )
+    .await?;
+    receipt.ok_or_else(|| EthError::ContractSendError("No receipt".to_string()))
 }
 
-/// given the contract batch-transfer details, it'll construct, sign and
-/// broadcast a corresponding transfer transaction.
-/// If successful, it returns the transaction receipt.
-pub async fn broadcast_contract_batch_transfer_tx(
+/// given the contract transfer details, it'll construct
+/// a corresponding transfer transaction.
+/// If successful, it returns the typed transaction.
+pub async fn construct_contract_transfer_tx(
+    transfer_details: ContractTransfer,
+    network: EthNetwork,
+) -> Result<TypedTransaction, EthError> {
+    let (_, tx) =
+        broadcast_contract_transfer_tx_common(transfer_details, network, None, "", 0).await?;
+    tx.ok_or_else(|| EthError::ContractSendError("No tx".to_string()))
+}
+
+async fn broadcast_contract_batch_transfer_tx_common(
     details: ContractBatchTransfer,
     network: EthNetwork,
-    secret_key: Arc<SecretKey>,
+    secret_key: Option<Arc<SecretKey>>,
     web3api_url: &str,
     polling_interval_ms: u64,
-) -> Result<EthersTransactionReceipt, EthError> {
+) -> Result<(Option<EthersTransactionReceipt>, Option<TypedTransaction>), EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
-
-    let client = get_ethers_provider(web3api_url).await?;
-    let provider = client.interval(Duration::from_millis(polling_interval_ms));
-    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
-    let client = SignerMiddleware::new(provider, wallet);
     match details {
         ContractBatchTransfer::Erc1155 {
             contract_address,
@@ -444,19 +621,70 @@ pub async fn broadcast_contract_batch_transfer_tx(
                 .iter()
                 .map(|val| u256_from_dec_str(val))
                 .collect::<Result<Vec<U256>, _>>()?;
+            let client = get_ethers_provider(web3api_url).await?;
 
-            let contract = Contract::new_erc1155(&contract_address, client)?;
+            if let Some(key) = secret_key {
+                let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
 
-            let call = contract.safe_batch_transfer_from(
-                from_address,
-                to_address,
-                token_ids,
-                amounts,
-                additional_data.into(),
-            );
-            ContractCall::from(call).legacy(legacy).send().await
+                let contract = Contract::new_erc1155(&contract_address, client)?;
+
+                let call = contract.safe_batch_transfer_from(
+                    from_address,
+                    to_address,
+                    token_ids,
+                    amounts,
+                    additional_data.into(),
+                );
+                let receipt = ContractCall::from(call).legacy(legacy).send().await?;
+                Ok((Some(receipt), None))
+            } else {
+                let contract = Contract::new_erc1155(&contract_address, client)?;
+
+                let call = contract.safe_batch_transfer_from(
+                    from_address,
+                    to_address,
+                    token_ids,
+                    amounts,
+                    additional_data.into(),
+                );
+                let tx = ContractCall::from(call).legacy(legacy).get_tx();
+                Ok((None, Some(tx)))
+            }
         }
     }
+}
+
+/// given the contract batch-transfer details, it'll construct, sign and
+/// broadcast a corresponding transfer transaction.
+/// If successful, it returns the transaction receipt.
+pub async fn broadcast_contract_batch_transfer_tx(
+    details: ContractBatchTransfer,
+    network: EthNetwork,
+    secret_key: Arc<SecretKey>,
+    web3api_url: &str,
+    polling_interval_ms: u64,
+) -> Result<EthersTransactionReceipt, EthError> {
+    let (receipt, _) = broadcast_contract_batch_transfer_tx_common(
+        details,
+        network,
+        Some(secret_key),
+        web3api_url,
+        polling_interval_ms,
+    )
+    .await?;
+    receipt.ok_or_else(|| EthError::ContractSendError("No receipt".to_string()))
+}
+
+/// given the contract batch-transfer details, it'll construct
+/// broadcast a corresponding transfer transaction.
+/// If successful, it returns the typed transaction.
+pub async fn construct_contract_batch_transfer_tx(
+    details: ContractBatchTransfer,
+    network: EthNetwork,
+) -> Result<TypedTransaction, EthError> {
+    let (_, tx) =
+        broadcast_contract_batch_transfer_tx_common(details, network, None, "", 0).await?;
+    tx.ok_or_else(|| EthError::ContractSendError("No tx".to_string()))
 }
 
 /// given the plain transfer details, it'll construct, sign and broadcast
@@ -481,9 +709,8 @@ pub async fn broadcast_sign_eth_tx(
     .map_err(EthError::HdWrapError)?;
     let tx = construct_simple_eth_transfer_tx(&from_address, to_hex, amount, legacy, chain_id)?;
     let client = get_ethers_provider(web3api_url).await?;
-    let provider = client.interval(Duration::from_millis(polling_interval_ms));
-    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
-    let client = SignerMiddleware::new(provider, wallet);
+
+    let client = create_localwallet_client(polling_interval_ms, secret_key, chain_id, client)?;
 
     let pending_tx = client
         .send_transaction(tx, None)

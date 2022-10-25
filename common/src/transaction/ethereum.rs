@@ -11,10 +11,10 @@ use serde::Deserialize;
 use std::default::Default;
 use std::str::FromStr;
 use std::sync::Arc;
-
 mod abi_contract;
 mod error;
 mod signer;
+use ethers::types::Signature;
 
 #[cfg(feature = "abi-contract")]
 pub use abi_contract::*;
@@ -195,6 +195,32 @@ pub fn build_signed_eth_tx(
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
     let sig = wallet.sign_transaction_sync(&tx);
     let signed_tx = &tx.rlp_signed(&sig);
+    Ok(signed_tx.to_vec())
+}
+
+/// builds an signed ethereum transaction given the inputs and signature
+pub fn build_signed_eth_tx_with_signature(
+    tx_info: EthTxInfo,
+    network: EthNetwork,
+    from_address: &str,
+    signature: &Signature, // 65 bytes
+) -> Result<Vec<u8>, EthError> {
+    let (chain_id, legacy) = network.to_chain_params()?;
+    let mut tx: TypedTransaction = construct_simple_eth_transfer_tx(
+        from_address,
+        &tx_info.to_address,
+        tx_info.amount,
+        tx_info.legacy_tx || legacy,
+        chain_id,
+    )?;
+    tx.set_nonce(U256::from_dec_str(&tx_info.nonce).map_err(EthError::DecConversion)?);
+    tx.set_gas(U256::from_dec_str(&tx_info.gas_limit).map_err(EthError::DecConversion)?);
+    let gas_price: U256 = tx_info.gas_price.try_into().map_err(EthError::ParseError)?;
+    tx.set_gas_price(gas_price);
+    if let Some(data) = tx_info.data {
+        tx.set_data(data.into());
+    }
+    let signed_tx = &tx.rlp_signed(signature);
     Ok(signed_tx.to_vec())
 }
 
