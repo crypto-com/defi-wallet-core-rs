@@ -2,7 +2,7 @@ use crate::{format_to_js_error, PrivateKey};
 use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
 use defi_wallet_core_common::{
     broadcast_tx_sync, build_signed_msg_tx, get_account_balance, get_account_details, node,
-    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, Height, Network, SingleCoin,
+    CosmosSDKMsg, CosmosSDKTxInfo, Height, Network, SingleCoin,
 };
 use js_sys::Promise;
 use serde::{Deserialize, Serialize};
@@ -27,27 +27,11 @@ impl CosmosClient {
         Self { config }
     }
 
-    /// Retrieve the account balance for a given address and a denom.
-    /// api-version: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.42.11
-    /// - 0 means before 0.42.11 or 0.44.4
-    /// - >=1 means after 0.42.11 or 0.44.4
-    /// TODO: switch to grpc-web
-    pub fn query_account_balance(
-        &self,
-        address: String,
-        denom: String,
-        api_version: u8,
-    ) -> Promise {
-        let api_url = self.config.api_url.to_owned();
+    pub fn query_account_balance(&self, address: String, denom: String) -> Promise {
+        let grpc_web_url = self.config.grpc_web_url.to_string();
         future_to_promise(async move {
-            let api_version = if api_version == 0 {
-                BalanceApiVersion::Old
-            } else {
-                BalanceApiVersion::New
-            };
-            let account_details =
-                get_account_balance(&api_url, &address, &denom, api_version).await?;
-            serde_wasm_bindgen::to_value(&account_details).map_err(format_to_js_error)
+            let balance = get_account_balance(&grpc_web_url, &address, &denom).await?;
+            serde_wasm_bindgen::to_value(&balance).map_err(format_to_js_error)
         })
     }
 
@@ -84,7 +68,9 @@ impl CosmosClient {
 #[derive(Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct CosmosClientConfig {
+    // TODO: Delete after replacing all with grpc-web.
     api_url: String,
+    grpc_web_url: String,
     tendermint_rpc_url: String,
 }
 
@@ -92,9 +78,10 @@ pub struct CosmosClientConfig {
 impl CosmosClientConfig {
     /// Create an instance.
     #[wasm_bindgen(constructor)]
-    pub fn new(api_url: String, tendermint_rpc_url: String) -> Self {
+    pub fn new(api_url: String, grpc_web_url: String, tendermint_rpc_url: String) -> Self {
         Self {
             api_url,
+            grpc_web_url,
             tendermint_rpc_url,
         }
     }

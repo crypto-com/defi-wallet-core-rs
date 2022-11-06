@@ -244,7 +244,7 @@ void chainmain_process() {
   String success, fail;
   String result = mywallet->get_default_address(CoinType::CryptoOrgMainnet);
   String balance =
-      query_account_balance(myservercosmos, myfrom, tx_info.fee_denom, 1);
+      query_account_balance(myservercosmos, myfrom, tx_info.fee_denom);
   cout << "balance=" << balance.c_str() << endl;
   String detailjson = query_account_details(myservercosmos, myfrom);
   cout << "detailjson=" << detailjson.c_str() << endl;

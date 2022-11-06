@@ -1080,7 +1080,6 @@ dependencies = [
  "defi-wallet-core-proto",
  "ethers",
  "js-sys",
- "reqwest",
  "serde",
  "serde-wasm-bindgen",
  "tendermint",

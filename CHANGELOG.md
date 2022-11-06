@@ -1,5 +1,8 @@
 # Changelog
 ## [0.x.x] - unreleased
+### Added
+### Changed
+- Update `get_account_balance` functions to replace REST API with `grpc-web` and delete `BalanceApiVersion`
 
 ## [0.3.0] - 2022-11-14
 ### Added
@@ -75,5 +78,12 @@
 - Add basic integration-test (uncompleted) with Dev node of [chain-main](https://github.com/crypto-org-chain/chain-main) and [cronos](https://github.com/crypto-org-chain/cronos).
 - Add example code in folder `example`.
 
-\[Unreleased\]: https://github.com/crypto-com/defi-wallet-core-rs/compare/v0.1.12...HEAD
+\[Unreleased\]: https://github.com/crypto-com/defi-wallet-core-rs/compare/v0.3.0...HEAD
+
+\[0.3.0\]: https://github.com/crypto-com/defi-wallet-core-rs/releases/tag/v0.3.0
+
+\[0.2.1\]: https://github.com/crypto-com/defi-wallet-core-rs/releases/tag/v0.2.1
+
+\[0.2.0\]: https://github.com/crypto-com/defi-wallet-core-rs/releases/tag/v0.2.0
+
 \[0.1.12\]: https://github.com/crypto-com/defi-wallet-core-rs/releases/tag/v0.1.12

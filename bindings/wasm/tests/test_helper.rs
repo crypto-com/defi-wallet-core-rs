@@ -15,11 +15,14 @@ use wasm_timer::Delay;
 pub(crate) const CHAIN_ID: &str = "chainmain-1";
 pub(crate) const CHAINMAIN_DENOM: &str = "basecro";
 pub(crate) const CRONOS_DENOM: &str = "basetcro";
+
 pub(crate) const CHAINMAIN_API_URL: &str = "http://127.0.0.1:26804";
+pub(crate) const CHAINMAIN_GRPC_WEB_URL: &str = "http://127.0.0.1:26808";
+pub(crate) const TENDERMINT_RPC_URL: &str = "http://127.0.0.1:26807";
+
 pub(crate) const CRONOS_RPC_URL: &str = "http://127.0.0.1:26651";
 pub(crate) const CRONOS_API_URL: &str = "http://127.0.0.1:26654";
-pub(crate) const TENDERMINT_RPC_URL: &str = "http://127.0.0.1:26807";
-pub(crate) const GRPC_WEB_URL: &str = "http://127.0.0.1:26808";
+pub(crate) const CRONOS_GRPC_WEB_URL: &str = "http://127.0.0.1:26658";
 
 pub(crate) const COMMUNITY: &str = "cro1qj4u2y23hx7plrztswrel2hgf8mh2m22k80fet";
 pub(crate) const DELEGATOR1: &str = "cro1ykec6vralvrh5vcvpf7w7u02gj728u4wp738kz";
@@ -51,8 +54,11 @@ pub(crate) const DEFAULT_WAITING_SECS: u64 = 3;
 // Helper functions
 
 pub(crate) fn chainmain_client() -> CosmosClient {
-    let config =
-        CosmosClientConfig::new(CHAINMAIN_API_URL.to_owned(), TENDERMINT_RPC_URL.to_owned());
+    let config = CosmosClientConfig::new(
+        CHAINMAIN_API_URL.to_owned(),
+        CHAINMAIN_GRPC_WEB_URL.to_owned(),
+        TENDERMINT_RPC_URL.to_owned(),
+    );
     CosmosClient::new(config)
 }
 
@@ -73,7 +79,11 @@ pub(crate) async fn chainmain_tx_info(address: &str) -> CosmosSDKTxInfoRaw {
 }
 
 pub(crate) fn cronos_client() -> CosmosClient {
-    let config = CosmosClientConfig::new(CRONOS_API_URL.to_owned(), TENDERMINT_RPC_URL.to_owned());
+    let config = CosmosClientConfig::new(
+        CRONOS_API_URL.to_owned(),
+        CRONOS_GRPC_WEB_URL.to_owned(),
+        TENDERMINT_RPC_URL.to_owned(),
+    );
     CosmosClient::new(config)
 }
 
@@ -83,7 +93,7 @@ pub(crate) fn get_private_key(mnemonic: &str) -> PrivateKey {
 }
 
 pub(crate) fn tonic_web_wasm_client() -> GrpcWebClient {
-    GrpcWebClient::new(GRPC_WEB_URL.to_owned())
+    GrpcWebClient::new(CHAINMAIN_GRPC_WEB_URL.to_owned())
 }
 
 pub(crate) async fn query_chainmain_account(address: &str) -> RawRpcAccountStatus {
@@ -101,11 +111,9 @@ pub(crate) async fn query_chainmain_account(address: &str) -> RawRpcAccountStatu
 }
 
 pub(crate) async fn query_chainmain_balance(address: &str) -> RawRpcBalance {
-    JsFuture::from(chainmain_client().query_account_balance(
-        address.to_owned(),
-        CHAINMAIN_DENOM.to_owned(),
-        1,
-    ))
+    JsFuture::from(
+        chainmain_client().query_account_balance(address.to_owned(), CHAINMAIN_DENOM.to_owned()),
+    )
     .await
     .unwrap()
     .into_serde::<RawRpcBalance>()
@@ -113,11 +121,9 @@ pub(crate) async fn query_chainmain_balance(address: &str) -> RawRpcBalance {
 }
 
 pub(crate) async fn query_cronos_balance(address: &str) -> RawRpcBalance {
-    JsFuture::from(cronos_client().query_account_balance(
-        address.to_owned(),
-        CRONOS_DENOM.to_owned(),
-        0,
-    ))
+    JsFuture::from(
+        cronos_client().query_account_balance(address.to_owned(), CRONOS_DENOM.to_owned()),
+    )
     .await
     .unwrap()
     .into_serde::<RawRpcBalance>()

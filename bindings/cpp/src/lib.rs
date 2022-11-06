@@ -4,10 +4,9 @@ use defi_wallet_core_common::node::ethereum::provider::set_ethers_httpagent;
 use defi_wallet_core_common::{
     broadcast_tx_sync_blocking, build_signed_msg_tx, build_signed_single_msg_tx,
     get_account_balance_blocking, get_account_details_blocking, get_single_msg_sign_payload,
-    BalanceApiVersion, CosmosSDKMsg, CosmosSDKTxInfo, EthError, EthNetwork, EthTxInfo, HDWallet,
-    Height, LoginInfo, Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey,
-    SingleCoin, TransactionReceipt, TxBroadcastResult, WalletCoin,
-    COMPRESSED_SECP256K1_PUBKEY_SIZE,
+    CosmosSDKMsg, CosmosSDKTxInfo, EthError, EthNetwork, EthTxInfo, HDWallet, Height, LoginInfo,
+    Network, PublicKeyBytesWrapper, RawRpcAccountResponse, SecretKey, SingleCoin,
+    TransactionReceipt, TxBroadcastResult, WalletCoin, COMPRESSED_SECP256K1_PUBKEY_SIZE,
 };
 
 use ethers::types::Signature;
@@ -402,7 +401,6 @@ pub mod ffi {
             api_url: String,
             address: String,
             denom: String,
-            api_version: u8,
         ) -> Result<String>;
         type PrivateKey;
         type CosmosSDKMsgRaw;
@@ -1014,16 +1012,8 @@ pub fn query_account_details_info(
 }
 
 /// query account balance from cosmos address and denom name
-pub fn query_account_balance(
-    api_url: String,
-    address: String,
-    denom: String,
-    api_version: u8,
-) -> Result<String> {
-    let balance_api_version = BalanceApiVersion::from(api_version);
-
-    let account_details =
-        get_account_balance_blocking(&api_url, &address, &denom, balance_api_version)?;
+pub fn query_account_balance(api_url: String, address: String, denom: String) -> Result<String> {
+    let account_details = get_account_balance_blocking(&api_url, &address, &denom)?;
 
     Ok(serde_json::to_string(&account_details)?)
 }
