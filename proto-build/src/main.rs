@@ -113,7 +113,7 @@ fn run_git(args: impl IntoIterator<Item = impl AsRef<OsStr>>) {
 
 fn update_submodules() {
     info!("Updating chain-main submodule...");
-    run_git(&[
+    run_git([
         "-C",
         CHAIN_MAIN_DIR,
         "submodule",
@@ -121,11 +121,11 @@ fn update_submodules() {
         "--init",
         "--recursive",
     ]);
-    run_git(&["-C", CHAIN_MAIN_DIR, "fetch"]);
-    run_git(&["-C", CHAIN_MAIN_DIR, "reset", "--hard", CHAIN_MAIN_REV]);
+    run_git(["-C", CHAIN_MAIN_DIR, "fetch"]);
+    run_git(["-C", CHAIN_MAIN_DIR, "reset", "--hard", CHAIN_MAIN_REV]);
 
     info!("Updating luna_classic submodule...");
-    run_git(&[
+    run_git([
         "-C",
         LUNA_CLASSIC_DIR,
         "submodule",
@@ -133,8 +133,8 @@ fn update_submodules() {
         "--init",
         "--recursive",
     ]);
-    run_git(&["-C", LUNA_CLASSIC_DIR, "fetch"]);
-    run_git(&["-C", LUNA_CLASSIC_DIR, "reset", "--hard", LUNA_CLASSIC_REV]);
+    run_git(["-C", LUNA_CLASSIC_DIR, "fetch"]);
+    run_git(["-C", LUNA_CLASSIC_DIR, "reset", "--hard", LUNA_CLASSIC_REV]);
 }
 
 fn output_commit_versions(out_dir: &Path) {
@@ -267,8 +267,8 @@ fn copy_generated_files(from_dir: &Path, to_dir: &Path) {
     info!("Copying generated files into '{}'...", to_dir.display());
 
     // Remove old compiled files
-    remove_dir_all(&to_dir).unwrap_or_default();
-    create_dir_all(&to_dir).unwrap();
+    remove_dir_all(to_dir).unwrap_or_default();
+    create_dir_all(to_dir).unwrap();
 
     let mut filenames = Vec::new();
 

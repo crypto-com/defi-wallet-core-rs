@@ -331,7 +331,7 @@ impl DynamicTransactionRequest {
 
     /// Convert to TypedTransaction
     pub fn to_type_tx(self) -> TypedTransaction {
-        if self.max_fee_per_gas != None {
+        if self.max_fee_per_gas.is_some() {
             TypedTransaction::Eip1559(self.to_eip1559_tx())
         } else if !self.access_list.0.is_empty() {
             TypedTransaction::Eip2930(self.to_eip2930_tx())
@@ -351,7 +351,7 @@ pub fn eth_sign_transaction(
     let tx: DynamicTransactionRequest =
         serde_json::from_str(json_str).map_err(EthError::JsonError)?;
     let type_tx: TypedTransaction = tx.to_type_tx();
-    if type_tx.chain_id() != None {
+    if type_tx.chain_id().is_some() {
         default_chain_id = type_tx.chain_id().unwrap().as_u64();
     }
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(default_chain_id);
