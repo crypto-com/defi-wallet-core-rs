@@ -30,17 +30,19 @@ pub async fn get_ethers_provider(urlinfo: &str) -> Result<Provider<Http>, EthErr
 
     #[cfg(not(target_arch = "wasm32"))]
     let client = {
-        let agentinfo: String = G_AGENTINFO
-            .get_or_init(|| {
-                std::env::var("DEFIWALLETCORE_AGENTINFO")
-                    .unwrap_or_else(|_| "defiwalletcore".to_string())
-            })
-            .clone();
-
-        reqwest::Client::builder()
-            .user_agent(agentinfo)
-            .build()
-            .map_err(EthError::ClientError)?
+        match G_AGENTINFO.get() {
+            Some(v) => reqwest::Client::builder()
+                .user_agent(v)
+                .build()
+                .map_err(EthError::ClientError)?,
+            None => reqwest::Client::builder()
+                .user_agent(
+                    std::env::var("DEFIWALLETCORE_AGENTINFO")
+                        .unwrap_or_else(|_| "defiwalletcore".to_string()),
+                )
+                .build()
+                .map_err(EthError::ClientError)?,
+        }
     };
 
     let httpprovider = Http::new_with_client(url, client);
