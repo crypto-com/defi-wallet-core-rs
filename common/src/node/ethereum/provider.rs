@@ -36,6 +36,10 @@ pub async fn get_ethers_provider(urlinfo: &str) -> Result<Provider<Http>, EthErr
                 .build()
                 .map_err(EthError::ClientError)?,
             None => reqwest::Client::builder()
+                .user_agent(
+                    std::env::var("DEFIWALLETCORE_AGENTINFO")
+                        .unwrap_or_else(|_| "defiwalletcore".to_string()),
+                )
                 .build()
                 .map_err(EthError::ClientError)?,
         }
