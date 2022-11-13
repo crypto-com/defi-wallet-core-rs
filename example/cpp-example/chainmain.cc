@@ -225,6 +225,7 @@ void chainmain_process() {
   cout << "export MYCOSMOSRPC=\"http://yourcosmosnode:1317\"" << endl;
   cout << "export MYTENDERMINTRPC=\"http://yourcosmosnode:26657\"" << endl;
   cout << "export MYGRPC=\"http://yourcosmosnode:9091\"" << endl;
+  cout << "export MYGRPCWEB=\"http://yourcosmosnode:26808\"" << endl;
   cout << "export MYCHAINID=your-chainid-1" << endl;
   cout << "export MYFROM=cro1yourwalletaddress" << endl;
   cout << "export MYTO=cro1yourreceiveraddress" << endl;
@@ -235,16 +236,18 @@ void chainmain_process() {
   String myfrom = getEnv("MYFROM");
   String myto = getEnv("MYTO");
   String myamount = getEnv("MYAMOUNT");
+  // TODO: Will delete after updating `query_account_details` with `MYGRPCWEB`.
   String myservercosmos = getEnv("MYCOSMOSRPC");         /* 1317 port */
   String myservertendermint = getEnv("MYTENDERMINTRPC"); /* 26657 port */
   String mygrpc = getEnv("MYGRPC");                      /* 9091 port */
+  String mygrpcweb = getEnv("MYGRPCWEB");                /* 26808 port */
+
   Box<Wallet> mywallet = createWallet(mymnemonics);
   cout << "transfer from " << myfrom << " to " << myto << " amount " << myamount
        << endl;
   String success, fail;
   String result = mywallet->get_default_address(CoinType::CryptoOrgMainnet);
-  String balance =
-      query_account_balance(myservercosmos, myfrom, tx_info.fee_denom);
+  String balance = query_account_balance(mygrpcweb, myfrom, tx_info.fee_denom);
   cout << "balance=" << balance.c_str() << endl;
   String detailjson = query_account_details(myservercosmos, myfrom);
   cout << "detailjson=" << detailjson.c_str() << endl;
