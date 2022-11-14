@@ -27,7 +27,7 @@ cosmrs = "0.9"
 eyre = "0.6"
 ethers = { version = "0.17", features = ["rustls", "abigen"] }
 ibc = { version = "0.19", default-features = false }
-ibc-proto = { version = "0.20", default-features = false }
+ibc-proto = { version = "0.22", default-features = false }
 itertools = "0.10"
 lazy_static = "1"
 pest = { version = "2", optional = true }
