@@ -51,7 +51,7 @@ uniffi_macros = { version = "^0.21", optional = true }
 url = "2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-cosmos-sdk-proto = { version = "0.14", default-features = false, features = ["cosmwasm"] }
+cosmos-sdk-proto = { version = "0.15", default-features = false, features = ["cosmwasm"] }
 defi-wallet-core-proto = { version = "0.1", path = "../proto" }
 # NOTE: crate `bip39` cannot work with latest crate `rand` (0.8.0)
 # FIXME: https://github.com/rust-bitcoin/rust-bip39/issues/14
