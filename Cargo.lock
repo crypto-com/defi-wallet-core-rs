@@ -995,7 +995,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-common"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "base64 0.13.1",
@@ -1041,7 +1041,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-cpp"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "cosmos-sdk-proto",
@@ -1072,7 +1072,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-wasm"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "console_error_panic_hook",
  "cosmos-sdk-proto",

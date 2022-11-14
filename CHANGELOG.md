@@ -1,10 +1,28 @@
 # Changelog
 ## [0.x.x] - unreleased
+
+## [0.3.0] - 2022-11-14
 ### Added
 - Add denomination query support to UniFFI bindings
+- Add Python bindings support
+- Add licenses and notices
+- Add set user-agent on Ethereum JSON-RPC support
+- Add get backup mnemonics support
+- Add ERC4907 support
+- Add a basic contract call creation using the raw ABI strings
 
 ### Changed
 - Extend UniFFI broadcast transaction binding to take an optional argument to specify the broadcast mode
+- Tight coupling between cronos apis and privatekey
+- Disable we_alloc for safety
+- Improve Android CI and support SDK 25
+- Replace action-rs/toolchain with dtolnay/rust-toolchain
+- Fix lose ABI parameter type function when parsing EthAbiParamType from a string
+- Improve the ABI parsing
+- Fix incorrect testnet setting
+- Split up broadcast txs to have the option to only build txs instead signing and broadcasting them
+- Give the valid web3url for the provider
+- Upgrade various dependencies
 
 ## [0.2.1] - 2022-07-18
 ### Added
