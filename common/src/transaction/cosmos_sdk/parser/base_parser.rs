@@ -9,7 +9,7 @@ use cosmos_sdk_proto::cosmos::staking::v1beta1::{MsgBeginRedelegate, MsgDelegate
 use cosmos_sdk_proto::traits::{Message, TypeUrl};
 use eyre::WrapErr;
 use ibc::applications::transfer::msgs::transfer;
-use tendermint_proto::Protobuf;
+use ibc_proto::protobuf::Protobuf;
 
 /// Base parser for standard Cosmos messages
 pub struct BaseParser;

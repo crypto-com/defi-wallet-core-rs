@@ -55,7 +55,7 @@ impl CosmosClient {
                 .into_result()
                 .map_err(format_to_js_error)?;
 
-            if let tendermint::abci::Code::Err(_) = resp.code {
+            if resp.code.is_err() {
                 return Err(serde_wasm_bindgen::to_value(&resp).map_err(format_to_js_error)?);
             }
 

@@ -97,12 +97,12 @@ pub(crate) fn tonic_web_wasm_client() -> GrpcWebClient {
 }
 
 pub(crate) async fn query_chainmain_account(address: &str) -> RawRpcAccountStatus {
-    let account_details =
+    let account_details = serde_wasm_bindgen::from_value::<RawRpcAccountResponse>(
         JsFuture::from(chainmain_client().query_account_details(address.to_owned()))
             .await
-            .unwrap()
-            .into_serde::<RawRpcAccountResponse>()
-            .unwrap();
+            .unwrap(),
+    )
+    .unwrap();
 
     match account_details {
         RawRpcAccountResponse::OkResponse { account } => account,
