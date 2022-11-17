@@ -134,7 +134,7 @@ impl<M: Middleware> DynamicContract<M> {
             .collect::<Result<Vec<Token>, _>>()?;
         let method = self
             .0
-            .method::<_, D>(method_name, tokens)
+            .method::<_, D>(method_name, Token::Tuple(tokens))
             .map_err(EthError::DynamicAbiError)?;
         Ok(method.into())
     }

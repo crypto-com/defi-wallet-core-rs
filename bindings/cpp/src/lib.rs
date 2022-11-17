@@ -18,6 +18,8 @@ mod contract;
 
 mod uint;
 
+mod ethereum;
+
 /// Wrapper of `CosmosSDKMsg`
 ///
 /// For now, types used as extern Rust types are required to be defined by the same crate that
@@ -537,6 +539,7 @@ pub mod ffi {
 
         /// create cronos tx info to sign
         pub fn new_eth_tx_info() -> EthTxInfoRaw;
+
         /// sign cronos tx with private key
         pub fn build_eth_signed_tx(
             tx_info: EthTxInfoRaw,
