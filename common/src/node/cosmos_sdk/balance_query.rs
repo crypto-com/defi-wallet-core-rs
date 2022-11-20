@@ -46,14 +46,14 @@ pub async fn get_account_balance(
 /// platform-guarded as JS/WASM doesn't support the reqwest blocking)
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_account_balance_blocking(
-    grpc_web_url: &str,
+    grpc_url: &str,
     address: &str,
     denom: &str,
 ) -> Result<RawRpcBalance, RestError> {
     tokio::runtime::Runtime::new()
         .map_err(|_err| RestError::AsyncRuntimeError)?
         .block_on(async move {
-            let mut client = QueryClient::connect(grpc_web_url.to_string())
+            let mut client = QueryClient::connect(grpc_url.to_string())
                 .await
                 .map_err(RestError::GRPCTransportError)?;
             let request = QueryBalanceRequest {

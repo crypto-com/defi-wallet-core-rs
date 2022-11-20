@@ -398,7 +398,7 @@ pub mod ffi {
         ) -> Result<CosmosTransactionReceiptRaw>;
         /// query account balance from cosmos address and denom name
         pub fn query_account_balance(
-            api_url: String,
+            grpc_url: String,
             address: String,
             denom: String,
         ) -> Result<String>;
@@ -1012,10 +1012,10 @@ pub fn query_account_details_info(
 }
 
 /// query account balance from cosmos address and denom name
-pub fn query_account_balance(api_url: String, address: String, denom: String) -> Result<String> {
-    let account_details = get_account_balance_blocking(&api_url, &address, &denom)?;
+pub fn query_account_balance(grpc_url: String, address: String, denom: String) -> Result<String> {
+    let balance = get_account_balance_blocking(&grpc_url, &address, &denom)?;
 
-    Ok(serde_json::to_string(&account_details)?)
+    Ok(serde_json::to_string(&balance)?)
 }
 
 /// broadcast the cosmos transaction

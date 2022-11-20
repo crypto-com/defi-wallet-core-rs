@@ -2,7 +2,7 @@
 ## [0.x.x] - unreleased
 ### Added
 ### Changed
-- Update `get_account_balance` functions to replace REST API with `grpc-web` and delete `BalanceApiVersion`
+- Update `get_account_balance` functions to replace REST API with `grpc` (non-wasm) and `grpc-web` (wasm) and delete `BalanceApiVersion`
 
 ## [0.3.0] - 2022-11-14
 ### Added

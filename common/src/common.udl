@@ -540,7 +540,7 @@ namespace common {
   [Throws=RestError]
   RawRpcAccountResponse get_account_details_blocking([ByRef] string api_url, [ByRef] string address);
   [Throws=RestError]
-  RawRpcBalance get_account_balance_blocking([ByRef] string api_url, [ByRef] string address, [ByRef] string denom);
+  RawRpcBalance get_account_balance_blocking([ByRef] string grpc_url, [ByRef] string address, [ByRef] string denom);
   [Throws=RestError]
   u64 simulate_blocking([ByRef] string grpc_url, sequence<u8> raw_signed_tx);
   [Throws=RestError]
