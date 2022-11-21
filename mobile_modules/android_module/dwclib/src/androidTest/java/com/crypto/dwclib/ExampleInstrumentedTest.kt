@@ -659,7 +659,7 @@ class ExampleInstrumentedTest {
 
     fun getAccountBalanceWorkTest() {
         val rb = getAccountBalanceBlocking(
-            "https://mainnet.crypto.org:1317",
+            "https://mainnet.crypto.org:9090",
             "cro1yjjlx5qsrj5rxn5xtd5rkm6dcqzlchxkrvsmg6",
             "basecro"
         )
