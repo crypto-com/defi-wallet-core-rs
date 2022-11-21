@@ -48,7 +48,7 @@ logWalletAddresses(wallet);
 // const account = await wasm.query_account_details("https://testnet-croeseid-4.crypto.org:1317", "tcro1y6493k3smakl2wf09u7ds4amztx8ks7leyrtmy");
 // console.log(account);
 
-// const balance = await wasm.query_account_balance("https://testnet-croeseid-4.crypto.org:1317", "tcro1y6493k3smakl2wf09u7ds4amztx8ks7leyrtmy", "basetcro", 0);
+// const balance = await wasm.query_account_balance("https://testnet-croeseid-4.crypto.org:9090", "tcro1y6493k3smakl2wf09u7ds4amztx8ks7leyrtmy", "basetcro");
 // console.log(balance);
 
 // const tx_resp = await wasm.broadcast_tx("https://testnet-croeseid-4.crypto.org:26657", signed_tx);
