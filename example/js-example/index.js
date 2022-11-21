@@ -5,6 +5,7 @@ import * as wasm from "@crypto-com/defi-wallet-core-wasm";
 const CHAIN_ID = "chainmain-1";
 const CHAINMAIN_DENOM = "basecro";
 const CHAINMAIN_API_URL = "http://127.0.0.1:26804";
+const CHAINMAIN_GRPC_WEB_URL = "http://127.0.0.1:26808";
 const TENDERMINT_RPC_URL = "http://127.0.0.1:26807";
 const DELEGATOR2 = "cro1tmfhgwp62uhz5y5hqcyl8jkjq22l2cles2lum8";
 const VALIDATOR1 = "crocncl1pk9eajj4zuzpptnadwz6tzfgcpchqvpkvql0a9";
@@ -22,9 +23,9 @@ testEip199PersonalSign();
 testEip712SimpleTypedDataSign();
 testEip712RecursivelyNestedTypedDataSign();
 testBuildEthereumContractBatchTransfer();
-const txData = testBuildAndSignCosmosTx();
-testCosmosClient(txData);
-
+const client = await testCosmosClient();
+await testQueryAccountBalance(client);
+testBuildAndSignCosmosTx();
 const wallet = new wasm.Wallet();
 logWalletAddresses(wallet);
 
@@ -47,9 +48,6 @@ logWalletAddresses(wallet);
 
 // const account = await wasm.query_account_details("https://testnet-croeseid-4.crypto.org:1317", "tcro1y6493k3smakl2wf09u7ds4amztx8ks7leyrtmy");
 // console.log(account);
-
-// const balance = await wasm.query_account_balance("https://testnet-croeseid-4.crypto.org:9090", "tcro1y6493k3smakl2wf09u7ds4amztx8ks7leyrtmy", "basetcro");
-// console.log(balance);
 
 // const tx_resp = await wasm.broadcast_tx("https://testnet-croeseid-4.crypto.org:26657", signed_tx);
 // console.log(tx_resp);
@@ -252,11 +250,16 @@ function testBuildEthereumContractBatchTransfer() {
   console.dir(details);
 }
 
-async function testCosmosClient(txData) {
+function testCosmosClient() {
   const config = new wasm.CosmosClientConfig(
     CHAINMAIN_API_URL,
+    CHAINMAIN_GRPC_WEB_URL,
     TENDERMINT_RPC_URL,
   );
-  const client = new wasm.CosmosClient(config);
-  await client.broadcast_tx(txData);
+  return new wasm.CosmosClient(config);
+}
+
+async function testQueryAccountBalance(client) {
+  const response = await client.query_account_balance(DELEGATOR2, CHAINMAIN_DENOM);
+  console.log(`Account balance: ${JSON.stringify(response)}`);
 }
