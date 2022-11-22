@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
             text += h
         }
 
-        val rb = getAccountBalanceBlocking("https://mainnet.crypto.org:1317","cro1yjjlx5qsrj5rxn5xtd5rkm6dcqzlchxkrvsmg6","basecro",BalanceApiVersion.NEW)
+        val rb = getAccountBalanceBlocking("https://mainnet.crypto.org:9090","cro1yjjlx5qsrj5rxn5xtd5rkm6dcqzlchxkrvsmg6","basecro")
         text += "\namount: " + rb.amount
 
         text += "\nend"

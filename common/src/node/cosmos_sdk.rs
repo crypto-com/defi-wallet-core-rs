@@ -13,20 +13,9 @@ use tendermint_rpc::{
     request, response,
 };
 
-/// Response from the balance API
-#[derive(Serialize, Deserialize)]
-pub struct BalanceResponse {
-    balance: RawRpcBalance,
-}
+mod balance_query;
 
-/// The raw balance data from the balance API
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
-pub struct RawRpcBalance {
-    /// denomination
-    pub denom: String,
-    /// the decimal number of coins of a given denomination
-    pub amount: String,
-}
+pub use balance_query::*;
 
 /// The raw response from the account API
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
@@ -99,24 +88,6 @@ impl From<u8> for BalanceApiVersion {
 
 fn get_accounts_url(api_url: &str, address: &str) -> String {
     format!("{}/cosmos/auth/v1beta1/accounts/{}", api_url, address)
-}
-
-fn get_balance_url(
-    api_url: &str,
-    address: &str,
-    denom: &str,
-    version: BalanceApiVersion,
-) -> String {
-    match version {
-        BalanceApiVersion::New => format!(
-            "{}/cosmos/bank/v1beta1/balances/{}/by_denom?denom={}",
-            api_url, address, denom
-        ),
-        BalanceApiVersion::Old => format!(
-            "{}/cosmos/bank/v1beta1/balances/{}/{}",
-            api_url, address, denom
-        ),
-    }
 }
 
 /// return the account details (async for JS/WASM)
@@ -236,40 +207,6 @@ fn get_denom_metadata_blocking(grpc_url: &str, denom: String) -> Result<DenomMet
         res.into_inner().metadata.ok_or(RestError::MissingResult)
     })?;
     Ok(result.into())
-}
-
-/// return the balance (async for JS/WASM)
-pub async fn get_account_balance(
-    api_url: &str,
-    address: &str,
-    denom: &str,
-    version: BalanceApiVersion,
-) -> Result<RawRpcBalance, RestError> {
-    let resp = reqwest::Client::new()
-        .get(get_balance_url(api_url, address, denom, version))
-        .send()
-        .await
-        .map_err(RestError::RequestError)?
-        .json::<BalanceResponse>()
-        .await
-        .map_err(RestError::RequestError)?;
-    Ok(resp.balance)
-}
-
-/// return the balance (blocking for other platforms;
-/// platform-guarded as JS/WASM doesn't support the reqwest blocking)
-#[cfg(not(target_arch = "wasm32"))]
-pub fn get_account_balance_blocking(
-    api_url: &str,
-    address: &str,
-    denom: &str,
-    version: BalanceApiVersion,
-) -> Result<RawRpcBalance, RestError> {
-    let resp = reqwest::blocking::get(get_balance_url(api_url, address, denom, version))
-        .map_err(RestError::RequestError)?
-        .json::<BalanceResponse>()
-        .map_err(RestError::RequestError)?;
-    Ok(resp.balance)
 }
 
 /// broadcast the tx (async for JS/WASM)
@@ -392,10 +329,6 @@ pub fn broadcast_tx_sync_blocking(
 pub struct CosmosSDKClient {
     /// the Tendermint JSON-RPC (usually on 26657)
     tendermint_rpc_url: String,
-    /// the Cosmos REST API (usually on 1317) -- FIXME: replace with grpc-web?
-    rest_api_url: String,
-    /// difference due to a breaking change: https://github.com/cosmos/cosmos-sdk/releases/tag/v0.42.11
-    balance_api_version: BalanceApiVersion,
     /// the Cosmos gRPC (usually on 9090)
     grpc_url: String,
 }
@@ -403,16 +336,9 @@ pub struct CosmosSDKClient {
 #[cfg(not(target_arch = "wasm32"))]
 impl CosmosSDKClient {
     /// a new client using a set of URLs
-    pub fn new(
-        tendermint_rpc_url: String,
-        rest_api_url: String,
-        balance_api_version: BalanceApiVersion,
-        grpc_url: String,
-    ) -> Self {
+    pub fn new(tendermint_rpc_url: String, grpc_url: String) -> Self {
         Self {
             tendermint_rpc_url,
-            rest_api_url,
-            balance_api_version,
             grpc_url,
         }
     }
@@ -434,12 +360,12 @@ impl CosmosSDKClient {
         address: &str,
         denom: &str,
     ) -> Result<RawRpcBalance, RestError> {
-        get_account_balance_blocking(&self.rest_api_url, address, denom, self.balance_api_version)
+        get_account_balance_blocking(&self.grpc_url, address, denom)
     }
 
     /// return the account details (blocking)
     pub fn get_account_details(&self, address: &str) -> Result<RawRpcAccountResponse, RestError> {
-        get_account_details_blocking(&self.rest_api_url, address)
+        get_account_details_blocking(&self.grpc_url, address)
     }
 
     /// return the denomination metadata (blocking)

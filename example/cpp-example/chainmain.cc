@@ -238,13 +238,13 @@ void chainmain_process() {
   String myservercosmos = getEnv("MYCOSMOSRPC");         /* 1317 port */
   String myservertendermint = getEnv("MYTENDERMINTRPC"); /* 26657 port */
   String mygrpc = getEnv("MYGRPC");                      /* 9091 port */
+
   Box<Wallet> mywallet = createWallet(mymnemonics);
   cout << "transfer from " << myfrom << " to " << myto << " amount " << myamount
        << endl;
   String success, fail;
   String result = mywallet->get_default_address(CoinType::CryptoOrgMainnet);
-  String balance =
-      query_account_balance(myservercosmos, myfrom, tx_info.fee_denom, 1);
+  String balance = query_account_balance(mygrpc, myfrom, tx_info.fee_denom);
   cout << "balance=" << balance.c_str() << endl;
   String detailjson = query_account_details(myservercosmos, myfrom);
   cout << "detailjson=" << detailjson.c_str() << endl;

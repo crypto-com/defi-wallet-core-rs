@@ -215,11 +215,6 @@ interface RawRpcAccountResponse {
   ErrorResponse(i64 code, string message, sequence<string> details);
 };
 
-enum BalanceApiVersion {
-  "Old",
-  "New",
-};
-
 dictionary TxBroadcastResult {
     string tx_hash_hex;
     u32 code;
@@ -243,7 +238,7 @@ dictionary DenomMetadata {
 };
 
 interface CosmosSDKClient {
-    constructor(string tendermint_rpc_url, string rest_api_url, BalanceApiVersion balance_api_version, string grpc_url);
+    constructor(string tendermint_rpc_url, string grpc_url);
 
     [Throws=RestError]
     TxBroadcastResult broadcast_tx(sequence<u8> raw_signed_tx, TxBroadcastMode? mode);
@@ -545,7 +540,7 @@ namespace common {
   [Throws=RestError]
   RawRpcAccountResponse get_account_details_blocking([ByRef] string api_url, [ByRef] string address);
   [Throws=RestError]
-  RawRpcBalance get_account_balance_blocking([ByRef] string api_url, [ByRef] string address, [ByRef] string denom, BalanceApiVersion version);
+  RawRpcBalance get_account_balance_blocking([ByRef] string grpc_url, [ByRef] string address, [ByRef] string denom);
   [Throws=RestError]
   u64 simulate_blocking([ByRef] string grpc_url, sequence<u8> raw_signed_tx);
   [Throws=RestError]

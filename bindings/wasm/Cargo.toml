@@ -38,6 +38,5 @@ wasm-bindgen-test = "0.3"
 ethers = { version = "0.17", features = ["rustls"] }
 wasm-timer = "0.2"
 tendermint-rpc = "0.23"
-reqwest = { version = "0.11", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
 tonic-web-wasm-client = "0.2"
