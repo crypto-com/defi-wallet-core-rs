@@ -1,6 +1,9 @@
+use cxx_build::CFG;
+
 const BRIDGES: &[&str] = &["src/lib.rs", "src/nft.rs", "src/contract.rs", "src/uint.rs"];
 
 fn main() {
+    CFG.doxygen = true;
     cxx_build::bridges(BRIDGES)
         .file("src/nft.cc")
         .flag_if_supported("-std=c++11")
