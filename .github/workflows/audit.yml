@@ -20,4 +20,5 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Install cargo audit
         run: cargo install cargo-audit
-      - run: cargo audit --deny warnings
+        # RUSTSEC-2021-0145: `atty` transitive dependency, only informational for Windows (not exploitable in practice)
+      - run: cargo audit --deny warnings --ignore RUSTSEC-2021-0145

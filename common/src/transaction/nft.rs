@@ -736,7 +736,7 @@ mod test {
         let chain_id = "chaintest".parse()?;
         let account_number = 1;
         let sequence_number = 0;
-        let gas = 100_000;
+        let gas = 100_000u64;
         let timeout_height = 9001u16;
         let memo = "example memo";
 

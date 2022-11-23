@@ -157,7 +157,7 @@ impl NftClient {
             .into_serde::<Response>()
             .unwrap();
 
-        assert_eq!(res.code, tendermint::abci::Code::Ok);
+        assert!(res.code.is_ok());
         wait_for_timeout(None).await;
     }
 }
@@ -189,31 +189,31 @@ async fn validate_issue() {
         .supply(denom1.id.clone(), SIGNER1.to_owned())
         .await;
     assert!(res.is_ok());
-    let supply = res.unwrap().into_serde::<u64>().unwrap();
+    let supply = serde_wasm_bindgen::from_value::<u64>(res.unwrap()).unwrap();
     assert_eq!(supply, 0);
 
     let res = grpc_client
         .owner(denom1.id.clone(), SIGNER1.to_owned(), None)
         .await;
     assert!(res.is_ok());
-    let owner = res.unwrap().into_serde::<Owner>().unwrap();
+    let owner = serde_wasm_bindgen::from_value::<Owner>(res.unwrap()).unwrap();
     assert_eq!(owner.address, SIGNER1.to_owned());
     assert_eq!(owner.id_collections, vec![]);
 
     let res = grpc_client.collection(denom2.id.clone(), None).await;
     assert!(res.is_ok());
-    let collection = res.unwrap().into_serde::<Collection>().unwrap();
+    let collection = serde_wasm_bindgen::from_value::<Collection>(res.unwrap()).unwrap();
     assert_eq!(collection.denom, Some(denom2.clone()));
     assert_eq!(collection.nfts.len(), 0);
 
     let res = grpc_client.denom(denom2.id.clone()).await;
     assert!(res.is_ok());
-    let denom = res.unwrap().into_serde::<Denom>().unwrap();
+    let denom = serde_wasm_bindgen::from_value::<Denom>(res.unwrap()).unwrap();
     assert_eq!(denom, denom2);
 
     let res = grpc_client.denom_by_name(denom1.name.clone()).await;
     assert!(res.is_ok());
-    let denom = res.unwrap().into_serde::<Denom>().unwrap();
+    let denom = serde_wasm_bindgen::from_value::<Denom>(res.unwrap()).unwrap();
     assert_eq!(denom, denom1);
 
     let pagination = PageRequest {
@@ -225,7 +225,7 @@ async fn validate_issue() {
     };
     let res = grpc_client.denoms(Some(pagination)).await;
     assert!(res.is_ok());
-    let denoms = res.unwrap().into_serde::<Vec<Denom>>().unwrap();
+    let denoms = serde_wasm_bindgen::from_value::<Vec<Denom>>(res.unwrap()).unwrap();
     assert_eq!(denoms.len(), 2);
     assert_eq!(denoms[0], denom2);
     assert_eq!(denoms[1], denom1);
@@ -240,13 +240,13 @@ async fn validate_mint() {
         .nft(denom1.id.clone(), TEST_TOKEN_ID.to_owned())
         .await;
     assert!(res.is_ok());
-    let nft = res.unwrap().into_serde::<BaseNft>().unwrap();
+    let nft = serde_wasm_bindgen::from_value::<BaseNft>(res.unwrap()).unwrap();
     assert_eq!(nft.owner, SIGNER2.to_owned());
 
     // Check collection after minting.
     let res = grpc_client.collection(denom1.id.clone(), None).await;
     assert!(res.is_ok());
-    let collection = res.unwrap().into_serde::<Collection>().unwrap();
+    let collection = serde_wasm_bindgen::from_value::<Collection>(res.unwrap()).unwrap();
     assert_eq!(collection.denom, Some(denom1));
     assert_eq!(collection.nfts.len(), 1);
 }
@@ -260,7 +260,7 @@ async fn validate_before_transfer() {
         .owner(denom1.clone().id, SIGNER2.to_owned(), None)
         .await;
     assert!(res.is_ok());
-    let owner = res.unwrap().into_serde::<Owner>().unwrap();
+    let owner = serde_wasm_bindgen::from_value::<Owner>(res.unwrap()).unwrap();
     assert_eq!(owner.address, SIGNER2.to_owned());
     assert_eq!(owner.id_collections.len(), 1);
     assert_eq!(owner.id_collections[0].denom_id, denom1.clone().id);
@@ -279,7 +279,7 @@ async fn validate_after_transfer() {
         .nft(denom1.clone().id, TEST_TOKEN_ID.to_owned())
         .await;
     assert!(res.is_ok());
-    let nft = res.unwrap().into_serde::<BaseNft>().unwrap();
+    let nft = serde_wasm_bindgen::from_value::<BaseNft>(res.unwrap()).unwrap();
     assert_eq!(nft.owner, SIGNER1.to_owned());
 
     // Check owner.
@@ -287,7 +287,7 @@ async fn validate_after_transfer() {
         .owner(denom1.clone().id, SIGNER2.to_owned(), None)
         .await;
     assert!(res.is_ok());
-    let owner = res.unwrap().into_serde::<Owner>().unwrap();
+    let owner = serde_wasm_bindgen::from_value::<Owner>(res.unwrap()).unwrap();
     assert_eq!(owner.address, SIGNER2.to_owned());
     assert_eq!(owner.id_collections, vec![]);
 }
@@ -300,7 +300,7 @@ async fn validate_edit() {
         .nft(denom1.id.clone(), TEST_TOKEN_ID.to_owned())
         .await;
     assert!(res.is_ok());
-    let nft = res.unwrap().into_serde::<BaseNft>().unwrap();
+    let nft = serde_wasm_bindgen::from_value::<BaseNft>(res.unwrap()).unwrap();
     assert_eq!(nft.name, "newname".to_owned());
     assert_eq!(nft.uri, "newuri".to_owned());
     assert_eq!(nft.data, "newdata".to_owned());
@@ -315,7 +315,7 @@ async fn validate_before_burn() {
         .supply(denom1.id.clone(), SIGNER1.to_owned())
         .await;
     assert!(res.is_ok());
-    let supply = res.unwrap().into_serde::<u64>().unwrap();
+    let supply = serde_wasm_bindgen::from_value::<u64>(res.unwrap()).unwrap();
     assert_eq!(supply, 1);
 }
 
@@ -333,13 +333,13 @@ async fn validate_after_burn() {
         .supply(denom1.clone().id, SIGNER1.to_owned())
         .await;
     assert!(res.is_ok());
-    let supply = res.unwrap().into_serde::<u64>().unwrap();
+    let supply = serde_wasm_bindgen::from_value::<u64>(res.unwrap()).unwrap();
     assert_eq!(supply, 0);
 
     // Check collection.
     let res = grpc_client.collection(denom1.clone().id, None).await;
     assert!(res.is_ok());
-    let collection = res.unwrap().into_serde::<Collection>().unwrap();
+    let collection = serde_wasm_bindgen::from_value::<Collection>(res.unwrap()).unwrap();
     assert_eq!(collection.denom, Some(denom1));
     assert_eq!(collection.nfts.len(), 0);
 }

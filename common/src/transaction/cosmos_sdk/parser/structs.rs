@@ -85,7 +85,7 @@ impl From<Fee> for CosmosFee {
 
         Self {
             amount,
-            gas_limit: fee.gas_limit.value(),
+            gas_limit: fee.gas_limit,
             payer: fee.payer.map(|p| p.to_string()),
             granter: fee.granter.map(|g| g.to_string()),
         }
