@@ -3,9 +3,10 @@
 use crate::node::ethereum::abi::EthAbiToken;
 use crate::EthError;
 use ethers::prelude::abi::{Contract, Token};
-
+use serde::{Deserialize, Serialize};
 /// Ethereum ABI token to ffi bind
-#[derive(Debug, Eq, PartialEq)]
+// enable serde serialization
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum EthAbiTokenBind {
     Address { data: String },
     FixedBytes { data: Vec<u8> },

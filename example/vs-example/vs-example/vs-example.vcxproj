@@ -150,6 +150,7 @@
     <ClCompile Include="sdk\include\defi-wallet-core-cpp\src\nft.rs.cc" />
     <ClCompile Include="sdk\include\defi-wallet-core-cpp\src\contract.rs.cc" />
     <ClCompile Include="sdk\include\defi-wallet-core-cpp\src\uint.rs.cc" />
+    <ClCompile Include="sdk\include\defi-wallet-core-cpp\src\ethereum.rs.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

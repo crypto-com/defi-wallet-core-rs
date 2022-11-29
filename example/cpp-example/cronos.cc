@@ -1,14 +1,25 @@
 #include "sdk/include/defi-wallet-core-cpp/src/contract.rs.h"
 #include "sdk/include/defi-wallet-core-cpp/src/lib.rs.h"
 #include "sdk/include/defi-wallet-core-cpp/src/uint.rs.h"
+#include "sdk/include/defi-wallet-core-cpp/src/ethereum.rs.h"
 #include "sdk/include/rust/cxx.h"
 #include <cassert>
 #include <chrono>
 #include <cstring>
 #include <iostream>
+#include <sstream>
+#include <fstream>
+#include <iomanip>
+
+using namespace std;
+using namespace rust;
+using namespace org::defi_wallet_core;
 
 void test_uint();
 void test_approval();
+
+Box<Wallet> createWallet(String mymnemonics);
+String getEnv(String key);
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> timepoint;
 timepoint measure_time(timepoint t1, std::string label);
@@ -491,6 +502,140 @@ void test_erc20_total_supply() {
                     .legacy();
   U256 total_supply = erc20.total_supply();
   assert(total_supply == u256("100000000000000000000000000000000"));
+}
+
+// sample code for calling smart-contract
+void test_dynamic_api_encode() {
+  std::ifstream t("../../common/src/contract/erc721-abi.json");
+  std::stringstream buffer;
+  buffer << t.rdbuf();
+  std::string json = buffer.str();
+
+  String mymnemonics = getEnv("MYMNEMONICS");
+  String mycronosrpc = getEnv("MYCRONOSRPC");
+  String mycontract = getEnv("MYCONTRACT721");
+  int mychainid = stoi(getEnv("MYCRONOSCHAINID").c_str());
+  Box<Wallet> mywallet = createWallet(mymnemonics);
+
+  String senderAddress = mywallet->get_eth_address(0);
+  String receiverAddress = mywallet->get_eth_address(2);
+  auto thisNonce = get_eth_nonce(senderAddress.c_str(), mycronosrpc);
+  cout << "rpc=" << mycronosrpc << endl;
+  std::string tokenid;
+  std::cout << "Enter tokenid: ";
+  std::cin >> tokenid;
+
+  Box<EthContract> w = new_eth_contract(mycronosrpc, mycontract, json);
+
+  char tmp[300];
+  memset(tmp, 0, sizeof(tmp));
+  sprintf(tmp,
+          "[{\"Address\":{\"data\":\"%s\"}},{\"Address\":{\"data\":\"%s\"}},{"
+          "\"Uint\":{\"data\":\"%d\"}}]",
+          senderAddress.c_str(), receiverAddress.c_str(), stoi(tokenid));
+  std::cout << tmp << std::endl;
+  std::string paramsjson = tmp;
+  Vec<uint8_t> data; // encoded
+  data = w->encode("safeTransferFrom", paramsjson);
+  cout << "data length=" << data.size() << endl;
+  char hdpath[100];
+  int cointype = 60;
+  int chainid = mychainid; // defined in cronos-devnet.yaml
+  snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+  Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
+  EthTxInfoRaw eth_tx_info = new_eth_tx_info();
+  eth_tx_info.to_address = mycontract;
+  eth_tx_info.nonce = thisNonce;
+  eth_tx_info.amount = "0";
+  eth_tx_info.amount_unit = EthAmount::EthDecimal;
+  eth_tx_info.data = data;
+  eth_tx_info.gas_limit = "219400";
+  eth_tx_info.gas_price = "100000000";
+  eth_tx_info.gas_price_unit = EthAmount::WeiDecimal;
+
+  Vec<uint8_t> signedtx =
+      build_eth_signed_tx(eth_tx_info, chainid, true, *privatekey);
+  CronosTransactionReceiptRaw receipt =
+      broadcast_eth_signed_raw_tx(signedtx, mycronosrpc, 1000);
+  String status = receipt.status;
+  Vec<String> logs = receipt.logs;
+  for (auto it = logs.begin(); it != logs.end(); ++it) {
+    cout << *it << endl;
+  }
+
+  cout << "status: " << status << endl;
+}
+
+void test_dynamic_api_call() {
+
+  std::ifstream t("../../common/src/contract/erc721-abi.json");
+  std::stringstream buffer;
+  buffer << t.rdbuf();
+  std::string json = buffer.str();
+
+  String mymnemonics = getEnv("MYMNEMONICS");
+  String mycronosrpc = getEnv("MYCRONOSRPC");
+  String mycontract = getEnv("MYCONTRACT721");
+
+  Box<EthContract> mycontractcall =
+      new_eth_contract(mycronosrpc, mycontract, json);
+
+  std::string tokenid;
+  std::cout << "Enter tokenid: ";
+  std::cin >> tokenid;
+
+  char tmp[300];
+  memset(tmp, 0, sizeof(tmp));
+  sprintf(tmp, "[{\"Uint\":{\"data\":\"%d\"}}]", stoi(tokenid));
+
+  std::string response = mycontractcall->call("ownerOf", tmp).c_str();
+  std::cout << "response: " << response << endl;
+}
+
+void test_dynamic_api_send() {
+  std::ifstream t("../../common/src/contract/erc721-abi.json");
+  std::stringstream buffer;
+  buffer << t.rdbuf();
+  std::string json = buffer.str();
+
+  String mymnemonics = getEnv("MYMNEMONICS");
+  String mycronosrpc = getEnv("MYCRONOSRPC");
+  String mycontract = getEnv("MYCONTRACT721");
+  int mychainid = stoi(getEnv("MYCRONOSCHAINID").c_str());
+  Box<Wallet> mywallet = createWallet(mymnemonics);
+
+  String senderAddress = mywallet->get_eth_address(0);
+  String receiverAddress = mywallet->get_eth_address(2);
+  auto thisNonce = get_eth_nonce(senderAddress.c_str(), mycronosrpc);
+  cout << "rpc=" << mycronosrpc << endl;
+  std::string tokenid;
+  std::cout << "Enter tokenid: ";
+  std::cin >> tokenid;
+
+  char tmp[300];
+  memset(tmp, 0, sizeof(tmp));
+  sprintf(tmp,
+          "[{\"Address\":{\"data\":\"%s\"}},{\"Address\":{\"data\":\"%s\"}},{"
+          "\"Uint\":{\"data\":\"%d\"}}]",
+          senderAddress.c_str(), receiverAddress.c_str(), stoi(tokenid));
+  std::cout << tmp << std::endl;
+  std::string paramsjson = tmp;
+  char hdpath[100];
+  int cointype = 60;
+  int chainid = mychainid; // defined in cronos-devnet.yaml
+  snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+  Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
+  Box<EthContract> w =
+      new_signing_eth_contract(mycronosrpc, mycontract, json, *privatekey);
+  CronosTransactionReceiptRaw receipt = w->send("safeTransferFrom", paramsjson);
+
+  String status = receipt.status;
+  Vec<String> logs = receipt.logs;
+  for (auto it = logs.begin(); it != logs.end(); ++it) {
+    cout << *it << endl;
+  }
+
+  cout << "status: " << status << endl;
 }
 
 void test_cronos_testnet() {

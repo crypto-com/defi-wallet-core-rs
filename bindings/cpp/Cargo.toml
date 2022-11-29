@@ -6,7 +6,7 @@ rust-version = "1.57"
 license = "Apache-2.0"
 
 [dependencies]
-defi-wallet-core-common = { path = "../../common" , features=["login"]}
+defi-wallet-core-common = { path = "../../common" , features=["login","abi-contract"]}
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
 cosmos-sdk-proto = { version = "0.15" }
 cxx = "1"

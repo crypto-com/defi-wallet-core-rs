@@ -5,7 +5,7 @@ members = [
     "proto",
     "common",
     "bindings/wasm",
-    "bindings/cpp"
+    "bindings/cpp",
 ]
 default-members = [
     "proto-build",
