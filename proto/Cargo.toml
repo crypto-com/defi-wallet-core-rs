@@ -15,7 +15,7 @@ cosmrs = "0.10"
 cosmos-sdk-proto = { version = "0.15", default-features = false }
 prost = "0.11"
 prost-types = "0.11"
-tendermint-proto = "0.26"
+tendermint-proto = "0.27"
 tonic = { version = "0.8", default-features = false, features = ["codegen", "prost"] }
 serde = "1"
 
