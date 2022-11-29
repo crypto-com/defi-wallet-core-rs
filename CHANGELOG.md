@@ -1,6 +1,8 @@
 # Changelog
 ## [0.x.x] - unreleased
 ### Added
+- Dynamic Contract C++ Bindings 
+- Minting C++ Example
 ### Changed
 - Update `get_account_balance` functions to replace REST API with `grpc` (non-wasm) and `grpc-web` (wasm) and delete `BalanceApiVersion`
 
