@@ -12,7 +12,7 @@ rust-version = "1.57"
 
 [dependencies]
 cosmrs = "0.10"
-cosmos-sdk-proto = { version = "0.15", default-features = false }
+cosmos-sdk-proto = { version = "0.16", default-features = false }
 prost = "0.11"
 prost-types = "0.11"
 tendermint-proto = "0.26"
