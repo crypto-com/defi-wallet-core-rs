@@ -114,20 +114,22 @@ pub fn construct_simple_eth_transfer_tx(
     chain_id: u64,
 ) -> Result<TypedTransaction, EthError> {
     let from = Address::from_str(from_hex).map_err(|_| EthError::HexConversion)?;
-    let to = Address::from_str(to_hex).map_err(|_| EthError::HexConversion)?;
+    let to = Address::from_str(to_hex).map_err(|_| EthError::HexConversion);
     let amount: U256 = amount.try_into().map_err(EthError::ParseError)?;
     if legacy_tx {
-        Ok(TransactionRequest::pay(to, amount)
-            .from(from)
-            .chain_id(chain_id)
-            .into())
+        let mut txrequest = TransactionRequest::new();
+        if let Ok(tovalue) = to {
+            txrequest = txrequest.to::<NameOrAddress>(tovalue.into());
+        };
+        let typedtx = txrequest.value(amount).from(from).chain_id(chain_id).into();
+        Ok(typedtx)
     } else {
-        Ok(Eip1559TransactionRequest::new()
-            .to(to)
-            .value(amount)
-            .from(from)
-            .chain_id(chain_id)
-            .into())
+        let mut txrequest = Eip1559TransactionRequest::new();
+        if let Ok(tovalue) = to {
+            txrequest = txrequest.to::<NameOrAddress>(tovalue.into());
+        }
+        let typedtx = txrequest.value(amount).from(from).chain_id(chain_id).into();
+        Ok(typedtx)
     }
 }
 
@@ -140,7 +142,6 @@ pub fn construct_unsigned_eth_tx(
     legacy_tx: bool,
 ) -> Result<Vec<u8>, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
-
     let tx =
         construct_simple_eth_transfer_tx(from_hex, to_hex, amount, legacy || legacy_tx, chain_id)?;
     Ok(tx.rlp().to_vec())
@@ -171,6 +172,7 @@ pub fn build_signed_eth_tx(
     secret_key: Arc<SecretKey>,
 ) -> Result<Vec<u8>, EthError> {
     let (chain_id, legacy) = network.to_chain_params()?;
+
     let from_address = WalletCoinFunc {
         coin: WalletCoin::Ethereum {
             network: EthNetwork::Mainnet,
@@ -192,8 +194,9 @@ pub fn build_signed_eth_tx(
     if let Some(data) = tx_info.data {
         tx.set_data(data.into());
     }
+    tx.set_chain_id(chain_id);
     let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
-    let sig = wallet.sign_transaction_sync(&tx);
+    let sig: Signature = wallet.sign_transaction_sync(&tx);
     let signed_tx = &tx.rlp_signed(&sig);
     Ok(signed_tx.to_vec())
 }

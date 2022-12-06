@@ -12,7 +12,6 @@ use ethers::prelude::*;
 use ethers::signers::Wallet;
 use ethers::types::transaction::eip2718::TypedTransaction;
 use std::convert::TryFrom;
-
 type HttpProvider = Provider<Http>;
 type DynamicContractHttp = DynamicContract<HttpProvider>;
 type SigningWallet = Wallet<SigningKey>;
@@ -62,6 +61,9 @@ mod ffi {
             abi_json: String,
             private_key: &PrivateKey,
         ) -> Result<Box<EthContract>>;
+
+        // extract toplevel json with keyname
+        fn read_json(filepath: String, keyname: String) -> Result<String>;
 
         fn encode(
             &mut self,
@@ -114,6 +116,14 @@ fn new_signing_eth_contract(
         dynamic_contract: None,
         signing_contract: Some(signing_contract),
     }))
+}
+
+fn read_json(filepath: String, keyname: String) -> Result<String> {
+    let src = std::fs::read_to_string(filepath)?;
+    let json: serde_json::Value = serde_json::from_str(&src)?;
+    let json = json.get(&keyname).ok_or_else(|| anyhow!("key not found"))?;
+    let jsonstring = serde_json::to_string(&json)?;
+    Ok(jsonstring)
 }
 
 impl EthContract {

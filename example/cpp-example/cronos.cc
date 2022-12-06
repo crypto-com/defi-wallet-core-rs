@@ -562,7 +562,6 @@ void test_dynamic_api_encode() {
   for (auto it = logs.begin(); it != logs.end(); ++it) {
     cout << *it << endl;
   }
-
   cout << "status: " << status << endl;
 }
 
@@ -630,12 +629,88 @@ void test_dynamic_api_send() {
   CronosTransactionReceiptRaw receipt = w->send("safeTransferFrom", paramsjson);
 
   String status = receipt.status;
-  Vec<String> logs = receipt.logs;
-  for (auto it = logs.begin(); it != logs.end(); ++it) {
-    cout << *it << endl;
-  }
-
   cout << "status: " << status << endl;
+}
+
+void test_dynamic_mint_with_encoding() {
+  cout << "test_dynamic_mint" << endl;
+  String abijson = read_json(
+      "../../contracts/artifacts/contracts/GameERC721.sol/GameERC721.json",
+      "abi");
+  String mymnemonics = getEnv("MYMNEMONICS");
+  String mycronosrpc = getEnv("MYCRONOSRPC");
+  String mycontract = getEnv("MYCONTRACT721");
+  int mychainid = stoi(getEnv("MYCRONOSCHAINID").c_str());
+  Box<Wallet> mywallet = createWallet(mymnemonics);
+  Box<EthContract> w = new_eth_contract(mycronosrpc, mycontract, abijson);
+  String senderAddress = mywallet->get_eth_address(0);
+  String receiverAddress = mywallet->get_eth_address(2);
+  auto thisNonce = get_eth_nonce(senderAddress.c_str(), mycronosrpc);
+  char hdpath[100];
+  int cointype = 60;
+  int chainid = mychainid; // defined in cronos-devnet.yaml
+  snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+  Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
+  EthTxInfoRaw eth_tx_info = new_eth_tx_info();
+  std::string tokenuri = "mytokenuri";
+  char tmp[300];
+  memset(tmp, 0, sizeof(tmp));
+  sprintf(tmp, "[{\"Address\":{\"data\":\"%s\"}},{\"Str\":{\"data\":\"%s\"}}]",
+          senderAddress.c_str(), tokenuri.c_str());
+  std::string paramsjson = tmp;
+  Vec<uint8_t> data; // encoded
+  data = w->encode("safeMint", paramsjson);
+
+  eth_tx_info.to_address = mycontract;
+  eth_tx_info.nonce = thisNonce;
+  eth_tx_info.amount = "0";
+  eth_tx_info.amount_unit = EthAmount::EthDecimal;
+  eth_tx_info.data = data;
+  eth_tx_info.gas_limit = "1955020";
+  eth_tx_info.gas_price = "100000";
+  eth_tx_info.gas_price_unit = EthAmount::WeiDecimal;
+
+  Vec<uint8_t> signedtx =
+      build_eth_signed_tx(eth_tx_info, chainid, true, *privatekey);
+  CronosTransactionReceiptRaw receipt =
+      broadcast_eth_signed_raw_tx(signedtx, mycronosrpc, 1000);
+  String status = receipt.status;
+  String contract_address = receipt.contract_address;
+  cout << "status: " << status << endl;
+  cout << "contract_address: " << mycontract << endl;
+}
+
+void test_dynamic_mint() {
+  cout << "test_dynamic_mint" << endl;
+  String abijson = read_json(
+      "../../contracts/artifacts/contracts/GameERC721.sol/GameERC721.json",
+      "abi");
+  String mymnemonics = getEnv("MYMNEMONICS");
+  String mycronosrpc = getEnv("MYCRONOSRPC");
+  String mycontract = getEnv("MYCONTRACT721");
+  int mychainid = stoi(getEnv("MYCRONOSCHAINID").c_str());
+  Box<Wallet> mywallet = createWallet(mymnemonics);
+  String senderAddress = mywallet->get_eth_address(0);
+  String receiverAddress = mywallet->get_eth_address(2);
+  auto thisNonce = get_eth_nonce(senderAddress.c_str(), mycronosrpc);
+  char hdpath[100];
+  int cointype = 60;
+  int chainid = mychainid; // defined in cronos-devnet.yaml
+  snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
+  Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
+  std::string tokenuri = "mytokenuri";
+  char tmp[300];
+  memset(tmp, 0, sizeof(tmp));
+  sprintf(tmp, "[{\"Address\":{\"data\":\"%s\"}},{\"Str\":{\"data\":\"%s\"}}]",
+          senderAddress.c_str(), tokenuri.c_str());
+  std::string paramsjson = tmp;
+  Box<EthContract> w =
+      new_signing_eth_contract(mycronosrpc, mycontract, abijson, *privatekey);
+  CronosTransactionReceiptRaw receipt = w->send("safeMint", paramsjson);
+
+  String status = receipt.status;
+  cout << "status: " << status << endl;
+  cout << "contract_address: " << mycontract << endl;
 }
 
 void test_cronos_testnet() {
