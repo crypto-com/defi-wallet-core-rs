@@ -1,10 +1,15 @@
 # Changelog
-## [0.x.x] - unreleased
+## [0.3.1] - 2022-12-6
 ### Added
-- Dynamic Contract C++ Bindings 
-- Minting C++ Example
+- Dynamic Contract C++ Bindings : Encode,Call,Send
+- Minting C++ Example : Encode,Send
+- Upgraded ethers to 1.0
+
 ### Changed
 - Update `get_account_balance` functions to replace REST API with `grpc` (non-wasm) and `grpc-web` (wasm) and delete `BalanceApiVersion`
+- Update the tendermint and ibc related crates and small API adjustments
+- Use Custom cxx-build fork
+
 
 ## [0.3.0] - 2022-11-14
 ### Added
