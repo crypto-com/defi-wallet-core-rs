@@ -1,4 +1,8 @@
 # Changelog
+
+Unreleased
+- change EthAbiTokenBind, EthAbiToken cloneable
+
 ## [0.3.1] - 2022-12-6
 ### Added
 - Dynamic Contract C++ Bindings : Encode,Call,Send
