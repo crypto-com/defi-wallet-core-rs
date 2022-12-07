@@ -6,7 +6,7 @@ use ethers::prelude::abi::{Contract, Token};
 use serde::{Deserialize, Serialize};
 /// Ethereum ABI token to ffi bind
 // enable serde serialization
-#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize, Clone)]
 pub enum EthAbiTokenBind {
     Address { data: String },
     FixedBytes { data: Vec<u8> },
