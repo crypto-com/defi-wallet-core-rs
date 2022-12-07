@@ -501,7 +501,7 @@ async fn broadcast_contract_transfer_tx_common(
                 let client = create_localwallet_client(polling_interval_ms, key, chain_id, client)?;
 
                 let contract = Contract::new_erc721(&contract_address, client)?;
-                let call = contract.safe_transfer_from_with_data(
+                let call = contract.safe_transfer_from_with_from_and_to_and_data(
                     from_address,
                     to_address,
                     token_id,
@@ -511,7 +511,7 @@ async fn broadcast_contract_transfer_tx_common(
                 Ok((Some(receipt), None))
             } else {
                 let contract = Contract::new_erc721(&contract_address, client)?;
-                let call = contract.safe_transfer_from_with_data(
+                let call = contract.safe_transfer_from_with_from_and_to_and_data(
                     from_address,
                     to_address,
                     token_id,

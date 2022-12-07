@@ -97,11 +97,12 @@ impl TryInto<U256> for EthAmount {
     type Error = ConversionError;
 
     fn try_into(self) -> Result<U256, Self::Error> {
-        match self {
+        let r = match self {
             EthAmount::WeiDecimal { amount } => parse_units(amount, "wei"),
             EthAmount::GweiDecimal { amount } => parse_units(amount, "gwei"),
             EthAmount::EthDecimal { amount } => parse_units(amount, "ether"),
-        }
+        }?;
+        Ok(r.into())
     }
 }
 

@@ -56,7 +56,8 @@ interface SecretKey {
 [Error]
 enum HdWrapError {
     "InvalidLength",
-    "HDError",
+    "HDErrorBip39",
+    "HDErrorBip32",
     "AccountId",
 };
 

@@ -101,8 +101,10 @@ pub struct HDWallet {
 pub enum HdWrapError {
     #[error("The length should be 64-bytes")]
     InvalidLength,
-    #[error("HD wallet error: {0}")]
-    HDError(anyhow::Error),
+    #[error("HD wallet error (bip 39): {0}")]
+    HDErrorBip39(bip39::Error),
+    #[error("HD wallet error (bip 32): {0}")]
+    HDErrorBip32(bip32::Error),
     #[error("AccountId error: {0}")]
     AccountId(eyre::Report),
 }
@@ -147,7 +149,7 @@ impl HDWallet {
         let size: usize = word_count.unwrap_or(MnemonicWordCount::TwentyFour).into();
         let entropy_bytes = (size / 3) * 4;
         let phrase = Mnemonic::from_entropy_in(Language::English, &entropy[0..entropy_bytes])
-            .map_err(|e| HdWrapError::HDError(e.into()))?;
+            .map_err(|e| HdWrapError::HDErrorBip39(e.into()))?;
         Self::recover_english(SecretString::new(phrase.to_string()), pass)
     }
 
@@ -178,7 +180,7 @@ impl HDWallet {
         let mut entropy = [0u8; (MAX_NB_WORDS / 3) * 4];
         rand_core::RngCore::fill_bytes(&mut rng, &mut entropy[0..entropy_bytes]);
         let mnemonic = Mnemonic::from_entropy_in(Language::English, &entropy[0..entropy_bytes])
-            .map_err(|e| HdWrapError::HDError(e.into()))?;
+            .map_err(|e| HdWrapError::HDErrorBip39(e.into()))?;
         let seed = mnemonic.to_seed_normalized(password.expose_secret());
         let seed = Seed::new(seed);
         Ok(Self {
@@ -193,7 +195,7 @@ impl HDWallet {
         password: SecretString,
     ) -> Result<Self, HdWrapError> {
         let mnemonic = Mnemonic::from_str(mnemonic_phrase.expose_secret())
-            .map_err(|e| HdWrapError::HDError(e.into()))?;
+            .map_err(|e| HdWrapError::HDErrorBip39(e.into()))?;
         let seed = mnemonic.to_seed_normalized(password.expose_secret());
         let seed = Seed::new(seed);
 
@@ -218,9 +220,9 @@ impl HDWallet {
     pub fn get_key(&self, derivation_path: String) -> Result<Arc<SecretKey>, HdWrapError> {
         let derivation_path: DerivationPath = derivation_path
             .parse()
-            .map_err(|e: bip32::Error| HdWrapError::HDError(e.into()))?;
+            .map_err(|e: bip32::Error| HdWrapError::HDErrorBip32(e.into()))?;
         let child_xprv = XPrv::derive_from_path(&self.seed, &derivation_path)
-            .map_err(|e| HdWrapError::HDError(e.into()))?;
+            .map_err(|e| HdWrapError::HDErrorBip32(e.into()))?;
         Ok(Arc::new(SecretKey(child_xprv.private_key().clone())))
     }
 
@@ -233,9 +235,9 @@ impl HDWallet {
         let coin_type = WalletCoinFunc { coin }.get_coin_type();
         let derivation_path: DerivationPath = format!("m/44'/{}'/0'/0/{}", coin_type, index)
             .parse()
-            .map_err(|e: bip32::Error| HdWrapError::HDError(e.into()))?;
+            .map_err(|e: bip32::Error| HdWrapError::HDErrorBip32(e.into()))?;
         let child_xprv = XPrv::derive_from_path(&self.seed, &derivation_path)
-            .map_err(|e| HdWrapError::HDError(e.into()))?;
+            .map_err(|e| HdWrapError::HDErrorBip32(e.into()))?;
         Ok(Arc::new(SecretKey(child_xprv.private_key().clone())))
     }
 }
