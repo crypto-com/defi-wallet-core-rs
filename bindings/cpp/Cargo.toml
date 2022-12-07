@@ -14,7 +14,7 @@ anyhow = "1"
 serde="1"
 serde_json="1"
 siwe = { version = "0.5" }
-ethers = { version = "0.17", features = ["rustls"] }
+ethers = { version = "1", features = ["rustls"] }
 hex = "0.4"
 tokio = { version = "1", features = ["rt"] }
 
