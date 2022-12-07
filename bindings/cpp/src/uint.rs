@@ -1,6 +1,7 @@
 use anyhow::Result;
 use common::EthError;
 use defi_wallet_core_common as common;
+use ethers::utils::ParseUnits;
 use std::fmt;
 
 #[cxx::bridge(namespace = "org::defi_wallet_core")]
@@ -330,21 +331,24 @@ impl U256 {
 
     /// Multiplies the provided amount with 10^{units} provided.
     pub fn parse_units<S: AsRef<str>>(amount: String, units: S) -> Result<U256, EthError> {
-        Ok(ethers::utils::parse_units(amount, units.as_ref())
+        let parsed: ethers::prelude::U256 = ethers::utils::parse_units(amount, units.as_ref())
             .map_err(EthError::ParseError)?
-            .into())
+            .into();
+        Ok(parsed.into())
     }
 
     /// Format the output for the user which prefer to see values in ether (instead of wei)
     /// Divides the input by 1e18
     pub fn format_ether(&self) -> U256 {
-        ethers::utils::format_ether(self).into()
+        let parsed_units = ParseUnits::U256(self.into());
+        ethers::utils::format_ether(parsed_units).into()
     }
 
     /// Convert to common ethereum unit types: ether, gwei, or wei
     /// formatted in _ETH decimals_ (e.g. "1.50000...") wrapped as string
     pub fn format_units<S: AsRef<str>>(&self, units: S) -> Result<String, EthError> {
-        ethers::utils::format_units(self, units.as_ref()).map_err(EthError::ParseError)
+        let parsed_units = ParseUnits::U256(self.into());
+        ethers::utils::format_units(parsed_units, units.as_ref()).map_err(EthError::ParseError)
     }
 }
 
