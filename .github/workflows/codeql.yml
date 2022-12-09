@@ -2,7 +2,7 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "main", "dependabot/npm_and_yarn/contracts/normalize-url-4.5.1", "feat/add-code-coverage-to-ci", "feature/241", "feature/619", "feature/660", "feature-ed25519", "ncw-innovation-release" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   schedule:
