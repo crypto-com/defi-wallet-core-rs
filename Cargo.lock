@@ -1001,7 +1001,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-common"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "base64 0.13.1",
@@ -1046,7 +1046,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-cpp"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "cosmos-sdk-proto",
@@ -1077,7 +1077,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-wasm"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "console_error_panic_hook",
  "cosmos-sdk-proto",
@@ -4349,21 +4349,25 @@ dependencies = [
 
 [[package]]
 name = "tonic-web-wasm-client"
-version = "0.2.2"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48b047072b5eefde66066b37cc182bd71c98e47a297eb5b5298c84844f52c07c"
+checksum = "dd39aa3b83dd3622795b3bb6b190e4da0963381e9e0742b4564029055e02d615"
 dependencies = [
  "base64 0.13.1",
+ "byteorder",
  "bytes",
- "console_error_panic_hook",
- "futures-core",
+ "futures-util",
  "http",
  "http-body",
  "httparse",
- "reqwest",
+ "js-sys",
+ "pin-project",
  "thiserror",
  "tonic",
- "tower",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-streams",
+ "web-sys",
 ]
 
 [[package]]
@@ -4794,6 +4798,19 @@ checksum = "4683da3dfc016f704c9f82cf401520c4f1cb3ee440f7f52b3d6ac29506a49ca7"
 dependencies = [
  "proc-macro2",
  "quote",
+]
+
+[[package]]
+name = "wasm-streams"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4609d447824375f43e1ffbc051b50ad8f4b3ae8219680c94452ea05eb240ac7"
+dependencies = [
+ "futures-util",
+ "js-sys",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]
