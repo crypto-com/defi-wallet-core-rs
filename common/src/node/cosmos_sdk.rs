@@ -214,9 +214,7 @@ pub async fn broadcast_tx_sync(
     tendermint_rpc_url: &str,
     raw_signed_tx: Vec<u8>,
 ) -> Result<response::Wrapper<tx_sync::Response>, RestError> {
-    let request = request::Wrapper::new(tx_sync::Request {
-        tx: raw_signed_tx.into(),
-    });
+    let request = request::Wrapper::new(tx_sync::Request { tx: raw_signed_tx });
 
     reqwest::Client::new()
         .post(tendermint_rpc_url)
