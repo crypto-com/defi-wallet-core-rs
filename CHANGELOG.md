@@ -1,7 +1,11 @@
 # Changelog
 
 Unreleased
-- change EthAbiTokenBind, EthAbiToken cloneable
+
+## [0.3.2] - 2022-12-15
+### Added
+- Change EthAbiTokenBind, EthAbiToken cloneable
+- Add chainid in DynamicContract send
 
 ## [0.3.1] - 2022-12-6
 ### Added
