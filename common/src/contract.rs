@@ -146,7 +146,7 @@ where
     M: Middleware,
     D: Detokenize,
 {
-    contract_call: builders::ContractCall<M, D>,
+    pub contract_call: builders::ContractCall<M, D>,
 }
 
 impl<M, D> ContractCall<M, D>

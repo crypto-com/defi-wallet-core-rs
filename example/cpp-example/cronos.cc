@@ -625,7 +625,7 @@ void test_dynamic_api_send() {
   snprintf(hdpath, sizeof(hdpath), "m/44'/%d'/0'/0/0", cointype);
   Box<PrivateKey> privatekey = mywallet->get_key(hdpath);
   Box<EthContract> w =
-      new_signing_eth_contract(mycronosrpc, mycontract, json, *privatekey);
+      new_signing_eth_contract(mycronosrpc, mycontract, json, *privatekey, mychainid);
   CronosTransactionReceiptRaw receipt = w->send("safeTransferFrom", paramsjson);
 
   String status = receipt.status;
@@ -667,7 +667,7 @@ void test_dynamic_mint_with_encoding() {
   eth_tx_info.amount_unit = EthAmount::EthDecimal;
   eth_tx_info.data = data;
   eth_tx_info.gas_limit = "1955020";
-  eth_tx_info.gas_price = "100000";
+  eth_tx_info.gas_price = "2028122028989";
   eth_tx_info.gas_price_unit = EthAmount::WeiDecimal;
 
   Vec<uint8_t> signedtx =
@@ -705,7 +705,7 @@ void test_dynamic_mint() {
           senderAddress.c_str(), tokenuri.c_str());
   std::string paramsjson = tmp;
   Box<EthContract> w =
-      new_signing_eth_contract(mycronosrpc, mycontract, abijson, *privatekey);
+      new_signing_eth_contract(mycronosrpc, mycontract, abijson, *privatekey, chainid);
   CronosTransactionReceiptRaw receipt = w->send("safeMint", paramsjson);
 
   String status = receipt.status;
