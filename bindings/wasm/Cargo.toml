@@ -37,6 +37,6 @@ tendermint = "0.26"
 wasm-bindgen-test = "0.3"
 ethers = { version = "1", features = ["rustls"] }
 wasm-timer = "0.2"
-tendermint-rpc = "0.26"
+tendermint-rpc = "0.28"
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
 tonic-web-wasm-client = "0.3"
