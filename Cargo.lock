@@ -1044,8 +1044,8 @@ dependencies = [
  "tonic",
  "tonic-web-wasm-client",
  "uniffi",
- "uniffi_build",
- "uniffi_macros",
+ "uniffi_build 0.21.0",
+ "uniffi_macros 0.22.0",
  "url",
  "wasm-bindgen",
 ]
@@ -4583,7 +4583,7 @@ dependencies = [
  "once_cell",
  "paste",
  "static_assertions",
- "uniffi_macros",
+ "uniffi_macros 0.21.0",
 ]
 
 [[package]]
@@ -4605,7 +4605,7 @@ dependencies = [
  "serde",
  "serde_json",
  "toml",
- "uniffi_meta",
+ "uniffi_meta 0.21.0",
  "weedle2",
 ]
 
@@ -4618,6 +4618,26 @@ dependencies = [
  "anyhow",
  "camino",
  "uniffi_bindgen",
+]
+
+[[package]]
+name = "uniffi_build"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6db116cd55ae857fd40d5780d47c76d3f6aa68c242458fb57bc24cb130a3e920"
+dependencies = [
+ "anyhow",
+ "camino",
+]
+
+[[package]]
+name = "uniffi_checksum_derive"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f55105cc7e1ac83ca1eb29587e3b7f65737f9142dc65d54b63502c2589c9d6a5"
+dependencies = [
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -4635,8 +4655,27 @@ dependencies = [
  "serde",
  "syn",
  "toml",
- "uniffi_build",
- "uniffi_meta",
+ "uniffi_build 0.21.0",
+ "uniffi_meta 0.21.0",
+]
+
+[[package]]
+name = "uniffi_macros"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed72d962296f794d962888484c8a2129174976fb2d7c566eca52892d373e0234"
+dependencies = [
+ "bincode",
+ "camino",
+ "fs-err",
+ "once_cell",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "syn",
+ "toml",
+ "uniffi_build 0.22.0",
+ "uniffi_meta 0.22.0",
 ]
 
 [[package]]
@@ -4646,6 +4685,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd9417cc653937681436b93838d8c5f97a5b8c58697813982ee8810bd1dc3b57"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "uniffi_meta"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f819a2d6f98e2e9758604f3f541c8200166868525d0329e232ce188f19eeeb4"
+dependencies = [
+ "serde",
+ "siphasher",
+ "uniffi_checksum_derive",
 ]
 
 [[package]]
