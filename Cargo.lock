@@ -1044,7 +1044,7 @@ dependencies = [
  "tonic",
  "tonic-web-wasm-client",
  "uniffi",
- "uniffi_build 0.21.0",
+ "uniffi_build 0.22.0",
  "uniffi_macros 0.22.0",
  "url",
  "wasm-bindgen",
@@ -1876,9 +1876,9 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "goblin"
-version = "0.5.4"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7666983ed0dd8d21a6f6576ee00053ca0926fb281a5522577a4dbd0f1b54143"
+checksum = "572564d6cba7d09775202c8e7eebc4d534d5ae36578ab402fb21e182a0ac9505"
 dependencies = [
  "log",
  "plain",
@@ -4588,16 +4588,16 @@ dependencies = [
 
 [[package]]
 name = "uniffi_bindgen"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12cc4af3c0180c7e86c4a3acf2b6587af04ba2567b1e948993df10f421796621"
+checksum = "19d84dea610e893f4043354c71e4361386475365e6e2834aded4c8cebf940311"
 dependencies = [
  "anyhow",
  "askama",
  "bincode",
  "camino",
- "clap",
  "fs-err",
+ "glob",
  "goblin",
  "heck",
  "once_cell",
@@ -4605,7 +4605,8 @@ dependencies = [
  "serde",
  "serde_json",
  "toml",
- "uniffi_meta 0.21.0",
+ "uniffi_meta 0.22.0",
+ "uniffi_testing",
  "weedle2",
 ]
 
@@ -4617,7 +4618,6 @@ checksum = "510287c368a9386eb731ebe824a6fc6c82a105e20d020af1aa20519c1c1561db"
 dependencies = [
  "anyhow",
  "camino",
- "uniffi_bindgen",
 ]
 
 [[package]]
@@ -4628,6 +4628,7 @@ checksum = "6db116cd55ae857fd40d5780d47c76d3f6aa68c242458fb57bc24cb130a3e920"
 dependencies = [
  "anyhow",
  "camino",
+ "uniffi_bindgen",
 ]
 
 [[package]]
@@ -4696,6 +4697,21 @@ dependencies = [
  "serde",
  "siphasher",
  "uniffi_checksum_derive",
+]
+
+[[package]]
+name = "uniffi_testing"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0cd68c90ec2ab35abc868eae85eedd92b7cede34d38a57e356fce96b8f99d4ef"
+dependencies = [
+ "anyhow",
+ "camino",
+ "cargo_metadata 0.15.2",
+ "fs-err",
+ "once_cell",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
