@@ -530,19 +530,6 @@ dependencies = [
 
 [[package]]
 name = "cargo_metadata"
-version = "0.14.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4acbb09d9ee8e23699b9634375c72795d095bf268439da88562cf9b501f181fa"
-dependencies = [
- "camino",
- "cargo-platform",
- "semver",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "cargo_metadata"
 version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "982a0cf6a99c350d7246035613882e376d58cebe571785abc5da4f648d53ac0a"
@@ -1045,7 +1032,7 @@ dependencies = [
  "tonic-web-wasm-client",
  "uniffi",
  "uniffi_build 0.21.0",
- "uniffi_macros 0.22.0",
+ "uniffi_macros",
  "url",
  "wasm-bindgen",
 ]
@@ -1460,7 +1447,7 @@ checksum = "ade3e9c97727343984e1ceada4fdab11142d2ee3472d2c67027d56b1251d4f15"
 dependencies = [
  "arrayvec",
  "bytes",
- "cargo_metadata 0.15.2",
+ "cargo_metadata",
  "chrono",
  "convert_case",
  "elliptic-curve",
@@ -4571,19 +4558,18 @@ checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
 
 [[package]]
 name = "uniffi"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f54af5ada67d1173457a99a7bb44a7917f63e7466764cb4714865c7a6678b830"
+checksum = "8e7057bad60ea5f6e2c2df43dbc8143880d19daca2d9bb0ef81131b37ef42cc9"
 dependencies = [
  "anyhow",
  "bytes",
  "camino",
- "cargo_metadata 0.14.2",
  "log",
  "once_cell",
  "paste",
  "static_assertions",
- "uniffi_macros 0.21.0",
+ "uniffi_macros",
 ]
 
 [[package]]
@@ -4638,25 +4624,6 @@ checksum = "f55105cc7e1ac83ca1eb29587e3b7f65737f9142dc65d54b63502c2589c9d6a5"
 dependencies = [
  "quote",
  "syn",
-]
-
-[[package]]
-name = "uniffi_macros"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c8604503caa2cbcf271578dc51ca236d40e3b22e1514ffa2e638e2c39f6ad10"
-dependencies = [
- "bincode",
- "camino",
- "fs-err",
- "once_cell",
- "proc-macro2",
- "quote",
- "serde",
- "syn",
- "toml",
- "uniffi_build 0.21.0",
- "uniffi_meta 0.21.0",
 ]
 
 [[package]]

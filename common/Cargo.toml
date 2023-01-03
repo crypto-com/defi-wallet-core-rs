@@ -46,7 +46,7 @@ tendermint = "0.26"
 tendermint-proto = "0.26"
 tendermint-rpc = "0.26"
 thiserror = "1"
-uniffi = { version = "^0.21", optional = true }
+uniffi = { version = "^0.22", optional = true }
 uniffi_macros = { version = "^0.22", optional = true }
 url = "2"
 
