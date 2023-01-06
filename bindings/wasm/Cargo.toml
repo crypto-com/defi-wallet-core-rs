@@ -29,14 +29,14 @@ wasm-bindgen = "0.2"
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
 console_error_panic_hook = { version = "0.1", optional = true }
-cosmos-sdk-proto = { version = "0.15", default-features = false, features = ["cosmwasm"] }
+cosmos-sdk-proto = { git = "https://github.com/cosmos/cosmos-rust.git", default-features = false, features = ["cosmwasm"] }
 
-tendermint = "0.26"
+tendermint = "0.28"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
 ethers = { version = "1", features = ["rustls"] }
 wasm-timer = "0.2"
-tendermint-rpc = "0.26"
+tendermint-rpc = "0.28"
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
 tonic-web-wasm-client = "0.3"

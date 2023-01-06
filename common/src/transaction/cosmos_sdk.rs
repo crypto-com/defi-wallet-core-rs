@@ -590,14 +590,18 @@ impl CosmosSDKMsg {
                 timeout_timestamp,
             } => {
                 let any = MsgTransfer {
-                    sender: Signer::from_str(sender_address.as_ref())?,
-                    receiver: Signer::from_str(receiver)?,
-                    source_port: PortId::from_str(source_port)?,
-                    source_channel: ChannelId::from_str(source_channel)?,
+                    sender: Signer::from_str(sender_address.as_ref())
+                        .map_err(|e| eyre::eyre!("{e}"))?,
+                    receiver: Signer::from_str(receiver).map_err(|e| eyre::eyre!("{e}"))?,
+                    source_port: PortId::from_str(source_port).map_err(|e| eyre::eyre!("{e}"))?,
+                    source_channel: ChannelId::from_str(source_channel)
+                        .map_err(|e| eyre::eyre!("{e}"))?,
                     token: token.try_into()?,
                     // TODO: timeout_height and timeout_timestamp cannot both be 0.
-                    timeout_height: TimeoutHeight::try_from(timeout_height.clone())?,
-                    timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)?,
+                    timeout_height: TimeoutHeight::try_from(timeout_height.clone())
+                        .map_err(|e| eyre::eyre!("{e}"))?,
+                    timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)
+                        .map_err(|e| eyre::eyre!("{e}"))?,
                 }
                 .to_any();
                 // FIXME:
