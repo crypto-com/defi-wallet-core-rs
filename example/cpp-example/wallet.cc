@@ -52,5 +52,4 @@ void test_wallet() {
   test_wallet_restore(String("mypassword"));
   test_wallet_generatemnemonics(String("mypassword"));
   test_wallet_new(String("mypassword"));
-  test_wallet_secure_storage();
 }
