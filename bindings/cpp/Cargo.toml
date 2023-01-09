@@ -17,6 +17,7 @@ siwe = { version = "0.5" }
 ethers = { version = "1", features = ["rustls"] }
 hex = "0.4"
 tokio = { version = "1", features = ["rt"] }
+keyring="1.2.0"
 
 [build-dependencies]
 cxx-build = "1"
