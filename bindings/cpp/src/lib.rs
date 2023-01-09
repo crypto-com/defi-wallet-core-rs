@@ -10,6 +10,7 @@ use defi_wallet_core_common::{
 };
 
 use ethers::types::Signature;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
 mod nft;
@@ -20,6 +21,11 @@ mod uint;
 
 mod ethereum;
 
+#[derive(Serialize, Deserialize)]
+pub struct SecureStorageWaleltInfo {
+    pub mnemonic: String,
+    pub password: String,
+}
 /// Wrapper of `CosmosSDKMsg`
 ///
 /// For now, types used as extern Rust types are required to be defined by the same crate that
@@ -442,6 +448,22 @@ pub mod ffi {
         fn generate_mnemonics(password: String, word_count: MnemonicWordCount) -> Result<String>;
 
         /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
+        /// and save to secure storage
+        fn restore_wallet_save_to_securestorage(
+            mnemonic: String,
+            password: String,
+            servicename: String,
+            username: String,
+        ) -> Result<Box<Wallet>>;
+
+        /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
+        /// from secure storage     
+        fn restore_wallet_load_from_securestorage(
+            servicename: String,
+            username: String,
+        ) -> Result<Box<Wallet>>;
+
+        /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
         fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>>;
         /// returns the default address of the wallet
         fn get_default_address(self: &Wallet, coin: CoinType) -> Result<String>;
@@ -712,6 +734,39 @@ fn generate_mnemonics(password: String, word_count: MnemonicWordCount) -> Result
 /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
 fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>> {
     let wallet = HDWallet::recover_wallet(mnemonic, Some(password))?;
+    Ok(Box::new(Wallet { wallet }))
+}
+
+fn restore_wallet_save_to_securestorage(
+    mnemonic: String,
+    password: String,
+    servicename: String,
+    username: String,
+) -> Result<Box<Wallet>> {
+    let securestorageinfo = SecureStorageWaleltInfo {
+        mnemonic: mnemonic.clone(),
+        password: password.clone(),
+    };
+    let infobytes = bincode::serialize(&securestorageinfo)?;
+    let infohex = hex::encode(infobytes);
+    let entry = keyring::Entry::new(&servicename, &username);
+    entry.set_password(&infohex)?;
+    let wallet = HDWallet::recover_wallet(mnemonic, Some(password))?;
+    Ok(Box::new(Wallet { wallet }))
+}
+
+fn restore_wallet_load_from_securestorage(
+    servicename: String,
+    username: String,
+) -> Result<Box<Wallet>> {
+    let entry = keyring::Entry::new(&servicename, &username);
+
+    let infohex = entry.get_password()?;
+    let infobytes = hex::decode(infohex)?;
+    let securestorageinfo: SecureStorageWaleltInfo = bincode::deserialize(&infobytes)?;
+
+    let wallet =
+        HDWallet::recover_wallet(securestorageinfo.mnemonic, Some(securestorageinfo.password))?;
     Ok(Box::new(Wallet { wallet }))
 }
 
