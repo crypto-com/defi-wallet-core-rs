@@ -773,7 +773,7 @@ checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 [[package]]
 name = "cosmos-sdk-proto"
 version = "0.16.0"
-source = "git+https://github.com/cosmos/cosmos-rust.git#f5816dfd24663246eb3b444d3fb59b72c07fb9d9"
+source = "git+https://github.com/cosmos/cosmos-rust.git#c55ff8daf8254dd3bb1a8b49c3ea23206499c6ca"
 dependencies = [
  "prost",
  "prost-types",
@@ -784,7 +784,7 @@ dependencies = [
 [[package]]
 name = "cosmrs"
 version = "0.11.0"
-source = "git+https://github.com/cosmos/cosmos-rust.git#f5816dfd24663246eb3b444d3fb59b72c07fb9d9"
+source = "git+https://github.com/cosmos/cosmos-rust.git#c55ff8daf8254dd3bb1a8b49c3ea23206499c6ca"
 dependencies = [
  "bip32",
  "cosmos-sdk-proto",
