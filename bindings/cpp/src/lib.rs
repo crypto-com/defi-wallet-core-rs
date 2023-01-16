@@ -450,6 +450,7 @@ pub mod ffi {
 
         /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
         /// and save to secure storage
+        #[cfg(not(target_os = "android"))]
         fn restore_wallet_save_to_securestorage(
             mnemonic: String,
             password: String,
@@ -458,7 +459,8 @@ pub mod ffi {
         ) -> Result<Box<Wallet>>;
 
         /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
-        /// from secure storage     
+        /// from secure storage   
+        #[cfg(not(target_os = "android"))]
         fn restore_wallet_load_from_securestorage(
             servicename: String,
             username: String,
@@ -738,6 +740,7 @@ fn restore_wallet(mnemonic: String, password: String) -> Result<Box<Wallet>> {
     Ok(Box::new(Wallet { wallet }))
 }
 
+#[cfg(not(target_os = "android"))]
 fn restore_wallet_save_to_securestorage(
     mnemonic: String,
     password: String,
@@ -756,6 +759,7 @@ fn restore_wallet_save_to_securestorage(
     Ok(Box::new(Wallet { wallet }))
 }
 
+#[cfg(not(target_os = "android"))]
 fn restore_wallet_load_from_securestorage(
     servicename: String,
     username: String,
