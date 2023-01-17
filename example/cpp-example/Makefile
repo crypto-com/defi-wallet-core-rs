@@ -19,7 +19,7 @@ ifeq ($(UNAME), Darwin)
 endif
 
 ifeq ($(UNAME), Linux)
-	FLAGS=-lpthread -ldl
+	FLAGS=-lpthread -ldl -lrt
 endif
 
 all: clean build
