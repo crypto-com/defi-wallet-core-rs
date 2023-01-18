@@ -13,7 +13,7 @@ add_subdirectory(sdk)
 # static cppexample
 add_executable(cppexamplestatic main.cc chainmain.cc cronos.cc wallet.cc)
 if (UNIX AND NOT APPLE)
-  target_link_libraries(cppexamplestatic PUBLIC ${DEFI_WALLET_CORE_CPP_LIB} pthread dl)
+  target_link_libraries(cppexamplestatic PUBLIC ${DEFI_WALLET_CORE_CPP_LIB} pthread dl rt)
 else()
   target_link_libraries(cppexamplestatic PUBLIC ${DEFI_WALLET_CORE_CPP_LIB})
 endif()
