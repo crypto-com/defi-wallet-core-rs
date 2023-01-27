@@ -593,14 +593,14 @@ impl CosmosSDKMsg {
                     sender: Signer::from_str(sender_address.as_ref())
                         .map_err(|e| eyre::eyre!("{e}"))?,
                     receiver: Signer::from_str(receiver).map_err(|e| eyre::eyre!("{e}"))?,
-                    source_port: PortId::from_str(source_port).map_err(|e| eyre::eyre!("{e}"))?,
-                    source_channel: ChannelId::from_str(source_channel)
+                    port_on_a: PortId::from_str(source_port).map_err(|e| eyre::eyre!("{e}"))?,
+                    chan_on_a: ChannelId::from_str(source_channel)
                         .map_err(|e| eyre::eyre!("{e}"))?,
                     token: token.try_into()?,
                     // TODO: timeout_height and timeout_timestamp cannot both be 0.
-                    timeout_height: TimeoutHeight::try_from(timeout_height.clone())
+                    timeout_height_on_b: TimeoutHeight::try_from(timeout_height.clone())
                         .map_err(|e| eyre::eyre!("{e}"))?,
-                    timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)
+                    timeout_timestamp_on_b: Timestamp::from_nanoseconds(*timeout_timestamp)
                         .map_err(|e| eyre::eyre!("{e}"))?,
                 }
                 .to_any();

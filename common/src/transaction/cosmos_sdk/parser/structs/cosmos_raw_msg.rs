@@ -145,14 +145,14 @@ impl TryFrom<MsgTransfer> for CosmosRawMsg {
             msg: CosmosRawNormalMsg::IbcTransfer {
                 sender: msg.sender.to_string(),
                 receiver: msg.receiver.to_string(),
-                source_port: msg.source_port.to_string(),
-                source_channel: msg.source_channel.to_string(),
+                source_port: msg.port_on_a.to_string(),
+                source_channel: msg.chan_on_a.to_string(),
                 token: msg.token.into(),
-                timeout_height: match msg.timeout_height {
+                timeout_height: match msg.timeout_height_on_b {
                     TimeoutHeight::Never => Height::default(),
                     TimeoutHeight::At(height) => height.into(),
                 },
-                timeout_timestamp: msg.timeout_timestamp.nanoseconds(),
+                timeout_timestamp: msg.timeout_timestamp_on_b.nanoseconds(),
             },
         })
     }
@@ -386,14 +386,14 @@ impl CosmosRawNormalMsg {
                 let any = MsgTransfer {
                     sender: Signer::from_str(sender).map_err(|e| eyre::eyre!("{e}"))?,
                     receiver: Signer::from_str(receiver).map_err(|e| eyre::eyre!("{e}"))?,
-                    source_port: PortId::from_str(source_port).map_err(|e| eyre::eyre!("{e}"))?,
-                    source_channel: ChannelId::from_str(source_channel)
+                    port_on_a: PortId::from_str(source_port).map_err(|e| eyre::eyre!("{e}"))?,
+                    chan_on_a: ChannelId::from_str(source_channel)
                         .map_err(|e| eyre::eyre!("{e}"))?,
                     token: token.try_into()?,
                     // TODO: timeout_height and timeout_timestamp cannot both be 0.
-                    timeout_height: TimeoutHeight::try_from(timeout_height.clone())
+                    timeout_height_on_b: TimeoutHeight::try_from(timeout_height.clone())
                         .map_err(|e| eyre::eyre!("{e}"))?,
-                    timeout_timestamp: Timestamp::from_nanoseconds(*timeout_timestamp)
+                    timeout_timestamp_on_b: Timestamp::from_nanoseconds(*timeout_timestamp)
                         .map_err(|e| eyre::eyre!("{e}"))?,
                 }
                 .to_any();
