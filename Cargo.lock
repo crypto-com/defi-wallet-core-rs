@@ -1121,7 +1121,7 @@ name = "defi-wallet-core-common"
 version = "0.3.2"
 dependencies = [
  "anyhow",
- "base64 0.20.0",
+ "base64 0.21.0",
  "bech32 0.9.1",
  "bip39",
  "cosmos-sdk-proto",

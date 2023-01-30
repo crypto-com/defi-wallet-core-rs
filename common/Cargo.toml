@@ -20,7 +20,7 @@ erc4907 = []
 
 [dependencies]
 anyhow = "1"
-base64 = "0.20"
+base64 = "0.21"
 bech32 = "0.9"
 bip39 = { version = "1", default-features = false }
 cosmrs = { git = "https://github.com/cosmos/cosmos-rust.git" }

@@ -3,6 +3,7 @@
 // moved to `cosmos_sdk.rs` if reusable.
 
 use crate::transaction::cosmos_sdk::{CosmosError, SingleCoin};
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use cosmrs::crypto::{LegacyAminoMultisig, PublicKey};
 use cosmrs::tx::{mode_info, AuthInfo, Body, Fee, ModeInfo, SignerInfo, SignerPublicKey};
 use itertools::Itertools;
@@ -26,7 +27,7 @@ impl From<cosmrs::Any> for CosmosAny {
     fn from(any: cosmrs::Any) -> Self {
         Self {
             type_url: any.type_url,
-            value: base64::encode(any.value),
+            value: STANDARD.encode(&any.value),
         }
     }
 }
