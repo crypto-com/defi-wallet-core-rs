@@ -45,7 +45,7 @@ then
         wget https://github.com/java-native-access/jna/raw/5.10.0/dist/jna.aar -P NDK/libs/ || exit 1
 fi
 
-uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language kotlin --out-dir bindings/android || exit 1
+cargo run --features=uniffi-bindgen -p defi-wallet-core-common --bin uniffi-bindgen -- generate common/src/common.udl --config common/uniffi.toml --language kotlin --out-dir bindings/android || exit 1
 
 if [ "$1" != "x86" ]; then
         rustup target add aarch64-linux-android armv7-linux-androideabi || exit 1

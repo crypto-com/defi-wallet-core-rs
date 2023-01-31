@@ -14,7 +14,7 @@ if [ "$1" != "x86" ]; then
 fi
 rustup target add x86_64-apple-ios || exit 1
 
-uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language swift --out-dir bindings/ios || exit 1
+cargo run --features=uniffi-bindgen -p defi-wallet-core-common --bin uniffi-bindgen -- generate common/src/common.udl --config common/uniffi.toml --language swift --out-dir bindings/ios || exit 1
 if [ "$1" != "x86" ]; then
         cargo build --features uniffi-binding --target aarch64-apple-ios -p defi-wallet-core-common --release || exit 1
 fi

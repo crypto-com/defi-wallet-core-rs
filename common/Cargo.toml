@@ -5,6 +5,10 @@ edition = "2021"
 rust-version = "1.57"
 license = "Apache-2.0"
 
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+
 [lib]
 crate-type = ["cdylib", "staticlib", "rlib"]
 
@@ -15,6 +19,7 @@ default = []
 abi-contract = ["pest", "pest_derive"]
 login = ["siwe"]
 uniffi-binding = ["abi-contract", "uniffi", "uniffi_build", "uniffi_macros"]
+uniffi-bindgen = ["uniffi/cli"]
 qr-code = ["abi-contract", "rustc-hex"]
 erc4907 = []
 

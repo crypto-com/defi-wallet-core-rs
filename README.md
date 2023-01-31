@@ -16,11 +16,9 @@ The codebase is primarily in Rust and provides cross-language bindings using mul
 ## Pre-requisites
 
 Naturally, you will need the [Rust toolchain] installed.
-Besides that, for [UniFFI] language bindings, you will need specified version of `uniffi_bindgen` installed as well as corresponding language formatters:
+Besides that, for [UniFFI] language bindings, you will need the corresponding language formatters:
 
 ```bash
-make install-uniffi-bindgen # Install version specified in `Cargo.lock`
-uniffi-bindgen --version # Check the version
 brew install ktlint
 brew install swiftformat
 ```
@@ -38,12 +36,12 @@ You can generate the language bindings for different platforms using the command
 
 ### Android
 ```bash
-uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language kotlin --out-dir bindings/android
+cargo run --features=uniffi-bindgen -p defi-wallet-core-common --bin uniffi-bindgen -- generate common/src/common.udl --config common/uniffi.toml --language kotlin --out-dir bindings/android
 ```
 
 ### iOS
 ```bash
-uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language swift --out-dir bindings/ios
+cargo run --features=uniffi-bindgen -p defi-wallet-core-common --bin uniffi-bindgen -- generate common/src/common.udl --config common/uniffi.toml --language swift --out-dir bindings/ios
 ```
 
 ### JavaScript-Wasm
@@ -53,7 +51,7 @@ wasm-pack build --scope crypto-com bindings/wasm
 
 ### Python
 ```bash
-uniffi-bindgen generate common/src/common.udl --config common/uniffi.toml --language python --out-dir bindings/python
+cargo run --features=uniffi-bindgen -p defi-wallet-core-common --bin uniffi-bindgen -- generate common/src/common.udl --config common/uniffi.toml --language python --out-dir bindings/python
 ```
 
 ## Building

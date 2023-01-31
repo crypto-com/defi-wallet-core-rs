@@ -49,7 +49,6 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - run: make install-uniffi-bindgen
       - run: |
           export ANDROID_HOME=$HOME/Library/Android/sdk
           export NDK_HOME=$ANDROID_NDK_HOME
