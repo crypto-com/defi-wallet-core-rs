@@ -8,6 +8,7 @@ on:
       - main
     paths:
       - Cargo.lock
+  merge_group:
   schedule:
     - cron: '0 0 * * *'
 
