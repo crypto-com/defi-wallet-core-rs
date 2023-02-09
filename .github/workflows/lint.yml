@@ -4,6 +4,7 @@ name: Run Lint
 # running if no *.{go, mod, sum} files have been changed.
 on:
   pull_request:
+  merge_group:
   push:
     branches:
       - main

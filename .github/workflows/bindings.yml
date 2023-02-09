@@ -5,6 +5,7 @@ on:
       - main
     paths-ignore:
       - README.md
+  merge_group:
   pull_request:
     paths-ignore:
       - README.md

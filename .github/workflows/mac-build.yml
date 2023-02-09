@@ -8,6 +8,7 @@ on:
       - README.md
     tags:
       - "v*.*.*"
+  merge_group:
   pull_request:
     paths-ignore:
       - README.md
