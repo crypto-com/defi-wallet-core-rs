@@ -1130,7 +1130,7 @@ dependencies = [
  "ethers",
  "eyre",
  "ibc",
- "ibc-proto",
+ "ibc-proto 0.25.0",
  "itertools",
  "lazy_static",
  "once_cell",
@@ -2307,7 +2307,7 @@ dependencies = [
  "displaydoc",
  "dyn-clone",
  "erased-serde",
- "ibc-proto",
+ "ibc-proto 0.24.1",
  "ics23",
  "num-traits",
  "primitive-types",
@@ -2339,6 +2339,21 @@ dependencies = [
  "parity-scale-codec",
  "prost",
  "scale-info",
+ "serde",
+ "subtle-encoding",
+ "tendermint-proto",
+]
+
+[[package]]
+name = "ibc-proto"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a057472da7f2107be20b1996063db3616cf356167b03f50118fc3f3a8c4c704"
+dependencies = [
+ "base64 0.13.1",
+ "bytes",
+ "flex-error",
+ "prost",
  "serde",
  "subtle-encoding",
  "tendermint-proto",
