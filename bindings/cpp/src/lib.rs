@@ -26,6 +26,14 @@ pub struct SecureStorageWaleltInfo {
     pub mnemonic: String,
     pub password: String,
 }
+
+#[derive(Serialize, Deserialize)]
+struct SecureStorageReadForAndroid {
+    result: String,
+    success: String,
+    error: String,
+}
+
 /// Wrapper of `CosmosSDKMsg`
 ///
 /// For now, types used as extern Rust types are required to be defined by the same crate that
@@ -386,9 +394,16 @@ pub mod ffi {
         pub effective_gas_price: String,
     }
 
-    extern "C++" {
+    unsafe extern "C++" {
         include!("defi-wallet-core-cpp/src/uint.rs.h");
         type U256 = crate::uint::ffi::U256;
+    }
+
+    #[cfg(target_os = "android")]
+    unsafe extern "C++" {
+        include!("defi-wallet-core-cpp/include/android.h");
+        fn secureStorageWrite(userkey: String, uservalue: String) -> i32;
+        fn secureStorageRead(userkey: String) -> String;
     }
 
     extern "Rust" {
@@ -450,7 +465,6 @@ pub mod ffi {
 
         /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
         /// and save to secure storage
-        #[cfg(not(target_os = "android"))]
         fn restore_wallet_save_to_securestorage(
             mnemonic: String,
             password: String,
@@ -460,7 +474,6 @@ pub mod ffi {
 
         /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
         /// from secure storage   
-        #[cfg(not(target_os = "android"))]
         fn restore_wallet_load_from_securestorage(
             servicename: String,
             username: String,
@@ -767,6 +780,57 @@ fn restore_wallet_load_from_securestorage(
     let entry = keyring::Entry::new(&servicename, &username);
 
     let infojson = entry.get_password()?;
+    let securestorageinfo: SecureStorageWaleltInfo = serde_json::from_str(&infojson)?;
+    let wallet =
+        HDWallet::recover_wallet(securestorageinfo.mnemonic, Some(securestorageinfo.password))?;
+    Ok(Box::new(Wallet { wallet }))
+}
+
+#[cfg(target_os = "android")]
+fn restore_wallet_save_to_securestorage(
+    mnemonic: String,
+    password: String,
+    servicename: String,
+    username: String,
+) -> Result<Box<Wallet>> {
+    let securestorageinfo = SecureStorageWaleltInfo {
+        mnemonic: mnemonic.clone(),
+        password: password.clone(),
+    };
+
+    let keyvalue = format!("{}_{}", servicename, username);
+    let infojson = serde_json::to_string(&securestorageinfo)?;
+    // " cannot be used directly, need to be escaped
+    // because it's used in a json string
+    let infojson = infojson.replace("\"", "\\\"");
+    let result = ffi::secureStorageWrite(keyvalue, infojson);
+    if result == 0 {
+        return Err(anyhow!("Cannot save to secure storage"));
+    }
+    let wallet = HDWallet::recover_wallet(mnemonic, Some(password))?;
+    Ok(Box::new(Wallet { wallet }))
+}
+
+#[cfg(target_os = "android")]
+fn restore_wallet_load_from_securestorage(
+    servicename: String,
+    username: String,
+) -> Result<Box<Wallet>> {
+    let keyvalue = format!("{}_{}", servicename, username);
+
+    let androidjson = ffi::secureStorageRead(keyvalue);
+    if androidjson.is_empty() {
+        return Err(anyhow!("Cannot load from secure storage"));
+    }
+    let androidinfo: SecureStorageReadForAndroid = serde_json::from_str(&androidjson)?;
+    if androidinfo.success == "0" {
+        return Err(anyhow!(
+            "Cannot load from secure storage {}",
+            androidinfo.error
+        ));
+    }
+
+    let infojson = androidinfo.result;
     let securestorageinfo: SecureStorageWaleltInfo = serde_json::from_str(&infojson)?;
     let wallet =
         HDWallet::recover_wallet(securestorageinfo.mnemonic, Some(securestorageinfo.password))?;

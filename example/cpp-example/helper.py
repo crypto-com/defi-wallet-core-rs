@@ -17,6 +17,7 @@ EXAMPLE_SOURCES = [
 SOURCES = [
     "../../bindings/cpp/src/nft.cc",
     "../../bindings/cpp/include/nft.h",
+    "../../bindings/cpp/include/android.h",
 ]
 
 CPP_EXAMPLE_PATH = Path(__file__).parent
@@ -29,18 +30,21 @@ INITIAL_INCLUDES = [
     '#include "defi-wallet-core-cpp/src/lib.rs.h"',
     '#include "defi-wallet-core-cpp/src/uint.rs.h"',
     '#include "defi-wallet-core-cpp/include/nft.h"',
+    '#include "defi-wallet-core-cpp/include/android.h"',
 ]
 
 FINAL_INCLUDES = [
     '#include "lib.rs.h"',
     '#include "uint.rs.h"',
     '#include "../../nft.h"',
+    '#include "../../android.h"',
 ]
 
 INITIAL_SOURCES_INCLUDES = [
     '#include "defi-wallet-core-cpp/include/nft.h"',
+    '#include "defi-wallet-core-cpp/include/anndroid.h"',
 ]
-FINAL_SOURCES_INCLUDES = ['#include "nft.h"']
+FINAL_SOURCES_INCLUDES = ['#include "nft.h"', '#include "android.h"']
 
 
 # the path of output target, defined by --target_dir
