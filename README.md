@@ -59,7 +59,7 @@ cargo run --features=uniffi-bindgen -p defi-wallet-core-common --bin uniffi-bind
 ## Building Proto files from source
 
 The single `proto-build` crate in this repo clones and rebuilds proto files for
-all other crates, simply make the required edits in [main.rs](proto-build/main.rs), then
+all other crates, simply make the required edits in [main.rs](proto-build/src/main.rs), then
 
 ```bash
 cd proto-build # enter `proto-build`, so that we can clone repos and build proto files relative to it
