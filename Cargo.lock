@@ -889,18 +889,18 @@ checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 [[package]]
 name = "cosmos-sdk-proto"
 version = "0.16.0"
-source = "git+https://github.com/cosmos/cosmos-rust.git#c55ff8daf8254dd3bb1a8b49c3ea23206499c6ca"
+source = "git+https://github.com/crypto-com/cosmos-rust.git#28dc22b69033593c12eb31193a808aeba65ef810"
 dependencies = [
  "prost",
  "prost-types",
- "tendermint-proto 0.28.0",
+ "tendermint-proto 0.29.0",
  "tonic",
 ]
 
 [[package]]
 name = "cosmrs"
 version = "0.11.0"
-source = "git+https://github.com/cosmos/cosmos-rust.git#c55ff8daf8254dd3bb1a8b49c3ea23206499c6ca"
+source = "git+https://github.com/crypto-com/cosmos-rust.git#28dc22b69033593c12eb31193a808aeba65ef810"
 dependencies = [
  "bip32",
  "cosmos-sdk-proto",
@@ -912,7 +912,7 @@ dependencies = [
  "serde",
  "serde_json",
  "subtle-encoding",
- "tendermint 0.28.0",
+ "tendermint 0.29.0",
  "thiserror",
 ]
 
@@ -3621,17 +3621,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ripemd160"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2eca4ecc81b7f313189bf73ce724400a07da2a6dac19588b03c8bd76a2dcc251"
-dependencies = [
- "block-buffer 0.9.0",
- "digest 0.9.0",
- "opaque-debug 0.3.0",
-]
-
-[[package]]
 name = "rlp"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4386,12 +4375,10 @@ dependencies = [
  "ed25519-dalek",
  "flex-error",
  "futures",
- "k256",
  "num-traits",
  "once_cell",
  "prost",
  "prost-types",
- "ripemd160",
  "serde",
  "serde_bytes",
  "serde_json",
@@ -4417,10 +4404,12 @@ dependencies = [
  "ed25519-consensus",
  "flex-error",
  "futures",
+ "k256",
  "num-traits",
  "once_cell",
  "prost",
  "prost-types",
+ "ripemd",
  "serde",
  "serde_bytes",
  "serde_json",

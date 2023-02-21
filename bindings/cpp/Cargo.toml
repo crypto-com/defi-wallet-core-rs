@@ -8,7 +8,7 @@ license = "Apache-2.0"
 [dependencies]
 defi-wallet-core-common = { path = "../../common" , features=["login","abi-contract"]}
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
-cosmos-sdk-proto = { git = "https://github.com/cosmos/cosmos-rust.git" }
+cosmos-sdk-proto = { git = "https://github.com/crypto-com/cosmos-rust.git" }
 cxx = "1"
 anyhow = "1"
 serde="1"
