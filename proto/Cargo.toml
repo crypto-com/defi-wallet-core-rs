@@ -15,7 +15,7 @@ cosmrs = { git = "https://github.com/cosmos/cosmos-rust.git" }
 cosmos-sdk-proto = { git = "https://github.com/cosmos/cosmos-rust.git", default-features = false }
 prost = "0.11"
 prost-types = "0.11"
-tendermint-proto = "0.28"
+tendermint-proto = "0.29"
 tonic = { version = "0.8", default-features = false, features = ["codegen", "prost"] }
 serde = "1"
 
