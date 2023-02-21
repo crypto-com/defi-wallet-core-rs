@@ -47,7 +47,7 @@ serde = "1"
 serde_json = "1"
 serde_with = "2"
 siwe = { version = "0.5", optional = true }
-tendermint = "0.28"
+tendermint = "0.29"
 tendermint-proto = "0.29"
 tendermint-rpc = "0.29"
 thiserror = "1"
