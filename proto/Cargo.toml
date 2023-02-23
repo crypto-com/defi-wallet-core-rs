@@ -11,6 +11,7 @@ edition = "2021"
 rust-version = "1.57"
 
 [dependencies]
+# FIXME: switch to upstream crates.io when released
 cosmrs = { git = "https://github.com/crypto-com/cosmos-rust.git" }
 cosmos-sdk-proto = { git = "https://github.com/crypto-com/cosmos-rust.git", default-features = false }
 prost = "0.11"
