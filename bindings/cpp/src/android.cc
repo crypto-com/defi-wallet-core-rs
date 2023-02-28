@@ -1,3 +1,4 @@
+#ifdef __ANDROID__
 #include <jni.h>
 #include <string>
 #include "defi-wallet-core-cpp/include/android.h"
@@ -83,3 +84,4 @@ rust::String secureStorageRead(rust::String userkey) {
 
 } // namespace defi_wallet_core
 } // namespace org
+#endif
