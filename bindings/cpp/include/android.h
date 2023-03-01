@@ -1,3 +1,4 @@
+#ifdef __ANDROID__
 #include "rust/cxx.h"
 #include <jni.h>
 namespace org {
@@ -8,3 +9,4 @@ int secureStorageWrite(rust::String userkey, rust::String uservalue);
 rust::String secureStorageRead(rust::String userkey);
 } // namespace defi_wallet_core
 } // namespace org
+#endif
