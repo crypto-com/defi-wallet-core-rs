@@ -766,7 +766,7 @@ fn restore_wallet_save_to_securestorage(
     };
 
     let infojson = serde_json::to_string(&securestorageinfo)?;
-    let entry = keyring::Entry::new(&servicename, &username);
+    let entry = keyring::Entry::new(&servicename, &username)?;
     entry.set_password(&infojson)?;
     let wallet = HDWallet::recover_wallet(mnemonic, Some(password))?;
     Ok(Box::new(Wallet { wallet }))
@@ -777,7 +777,7 @@ fn restore_wallet_load_from_securestorage(
     servicename: String,
     username: String,
 ) -> Result<Box<Wallet>> {
-    let entry = keyring::Entry::new(&servicename, &username);
+    let entry = keyring::Entry::new(&servicename, &username)?;
 
     let infojson = entry.get_password()?;
     let securestorageinfo: SecureStorageWaleltInfo = serde_json::from_str(&infojson)?;
