@@ -1,6 +1,16 @@
 # Changelog
-
 Unreleased
+
+
+
+## [0.3.3] - 2023-3-2
+### Added
+- Add secure storage option for desktop(mac,linux,windows), mobile (ios, android)
+- Update crates : keyring to 2.0, uniffi 0.23 etc
+- Pin to the nix 2.13
+- Add code owners
+- Fix README.md for main.rs
+- Fix compile for android 
 
 ## [0.3.2] - 2022-12-15
 ### Added
