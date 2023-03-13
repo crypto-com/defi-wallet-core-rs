@@ -21,7 +21,7 @@ cronos-test = []
 defi-wallet-core-common = { path = "../../common", features = ["abi-contract"] }
 js-sys = "0.3"
 serde = { version = "1", features = ["derive"] }
-serde-wasm-bindgen = "0.4"
+serde-wasm-bindgen = "0.5"
 wasm-bindgen-futures = "0.4"
 wasm-bindgen = "0.2"
 # The `console_error_panic_hook` crate provides better debugging of panics by
