@@ -1,5 +1,6 @@
 use crate::EthError;
 use ethers::providers::{Http, Provider};
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::Duration;
 use url::Url;
 
