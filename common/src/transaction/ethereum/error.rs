@@ -42,6 +42,8 @@ pub enum EthError {
     SignatureError,
     #[error("Chainid error: {0}")]
     ChainidError(#[from] ParseChainError),
+    #[error("Incorrect chain name error: {0}")]
+    IncorrectChainidError(String),
     #[error("ABI error: {0}")]
     AbiError(#[from] abi::Error),
     #[error("Dynamic ABI error: {0}")]

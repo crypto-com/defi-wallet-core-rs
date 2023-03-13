@@ -70,7 +70,8 @@ impl TryFrom<EthNetwork> for Chain {
             EthNetwork::BSC => Chain::BinanceSmartChain,
             EthNetwork::Cronos => Chain::Cronos,
             EthNetwork::Polygon => Chain::Polygon,
-            EthNetwork::Known { name } => Chain::from_str(&name)?,
+            EthNetwork::Known { name } => Chain::from_str(&name)
+                .map_err(|e| EthError::IncorrectChainidError(e.to_string()))?,
             EthNetwork::Custom { chain_id, .. } => Chain::try_from(chain_id)?,
         })
     }

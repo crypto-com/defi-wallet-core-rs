@@ -410,6 +410,7 @@ enum EthError {
   "ContractCallError",
   "SignatureError",
   "ChainidError",
+  "IncorrectChainidError",
   "AbiError",
   "DynamicAbiError",
   "Eip712Error",
