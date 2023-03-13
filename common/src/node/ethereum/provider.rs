@@ -1,5 +1,6 @@
 use crate::EthError;
 use ethers::providers::{Http, Provider};
+use std::time::Duration;
 use url::Url;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -33,6 +34,7 @@ pub async fn get_ethers_provider(urlinfo: &str) -> Result<Provider<Http>, EthErr
         match G_AGENTINFO.get() {
             Some(v) => reqwest::Client::builder()
                 .user_agent(v)
+                .timeout(Duration::from_millis(60000))
                 .build()
                 .map_err(EthError::ClientError)?,
             None => reqwest::Client::builder()
@@ -40,6 +42,7 @@ pub async fn get_ethers_provider(urlinfo: &str) -> Result<Provider<Http>, EthErr
                     std::env::var("DEFIWALLETCORE_AGENTINFO")
                         .unwrap_or_else(|_| "defiwalletcore".to_string()),
                 )
+                .timeout(Duration::from_millis(60000))
                 .build()
                 .map_err(EthError::ClientError)?,
         }
