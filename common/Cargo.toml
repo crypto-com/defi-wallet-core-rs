@@ -27,7 +27,7 @@ erc4907 = []
 anyhow = "1"
 base64 = "0.21"
 bech32 = "0.9"
-bip39 = { version = "1", default-features = false }
+bip39 = { version = "2", default-features = false }
 # FIXME: switch to upstream crates.io when released
 cosmrs = { git = "https://github.com/crypto-com/cosmos-rust.git" }
 eyre = "0.6"
