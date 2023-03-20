@@ -32,7 +32,7 @@ bip39 = { version = "2", default-features = false }
 cosmrs = { git = "https://github.com/crypto-com/cosmos-rust.git" }
 eyre = "0.6"
 ethers = { version = "2", features = ["rustls", "abigen"] }
-ibc = { version = "0.31", features = ["serde"], default-features = false }
+ibc = { version = "0.34", features = ["serde"], default-features = false }
 ibc-proto = { version = "0.26", default-features = false }
 itertools = "0.10"
 lazy_static = "1"
