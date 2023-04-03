@@ -60,7 +60,7 @@ url = "2"
 cosmos-sdk-proto = { git = "https://github.com/crypto-com/cosmos-rust.git", default-features = false, features = ["cosmwasm", "grpc"] }
 defi-wallet-core-proto = { version = "0.1", path = "../proto" }
 rand = { version = "0.8", default-features = false, features = ["getrandom"] }
-tonic = { version = "0.8", default-features = false, features = ["codegen", "prost"] }
+tonic = { version = "0.9", default-features = false, features = ["codegen", "prost"] }
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
 # tonic-web-wasm-client would be replaced if tonic has native grpc-web support.
 # Check https://github.com/hyperium/tonic/issues/645
