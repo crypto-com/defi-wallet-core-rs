@@ -3,7 +3,7 @@ use crate::{
     WalletCoinFunc,
 };
 use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
-use ethers::prelude::{Address, LocalWallet, Middleware, Signer, SignerMiddleware};
+use ethers::prelude::{Address, LocalWallet, Middleware, Signer, SignerMiddleware, TxHash};
 use ethers::types::transaction::eip2718::TypedTransaction;
 use std::{str::FromStr, sync::Arc, time::Duration};
 // use ethers Http
@@ -209,6 +209,86 @@ pub async fn get_eth_transaction_count(address: &str, web3api_url: &str) -> Resu
         .await
         .map_err(|_| EthError::BalanceFail)?;
     Ok(result)
+}
+
+// Wrapper of TxHash to implement TryFrom
+pub struct TxHashWrapper(TxHash);
+
+impl TryFrom<Vec<u8>> for TxHashWrapper {
+    type Error = EthError;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        if value.len() != 32 {
+            return Err(EthError::InvalidTxHash);
+        }
+
+        let mut tx_hash = [0u8; 32];
+        tx_hash.copy_from_slice(&value);
+        Ok(TxHashWrapper(TxHash::from(tx_hash)))
+    }
+}
+
+impl TryFrom<String> for TxHashWrapper {
+    type Error = EthError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let value = hex::decode(value).map_err(|_| EthError::HexConversion)?;
+        if value.len() != 32 {
+            return Err(EthError::InvalidTxHash);
+        }
+
+        let mut tx_hash = [0u8; 32];
+        tx_hash.copy_from_slice(&value);
+        Ok(TxHashWrapper(TxHash::from(tx_hash)))
+    }
+}
+
+async fn get_eth_transaction_receipt_by_vec(
+    tx_hash: Vec<u8>,
+    web3api_url: &str,
+) -> Result<EthersTransactionReceipt, EthError> {
+    let client = get_ethers_provider(web3api_url).await?;
+    let tx_hash = TxHashWrapper::try_from(tx_hash)?;
+
+    let receipt = client
+        .get_transaction_receipt(tx_hash.0)
+        .await
+        .map_err(EthError::GetTransactionReceiptError)?;
+
+    receipt.ok_or_else(|| EthError::GetTransactionError("No receipt".to_string()))
+}
+
+async fn get_eth_transaction_receipt_by_string(
+    tx_hash: String,
+    web3api_url: &str,
+) -> Result<EthersTransactionReceipt, EthError> {
+    let client = get_ethers_provider(web3api_url).await?;
+    let tx_hash = TxHashWrapper::try_from(tx_hash)?;
+
+    let receipt = client
+        .get_transaction_receipt(tx_hash.0)
+        .await
+        .map_err(EthError::GetTransactionReceiptError)?;
+
+    receipt.ok_or_else(|| EthError::GetTransactionError("No receipt".to_string()))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn get_eth_transaction_receipt_by_string_blocking(
+    tx_hash: String,
+    web3api_url: &str,
+) -> Result<EthersTransactionReceipt, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    rt.block_on(get_eth_transaction_receipt_by_string(tx_hash, web3api_url))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn get_eth_transaction_receipt_by_vec_blocking(
+    tx_hash: Vec<u8>,
+    web3api_url: &str,
+) -> Result<EthersTransactionReceipt, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    rt.block_on(get_eth_transaction_receipt_by_vec(tx_hash, web3api_url))
 }
 
 /// given the account address and contract information, it returns the amount of ERC20/ERC721/ERC1155 token it owns

@@ -473,7 +473,7 @@ pub mod ffi {
         ) -> Result<Box<Wallet>>;
 
         /// recovers/imports HD wallet from a BIP39 backup phrase (English words) and password
-        /// from secure storage   
+        /// from secure storage
         fn restore_wallet_load_from_securestorage(
             servicename: String,
             username: String,
@@ -599,6 +599,18 @@ pub mod ffi {
         /// Returns the corresponding account's nonce / number of transactions
         /// sent from it.
         pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String>;
+
+        #[cxx_name = "get_eth_transaction_receipt_blocking"]
+        pub fn get_eth_transaction_receipt_by_vec_blocking(
+            tx_hash: Vec<u8>,
+            api_url: &str,
+        ) -> Result<String>;
+
+        #[cxx_name = "get_eth_transaction_receipt_blocking"]
+        pub fn get_eth_transaction_receipt_by_string_blocking(
+            tx_hash: String,
+            api_url: &str,
+        ) -> Result<String>;
 
         /// broadcast signed cronos tx
         pub fn broadcast_eth_signed_raw_tx(
@@ -1287,6 +1299,28 @@ pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
     let res = defi_wallet_core_common::get_eth_transaction_count_blocking(address, api_url)?;
     // convert res to string
     Ok(res.to_string())
+}
+
+/// Get eth transaction receipt with transaction hash, return json string
+/// TODO: Provide TransactionReceipt type binding
+pub fn get_eth_transaction_receipt_by_vec_blocking(
+    tx_hash: Vec<u8>,
+    api_url: &str,
+) -> Result<String> {
+    let receipt =
+        defi_wallet_core_common::get_eth_transaction_receipt_by_vec_blocking(tx_hash, api_url)?;
+    Ok(serde_json::to_string(&receipt)?)
+}
+
+/// Get eth transaction receipt with transaction hash, return json string
+/// TODO: Provide TransactionReceipt type binding
+pub fn get_eth_transaction_receipt_by_string_blocking(
+    tx_hash: String,
+    api_url: &str,
+) -> Result<String> {
+    let receipt =
+        defi_wallet_core_common::get_eth_transaction_receipt_by_string_blocking(tx_hash, api_url)?;
+    Ok(serde_json::to_string(&receipt)?)
 }
 
 /// broadcast signed cronos tx

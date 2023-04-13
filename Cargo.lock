@@ -1141,6 +1141,7 @@ dependencies = [
  "defi-wallet-core-proto",
  "ethers",
  "eyre",
+ "hex",
  "ibc",
  "ibc-proto",
  "itertools",
