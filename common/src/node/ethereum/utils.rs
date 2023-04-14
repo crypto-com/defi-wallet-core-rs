@@ -246,7 +246,7 @@ impl TryFrom<String> for TxHashWrapper {
 async fn get_eth_transaction_receipt_by_vec(
     tx_hash: Vec<u8>,
     web3api_url: &str,
-) -> Result<EthersTransactionReceipt, EthError> {
+) -> Result<Option<EthersTransactionReceipt>, EthError> {
     let client = get_ethers_provider(web3api_url).await?;
     let tx_hash = TxHashWrapper::try_from(tx_hash)?;
 
@@ -255,13 +255,13 @@ async fn get_eth_transaction_receipt_by_vec(
         .await
         .map_err(EthError::GetTransactionReceiptError)?;
 
-    receipt.ok_or_else(|| EthError::GetTransactionError("No receipt".to_string()))
+    Ok(receipt)
 }
 
 async fn get_eth_transaction_receipt_by_string(
     tx_hash: String,
     web3api_url: &str,
-) -> Result<EthersTransactionReceipt, EthError> {
+) -> Result<Option<EthersTransactionReceipt>, EthError> {
     let client = get_ethers_provider(web3api_url).await?;
     let tx_hash = TxHashWrapper::try_from(tx_hash)?;
 
@@ -270,14 +270,14 @@ async fn get_eth_transaction_receipt_by_string(
         .await
         .map_err(EthError::GetTransactionReceiptError)?;
 
-    receipt.ok_or_else(|| EthError::GetTransactionError("No receipt".to_string()))
+    Ok(receipt)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_eth_transaction_receipt_by_string_blocking(
     tx_hash: String,
     web3api_url: &str,
-) -> Result<EthersTransactionReceipt, EthError> {
+) -> Result<Option<EthersTransactionReceipt>, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     rt.block_on(get_eth_transaction_receipt_by_string(tx_hash, web3api_url))
 }
@@ -286,7 +286,7 @@ pub fn get_eth_transaction_receipt_by_string_blocking(
 pub fn get_eth_transaction_receipt_by_vec_blocking(
     tx_hash: Vec<u8>,
     web3api_url: &str,
-) -> Result<EthersTransactionReceipt, EthError> {
+) -> Result<Option<EthersTransactionReceipt>, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     rt.block_on(get_eth_transaction_receipt_by_vec(tx_hash, web3api_url))
 }

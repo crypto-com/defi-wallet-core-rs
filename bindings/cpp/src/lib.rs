@@ -1309,7 +1309,10 @@ pub fn get_eth_transaction_receipt_by_vec_blocking(
 ) -> Result<String> {
     let receipt =
         defi_wallet_core_common::get_eth_transaction_receipt_by_vec_blocking(tx_hash, api_url)?;
-    Ok(serde_json::to_string(&receipt)?)
+    if let None = receipt {
+        Ok("".to_string())
+    } else {
+        Ok(serde_json::to_string(&receipt)?)
 }
 
 /// Get eth transaction receipt with transaction hash, return json string
@@ -1320,7 +1323,11 @@ pub fn get_eth_transaction_receipt_by_string_blocking(
 ) -> Result<String> {
     let receipt =
         defi_wallet_core_common::get_eth_transaction_receipt_by_string_blocking(tx_hash, api_url)?;
-    Ok(serde_json::to_string(&receipt)?)
+    if let None = receipt {
+        Ok("".to_string())
+    } else {
+        Ok(serde_json::to_string(&receipt)?)
+    }
 }
 
 /// broadcast signed cronos tx
