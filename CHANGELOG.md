@@ -1,6 +1,10 @@
 # Changelog
 Unreleased
 
+## [0.3.4] - 2023-4-14
+### Changed
+- Upgrade ethers to 2.0
+- Set ethers request timeout to 60 seconds
 
 
 ## [0.3.3] - 2023-3-2
@@ -10,7 +14,7 @@ Unreleased
 - Pin to the nix 2.13
 - Add code owners
 - Fix README.md for main.rs
-- Fix compile for android 
+- Fix compile for android
 
 ## [0.3.2] - 2022-12-15
 ### Added
