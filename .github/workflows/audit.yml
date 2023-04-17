@@ -22,4 +22,5 @@ jobs:
       - name: Install cargo audit
         run: cargo install cargo-audit
         # RUSTSEC-2021-0145: `atty` transitive dependency, only informational for Windows (not exploitable in practice)
-      - run: cargo audit --deny warnings --ignore RUSTSEC-2021-0145
+        # RUSTSEC-2023-0033: fixed until https://github.com/near/borsh-rs/issues/19
+      - run: cargo audit --deny warnings --ignore RUSTSEC-2021-0145 RUSTSEC-2023-0033
