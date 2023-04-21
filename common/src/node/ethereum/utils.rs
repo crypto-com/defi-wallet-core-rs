@@ -21,6 +21,8 @@ use ethers::types::U256;
 
 use crate::provider::get_ethers_provider;
 
+use serde::{Deserialize, Serialize};
+
 /// a subset of `ethers::prelude::::TransactionReceipt` for non-wasm
 #[cfg(not(target_arch = "wasm32"))]
 pub struct TransactionReceipt {
@@ -91,6 +93,7 @@ impl From<EthersTransactionReceipt> for TransactionReceipt {
 
 /// Information needed for approving operator to withdraw from your account on
 /// different common contract types.
+#[derive(Serialize, Deserialize)]
 pub enum ContractApproval {
     Erc20 {
         contract_address: String,
@@ -132,6 +135,7 @@ pub enum ContractBalance {
 }
 
 /// Information needed for transferring tokens on different common contract types
+#[derive(Serialize, Deserialize)]
 pub enum ContractTransfer {
     Erc20Transfer {
         contract_address: String,
