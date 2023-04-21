@@ -1,6 +1,11 @@
 # Changelog
 Unreleased
 
+## [0.3.5] - 2023-4-21
+### Changed
+- Implement Serialize and Deserialize for ContractApproval and ContractTransfer
+- Bump various dependencies
+
 ## [0.3.4] - 2023-4-14
 ### Changed
 - Upgrade ethers to 2.0
