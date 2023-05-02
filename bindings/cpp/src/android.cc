@@ -1,3 +1,5 @@
+// Copyright 2022, Cronos Labs. All Rights Reserved
+
 #ifdef __ANDROID__
 #include <jni.h>
 #include <string>
