@@ -243,6 +243,7 @@ impl TryFrom<String> for TxHashWrapper {
     }
 }
 
+// TODO Don't expose to wasm32, to avoid clippy issue, no plan to support wasm32 for now
 #[cfg(not(target_arch = "wasm32"))]
 async fn get_eth_transaction_receipt_by_vec(
     tx_hash: Vec<u8>,
@@ -259,6 +260,7 @@ async fn get_eth_transaction_receipt_by_vec(
     Ok(receipt)
 }
 
+// TODO Don't expose to wasm32, to avoid clippy issue, no plan to support wasm32 for now
 #[cfg(not(target_arch = "wasm32"))]
 async fn get_eth_transaction_receipt_by_string(
     tx_hash: String,
