@@ -243,6 +243,7 @@ impl TryFrom<String> for TxHashWrapper {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 async fn get_eth_transaction_receipt_by_vec(
     tx_hash: Vec<u8>,
     web3api_url: &str,
@@ -258,6 +259,7 @@ async fn get_eth_transaction_receipt_by_vec(
     Ok(receipt)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 async fn get_eth_transaction_receipt_by_string(
     tx_hash: String,
     web3api_url: &str,
@@ -279,8 +281,7 @@ pub fn get_eth_transaction_receipt_by_string_blocking(
     web3api_url: &str,
 ) -> Result<Option<EthersTransactionReceipt>, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    let receipt = rt.block_on(get_eth_transaction_receipt_by_string(tx_hash, web3api_url))?;
-    Ok(receipt)
+    rt.block_on(get_eth_transaction_receipt_by_string(tx_hash, web3api_url))
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -289,8 +290,7 @@ pub fn get_eth_transaction_receipt_by_vec_blocking(
     web3api_url: &str,
 ) -> Result<Option<EthersTransactionReceipt>, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    let receipt = rt.block_on(get_eth_transaction_receipt_by_vec(tx_hash, web3api_url))?;
-    Ok(receipt)
+    rt.block_on(get_eth_transaction_receipt_by_vec(tx_hash, web3api_url))
 }
 
 /// given the account address and contract information, it returns the amount of ERC20/ERC721/ERC1155 token it owns
