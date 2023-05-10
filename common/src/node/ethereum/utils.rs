@@ -279,7 +279,8 @@ pub fn get_eth_transaction_receipt_by_string_blocking(
     web3api_url: &str,
 ) -> Result<Option<EthersTransactionReceipt>, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    rt.block_on(get_eth_transaction_receipt_by_string(tx_hash, web3api_url))
+    let receipt = rt.block_on(get_eth_transaction_receipt_by_string(tx_hash, web3api_url))?;
+    Ok(receipt)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -288,7 +289,8 @@ pub fn get_eth_transaction_receipt_by_vec_blocking(
     web3api_url: &str,
 ) -> Result<Option<EthersTransactionReceipt>, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
-    rt.block_on(get_eth_transaction_receipt_by_vec(tx_hash, web3api_url))
+    let receipt = rt.block_on(get_eth_transaction_receipt_by_vec(tx_hash, web3api_url))?;
+    Ok(receipt)
 }
 
 /// given the account address and contract information, it returns the amount of ERC20/ERC721/ERC1155 token it owns
