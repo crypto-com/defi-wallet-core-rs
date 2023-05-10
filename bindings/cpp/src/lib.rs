@@ -1313,6 +1313,7 @@ pub fn get_eth_transaction_receipt_by_vec_blocking(
         Ok("".to_string())
     } else {
         Ok(serde_json::to_string(&receipt)?)
+    }
 }
 
 /// Get eth transaction receipt with transaction hash, return json string
