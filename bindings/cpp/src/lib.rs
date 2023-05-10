@@ -1309,7 +1309,7 @@ pub fn get_eth_transaction_receipt_by_vec_blocking(
 ) -> Result<String> {
     let receipt =
         defi_wallet_core_common::get_eth_transaction_receipt_by_vec_blocking(tx_hash, api_url)?;
-    if let None = receipt {
+    if receipt.is_none() {
         Ok("".to_string())
     } else {
         Ok(serde_json::to_string(&receipt)?)
@@ -1324,7 +1324,7 @@ pub fn get_eth_transaction_receipt_by_string_blocking(
 ) -> Result<String> {
     let receipt =
         defi_wallet_core_common::get_eth_transaction_receipt_by_string_blocking(tx_hash, api_url)?;
-    if let None = receipt {
+    if receipt.is_none() {
         Ok("".to_string())
     } else {
         Ok(serde_json::to_string(&receipt)?)
