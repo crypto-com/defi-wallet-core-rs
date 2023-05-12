@@ -263,11 +263,10 @@ impl TryFrom<String> for TxHashWrapper {
 impl Future for TxHashWrapper {
     type Output = Result<Option<EthersTransactionReceipt>, EthError>;
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let mut fut = Box::pin(get_eth_transaction_receipt_by_vec(
-            self.tx_hash.0.to_vec(),
-            self.web3api_url.as_str(),
-        ));
-        let future = fut.as_mut();
+        let future =
+            get_eth_transaction_receipt_by_vec(self.tx_hash.0.to_vec(), self.web3api_url.as_str())
+                .boxed();
+        let mut futunre = futures::pin_mut!(future);
         if let Poll::Ready(receipt) = future.poll(cx) {
             match receipt {
                 Ok(receipt) => match receipt {
