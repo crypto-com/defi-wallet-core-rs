@@ -28,6 +28,10 @@ pub enum EthError {
     SendTxFail(SignerMiddlewareError<Provider<Http>, Wallet<SigningKey>>),
     #[error("Transaction sending failed: {0}")]
     BroadcastTxFail(ProviderError),
+    #[error("Get Transaction Receipt failed: {0}")]
+    GetTransactionReceiptError(ProviderError),
+    #[error("Invliad Transaction Hash")]
+    InvalidTxHash,
     #[error("Transaction dropped from the mempool")]
     MempoolDrop,
     #[error("Failed to obtain an account balance")]
@@ -38,6 +42,8 @@ pub enum EthError {
     ContractSendError(String),
     #[error("Contract Call Error: {0}")]
     ContractCallError(String),
+    #[error("Get Transaction Error: {0}")]
+    GetTransactionError(String),
     #[error("Signature error")]
     SignatureError,
     #[error("Chainid error: {0}")]
