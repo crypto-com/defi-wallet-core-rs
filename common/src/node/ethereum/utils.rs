@@ -23,6 +23,7 @@ use crate::provider::get_ethers_provider;
 
 use serde::{Deserialize, Serialize};
 
+use futures::FutureExt;
 use pin_project::pin_project;
 use std::{
     future::Future,
@@ -266,7 +267,7 @@ impl Future for TxHashWrapper {
         let future =
             get_eth_transaction_receipt_by_vec(self.tx_hash.0.to_vec(), self.web3api_url.as_str())
                 .boxed();
-        let mut futunre = futures::pin_mut!(future);
+        futures::pin_mut!(future);
         if let Poll::Ready(receipt) = future.poll(cx) {
             match receipt {
                 Ok(receipt) => match receipt {
