@@ -1350,11 +1350,7 @@ pub fn wait_for_transaction_receipt_by_vec_blocking(
 ) -> Result<String> {
     let receipt =
         defi_wallet_core_common::wait_for_transaction_receipt_by_vec_blocking(tx_hash, api_url)?;
-    if receipt.is_none() {
-        Ok("".to_string())
-    } else {
-        Ok(serde_json::to_string(&receipt)?)
-    }
+    Ok(serde_json::to_string(&receipt)?)
 }
 
 /// wait for transaction receipt with transaction hash, return json string
@@ -1365,11 +1361,7 @@ pub fn wait_for_transaction_receipt_by_string_blocking(
 ) -> Result<String> {
     let receipt =
         defi_wallet_core_common::wait_for_transaction_receipt_by_string_blocking(tx_hash, api_url)?;
-    if receipt.is_none() {
-        Ok("".to_string())
-    } else {
-        Ok(serde_json::to_string(&receipt)?)
-    }
+    Ok(serde_json::to_string(&receipt)?)
 }
 
 /// broadcast signed cronos tx

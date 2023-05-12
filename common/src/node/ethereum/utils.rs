@@ -262,7 +262,7 @@ impl TryFrom<String> for TxHashWrapper {
 }
 
 impl Future for TxHashWrapper {
-    type Output = Result<Option<EthersTransactionReceipt>, EthError>;
+    type Output = Result<EthersTransactionReceipt, EthError>;
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let future =
             get_eth_transaction_receipt_by_vec(self.tx_hash.0.to_vec(), self.web3api_url.as_str())
@@ -271,7 +271,7 @@ impl Future for TxHashWrapper {
         if let Poll::Ready(receipt) = future.poll(cx) {
             match receipt {
                 Ok(receipt) => match receipt {
-                    Some(receipt) => return Poll::Ready(Ok(Some(receipt))),
+                    Some(receipt) => return Poll::Ready(Ok(receipt)),
                     None => return Poll::Pending,
                 },
                 Err(e) => return Poll::Ready(Err(e)),
@@ -320,7 +320,7 @@ async fn get_eth_transaction_receipt_by_string(
 async fn wait_for_transaction_receipt_by_vec(
     tx_hash: Vec<u8>,
     web3api_url: &str,
-) -> Result<Option<EthersTransactionReceipt>, EthError> {
+) -> Result<EthersTransactionReceipt, EthError> {
     let mut tx_hash_wrapper = TxHashWrapper::try_from(tx_hash)?;
     tx_hash_wrapper.web3api_url = web3api_url.to_string();
     let receipt = tx_hash_wrapper.await; // wait the transaction receipt
@@ -332,7 +332,7 @@ async fn wait_for_transaction_receipt_by_vec(
 async fn wait_for_transaction_receipt_by_string(
     tx_hash: String,
     web3api_url: &str,
-) -> Result<Option<EthersTransactionReceipt>, EthError> {
+) -> Result<EthersTransactionReceipt, EthError> {
     let mut tx_hash_wrapper = TxHashWrapper::try_from(tx_hash)?;
     tx_hash_wrapper.web3api_url = web3api_url.to_string();
     let receipt = tx_hash_wrapper.await; // wait the transaction receipt
@@ -361,7 +361,7 @@ pub fn get_eth_transaction_receipt_by_vec_blocking(
 pub fn wait_for_transaction_receipt_by_vec_blocking(
     tx_hash: Vec<u8>,
     web3api_url: &str,
-) -> Result<Option<EthersTransactionReceipt>, EthError> {
+) -> Result<EthersTransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     rt.block_on(wait_for_transaction_receipt_by_vec(tx_hash, web3api_url))
 }
@@ -370,7 +370,7 @@ pub fn wait_for_transaction_receipt_by_vec_blocking(
 pub fn wait_for_transaction_receipt_by_string_blocking(
     tx_hash: String,
     web3api_url: &str,
-) -> Result<Option<EthersTransactionReceipt>, EthError> {
+) -> Result<EthersTransactionReceipt, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     rt.block_on(wait_for_transaction_receipt_by_string(tx_hash, web3api_url))
 }
