@@ -296,7 +296,7 @@ impl<'a> Future for TxHashWrapper<'a> {
                 // new block has been mined
                 // let _ready = futures_util::ready!(this.interval.poll_next_unpin(ctx));
                 let fut = Box::pin(get_eth_transaction_receipt_by_vec(
-                    this.tx_hash.0.to_vec().clone(),
+                    this.tx_hash.0.to_vec(),
                     this.web3api_url.clone(),
                 ));
                 *this.state = TxHashState::GettingReceipt(fut);
