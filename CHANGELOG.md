@@ -1,6 +1,11 @@
 # Changelog
 Unreleased
 
+## [0.3.6] - 2023-5-16
+### Changed
+- Add get_eth_transaction_receipt
+- Add wait_for_transaction_receipt
+
 ## [0.3.5] - 2023-4-21
 ### Changed
 - Implement Serialize and Deserialize for ContractApproval and ContractTransfer
