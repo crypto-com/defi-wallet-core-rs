@@ -233,11 +233,7 @@ enum TxHashState<'a> {
 
     /// Polling the blockchain for the receipt
     GettingReceipt(
-        Pin<
-            Box<
-                dyn Future<Output = Result<Option<EthersTransactionReceipt>, EthError>> + 'a,
-            >,
-        >,
+        Pin<Box<dyn Future<Output = Result<Option<EthersTransactionReceipt>, EthError>> + 'a>>,
     ),
 
     /// TODO If the pending tx required only 1 conf, it will return early. Otherwise it will
