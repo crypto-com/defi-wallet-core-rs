@@ -600,28 +600,30 @@ pub mod ffi {
         /// sent from it.
         pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String>;
 
+        pub fn get_block_number_blocking(api_url: String) -> Result<String>;
+
         #[cxx_name = "get_eth_transaction_receipt_blocking"]
         pub fn get_eth_transaction_receipt_by_vec_blocking(
             tx_hash: Vec<u8>,
-            api_url: &str,
+            api_url: String,
         ) -> Result<String>;
 
         #[cxx_name = "get_eth_transaction_receipt_blocking"]
         pub fn get_eth_transaction_receipt_by_string_blocking(
             tx_hash: String,
-            api_url: &str,
+            api_url: String,
         ) -> Result<String>;
 
         #[cxx_name = "wait_for_transaction_receipt_blocking"]
         pub fn wait_for_transaction_receipt_by_vec_blocking(
             tx_hash: Vec<u8>,
-            api_url: &str,
+            api_url: String,
         ) -> Result<String>;
 
         #[cxx_name = "wait_for_transaction_receipt_blocking"]
         pub fn wait_for_transaction_receipt_by_string_blocking(
             tx_hash: String,
-            api_url: &str,
+            api_url: String,
         ) -> Result<String>;
         /// broadcast signed cronos tx
         pub fn broadcast_eth_signed_raw_tx(
@@ -1312,11 +1314,19 @@ pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
     Ok(res.to_string())
 }
 
+pub fn get_block_number_blocking(
+    api_url: String,
+) -> Result<String> {
+    let block_number =
+        defi_wallet_core_common::get_block_number_blocking(api_url)?;
+    Ok(block_number)
+}
+
 /// Get eth transaction receipt with transaction hash, return json string
 /// TODO: Provide TransactionReceipt type binding
 pub fn get_eth_transaction_receipt_by_vec_blocking(
     tx_hash: Vec<u8>,
-    api_url: &str,
+    api_url: String,
 ) -> Result<String> {
     let receipt =
         defi_wallet_core_common::get_eth_transaction_receipt_by_vec_blocking(tx_hash, api_url)?;
@@ -1331,7 +1341,7 @@ pub fn get_eth_transaction_receipt_by_vec_blocking(
 /// TODO: Provide TransactionReceipt type binding
 pub fn get_eth_transaction_receipt_by_string_blocking(
     tx_hash: String,
-    api_url: &str,
+    api_url: String,
 ) -> Result<String> {
     let receipt =
         defi_wallet_core_common::get_eth_transaction_receipt_by_string_blocking(tx_hash, api_url)?;
@@ -1346,7 +1356,7 @@ pub fn get_eth_transaction_receipt_by_string_blocking(
 /// TODO: Provide TransactionReceipt type binding
 pub fn wait_for_transaction_receipt_by_vec_blocking(
     tx_hash: Vec<u8>,
-    api_url: &str,
+    api_url: String,
 ) -> Result<String> {
     let receipt =
         defi_wallet_core_common::wait_for_transaction_receipt_by_vec_blocking(tx_hash, api_url)?;
@@ -1357,7 +1367,7 @@ pub fn wait_for_transaction_receipt_by_vec_blocking(
 /// TODO: Provide TransactionReceipt type binding
 pub fn wait_for_transaction_receipt_by_string_blocking(
     tx_hash: String,
-    api_url: &str,
+    api_url: String,
 ) -> Result<String> {
     let receipt =
         defi_wallet_core_common::wait_for_transaction_receipt_by_string_blocking(tx_hash, api_url)?;

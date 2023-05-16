@@ -404,6 +404,7 @@ enum EthError {
   "SendTxFail",
   "BroadcastTxFail",
   "GetTransactionReceiptError",
+  "GetBlockNumberError",
   "InvalidTxHash",
   "MempoolDrop",
   "BalanceFail",
