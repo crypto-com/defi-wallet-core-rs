@@ -1314,11 +1314,8 @@ pub fn get_eth_nonce(address: &str, api_url: &str) -> Result<String> {
     Ok(res.to_string())
 }
 
-pub fn get_block_number_blocking(
-    api_url: String,
-) -> Result<String> {
-    let block_number =
-        defi_wallet_core_common::get_block_number_blocking(api_url)?;
+pub fn get_block_number_blocking(api_url: String) -> Result<String> {
+    let block_number = defi_wallet_core_common::get_block_number_blocking(api_url)?;
     Ok(block_number)
 }
 
