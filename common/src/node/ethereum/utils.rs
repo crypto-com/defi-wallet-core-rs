@@ -317,8 +317,7 @@ impl<'a> Future for TxHashWrapper<'a> {
                     ctx.waker().wake_by_ref();
                     return Poll::Pending;
                 }
-                // TODO
-                // If we requested more than 1 confirmation, we need to compare the receipt's
+                // TODO If we requested more than 1 confirmation, we need to compare the receipt's
                 // block number and the current block
                 let receipt = receipt.take().unwrap();
                 *this.state = TxHashState::Completed;
@@ -332,6 +331,8 @@ impl<'a> Future for TxHashWrapper<'a> {
     }
 }
 
+// TODO Use get interval in checking receipt
+#[allow(dead_code)]
 async fn get_interval(web3api_url: String) -> Result<Duration, EthError> {
     let client = get_ethers_provider(&web3api_url).await?;
     let interval = client.get_interval();
