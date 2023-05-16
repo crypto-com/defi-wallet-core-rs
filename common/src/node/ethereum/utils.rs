@@ -383,7 +383,7 @@ async fn wait_for_transaction_receipt_by_vec(
 ) -> Result<EthersTransactionReceipt, EthError> {
     let mut tx_hash_wrapper = TxHashWrapper::try_from(tx_hash)?;
     tx_hash_wrapper.web3api_url = web3api_url;
-    tx_hash_wrapper.await; // wait the transaction receipt
+    tx_hash_wrapper.await // wait the transaction receipt
 }
 
 async fn wait_for_transaction_receipt_by_string(
@@ -392,7 +392,7 @@ async fn wait_for_transaction_receipt_by_string(
 ) -> Result<EthersTransactionReceipt, EthError> {
     let mut tx_hash_wrapper = TxHashWrapper::try_from(tx_hash)?;
     tx_hash_wrapper.web3api_url = web3api_url;
-    tx_hash_wrapper.await; // wait the transaction receipt
+    tx_hash_wrapper.await // wait the transaction receipt
 }
 
 #[cfg(not(target_arch = "wasm32"))]
