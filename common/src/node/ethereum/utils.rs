@@ -23,6 +23,13 @@ use crate::provider::get_ethers_provider;
 
 use serde::{Deserialize, Serialize};
 
+use pin_project::pin_project;
+use std::{
+    future::Future,
+    pin::Pin,
+    task::{Context, Poll},
+};
+
 /// a subset of `ethers::prelude::::TransactionReceipt` for non-wasm
 #[cfg(not(target_arch = "wasm32"))]
 pub struct TransactionReceipt {
@@ -212,9 +219,32 @@ pub async fn get_eth_transaction_count(address: &str, web3api_url: &str) -> Resu
 }
 
 // Wrapper of TxHash to implement TryFrom
-pub struct TxHashWrapper(TxHash);
+#[pin_project]
+pub struct TxHashWrapper<'a> {
+    tx_hash: TxHash,
+    pub web3api_url: String,
+    state: TxHashState<'a>,
+}
 
-impl TryFrom<Vec<u8>> for TxHashWrapper {
+/// A simplified `TxHashState`
+enum TxHashState<'a> {
+    /// Waiting for interval to elapse before calling API again
+    PausedGettingReceipt,
+
+    /// Polling the blockchain for the receipt
+    GettingReceipt(
+        Pin<Box<dyn Future<Output = Result<Option<EthersTransactionReceipt>, EthError>> + 'a>>,
+    ),
+
+    /// TODO If the pending tx required only 1 conf, it will return early. Otherwise it will
+    /// proceed to the next state which will poll the block number until there have been
+    /// enough confirmations
+    CheckingReceipt(Option<EthersTransactionReceipt>),
+
+    Completed,
+}
+
+impl<'a> TryFrom<Vec<u8>> for TxHashWrapper<'a> {
     type Error = EthError;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
@@ -224,11 +254,15 @@ impl TryFrom<Vec<u8>> for TxHashWrapper {
 
         let mut tx_hash = [0u8; 32];
         tx_hash.copy_from_slice(&value);
-        Ok(TxHashWrapper(TxHash::from(tx_hash)))
+        Ok(TxHashWrapper {
+            tx_hash: TxHash::from(tx_hash),
+            web3api_url: "".to_string(),
+            state: TxHashState::PausedGettingReceipt,
+        })
     }
 }
 
-impl TryFrom<String> for TxHashWrapper {
+impl<'a> TryFrom<String> for TxHashWrapper<'a> {
     type Error = EthError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
@@ -239,48 +273,146 @@ impl TryFrom<String> for TxHashWrapper {
 
         let mut tx_hash = [0u8; 32];
         tx_hash.copy_from_slice(&value);
-        Ok(TxHashWrapper(TxHash::from(tx_hash)))
+        Ok(TxHashWrapper {
+            tx_hash: TxHash::from(tx_hash),
+            web3api_url: "".to_string(),
+            state: TxHashState::PausedGettingReceipt,
+        })
     }
 }
 
-// TODO Don't expose to wasm32, to avoid clippy issue, no plan to support wasm32 for now
-#[cfg(not(target_arch = "wasm32"))]
+impl<'a> Future for TxHashWrapper<'a> {
+    type Output = Result<EthersTransactionReceipt, EthError>;
+    fn poll(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.project();
+        // println!("Polling...");
+        match this.state {
+            TxHashState::PausedGettingReceipt => {
+                // TODO Wait the polling period so that we do not spam the chain when no
+                // new block has been mined
+                // let _ready = futures_util::ready!(this.interval.poll_next_unpin(ctx));
+                let fut = Box::pin(get_eth_transaction_receipt_by_vec(
+                    this.tx_hash.0.to_vec(),
+                    this.web3api_url.clone(),
+                ));
+                *this.state = TxHashState::GettingReceipt(fut);
+                ctx.waker().wake_by_ref();
+            }
+            TxHashState::GettingReceipt(fut) => {
+                if let Ok(receipt) = futures_util::ready!(fut.as_mut().poll(ctx)) {
+                    // TODO use tracing
+                    // println!("Checking receipt for pending tx {:?}", *this.tx_hash);
+                    *this.state = TxHashState::CheckingReceipt(receipt)
+                } else {
+                    *this.state = TxHashState::PausedGettingReceipt
+                }
+                ctx.waker().wake_by_ref();
+            }
+            TxHashState::CheckingReceipt(receipt) => {
+                if receipt.is_none() {
+                    *this.state = TxHashState::PausedGettingReceipt;
+                    ctx.waker().wake_by_ref();
+                    return Poll::Pending;
+                }
+                // TODO If we requested more than 1 confirmation, we need to compare the receipt's
+                // block number and the current block
+                let receipt = receipt.take().unwrap();
+                *this.state = TxHashState::Completed;
+                return Poll::Ready(Ok(receipt));
+            }
+            TxHashState::Completed => {
+                panic!("polled pending transaction future after completion")
+            }
+        }
+        Poll::Pending
+    }
+}
+
+// TODO Use get interval in checking receipt
+#[allow(dead_code)]
+async fn get_interval(web3api_url: String) -> Result<Duration, EthError> {
+    let client = get_ethers_provider(&web3api_url).await?;
+    let interval = client.get_interval();
+    Ok(interval)
+}
+
+// TODO Use in wasm
+#[allow(dead_code)]
+async fn get_block_number(web3api_url: String) -> Result<String, EthError> {
+    let client = get_ethers_provider(&web3api_url).await?;
+
+    let block_number = client
+        .get_block_number()
+        .await
+        .map_err(EthError::GetBlockNumberError)?;
+
+    Ok(block_number.to_string())
+}
+
 async fn get_eth_transaction_receipt_by_vec(
     tx_hash: Vec<u8>,
-    web3api_url: &str,
+    web3api_url: String,
 ) -> Result<Option<EthersTransactionReceipt>, EthError> {
-    let client = get_ethers_provider(web3api_url).await?;
+    let client = get_ethers_provider(&web3api_url).await?;
     let tx_hash = TxHashWrapper::try_from(tx_hash)?;
 
     let receipt = client
-        .get_transaction_receipt(tx_hash.0)
+        .get_transaction_receipt(tx_hash.tx_hash)
         .await
         .map_err(EthError::GetTransactionReceiptError)?;
 
     Ok(receipt)
 }
 
-// TODO Don't expose to wasm32, to avoid clippy issue, no plan to support wasm32 for now
-#[cfg(not(target_arch = "wasm32"))]
+// TODO Use in wasm
+#[allow(dead_code)]
 async fn get_eth_transaction_receipt_by_string(
     tx_hash: String,
-    web3api_url: &str,
+    web3api_url: String,
 ) -> Result<Option<EthersTransactionReceipt>, EthError> {
-    let client = get_ethers_provider(web3api_url).await?;
+    let client = get_ethers_provider(&web3api_url).await?;
     let tx_hash = TxHashWrapper::try_from(tx_hash)?;
 
     let receipt = client
-        .get_transaction_receipt(tx_hash.0)
+        .get_transaction_receipt(tx_hash.tx_hash)
         .await
         .map_err(EthError::GetTransactionReceiptError)?;
 
     Ok(receipt)
+}
+
+// TODO Use in wasm
+#[allow(dead_code)]
+async fn wait_for_transaction_receipt_by_vec(
+    tx_hash: Vec<u8>,
+    web3api_url: String,
+) -> Result<EthersTransactionReceipt, EthError> {
+    let mut tx_hash_wrapper = TxHashWrapper::try_from(tx_hash)?;
+    tx_hash_wrapper.web3api_url = web3api_url;
+    tx_hash_wrapper.await // wait the transaction receipt
+}
+
+// TODO Use in wasm
+#[allow(dead_code)]
+async fn wait_for_transaction_receipt_by_string(
+    tx_hash: String,
+    web3api_url: String,
+) -> Result<EthersTransactionReceipt, EthError> {
+    let mut tx_hash_wrapper = TxHashWrapper::try_from(tx_hash)?;
+    tx_hash_wrapper.web3api_url = web3api_url;
+    tx_hash_wrapper.await // wait the transaction receipt
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn get_block_number_blocking(web3api_url: String) -> Result<String, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    rt.block_on(get_block_number(web3api_url))
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_eth_transaction_receipt_by_string_blocking(
     tx_hash: String,
-    web3api_url: &str,
+    web3api_url: String,
 ) -> Result<Option<EthersTransactionReceipt>, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     rt.block_on(get_eth_transaction_receipt_by_string(tx_hash, web3api_url))
@@ -289,10 +421,28 @@ pub fn get_eth_transaction_receipt_by_string_blocking(
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_eth_transaction_receipt_by_vec_blocking(
     tx_hash: Vec<u8>,
-    web3api_url: &str,
+    web3api_url: String,
 ) -> Result<Option<EthersTransactionReceipt>, EthError> {
     let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
     rt.block_on(get_eth_transaction_receipt_by_vec(tx_hash, web3api_url))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn wait_for_transaction_receipt_by_vec_blocking(
+    tx_hash: Vec<u8>,
+    web3api_url: String,
+) -> Result<EthersTransactionReceipt, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    rt.block_on(wait_for_transaction_receipt_by_vec(tx_hash, web3api_url))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn wait_for_transaction_receipt_by_string_blocking(
+    tx_hash: String,
+    web3api_url: String,
+) -> Result<EthersTransactionReceipt, EthError> {
+    let rt = tokio::runtime::Runtime::new().map_err(|_err| EthError::AsyncRuntimeError)?;
+    rt.block_on(wait_for_transaction_receipt_by_string(tx_hash, web3api_url))
 }
 
 /// given the account address and contract information, it returns the amount of ERC20/ERC721/ERC1155 token it owns

@@ -30,6 +30,8 @@ pub enum EthError {
     BroadcastTxFail(ProviderError),
     #[error("Get Transaction Receipt failed: {0}")]
     GetTransactionReceiptError(ProviderError),
+    #[error("Get Block Number failed: {0}")]
+    GetBlockNumberError(ProviderError),
     #[error("Invliad Transaction Hash")]
     InvalidTxHash,
     #[error("Transaction dropped from the mempool")]

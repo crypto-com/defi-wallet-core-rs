@@ -1130,7 +1130,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-common"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "anyhow",
  "base64 0.21.0",
@@ -1141,6 +1141,8 @@ dependencies = [
  "defi-wallet-core-proto",
  "ethers",
  "eyre",
+ "futures",
+ "futures-util",
  "hex",
  "ibc",
  "ibc-proto",
@@ -1149,6 +1151,7 @@ dependencies = [
  "once_cell",
  "pest",
  "pest_derive",
+ "pin-project",
  "prost",
  "rand",
  "rand_core",
@@ -1176,7 +1179,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-cpp"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "anyhow",
  "cosmos-sdk-proto",
@@ -1208,7 +1211,7 @@ dependencies = [
 
 [[package]]
 name = "defi-wallet-core-wasm"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "console_error_panic_hook",
  "cosmos-sdk-proto",
