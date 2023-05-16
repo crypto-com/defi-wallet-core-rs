@@ -5,6 +5,7 @@ Unreleased
 ### Changed
 - Add get_eth_transaction_receipt
 - Add wait_for_transaction_receipt
+- Add get_block_number
 
 ## [0.3.5] - 2023-4-21
 ### Changed
