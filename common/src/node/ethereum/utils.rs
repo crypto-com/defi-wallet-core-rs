@@ -336,6 +336,8 @@ async fn get_interval(web3api_url: String) -> Result<Duration, EthError> {
     Ok(interval)
 }
 
+// TODO Use in wasm
+#[allow(dead_code)]
 async fn get_block_number(web3api_url: String) -> Result<String, EthError> {
     let client = get_ethers_provider(&web3api_url).await?;
 
@@ -362,6 +364,8 @@ async fn get_eth_transaction_receipt_by_vec(
     Ok(receipt)
 }
 
+// TODO Use in wasm
+#[allow(dead_code)]
 async fn get_eth_transaction_receipt_by_string(
     tx_hash: String,
     web3api_url: String,
@@ -377,6 +381,8 @@ async fn get_eth_transaction_receipt_by_string(
     Ok(receipt)
 }
 
+// TODO Use in wasm
+#[allow(dead_code)]
 async fn wait_for_transaction_receipt_by_vec(
     tx_hash: Vec<u8>,
     web3api_url: String,
@@ -386,6 +392,8 @@ async fn wait_for_transaction_receipt_by_vec(
     tx_hash_wrapper.await // wait the transaction receipt
 }
 
+// TODO Use in wasm
+#[allow(dead_code)]
 async fn wait_for_transaction_receipt_by_string(
     tx_hash: String,
     web3api_url: String,
