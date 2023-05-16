@@ -235,7 +235,7 @@ enum TxHashState<'a> {
     GettingReceipt(
         Pin<
             Box<
-                dyn Future<Output = Result<Option<EthersTransactionReceipt>, EthError>> + Send + 'a,
+                dyn Future<Output = Result<Option<EthersTransactionReceipt>, EthError>> + 'a,
             >,
         >,
     ),
@@ -289,7 +289,7 @@ impl<'a> Future for TxHashWrapper<'a> {
     type Output = Result<EthersTransactionReceipt, EthError>;
     fn poll(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
-        println!("Polling...");
+        // println!("Polling...");
         match this.state {
             TxHashState::PausedGettingReceipt => {
                 // TODO Wait the polling period so that we do not spam the chain when no
@@ -304,7 +304,8 @@ impl<'a> Future for TxHashWrapper<'a> {
             }
             TxHashState::GettingReceipt(fut) => {
                 if let Ok(receipt) = futures_util::ready!(fut.as_mut().poll(ctx)) {
-                    println!("Checking receipt for pending tx {:?}", *this.tx_hash);
+                    // TODO use tracing
+                    // println!("Checking receipt for pending tx {:?}", *this.tx_hash);
                     *this.state = TxHashState::CheckingReceipt(receipt)
                 } else {
                     *this.state = TxHashState::PausedGettingReceipt
@@ -387,7 +388,7 @@ async fn wait_for_transaction_receipt_by_vec(
     let mut tx_hash_wrapper = TxHashWrapper::try_from(tx_hash)?;
     tx_hash_wrapper.web3api_url = web3api_url;
     let receipt = tx_hash_wrapper.await; // wait the transaction receipt
-    println!("done...");
+    // println!("done...");
     receipt
 }
 
@@ -398,7 +399,7 @@ async fn wait_for_transaction_receipt_by_string(
     let mut tx_hash_wrapper = TxHashWrapper::try_from(tx_hash)?;
     tx_hash_wrapper.web3api_url = web3api_url;
     let receipt = tx_hash_wrapper.await; // wait the transaction receipt
-    println!("done...");
+    // println!("done...");
     receipt
 }
 
