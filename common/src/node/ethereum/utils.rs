@@ -332,8 +332,12 @@ impl<'a> Future for TxHashWrapper<'a> {
     }
 }
 
-// TODO Don't expose to wasm32, to avoid clippy issue, no plan to support wasm32 for now
-#[cfg(not(target_arch = "wasm32"))]
+async fn get_interval(web3api_url: String) -> Result<Duration, EthError> {
+    let client = get_ethers_provider(&web3api_url).await?;
+    let interval = client.get_interval();
+    Ok(interval)
+}
+
 async fn get_block_number(web3api_url: String) -> Result<String, EthError> {
     let client = get_ethers_provider(&web3api_url).await?;
 
@@ -345,8 +349,6 @@ async fn get_block_number(web3api_url: String) -> Result<String, EthError> {
     Ok(block_number.to_string())
 }
 
-// TODO Don't expose to wasm32, to avoid clippy issue, no plan to support wasm32 for now
-#[cfg(not(target_arch = "wasm32"))]
 async fn get_eth_transaction_receipt_by_vec(
     tx_hash: Vec<u8>,
     web3api_url: String,
@@ -362,8 +364,6 @@ async fn get_eth_transaction_receipt_by_vec(
     Ok(receipt)
 }
 
-// TODO Don't expose to wasm32, to avoid clippy issue, no plan to support wasm32 for now
-#[cfg(not(target_arch = "wasm32"))]
 async fn get_eth_transaction_receipt_by_string(
     tx_hash: String,
     web3api_url: String,
@@ -379,8 +379,6 @@ async fn get_eth_transaction_receipt_by_string(
     Ok(receipt)
 }
 
-// TODO Don't expose to wasm32, to avoid clippy issue, no plan to support wasm32 for now
-#[cfg(not(target_arch = "wasm32"))]
 async fn wait_for_transaction_receipt_by_vec(
     tx_hash: Vec<u8>,
     web3api_url: String,
@@ -392,8 +390,6 @@ async fn wait_for_transaction_receipt_by_vec(
     receipt
 }
 
-// TODO Don't expose to wasm32, to avoid clippy issue, no plan to support wasm32 for now
-#[cfg(not(target_arch = "wasm32"))]
 async fn wait_for_transaction_receipt_by_string(
     tx_hash: String,
     web3api_url: String,
