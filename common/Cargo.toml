@@ -31,7 +31,16 @@ bip39 = { version = "2", default-features = false }
 # FIXME: switch to upstream crates.io when released
 cosmrs = { git = "https://github.com/crypto-com/cosmos-rust.git" }
 eyre = "0.6"
-ethers = { version = "2", features = ["rustls", "abigen"] }
+ethers = { version = "=2.0.0", features = ["rustls", "abigen"] }
+ethers-addressbook = { version = "=2.0.0"}
+ethers-contract = { version = "=2.0.0" }
+ethers-core = { version = "=2.0.0" }
+ethers-etherscan = { version = "=2.0.0" }
+ethers-middleware = { version = "=2.0.0" }
+ethers-providers = { version = "=2.0.0"}
+ethers-signers = { version = "=2.0.0" }
+ethers-solc = { version = "=2.0.0"}
+
 ibc = { version = "0.31", features = ["serde"], default-features = false }
 ibc-proto = { version = "0.26", default-features = false }
 itertools = "0.10"

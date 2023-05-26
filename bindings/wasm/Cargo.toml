@@ -35,7 +35,15 @@ tendermint = "0.29"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
-ethers = { version = "2", features = ["rustls"] }
+ethers = { version = "=2.0.0", features = ["rustls"] }
+ethers-addressbook = { version = "=2.0.0"}
+ethers-contract = { version = "=2.0.0" }
+ethers-core = { version = "=2.0.0" }
+ethers-etherscan = { version = "=2.0.0" }
+ethers-middleware = { version = "=2.0.0" }
+ethers-providers = { version = "=2.0.0"}
+ethers-signers = { version = "=2.0.0" }
+ethers-solc = { version = "=2.0.0"}
 wasm-timer = "0.2"
 tendermint-rpc = "0.29"
 defi-wallet-core-proto = { version = "0.1", path = "../../proto" }
