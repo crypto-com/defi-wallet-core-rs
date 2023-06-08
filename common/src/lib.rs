@@ -1,3 +1,4 @@
+#![allow(ambiguous_glob_reexports)]
 /// Eth contract types generated from ABI
 pub mod contract;
 /// interactions with remote node RPC / API (querying, broadcast etc.)
