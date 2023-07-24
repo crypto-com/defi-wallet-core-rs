@@ -36,12 +36,12 @@ impl TryFrom<&EthAbiTokenBind> for EthAbiToken {
                     .map(TryInto::try_into)
                     .collect::<Result<_, _>>()?,
             ),
-            EthAbiTokenBind::Array { data } => EthAbiToken::FixedArray(
+            EthAbiTokenBind::Array { data } => EthAbiToken::Array(
                 data.iter()
                     .map(TryInto::try_into)
                     .collect::<Result<_, _>>()?,
             ),
-            EthAbiTokenBind::Tuple { data } => EthAbiToken::FixedArray(
+            EthAbiTokenBind::Tuple { data } => EthAbiToken::Tuple(
                 data.iter()
                     .map(TryInto::try_into)
                     .collect::<Result<_, _>>()?,

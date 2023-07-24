@@ -346,7 +346,7 @@ impl TryFrom<&EthAbiToken> for Token {
                     .map(TryInto::try_into)
                     .collect::<Result<_, _>>()?,
             ),
-            EthAbiToken::Array(values) => Token::FixedArray(
+            EthAbiToken::Array(values) => Token::Array(
                 values
                     .iter()
                     .map(TryInto::try_into)
