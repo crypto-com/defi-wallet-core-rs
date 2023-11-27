@@ -17,7 +17,7 @@ mod login;
 mod qr_code;
 
 /// Utility functions
-mod utils;
+pub mod utils;
 
 // expose all proto related types (e.g. for uniffi)
 pub use cosmos_sdk_proto::cosmos::base::query::v1beta1::PageRequest;
