@@ -18,7 +18,8 @@ impl EthSigner {
     /// Create an instance via a secret key.
     pub fn new(secret_key: Arc<SecretKey>) -> Self {
         Self {
-            wallet: secret_key.get_signing_key().into(),
+            // TODO remove unwrap
+            wallet: secret_key.get_eth_signing_key().unwrap().into(),
         }
     }
 
@@ -33,7 +34,11 @@ impl EthSigner {
     pub fn eth_sign_insecure(&self, hash: &str) -> Result<String, EthError> {
         let hash = hash.strip_prefix("0x").unwrap_or(hash);
         let hash = H256::from_str(hash).map_err(|_| EthError::HexConversion)?;
-        let signature = self.wallet.sign_hash(hash).to_string();
+        let signature = self
+            .wallet
+            .sign_hash(hash)
+            .map_err(|_| EthError::SignatureError)?
+            .to_string();
         Ok(format!("0x{signature}"))
     }
 
@@ -41,7 +46,8 @@ impl EthSigner {
     /// Return a signature of hex string with prefix `0x`.
     pub fn personal_sign(&self, message: &str) -> String {
         let hash = hash_message(message);
-        let signature = self.wallet.sign_hash(hash).to_string();
+        // TODO : remove unwrap
+        let signature = self.wallet.sign_hash(hash).unwrap().to_string();
         format!("0x{signature}")
     }
 
@@ -92,6 +98,7 @@ impl EthSigner {
         let signature = self
             .wallet
             .sign_hash(H256::from_slice(&encoded_data))
+            .map_err(|_| EthError::SignatureError)? // TODO: better error handling
             .to_string();
         Ok(format!("0x{signature}"))
     }

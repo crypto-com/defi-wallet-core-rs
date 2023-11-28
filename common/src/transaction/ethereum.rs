@@ -197,8 +197,15 @@ pub fn build_signed_eth_tx(
         tx.set_data(data.into());
     }
     tx.set_chain_id(chain_id);
-    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
-    let sig: Signature = wallet.sign_transaction_sync(&tx);
+    let wallet = LocalWallet::from(
+        secret_key
+            .get_eth_signing_key()
+            .map_err(|_| EthError::SignatureError)?,
+    )
+    .with_chain_id(chain_id);
+    let sig: Signature = wallet
+        .sign_transaction_sync(&tx)
+        .map_err(|_| EthError::SignatureError)?;
     let signed_tx = &tx.rlp_signed(&sig);
     Ok(signed_tx.to_vec())
 }
@@ -357,10 +364,19 @@ pub fn eth_sign_transaction(
         serde_json::from_str(json_str).map_err(EthError::JsonError)?;
     let type_tx: TypedTransaction = tx.to_type_tx();
     if type_tx.chain_id().is_some() {
-        default_chain_id = type_tx.chain_id().unwrap().as_u64();
+        default_chain_id = type_tx
+            .chain_id()
+            .map_or_else(|| 0u64, |chainid| chainid.as_u64());
     }
-    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(default_chain_id);
-    let sig = wallet.sign_transaction_sync(&type_tx);
+    let wallet = LocalWallet::from(
+        secret_key
+            .get_eth_signing_key()
+            .map_err(|_| EthError::SignatureError)?,
+    )
+    .with_chain_id(default_chain_id);
+    let sig = wallet
+        .sign_transaction_sync(&type_tx)
+        .map_err(|_| EthError::SignatureError)?;
     let signed_tx = &type_tx.rlp_signed(&sig);
     Ok(signed_tx.to_vec())
 }
@@ -377,8 +393,15 @@ pub fn eth_sign_transaction_with_chainid(
     tx.chain_id = Some(chain_id.into());
     let type_tx: TypedTransaction = tx.to_type_tx();
 
-    let wallet = LocalWallet::from(secret_key.get_signing_key()).with_chain_id(chain_id);
-    let sig = wallet.sign_transaction_sync(&type_tx);
+    let wallet = LocalWallet::from(
+        secret_key
+            .get_eth_signing_key()
+            .map_err(|_| EthError::SignatureError)?,
+    )
+    .with_chain_id(chain_id);
+    let sig = wallet
+        .sign_transaction_sync(&type_tx)
+        .map_err(|_| EthError::SignatureError)?;
     let signed_tx = &type_tx.rlp_signed(&sig);
     Ok(signed_tx.to_vec())
 }
