@@ -65,11 +65,11 @@ python-tests:
 wasm-ci-tests:
 	export WASM_BINDGEN_TEST_TIMEOUT=60
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl start"
-	cd bindings/wasm/ && wasm-pack test --chrome --headless && cd ../..
+	cd bindings/wasm/ && wasm-pack test --firefox --headless && cd ../..
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl stop"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/chainmain-ctl clear"
 	@nix-shell ./integration_tests/shell.nix --run "scripts/start-all"
-	cd bindings/wasm/ && wasm-pack test --chrome --headless -- --features cronos-test,ibc-test --test ibc --test ethereum && cd ../..
+	cd bindings/wasm/ && wasm-pack test --firefox --headless -- --features cronos-test,ibc-test --test ibc --test ethereum && cd ../..
 	@nix-shell ./integration_tests/shell.nix --run "scripts/stop-all"
 
 # No ibc test

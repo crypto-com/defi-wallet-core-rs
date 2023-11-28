@@ -7,6 +7,6 @@
 # Test for ibc transfer
 ./scripts/start-all
 cd bindings/wasm/
-wasm-pack test --chrome --headless -- --features ibc-test --test ibc
+wasm-pack test --firefox --headless -- --features ibc-test --test ibc
 cd ../..
 ./scripts/stop-all

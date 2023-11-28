@@ -2,13 +2,10 @@ use crate::{
     construct_simple_eth_transfer_tx, EthAmount, EthError, EthNetwork, SecretKey, WalletCoin,
     WalletCoinFunc,
 };
-use cosmrs::bip32::secp256k1::ecdsa::SigningKey;
 use ethers::prelude::{Address, LocalWallet, Middleware, Signer, SignerMiddleware, TxHash};
+use ethers::providers::{Http, Provider};
 use ethers::types::transaction::eip2718::TypedTransaction;
 use std::{str::FromStr, sync::Arc, time::Duration};
-// use ethers Http
-use ethers::prelude::Wallet;
-use ethers::providers::{Http, Provider};
 
 #[cfg(not(target_arch = "wasm32"))]
 use ethers::utils::hex::ToHex;
@@ -482,9 +479,12 @@ fn create_localwallet_client(
     key: Arc<SecretKey>,
     chain_id: u64,
     client: Provider<Http>,
-) -> Result<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>, EthError> {
+) -> Result<SignerMiddleware<Provider<Http>, LocalWallet>, EthError> {
     let provider = client.interval(Duration::from_millis(polling_interval_ms));
-    let wallet = LocalWallet::from(key.get_signing_key()).with_chain_id(chain_id);
+    let ethers_key = key
+        .get_eth_signing_key()
+        .map_err(|_| EthError::SignatureError)?;
+    let wallet = LocalWallet::from(ethers_key).with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     Ok(client)
 }
