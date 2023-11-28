@@ -3,7 +3,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQURIED ON)
 set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE INTERNAL "" FORCE)
 if (APPLE)
-  set(CMAKE_CXX_FLAGS "-framework Security -framework CoreFoundation")
+  set(CMAKE_CXX_FLAGS "-framework Security -framework CoreFoundation -framework SystemConfiguration")
 endif()
 
 project(cppexample VERSION 1.0)
