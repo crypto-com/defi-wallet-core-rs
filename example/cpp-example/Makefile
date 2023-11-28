@@ -15,7 +15,7 @@ else
 endif
 
 ifeq ($(UNAME), Darwin)
-	FLAGS=-framework Security -framework CoreFoundation
+	FLAGS=-framework Security -framework CoreFoundation -framework SystemConfiguration
 endif
 
 ifeq ($(UNAME), Linux)
