@@ -108,8 +108,10 @@ fn new_signing_eth_contract(
     chainid: u64,
 ) -> Result<Box<EthContract>> {
     let client: Provider<Http> = Provider::<Http>::try_from(&rpcserver)?;
-    let signingkey: SigningKey = SigningKey::from_bytes(&private_key.to_bytes())?;
-    let wallet: Wallet<SigningKey> = signingkey.into();
+    let binding = private_key.to_bytes();
+    let bytes = binding.as_slice(); // 32 bytes
+    let signing_key = SigningKey::from_bytes(bytes.into())?;
+    let wallet: Wallet<SigningKey> = signing_key.into();
     let wallet = wallet.with_chain_id(chainid);
     let signer: SignerMiddleware<Provider<Http>, Wallet<SigningKey>> =
         SignerMiddleware::new(client, wallet);

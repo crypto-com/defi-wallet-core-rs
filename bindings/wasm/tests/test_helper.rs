@@ -4,6 +4,7 @@
 // functions are not all used for each test files.
 #![allow(dead_code)]
 
+use async_std::task;
 use core::time::Duration;
 use defi_wallet_core_common::{Network, RawRpcAccountResponse, RawRpcAccountStatus, RawRpcBalance};
 use defi_wallet_core_wasm::{
@@ -131,7 +132,5 @@ pub(crate) async fn query_cronos_balance(address: &str) -> RawRpcBalance {
 }
 
 pub(crate) async fn wait_for_timeout(secs: Option<u64>) {
-    Delay::new(Duration::from_secs(secs.unwrap_or(DEFAULT_WAITING_SECS)))
-        .await
-        .unwrap();
+    task::sleep(Duration::from_secs(secs.unwrap_or(DEFAULT_WAITING_SECS))).await;
 }

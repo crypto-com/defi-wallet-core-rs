@@ -341,7 +341,8 @@ impl U256 {
     /// Divides the input by 1e18
     pub fn format_ether(&self) -> U256 {
         let parsed_units = ParseUnits::U256(self.into());
-        ethers::utils::format_ether(parsed_units).into()
+        let formatted_string = ethers::utils::format_ether(parsed_units);
+        U256::from_dec_str(formatted_string).unwrap()
     }
 
     /// Convert to common ethereum unit types: ether, gwei, or wei

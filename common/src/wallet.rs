@@ -7,6 +7,7 @@ use ethers::core::k256::ecdsa;
 use ethers::prelude::{LocalWallet, Signature, Signer, H256};
 use ethers::utils::hex::{self, FromHexError, ToHex};
 use ethers::utils::{hash_message, secret_key_to_address};
+use ethers_core::k256::ecdsa::SigningKey as EthSigningKey;
 use rand_core::{OsRng, RngCore};
 use secrecy::{ExposeSecret, SecretString, Zeroize};
 use std::str::FromStr;
@@ -66,7 +67,7 @@ impl WalletCoinFunc {
                     .map_err(HdWrapError::AccountId)
             }
             WalletCoin::Ethereum { .. } => {
-                let address = secret_key_to_address(&private_key.get_signing_key());
+                let address = secret_key_to_address(&private_key.get_eth_signing_key()?);
                 let address_hex: String = address.encode_hex();
                 Ok(format!("0x{}", address_hex))
             }
@@ -261,8 +262,8 @@ impl SecretKey {
 
     /// constructs secret key from bytes
     pub fn from_bytes(bytes: Vec<u8>) -> Result<Self, SecretKeyWrapError> {
-        let signing_key =
-            SigningKey::from_bytes(&bytes).map_err(SecretKeyWrapError::InvalidBytes)?;
+        let signing_key = SigningKey::from_bytes(&bytes)
+            .map_err(|_| SecretKeyWrapError::InvalidBytes(ecdsa::Error::new()))?;
         Ok(Self(signing_key))
     }
 
@@ -277,22 +278,34 @@ impl SecretKey {
         self.0.clone()
     }
 
+    pub fn get_eth_signing_key(&self) -> Result<EthSigningKey, HdWrapError> {
+        let binding = self.0.to_bytes();
+        let bytes = binding.as_slice(); // 32 bytes
+        let signing_key =
+            EthSigningKey::from_bytes(bytes.into()).map_err(|_| HdWrapError::InvalidLength)?;
+        Ok(signing_key)
+    }
+
     /// signs an arbitrary message as per EIP-191
     /// TODO: chain_id may not be necessary?
     pub fn eth_sign(&self, message: &[u8], chain_id: u64) -> Result<Signature, HdWrapError> {
         let hash = hash_message(message);
-        let wallet = LocalWallet::from(self.get_signing_key()).with_chain_id(chain_id);
-        let signature = wallet.sign_hash(hash);
+        let wallet = LocalWallet::from(self.get_eth_signing_key()?).with_chain_id(chain_id);
+        let signature = wallet
+            .sign_hash(hash)
+            .map_err(|_| HdWrapError::InvalidLength)?;
         Ok(signature)
     }
 
     // eth sign hash hex string without the 0x prefix
     pub fn eth_sign_by_hash(&self, hash: String, chain_id: u64) -> Result<Signature, HdWrapError> {
         let vhash = hex_to_bytes(hash);
-        let bhash: [u8; 32] = vhash.try_into().unwrap();
+        let bhash: [u8; 32] = vhash.try_into().map_err(|_| HdWrapError::InvalidLength)?;
         let uhash: H256 = bhash.into();
-        let wallet = LocalWallet::from(self.get_signing_key()).with_chain_id(chain_id);
-        let signature = wallet.sign_hash(uhash);
+        let wallet = LocalWallet::from(self.get_eth_signing_key()?).with_chain_id(chain_id);
+        let signature = wallet
+            .sign_hash(uhash)
+            .map_err(|_| HdWrapError::InvalidLength)?;
         Ok(signature)
     }
 
