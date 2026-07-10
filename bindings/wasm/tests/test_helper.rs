@@ -1,4 +1,5 @@
 //! Test helper constants and functions.
+#![cfg(target_arch = "wasm32")]
 
 // Disable unused code warnings in this file. Since the helper constants and
 // functions are not all used for each test files.
@@ -11,7 +12,6 @@ use defi_wallet_core_wasm::{
     CosmosClient, CosmosClientConfig, CosmosSDKTxInfoRaw, GrpcWebClient, PrivateKey, Wallet,
 };
 use wasm_bindgen_futures::JsFuture;
-use wasm_timer::Delay;
 
 pub(crate) const CHAIN_ID: &str = "chainmain-1";
 pub(crate) const CHAINMAIN_DENOM: &str = "basecro";
@@ -112,22 +112,24 @@ pub(crate) async fn query_chainmain_account(address: &str) -> RawRpcAccountStatu
 }
 
 pub(crate) async fn query_chainmain_balance(address: &str) -> RawRpcBalance {
-    JsFuture::from(
-        chainmain_client().query_account_balance(address.to_owned(), CHAINMAIN_DENOM.to_owned()),
+    serde_wasm_bindgen::from_value(
+        JsFuture::from(
+            chainmain_client().query_account_balance(address.to_owned(), CHAINMAIN_DENOM.to_owned()),
+        )
+        .await
+        .unwrap(),
     )
-    .await
-    .unwrap()
-    .into_serde::<RawRpcBalance>()
     .unwrap()
 }
 
 pub(crate) async fn query_cronos_balance(address: &str) -> RawRpcBalance {
-    JsFuture::from(
-        cronos_client().query_account_balance(address.to_owned(), CRONOS_DENOM.to_owned()),
+    serde_wasm_bindgen::from_value(
+        JsFuture::from(
+            cronos_client().query_account_balance(address.to_owned(), CRONOS_DENOM.to_owned()),
+        )
+        .await
+        .unwrap(),
     )
-    .await
-    .unwrap()
-    .into_serde::<RawRpcBalance>()
     .unwrap()
 }
 
