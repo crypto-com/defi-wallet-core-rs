@@ -477,6 +477,7 @@ interface EthAmount {
      BSC();
      Cronos();
      Polygon();
+     Chain138();
      Known(string name);
      Custom(u64 chain_id, boolean legacy);
  };

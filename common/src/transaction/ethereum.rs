@@ -35,6 +35,8 @@ pub enum EthNetwork {
     Cronos,
     /// Polygon
     Polygon,
+    /// DeFi Oracle Meta Mainnet / Chain 138
+    Chain138,
     /// Known network with specified name
     Known { name: String },
     /// Custom network with chain ID and legacy flag
@@ -46,6 +48,7 @@ impl EthNetwork {
     /// transaction request
     pub fn to_chain_params(self) -> Result<(u64, bool), EthError> {
         match self {
+            EthNetwork::Chain138 => Ok((138, false)),
             EthNetwork::Custom { chain_id, legacy } => Ok((chain_id, legacy)),
             _ => {
                 let chain = Chain::try_from(self)?;
@@ -70,6 +73,11 @@ impl TryFrom<EthNetwork> for Chain {
             EthNetwork::BSC => Chain::BinanceSmartChain,
             EthNetwork::Cronos => Chain::Cronos,
             EthNetwork::Polygon => Chain::Polygon,
+            EthNetwork::Chain138 => {
+                return Err(EthError::IncorrectChainidError(
+                    "Chain 138 is not represented in ethers::types::Chain".into(),
+                ))
+            }
             EthNetwork::Known { name } => Chain::from_str(&name)
                 .map_err(|e| EthError::IncorrectChainidError(e.to_string()))?,
             EthNetwork::Custom { chain_id, .. } => Chain::try_from(chain_id)?,
@@ -615,5 +623,14 @@ mod tests {
             hex::encode(tx_raw),
             "f86b808203e8825208944592d8f8d7b001e72cb26a73e4fa1806a51ac79d880de0b6b3a764000080820135a01c41699ee874ae206cc364c60ad699a840085ecd72a3c700cf9cae84cefc2373a056dacb5e4a89073ab83f93c6e4ed706019ec68f569d1930c6e29272bd9361525",
         );
+    }
+
+    #[test]
+    fn chain138_network_params_test() {
+        let (chain_id, legacy) = EthNetwork::Chain138
+            .to_chain_params()
+            .expect("chain params");
+        assert_eq!(chain_id, 138);
+        assert!(!legacy);
     }
 }

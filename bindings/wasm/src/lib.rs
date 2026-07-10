@@ -124,6 +124,8 @@ pub enum CoinType {
     Polygon,
     /// BinanceSmartChain
     BSC,
+    /// DeFi Oracle Meta Mainnet / Chain 138
+    Chain138,
 }
 
 impl From<CoinType> for WalletCoin {
@@ -153,6 +155,9 @@ impl From<CoinType> for WalletCoin {
             CoinType::Polygon => WalletCoin::Ethereum {
                 network: EthNetwork::Polygon,
             },
+            CoinType::Chain138 => WalletCoin::Ethereum {
+                network: EthNetwork::Chain138,
+            },
         }
     }
 }
@@ -174,6 +179,17 @@ impl From<MnemonicWordCount> for defi_wallet_core_common::MnemonicWordCount {
             MnemonicWordCount::Eighteen => defi_wallet_core_common::MnemonicWordCount::Eighteen,
             MnemonicWordCount::TwentyFour => defi_wallet_core_common::MnemonicWordCount::TwentyFour,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{get_eth_chain_id, CoinType};
+
+    #[test]
+    fn chain138_coin_type_resolves_chain_id() {
+        let chain_id = get_eth_chain_id(CoinType::Chain138).expect("chain id");
+        assert_eq!(chain_id, 138);
     }
 }
 
