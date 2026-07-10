@@ -310,6 +310,8 @@ pub mod ffi {
         CosmosHub,
         /// Ethereum
         Ethereum,
+        /// DeFi Oracle Meta Mainnet / Chain 138
+        Chain138,
     }
 
     pub enum MnemonicWordCount {
@@ -684,6 +686,9 @@ impl From<CoinType> for WalletCoin {
             },
             CoinType::CosmosHub => WalletCoin::CosmosSDK {
                 network: Network::CosmosHub,
+            },
+            CoinType::Chain138 => WalletCoin::Ethereum {
+                network: EthNetwork::Chain138,
             },
             _ => WalletCoin::Ethereum {
                 network: EthNetwork::Mainnet,
