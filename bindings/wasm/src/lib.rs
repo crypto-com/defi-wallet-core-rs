@@ -1,3 +1,5 @@
+#![cfg(target_arch = "wasm32")]
+
 use defi_wallet_core_common::{
     bytes_to_hex, hex_to_bytes, EthNetwork, HDWallet, Network, SecretKey, WalletCoin,
 };
