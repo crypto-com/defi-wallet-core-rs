@@ -116,20 +116,16 @@ pub fn construct_simple_eth_transfer_tx(
     chain_id: u64,
 ) -> Result<TypedTransaction, EthError> {
     let from = Address::from_str(from_hex).map_err(|_| EthError::HexConversion)?;
-    let to = Address::from_str(to_hex).map_err(|_| EthError::HexConversion);
+    let to = Address::from_str(to_hex).map_err(|_| EthError::HexConversion)?;
     let amount: U256 = amount.try_into().map_err(EthError::ParseError)?;
     if legacy_tx {
         let mut txrequest = TransactionRequest::new();
-        if let Ok(tovalue) = to {
-            txrequest = txrequest.to::<NameOrAddress>(tovalue.into());
-        };
+        txrequest = txrequest.to::<NameOrAddress>(to.into());
         let typedtx = txrequest.value(amount).from(from).chain_id(chain_id).into();
         Ok(typedtx)
     } else {
         let mut txrequest = Eip1559TransactionRequest::new();
-        if let Ok(tovalue) = to {
-            txrequest = txrequest.to::<NameOrAddress>(tovalue.into());
-        }
+        txrequest = txrequest.to::<NameOrAddress>(to.into());
         let typedtx = txrequest.value(amount).from(from).chain_id(chain_id).into();
         Ok(typedtx)
     }
