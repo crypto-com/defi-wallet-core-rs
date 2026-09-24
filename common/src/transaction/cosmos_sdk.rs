@@ -137,7 +137,7 @@ impl TryFrom<&SingleCoin> for Coin {
             },
             SingleCoin::TestnetCRO { amount } => {
                 let base_amount = amount
-                    .checked_mul(10 ^ 8)
+                    .checked_mul(100_000_000)
                     .ok_or_else(|| eyre!("integer overflow"))?;
                 Coin {
                     amount: base_amount.into(),
@@ -146,8 +146,8 @@ impl TryFrom<&SingleCoin> for Coin {
             }
             SingleCoin::CRO { amount, network } => {
                 let decimals = match network {
-                    Network::CronosMainnet => 10 ^ 18,
-                    _ => 10 ^ 8,
+                    Network::CronosMainnet => 1_000_000_000_000_000_000u64,
+                    _ => 100_000_000u64,
                 };
                 // FIXME: convert to Decimal when it supports multiplication
                 let base_amount = amount
@@ -194,7 +194,7 @@ impl TryFrom<&SingleCoin> for IbcCoin {
             },
             SingleCoin::TestnetCRO { amount } => {
                 let base_amount = amount
-                    .checked_mul(10 ^ 8)
+                    .checked_mul(100_000_000)
                     .ok_or_else(|| eyre!("integer overflow"))?;
                 IbcCoin {
                     amount: base_amount.to_string(),
@@ -203,8 +203,8 @@ impl TryFrom<&SingleCoin> for IbcCoin {
             }
             SingleCoin::CRO { amount, network } => {
                 let decimals = match network {
-                    Network::CronosMainnet => 10 ^ 18,
-                    _ => 10 ^ 8,
+                    Network::CronosMainnet => 1_000_000_000_000_000_000u64,
+                    _ => 100_000_000u64,
                 };
                 // FIXME: convert to Decimal when it supports multiplication
                 let base_amount = amount
